@@ -5,6 +5,7 @@ VisualStudioVersion = 17.10.35027.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2C564665-EC40-49B0-91EF-97F024604D98}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		GitVersion.yml = GitVersion.yml
 	EndProjectSection
 EndProject
@@ -28,7 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\version.yml = .github\workflows\version.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxDB.NET.Tests", "tests\RxDB.NET.Tests\RxDB.NET.Tests.csproj", "{C750473C-C51B-4FC7-8330-06849E6D9265}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDB.NET.Tests", "tests\RxDB.NET.Tests\RxDB.NET.Tests.csproj", "{C750473C-C51B-4FC7-8330-06849E6D9265}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

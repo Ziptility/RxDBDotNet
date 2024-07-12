@@ -1,4 +1,4 @@
-﻿namespace RxDB.NET;
+﻿namespace RxDBDotNet;
 
 /// <summary>
 /// Represents the authentication headers for streaming operations.

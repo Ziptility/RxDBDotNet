@@ -1,4 +1,4 @@
-﻿namespace RxDB.NET;
+﻿namespace RxDBDotNet;
 
 /// <summary>
 /// Represents a checkpoint used for replication.

@@ -1,4 +1,4 @@
-﻿namespace RxDB.NET;
+﻿namespace RxDBDotNet;
 
 /// <summary>
 /// Represents a row of data being pushed, including its assumed master state.

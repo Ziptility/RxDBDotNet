@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace RxDB.NET.Types
+namespace RxDBDotNet.Types
 {
     /// <summary>
     /// Defines the GraphQL object type for an entity.

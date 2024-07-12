@@ -14,8 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{4121
 		.github\dependabot.yml = .github\dependabot.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDB.NET", "src\RxDB.NET\RxDB.NET.csproj", "{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{EFEB7370-F4D3-4F5A-A2D7-C2AA18C8BF27}"
 	ProjectSection(SolutionItems) = preProject
 		.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
@@ -29,7 +27,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\version.yml = .github\workflows\version.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDB.NET.Tests", "tests\RxDB.NET.Tests\RxDB.NET.Tests.csproj", "{C750473C-C51B-4FC7-8330-06849E6D9265}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDBDotNet", "src\RxDBDotNet\RxDBDotNet.csproj", "{18C9BDAE-82CD-46D2-B384-676F850E9270}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDBDotNet.Tests", "tests\RxDBDotNet.Tests\RxDBDotNet.Tests.csproj", "{28B1D787-8667-4EFD-A7A0-82B34E213A56}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,14 +37,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C750473C-C51B-4FC7-8330-06849E6D9265}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C750473C-C51B-4FC7-8330-06849E6D9265}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C750473C-C51B-4FC7-8330-06849E6D9265}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C750473C-C51B-4FC7-8330-06849E6D9265}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18C9BDAE-82CD-46D2-B384-676F850E9270}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18C9BDAE-82CD-46D2-B384-676F850E9270}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18C9BDAE-82CD-46D2-B384-676F850E9270}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18C9BDAE-82CD-46D2-B384-676F850E9270}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28B1D787-8667-4EFD-A7A0-82B34E213A56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28B1D787-8667-4EFD-A7A0-82B34E213A56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28B1D787-8667-4EFD-A7A0-82B34E213A56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28B1D787-8667-4EFD-A7A0-82B34E213A56}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

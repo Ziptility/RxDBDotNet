@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace RxDB.NET.Resolvers;
+namespace RxDBDotNet.Resolvers;
 
 /// <summary>
 /// Provides data replication resolvers for entities.

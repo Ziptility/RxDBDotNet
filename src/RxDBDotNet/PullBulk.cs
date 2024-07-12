@@ -1,4 +1,4 @@
-﻿namespace RxDB.NET;
+﻿namespace RxDBDotNet;
 
 /// <summary>
 /// Represents the result of a bulk pull operation for replication.

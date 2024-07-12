@@ -1,4 +1,4 @@
-﻿namespace RxDB.NET.Types;
+﻿namespace RxDBDotNet.Types;
 
 /// <summary>
 /// Defines the GraphQL input type for a Checkpoint.

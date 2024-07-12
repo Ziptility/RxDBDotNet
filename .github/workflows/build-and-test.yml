@@ -21,8 +21,11 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore dependencies
+    - name: Restore dependencies for main project
       run: dotnet restore src/RxDB.NET/RxDB.NET.csproj
+
+    - name: Restore dependencies for test project
+      run: dotnet restore tests/RxDB.NET.Tests/RxDB.NET.Tests.csproj
 
     - name: Build
       run: dotnet build src/RxDB.NET/RxDB.NET.csproj --configuration Release --no-restore

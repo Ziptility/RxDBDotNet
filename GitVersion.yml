@@ -12,10 +12,3 @@ branches:
 ignore:
   sha: []
 merge-message-formats: {}
-labels:
-  alpha:
-    regex: -alpha
-    mode: ContinuousDeployment
-  beta:
-    regex: -beta
-    mode: ContinuousDeployment

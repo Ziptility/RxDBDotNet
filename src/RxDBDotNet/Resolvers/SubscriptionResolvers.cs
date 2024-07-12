@@ -5,32 +5,28 @@ using Microsoft.EntityFrameworkCore;
 namespace RxDBDotNet.Resolvers;
 
 /// <summary>
-/// Provides subscription resolvers for entities.
+///     Provides subscription resolvers for entities.
 /// </summary>
 /// <typeparam name="TEntity">The type of entity being replicated.</typeparam>
 /// <typeparam name="TContext">The type of the DbContext.</typeparam>
-public class SubscriptionResolvers<TEntity, TContext>
+/// <remarks>
+///     Initializes a new instance of the <see cref="SubscriptionResolvers{TEntity, TContext}" /> class.
+/// </remarks>
+/// <param name="dbContext">The DbContext to be used for data access.</param>
+public class SubscriptionResolvers<TEntity, TContext>(TContext dbContext)
     where TEntity : class, IReplicatedEntity
     where TContext : DbContext
 {
-    private readonly TContext _dbContext;
-
     /// <summary>
-    /// Initializes a new instance of the <see cref="SubscriptionResolvers{TEntity, TContext}"/> class.
+    ///     Streams data updates for the entity type.
     /// </summary>
-    /// <param name="dbContext">The DbContext to be used for data access.</param>
-    public SubscriptionResolvers(TContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    /// <summary>
-    /// Streams data updates for the entity type.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="PullBulk{TEntity}"/> object containing the latest updates.</returns>
+    /// <returns>
+    ///     A task that represents the asynchronous operation. The task result contains a <see cref="PullBulk{TEntity}" />
+    ///     object containing the latest updates.
+    /// </returns>
     public async Task<PullBulk<TEntity>> GetStreamData()
     {
-        var documents = await _dbContext.Set<TEntity>()
+        var documents = await dbContext.Set<TEntity>()
             .Where(e => !e.IsDeleted)
             .OrderBy(e => e.UpdatedAt)
             .ToListAsync();
@@ -40,12 +36,16 @@ public class SubscriptionResolvers<TEntity, TContext>
         return new PullBulk<TEntity>
         {
             Documents = documents,
-            Checkpoint = new Checkpoint { Id = Guid.NewGuid(), UpdatedAt = lastUpdated }
+            Checkpoint = new Checkpoint
+            {
+                Id = Guid.NewGuid(),
+                UpdatedAt = lastUpdated,
+            },
         };
     }
 
     /// <summary>
-    /// Subscribes to data updates for the entity type.
+    ///     Subscribes to data updates for the entity type.
     /// </summary>
     /// <param name="eventReceiver">The event receiver for the subscription.</param>
     /// <param name="cancellationToken">The cancellation token to cancel the subscription.</param>

@@ -1,0 +1,31 @@
+name: Determine Version
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  determine-version:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install GitVersion
+      run: dotnet tool install --global GitVersion.Tool
+
+    - name: Determine version
+      run: gitversion /output json /showvariable FullSemVer
+      id: gitversion
+
+    - name: Create tag
+      run: git tag v${{ steps.gitversion.outputs.FullSemVer }}
+      if: github.ref == 'refs/heads/main'
+    - name: Push tag
+      run: git push origin v${{ steps.gitversion.outputs.FullSemVer }}
+      if: github.ref == 'refs/heads/main'

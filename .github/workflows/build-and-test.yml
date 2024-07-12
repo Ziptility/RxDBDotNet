@@ -1,0 +1,31 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/RxDB.NET/RxDB.NET.csproj
+
+    - name: Build
+      run: dotnet build src/RxDB.NET/RxDB.NET.csproj --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test tests/RxDB.NET.Tests/RxDB.NET.Tests.csproj --no-restore --verbosity normal

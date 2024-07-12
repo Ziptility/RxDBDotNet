@@ -1,0 +1,19 @@
+mode: Mainline
+branches:
+  main:
+    regex: ^main$
+    tag: ''
+    source-branches: []
+    tracks-release-branches: false
+    is-mainline: true
+ignore:
+  sha: []
+commit-message:
+  mode: ConventionalCommits
+labels:
+  alpha:
+    regex: -alpha
+    mode: ContinuousDeployment
+  beta:
+    regex: -beta
+    mode: ContinuousDeployment

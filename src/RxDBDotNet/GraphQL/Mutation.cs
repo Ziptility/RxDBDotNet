@@ -1,11 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Models;
 using RxDBDotNet.Resolvers;
 
 namespace RxDBDotNet.GraphQL;
 
-public class Mutation<TEntity> where TEntity : class, IReplicatedEntity
+public class Mutation<TDocument> where TDocument : class, IReplicatedDocument
 {
-    [GraphQLName("pushEntity")]
-    public Task<List<TEntity>> PushEntity(List<PushRow<TEntity>> rows, [Service] ReplicationResolvers<TEntity, DbContext> resolvers)
-        => resolvers.PushData(rows);
+    [GraphQLName("pushDocument")]
+    public Task<List<TDocument>> PushDocuments(List<PushDocumentRequest<TDocument>> documents, [Service] ReplicationResolvers<TDocument, DbContext> resolvers)
+        => resolvers.PushDocuments(documents);
 }

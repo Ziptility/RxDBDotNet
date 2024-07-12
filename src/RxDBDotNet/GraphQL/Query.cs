@@ -1,11 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Models;
 using RxDBDotNet.Resolvers;
 
 namespace RxDBDotNet.GraphQL;
 
-public class Query<TEntity> where TEntity : class, IReplicatedEntity
+public class Query<TDocument> where TDocument : class, IReplicatedDocument
 {
-    [GraphQLName("pullEntity")]
-    public Task<PullBulk<TEntity>> PullEntity(Checkpoint checkpoint, int limit, [Service] ReplicationResolvers<TEntity, DbContext> resolvers)
-        => resolvers.PullData(checkpoint, limit);
+    [GraphQLName("pullDocument")]
+    public Task<PullDocumentsResult<TDocument>> PullDocuments(Checkpoint checkpoint, int limit, [Service] ReplicationResolvers<TDocument, DbContext> resolvers)
+        => resolvers.PullDocuments(checkpoint, limit);
 }

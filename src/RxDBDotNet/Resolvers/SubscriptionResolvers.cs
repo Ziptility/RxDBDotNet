@@ -1,57 +1,36 @@
-﻿using HotChocolate.Execution;
+﻿using System.Runtime.CompilerServices;
 using HotChocolate.Subscriptions;
-using Microsoft.EntityFrameworkCore;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Models;
 
 namespace RxDBDotNet.Resolvers;
 
 /// <summary>
 ///     Provides subscription resolvers for entities.
 /// </summary>
-/// <typeparam name="TEntity">The type of entity being replicated.</typeparam>
-/// <typeparam name="TContext">The type of the DbContext.</typeparam>
+/// <typeparam name="TDocument">The type of document being replicated.</typeparam>
 /// <remarks>
-///     Initializes a new instance of the <see cref="SubscriptionResolvers{TEntity, TContext}" /> class.
+///     Initializes a new instance of the <see cref="SubscriptionResolvers{TDocument}" /> class.
 /// </remarks>
-/// <param name="dbContext">The DbContext to be used for data access.</param>
-public class SubscriptionResolvers<TEntity, TContext>(TContext dbContext)
-    where TEntity : class, IReplicatedEntity
-    where TContext : DbContext
+public class SubscriptionResolvers<TDocument>
+    where TDocument : class, IReplicatedDocument
 {
     /// <summary>
-    ///     Streams data updates for the entity type.
-    /// </summary>
-    /// <returns>
-    ///     A task that represents the asynchronous operation. The task result contains a <see cref="PullBulk{TEntity}" />
-    ///     object containing the latest updates.
-    /// </returns>
-    public async Task<PullBulk<TEntity>> GetStreamData()
-    {
-        var documents = await dbContext.Set<TEntity>()
-            .Where(e => !e.IsDeleted)
-            .OrderBy(e => e.UpdatedAt)
-            .ToListAsync();
-
-        var lastUpdated = documents.Any() ? documents.Max(e => e.UpdatedAt) : DateTimeOffset.MinValue;
-
-        return new PullBulk<TEntity>
-        {
-            Documents = documents,
-            Checkpoint = new Checkpoint
-            {
-                Id = Guid.NewGuid(),
-                UpdatedAt = lastUpdated,
-            },
-        };
-    }
-
-    /// <summary>
-    ///     Subscribes to data updates for the entity type.
+    ///     Subscribes to updates for the document type.
     /// </summary>
     /// <param name="eventReceiver">The event receiver for the subscription.</param>
     /// <param name="cancellationToken">The cancellation token to cancel the subscription.</param>
-    public async Task<ISourceStream<PullBulk<TEntity>>> Subscribe([Service] ITopicEventReceiver eventReceiver, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<PullDocumentsResult<TDocument>> Subscribe(
+        [Service] ITopicEventReceiver eventReceiver,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var streamName = $"Stream_{typeof(TEntity).Name}";
-        return await eventReceiver.SubscribeAsync<PullBulk<TEntity>>(streamName, cancellationToken);
+        var streamName = $"Stream_{typeof(TDocument).Name}";
+
+        var documentSourceStream = await eventReceiver.SubscribeAsync<PullDocumentsResult<TDocument>>(streamName, cancellationToken);
+
+        await foreach (var pullDocumentResult in documentSourceStream.ReadEventsAsync().WithCancellation(cancellationToken))
+        {
+            yield return pullDocumentResult;
+        }
     }
 }

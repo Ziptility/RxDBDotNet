@@ -1,80 +1,114 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Models;
 
 namespace RxDBDotNet.Resolvers;
 
 /// <summary>
-/// Provides data replication resolvers for entities.
+///     Provides data replication resolvers for entities.
 /// </summary>
-/// <typeparam name="TEntity">The type of entity being replicated.</typeparam>
+/// <typeparam name="TDocument">The type of document being replicated.</typeparam>
 /// <typeparam name="TContext">The type of the DbContext.</typeparam>
-public class ReplicationResolvers<TEntity, TContext>
-    where TEntity : class, IReplicatedEntity
-    where TContext : DbContext
+/// <remarks>
+///     Initializes a new instance of the <see cref="ReplicationResolvers{TDocument, TContext}" /> class.
+/// </remarks>
+/// <param name="dbContext">The DbContext to be used for data access.</param>
+public class ReplicationResolvers<TDocument, TContext>(TContext dbContext)
+    where TDocument : class,
+    IReplicatedDocument where TContext : DbContext
 {
-    private readonly TContext _dbContext;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ReplicationResolvers{TEntity, TContext}"/> class.
-    /// </summary>
-    /// <param name="dbContext">The DbContext to be used for data access.</param>
-    public ReplicationResolvers(TContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     /// <summary>
     /// Pulls data from the backend based on the given checkpoint and limit.
     /// </summary>
     /// <param name="checkpoint">The last known checkpoint.</param>
     /// <param name="limit">The maximum number of documents to return.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="PullBulk{TEntity}"/> object containing the pulled documents and the new checkpoint.</returns>
-    public async Task<PullBulk<TEntity>> PullData(Checkpoint checkpoint, int limit)
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a
+    /// <see cref="PullDocumentsResult{TDocument}" /> object containing the pulled documents and the new checkpoint.
+    /// </returns>
+    /// <remarks>
+    /// This method filters documents based on both <c>UpdatedAt</c> and <c>Id</c> to ensure it only includes documents
+    /// that are newer or have a higher <c>Id</c> than the checkpoint. The documents are sorted by <c>UpdatedAt</c>
+    /// and then by <c>Id</c> to maintain a consistent order. The checkpoint is set to the <c>Id</c> and <c>UpdatedAt</c>
+    /// of the last document in the batch. If no documents are found, it falls back to the current checkpoint values.
+    /// </remarks>
+    public async Task<PullDocumentsResult<TDocument>> PullDocuments(Checkpoint checkpoint, int limit)
     {
-        var documents = await _dbContext.Set<TEntity>()
-            .Where(e => e.UpdatedAt > checkpoint.UpdatedAt)
+        var documents = await dbContext.Set<TDocument>()
+            .Where(e => e.UpdatedAt > checkpoint.UpdatedAt
+                        || (e.UpdatedAt == checkpoint.UpdatedAt && e.DocumentId.CompareTo(checkpoint.LastDocumentId) > 0))
             .OrderBy(e => e.UpdatedAt)
+            .ThenBy(e => e.DocumentId)
             .Take(limit)
             .ToListAsync();
 
-        var lastUpdated = documents.Any() ? documents.Max(e => e.UpdatedAt) : checkpoint.UpdatedAt;
+        var lastDocument = documents.LastOrDefault();
 
-        return new PullBulk<TEntity>
+        var newCheckpoint = new Checkpoint
+        {
+            LastDocumentId = lastDocument?.DocumentId ?? checkpoint.LastDocumentId,
+            UpdatedAt = lastDocument?.UpdatedAt ?? checkpoint.UpdatedAt,
+        };
+
+        return new PullDocumentsResult<TDocument>
         {
             Documents = documents,
-            Checkpoint = new Checkpoint { Id = Guid.NewGuid(), UpdatedAt = lastUpdated }
+            Checkpoint = newCheckpoint,
         };
     }
 
     /// <summary>
     /// Pushes data to the backend and handles any conflicts.
     /// </summary>
-    /// <param name="rows">The list of documents to push, including their assumed master state.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a list of conflicting documents, if any.</returns>
-    public async Task<List<TEntity>> PushData(List<PushRow<TEntity>> rows)
+    /// <param name="documents">The list of documents to push, including their assumed master state.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a list of conflicting documents,
+    /// if any.
+    /// </returns>
+    /// <remarks>
+    /// This method handles the interpretation of <c>AssumedMasterState</c> as per RxDB's expectations:
+    /// <list type="bullet">
+    /// <item>
+    /// <description>
+    /// If <c>AssumedMasterState</c> is null, the server assumes there is no prior state to compare against and directly checks for existing documents.
+    /// If a document exists and has a different <c>UpdatedAt</c> timestamp, it is considered a conflict.
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <description>
+    /// If the <c>AssumedMasterState</c> is not null and the <c>UpdatedAt</c> timestamp does not match, the document is added to the list of conflicts.
+    /// </description>
+    /// </item>
+    /// </list>
+    /// </remarks>
+    public async Task<List<TDocument>> PushDocuments(List<PushDocumentRequest<TDocument>> documents)
     {
-        var conflicts = new List<TEntity>();
+        var conflicts = new List<TDocument>();
 
-        foreach (var row in rows)
+        foreach (var document in documents)
         {
-            var existing = await _dbContext.Set<TEntity>().FindAsync(row.NewDocumentState.Id);
+            var existing = await dbContext.Set<TDocument>()
+                .FindAsync(document.NewDocumentState.DocumentId);
             if (existing != null)
             {
-                if (row.AssumedMasterState == null || existing.UpdatedAt != row.AssumedMasterState.UpdatedAt)
+                if (document.AssumedMasterState == null || existing.UpdatedAt != document.AssumedMasterState.UpdatedAt)
                 {
                     conflicts.Add(existing);
                 }
                 else
                 {
-                    _dbContext.Entry(existing).CurrentValues.SetValues(row.NewDocumentState);
+                    dbContext.Entry(existing)
+                        .CurrentValues.SetValues(document.NewDocumentState);
                 }
             }
             else
             {
-                _dbContext.Set<TEntity>().Add(row.NewDocumentState);
+                dbContext.Set<TDocument>()
+                    .Add(document.NewDocumentState);
             }
         }
 
-        await _dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return conflicts;
     }

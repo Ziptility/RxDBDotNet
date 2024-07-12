@@ -1,14 +1,20 @@
-﻿using HotChocolate.Execution;
-using HotChocolate.Subscriptions;
-using Microsoft.EntityFrameworkCore;
+﻿using HotChocolate.Subscriptions;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Models;
 using RxDBDotNet.Resolvers;
 
 namespace RxDBDotNet.GraphQL;
 
-public class Subscription<TEntity> where TEntity : class, IReplicatedEntity
+public class Subscription<TDocument> where TDocument : class, IReplicatedDocument
 {
-    [GraphQLName("streamEntity")]
-    [Subscribe]
-    public async Task<ISourceStream<PullBulk<TEntity>>> StreamEntity([Service] SubscriptionResolvers<TEntity, DbContext> resolvers, [Service] ITopicEventReceiver eventReceiver, CancellationToken cancellationToken)
-        => await resolvers.Subscribe(eventReceiver, cancellationToken);
+    public IAsyncEnumerable<PullDocumentsResult<TDocument>> OnDocumentChangedStream(
+        [Service] SubscriptionResolvers<TDocument> resolvers,
+        [Service] ITopicEventReceiver eventReceiver,
+        CancellationToken cancellationToken)
+        => resolvers.Subscribe(eventReceiver, cancellationToken);
+
+    [Subscribe(With = nameof(OnDocumentChangedStream))]
+    public PullDocumentsResult<TDocument> OnDocumentChanged(
+        [EventMessage] PullDocumentsResult<TDocument> changedDocument)
+        => changedDocument;
 }

@@ -30,8 +30,9 @@ namespace RxDB.NET.Types
                     property.Name != nameof(IReplicatedEntity.UpdatedAt) &&
                     property.Name != nameof(IReplicatedEntity.IsDeleted))
                 {
+                    var fieldType = GetGraphQlType(property.PropertyType);
                     descriptor.Field(property.Name)
-                        .Type(GetGraphQlType(property.PropertyType))
+                        .Type(fieldType)
                         .Description($"Field for {property.Name}");
                 }
             }
@@ -42,40 +43,40 @@ namespace RxDB.NET.Types
         /// </summary>
         /// <param name="propertyType">The C# type to map.</param>
         /// <returns>The corresponding GraphQL type.</returns>
-        private static IType GetGraphQlType(Type propertyType)
+        private static Type GetGraphQlType(Type propertyType)
         {
             if (propertyType == typeof(string))
             {
-                return new StringType();
+                return typeof(StringType);
             }
 
             if (propertyType == typeof(int))
             {
-                return new IntType();
+                return typeof(IntType);
             }
 
             if (propertyType == typeof(float))
             {
-                return new FloatType();
+                return typeof(FloatType);
             }
 
             if (propertyType == typeof(bool))
             {
-                return new BooleanType();
+                return typeof(BooleanType);
             }
 
             if (propertyType == typeof(DateTime))
             {
-                return new DateTimeType();
+                return typeof(DateTimeType);
             }
 
             if (propertyType == typeof(DateTimeOffset))
             {
-                return new DateTimeType();
+                return typeof(DateTimeType);
             }
 
             // Add more type mappings as needed
-            return new StringType(); // Default to string if no match
+            return typeof(StringType); // Default to string if no match
         }
     }
 }

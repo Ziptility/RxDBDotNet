@@ -13,19 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v4.1.1
+      with:
+        fetch-depth: 0
 
     - name: Install GitVersion
-      run: dotnet tool install --global GitVersion.Tool
+      uses: gittools/actions/gitversion/setup@v0.10.2
+      with:
+        versionSpec: '5.x'
 
-    - name: Determine version
-      run: gitversion /output json /showvariable FullSemVer
+    - name: Determine the semantic version of this build
       id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.10.2
 
-    - name: Create tag
-      run: git tag v${{ steps.gitversion.outputs.FullSemVer }}
-      if: github.ref == 'refs/heads/main'
-    - name: Push tag
-      run: git push origin v${{ steps.gitversion.outputs.FullSemVer }}
-      if: github.ref == 'refs/heads/main'
+    # - name: Create tag
+    #   run: git tag v${{ steps.gitversion.outputs.FullSemVer }}
+    #   if: github.ref == 'refs/heads/main'
+    # - name: Push tag
+    #   run: git push origin v${{ steps.gitversion.outputs.FullSemVer }}
+    #   if: github.ref == 'refs/heads/main'

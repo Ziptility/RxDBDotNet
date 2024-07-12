@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35027.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2C564665-EC40-49B0-91EF-97F024604D98}"
+	ProjectSection(SolutionItems) = preProject
+		GitVersion.yml = GitVersion.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{41216137-D61B-414F-BE61-FABEA436ABA8}"
+	ProjectSection(SolutionItems) = preProject
+		.github\dependabot.yml = .github\dependabot.yml
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDB.NET", "src\RxDB.NET\RxDB.NET.csproj", "{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{EFEB7370-F4D3-4F5A-A2D7-C2AA18C8BF27}"
+	ProjectSection(SolutionItems) = preProject
+		.github\ISSUE_TEMPLATE\bug_report.md = .github\ISSUE_TEMPLATE\bug_report.md
+		.github\ISSUE_TEMPLATE\feature_request.md = .github\ISSUE_TEMPLATE\feature_request.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{FAE03C4C-26D7-4944-84D0-B54C98548989}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build-and-test.yml = .github\workflows\build-and-test.yml
+		.github\workflows\release.yml = .github\workflows\release.yml
+		.github\workflows\version.yml = .github\workflows\version.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxDB.NET.Tests", "tests\RxDB.NET.Tests\RxDB.NET.Tests.csproj", "{C750473C-C51B-4FC7-8330-06849E6D9265}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03B99B0F-1001-4019-9E8C-D79AFA2A5DEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C750473C-C51B-4FC7-8330-06849E6D9265}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C750473C-C51B-4FC7-8330-06849E6D9265}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C750473C-C51B-4FC7-8330-06849E6D9265}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C750473C-C51B-4FC7-8330-06849E6D9265}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{41216137-D61B-414F-BE61-FABEA436ABA8} = {2C564665-EC40-49B0-91EF-97F024604D98}
+		{EFEB7370-F4D3-4F5A-A2D7-C2AA18C8BF27} = {41216137-D61B-414F-BE61-FABEA436ABA8}
+		{FAE03C4C-26D7-4944-84D0-B54C98548989} = {41216137-D61B-414F-BE61-FABEA436ABA8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {33885AAE-E818-451C-9604-9002D28B4F7B}
+	EndGlobalSection
+EndGlobal

@@ -1,21 +1,3 @@
-/**
- * This file is derived from the RxDB project (https://github.com/pubkey/rxdb).
- *
- * This file is licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Original Source: https://github.com/pubkey/rxdb
- */
-
 import "./style.css";
 import {
     addRxPlugin,
@@ -59,7 +41,6 @@ addRxPlugin(RxDBQueryBuilderPlugin);
 import { RxDBLeaderElectionPlugin } from "rxdb/plugins/leader-election";
 addRxPlugin(RxDBLeaderElectionPlugin);
 
-
 import {
     GRAPHQL_PORT,
     GRAPHQL_PATH,
@@ -78,12 +59,10 @@ const databaseNameField = document.querySelector("#database-name");
 
 console.log(`hostname: ${window.location.hostname}`);
 
-
 const syncUrls = {
     http: `http://${window.location.hostname}:${GRAPHQL_PORT}${GRAPHQL_PATH}`,
     ws: `ws://localhost:${GRAPHQL_SUBSCRIPTION_PORT}${GRAPHQL_SUBSCRIPTION_PATH}`
 };
-
 
 const batchSize = 50;
 
@@ -130,7 +109,6 @@ function doSync() {
     }
 }
 
-
 function getStorageKey() {
     const urlString = window.location.href;
     const url = new URL(urlString);
@@ -167,7 +145,6 @@ function getStorage() {
     }
 }
 
-
 async function run() {
     storageField.innerHTML = getStorageKey();
     databaseNameField.innerHTML = getDatabaseName();
@@ -195,7 +172,7 @@ async function run() {
     });
 
     db.hero.preSave(function (docData) {
-        docData.updatedAt = new Date().getTime();
+        docData.updatedAt = new Date().toISOString(); // Update to use ISO date string
     });
 
     // set up replication
@@ -218,9 +195,8 @@ async function run() {
                 streamQueryBuilder: pullStreamBuilder
             },
             live: true,
-            deletedField: "deleted"
+            deletedField: "isDeleted" // Updated to use "isDeleted"
         });
-
 
         // show replication-errors in logs
         heroesList.innerHTML = "Subscribe to errors..";
@@ -230,13 +206,11 @@ async function run() {
         });
     }
 
-
     // log all collection events for debugging
     db.hero.$.pipe(filter(ev => !ev.isLocal)).subscribe(ev => {
         console.log("collection.$ emitted:");
         console.dir(ev);
     });
-
 
     /**
      * We await the initial replication
@@ -265,13 +239,12 @@ async function run() {
                     <li class="hero-item">
                         <div class="color-box" style="background:${hero.color}"></div>
                         <div class="name">${hero.name} (updatedAt: ${hero.updatedAt})</div>
-                        <div class="delete-icon" onclick="window.deleteHero('${hero.primary}')">DELETE</div>
+                        <div class="delete-icon" onclick="window.deleteHero('${hero.id}')">DELETE</div>
                     </li>
                 `;
             });
             heroesList.innerHTML = html;
         });
-
 
     // set up click handlers
     window.deleteHero = async (id) => {
@@ -291,10 +264,11 @@ async function run() {
         const name = document.querySelector('input[name="name"]').value;
         const color = document.querySelector('input[name="color"]').value;
         const obj = {
-            id: name,
+            id: crypto.randomUUID(), // Generate a new UUID for the id
             name: name,
             color: color,
-            updatedAt: new Date().getTime()
+            updatedAt: new Date().toISOString(), // Updated to use ISO date string
+            isDeleted: false // Default to not deleted
         };
         console.log("inserting hero:");
         console.dir(obj);

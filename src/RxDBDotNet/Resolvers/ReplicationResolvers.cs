@@ -36,9 +36,9 @@ public class ReplicationResolvers<TDocument, TContext>(TContext dbContext)
     {
         var documents = await dbContext.Set<TDocument>()
             .Where(e => e.UpdatedAt > checkpoint.UpdatedAt
-                        || (e.UpdatedAt == checkpoint.UpdatedAt && e.DocumentId.CompareTo(checkpoint.LastDocumentId) > 0))
+                        || (e.UpdatedAt == checkpoint.UpdatedAt && e.Id.CompareTo(checkpoint.LastDocumentId) > 0))
             .OrderBy(e => e.UpdatedAt)
-            .ThenBy(e => e.DocumentId)
+            .ThenBy(e => e.Id)
             .Take(limit)
             .ToListAsync();
 
@@ -46,7 +46,7 @@ public class ReplicationResolvers<TDocument, TContext>(TContext dbContext)
 
         var newCheckpoint = new Checkpoint
         {
-            LastDocumentId = lastDocument?.DocumentId ?? checkpoint.LastDocumentId,
+            LastDocumentId = lastDocument?.Id ?? checkpoint.LastDocumentId,
             UpdatedAt = lastDocument?.UpdatedAt ?? checkpoint.UpdatedAt,
         };
 
@@ -88,7 +88,7 @@ public class ReplicationResolvers<TDocument, TContext>(TContext dbContext)
         foreach (var document in documents)
         {
             var existing = await dbContext.Set<TDocument>()
-                .FindAsync(document.NewDocumentState.DocumentId);
+                .FindAsync(document.NewDocumentState.Id);
             if (existing != null)
             {
                 if (document.AssumedMasterState == null || existing.UpdatedAt != document.AssumedMasterState.UpdatedAt)

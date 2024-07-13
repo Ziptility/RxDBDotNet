@@ -8,7 +8,7 @@ public interface IReplicatedDocument
     /// <summary>
     /// The unique identifier for the document.
     /// </summary>
-    Guid DocumentId { get; init; }
+    Guid Id { get; init; }
 
     /// <summary>
     /// The timestamp of the last update to the document.

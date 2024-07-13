@@ -1,4 +1,6 @@
+using Example.GraphQLApi.Models;
 using HotChocolate.AspNetCore;
+using RxDBDotNet.GraphQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,12 +16,27 @@ builder.WebHost.ConfigureKestrel(options =>
 // Add services to the container.
 builder.Services
     .AddGraphQLServer()
-    .AddQueryType<Query>()
+    .AddQueryType<Query<Hero>>()
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
     .AddInMemorySubscriptions();
 
+// Configure CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(corsPolicyBuilder =>
+    {
+        corsPolicyBuilder.WithOrigins("http://localhost:1337") // Add the allowed origin
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
+
+// Enable CORS
+app.UseCors();
 
 // Enable WebSockets
 app.UseWebSockets();
@@ -35,10 +52,6 @@ app.MapGraphQL().WithOptions(new GraphQLServerOptions
 app.Run();
 
 // Sample query, mutation, and subscription types for demonstration purposes
-public class Query
-{
-    public string Hello() => "Hello, world!";
-}
 
 public class Mutation
 {

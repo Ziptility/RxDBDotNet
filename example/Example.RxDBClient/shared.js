@@ -16,7 +16,6 @@
  * Original Source: https://github.com/pubkey/rxdb
  */
 
-
 export const GRAPHQL_PORT = 10102;
 export const GRAPHQL_PATH = "/graphql";
 export const GRAPHQL_SUBSCRIPTION_PORT = 10103;
@@ -37,7 +36,7 @@ export const heroSchema = {
     properties: {
         id: {
             type: "string",
-            maxLength: 100
+            format: "uuid"
         },
         name: {
             type: "string",
@@ -48,14 +47,15 @@ export const heroSchema = {
             maxLength: 30
         },
         updatedAt: {
-            type: "number",
-            minimum: 0,
-            maximum: 1000000000000000,
-            multipleOf: 1
+            type: "string",
+            format: "date-time"
+        },
+        isDeleted: {
+            type: "boolean"
         }
     },
     indexes: ["name", "color", "updatedAt"],
-    required: ["id", "color", "updatedAt"]
+    required: ["id", "name", "color", "updatedAt"]
 };
 
 export const graphQLGenerationInput = {
@@ -65,7 +65,7 @@ export const graphQLGenerationInput = {
             "id",
             "updatedAt"
         ],
-        deletedField: "deleted",
+        deletedField: "isDeleted",
         headerFields: ["Authorization"]
     }
 };

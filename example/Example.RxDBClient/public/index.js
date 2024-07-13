@@ -1,5 +1,5 @@
 /**
- * This file is part of the RxDB project (https://github.com/pubkey/rxdb).
+ * This file is derived from the RxDB project (https://github.com/pubkey/rxdb).
  *
  * This file is licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,12 +76,12 @@ const leaderIcon = document.querySelector("#leader-icon");
 const storageField = document.querySelector("#storage-key");
 const databaseNameField = document.querySelector("#database-name");
 
-console.log("hostname: " + window.location.hostname);
+console.log(`hostname: ${window.location.hostname}`);
 
 
 const syncUrls = {
-    http: "http://" + window.location.hostname + ":" + GRAPHQL_PORT + GRAPHQL_PATH,
-    ws: "ws://localhost:" + GRAPHQL_SUBSCRIPTION_PORT + GRAPHQL_SUBSCRIPTION_PATH
+    http: `http://${window.location.hostname}:${GRAPHQL_PORT}${GRAPHQL_PATH}`,
+    ws: `ws://localhost:${GRAPHQL_SUBSCRIPTION_PORT}${GRAPHQL_SUBSCRIPTION_PATH}`
 };
 
 
@@ -113,7 +113,7 @@ function getDatabaseName() {
 
     let ret = "heroesdb";
     if (dbNameFromUrl) {
-        console.log("databaseName from url: " + dbNameFromUrl);
+        console.log(`databaseName from url: ${dbNameFromUrl}`);
         ret += dbNameFromUrl;
     }
     return ret;
@@ -163,7 +163,7 @@ function getStorage() {
     } else if (storageKey === "memory") {
         return getRxStorageMemory();
     } else {
-        throw new Error("storage key not defined " + storageKey);
+        throw new Error(`storage key not defined ${storageKey}`);
     }
 }
 
@@ -183,7 +183,7 @@ async function run() {
 
     // display crown when tab is leader
     db.waitForLeadership().then(function () {
-        document.title = "♛ " + document.title;
+        document.title = `♛ ${document.title}`;
         leaderIcon.style.display = "block";
     });
 
@@ -206,7 +206,7 @@ async function run() {
             url: syncUrls,
             headers: {
                 /* optional, set an auth header */
-                Authorization: "Bearer " + JWT_BEARER_TOKEN
+                Authorization: `Bearer ${JWT_BEARER_TOKEN}`
             },
             push: {
                 batchSize,
@@ -275,7 +275,7 @@ async function run() {
 
     // set up click handlers
     window.deleteHero = async (id) => {
-        console.log("delete doc " + id);
+        console.log(`delete doc ${id}`);
         const doc = await db.hero.findOne(id).exec();
         if (doc) {
             console.log("got doc, remove it");

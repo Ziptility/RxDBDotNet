@@ -4,12 +4,12 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var cache = builder.AddRedis("cache");
 
-builder.AddProject<Projects.Example_GraphQLApi>("apiservice")
-    .WithReference(cache);
+var graphQLReplicationApi = builder
+    .AddProject<Projects.Example_GraphQLApi>("graphqlreplicationapi");
 
-// builder.AddProject<Projects.GraphQLExample_Web>("webfrontend")
-//     .WithExternalHttpEndpoints()
-//     .WithReference(cache)
-//     .WithReference(apiService);
+builder.AddProject<Projects.Example_RxDBClient>("rxdbclient")
+    .WithExternalHttpEndpoints()
+    .WithReference(graphQLReplicationApi)
+    .WithReference(cache);
 
 builder.Build().Run();

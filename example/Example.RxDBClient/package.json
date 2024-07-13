@@ -1,0 +1,23 @@
+{
+  "name": "example.rx-dbclient",
+  "version": "0.0.0",
+  "description": "Example.RxDBClient",
+  "main": "server.js",
+  "author": "",
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "eslintConfig": {},
+  "dependencies": {
+    "dexie": "^4.0.8",
+    "express": "^4.19.2",
+    "lokijs": "^1.5.12",
+    "rxdb": "^15.28.0",
+    "rxjs": "^7.8.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "license": "ISC"
+}

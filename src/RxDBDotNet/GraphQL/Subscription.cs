@@ -11,10 +11,13 @@ public class Subscription<TDocument> where TDocument : class, IReplicatedDocumen
         [Service] SubscriptionResolvers<TDocument> resolvers,
         [Service] ITopicEventReceiver eventReceiver,
         CancellationToken cancellationToken)
-        => resolvers.Subscribe(eventReceiver, cancellationToken);
+    {
+        return resolvers.Subscribe(eventReceiver, cancellationToken);
+    }
 
     [Subscribe(With = nameof(OnDocumentChangedStream))]
-    public PullDocumentsResult<TDocument> OnDocumentChanged(
-        [EventMessage] PullDocumentsResult<TDocument> changedDocument)
-        => changedDocument;
+    public PullDocumentsResult<TDocument> OnDocumentChanged([EventMessage] PullDocumentsResult<TDocument> changedDocument)
+    {
+        return changedDocument;
+    }
 }

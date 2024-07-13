@@ -1,15 +1,18 @@
 // see https://learn.microsoft.com/en-us/dotnet/aspire/get-started/build-aspire-apps-with-nodejs
 
+using Projects;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var cache = builder.AddRedis("cache");
 
-var graphQLReplicationApi = builder
-    .AddProject<Projects.Example_GraphQLApi>("graphqlreplicationapi");
+var graphQLApi = builder.AddProject<Example_GraphQLApi>("graphqlapi");
 
-builder.AddProject<Projects.Example_RxDBClient>("rxdbclient")
+builder.AddNpmApp("rxdbclient", "../Example.RxDBClient", "start:build")
+    .WithHttpEndpoint(port: 1337, env: "PORT")
     .WithExternalHttpEndpoints()
-    .WithReference(graphQLReplicationApi)
+    .WithReference(graphQLApi)
     .WithReference(cache);
 
-builder.Build().Run();
+builder.Build()
+    .Run();

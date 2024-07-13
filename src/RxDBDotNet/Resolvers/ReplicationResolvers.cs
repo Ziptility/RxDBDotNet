@@ -13,30 +13,27 @@ namespace RxDBDotNet.Resolvers;
 ///     Initializes a new instance of the <see cref="ReplicationResolvers{TDocument, TContext}" /> class.
 /// </remarks>
 /// <param name="dbContext">The DbContext to be used for data access.</param>
-public class ReplicationResolvers<TDocument, TContext>(TContext dbContext)
-    where TDocument : class,
-    IReplicatedDocument where TContext : DbContext
+public class ReplicationResolvers<TDocument, TContext>(TContext dbContext) where TDocument : class, IReplicatedDocument where TContext : DbContext
 {
     /// <summary>
-    /// Pulls data from the backend based on the given checkpoint and limit.
+    ///     Pulls data from the backend based on the given checkpoint and limit.
     /// </summary>
     /// <param name="checkpoint">The last known checkpoint.</param>
     /// <param name="limit">The maximum number of documents to return.</param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a
-    /// <see cref="PullDocumentsResult{TDocument}" /> object containing the pulled documents and the new checkpoint.
+    ///     A task that represents the asynchronous operation. The task result contains a
+    ///     <see cref="PullDocumentsResult{TDocument}" /> object containing the pulled documents and the new checkpoint.
     /// </returns>
     /// <remarks>
-    /// This method filters documents based on both <c>UpdatedAt</c> and <c>Id</c> to ensure it only includes documents
-    /// that are newer or have a higher <c>Id</c> than the checkpoint. The documents are sorted by <c>UpdatedAt</c>
-    /// and then by <c>Id</c> to maintain a consistent order. The checkpoint is set to the <c>Id</c> and <c>UpdatedAt</c>
-    /// of the last document in the batch. If no documents are found, it falls back to the current checkpoint values.
+    ///     This method filters documents based on both <c>UpdatedAt</c> and <c>Id</c> to ensure it only includes documents
+    ///     that are newer or have a higher <c>Id</c> than the checkpoint. The documents are sorted by <c>UpdatedAt</c>
+    ///     and then by <c>Id</c> to maintain a consistent order. The checkpoint is set to the <c>Id</c> and <c>UpdatedAt</c>
+    ///     of the last document in the batch. If no documents are found, it falls back to the current checkpoint values.
     /// </remarks>
     public async Task<PullDocumentsResult<TDocument>> PullDocuments(Checkpoint checkpoint, int limit)
     {
         var documents = await dbContext.Set<TDocument>()
-            .Where(e => e.UpdatedAt > checkpoint.UpdatedAt
-                        || (e.UpdatedAt == checkpoint.UpdatedAt && e.Id.CompareTo(checkpoint.LastDocumentId) > 0))
+            .Where(e => e.UpdatedAt > checkpoint.UpdatedAt || e.UpdatedAt == checkpoint.UpdatedAt && e.Id.CompareTo(checkpoint.LastDocumentId) > 0)
             .OrderBy(e => e.UpdatedAt)
             .ThenBy(e => e.Id)
             .Take(limit)
@@ -58,28 +55,30 @@ public class ReplicationResolvers<TDocument, TContext>(TContext dbContext)
     }
 
     /// <summary>
-    /// Pushes data to the backend and handles any conflicts.
+    ///     Pushes data to the backend and handles any conflicts.
     /// </summary>
     /// <param name="documents">The list of documents to push, including their assumed master state.</param>
     /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a list of conflicting documents,
-    /// if any.
+    ///     A task that represents the asynchronous operation. The task result contains a list of conflicting documents,
+    ///     if any.
     /// </returns>
     /// <remarks>
-    /// This method handles the interpretation of <c>AssumedMasterState</c> as per RxDB's expectations:
-    /// <list type="bullet">
-    /// <item>
-    /// <description>
-    /// If <c>AssumedMasterState</c> is null, the server assumes there is no prior state to compare against and directly checks for existing documents.
-    /// If a document exists and has a different <c>UpdatedAt</c> timestamp, it is considered a conflict.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <description>
-    /// If the <c>AssumedMasterState</c> is not null and the <c>UpdatedAt</c> timestamp does not match, the document is added to the list of conflicts.
-    /// </description>
-    /// </item>
-    /// </list>
+    ///     This method handles the interpretation of <c>AssumedMasterState</c> as per RxDB's expectations:
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>
+    ///                 If <c>AssumedMasterState</c> is null, the server assumes there is no prior state to compare against and
+    ///                 directly checks for existing documents.
+    ///                 If a document exists and has a different <c>UpdatedAt</c> timestamp, it is considered a conflict.
+    ///             </description>
+    ///         </item>
+    ///         <item>
+    ///             <description>
+    ///                 If the <c>AssumedMasterState</c> is not null and the <c>UpdatedAt</c> timestamp does not match, the
+    ///                 document is added to the list of conflicts.
+    ///             </description>
+    ///         </item>
+    ///     </list>
     /// </remarks>
     public async Task<List<TDocument>> PushDocuments(List<PushDocumentRequest<TDocument>> documents)
     {

@@ -159,10 +159,11 @@ async function run() {
     window.db = db;
 
     // display crown when tab is leader
-    db.waitForLeadership().then(function () {
-        document.title = `♛ ${document.title}`;
-        leaderIcon.style.display = "block";
-    });
+    db.waitForLeadership()
+        .then(function() {
+            document.title = `♛ ${document.title}`;
+            leaderIcon.style.display = "block";
+        });
 
     heroesList.innerHTML = "Create collection..";
     await db.addCollections({
@@ -171,7 +172,7 @@ async function run() {
         }
     });
 
-    db.hero.preSave(function (docData) {
+    db.hero.preSave(function(docData) {
         docData.updatedAt = new Date().toISOString(); // Update to use ISO date string
     });
 
@@ -207,10 +208,11 @@ async function run() {
     }
 
     // log all collection events for debugging
-    db.hero.$.pipe(filter(ev => !ev.isLocal)).subscribe(ev => {
-        console.log("collection.$ emitted:");
-        console.dir(ev);
-    });
+    db.hero.$.pipe(filter(ev => !ev.isLocal))
+        .subscribe(ev => {
+            console.log("collection.$ emitted:");
+            console.dir(ev);
+        });
 
     /**
      * We await the initial replication
@@ -230,11 +232,11 @@ async function run() {
         .sort({
             name: "asc"
         })
-        .$.subscribe(function (heroes) {
+        .$.subscribe(function(heroes) {
             console.log("emitted heroes:");
             console.dir(heroes.map(d => d.toJSON()));
             let html = "";
-            heroes.forEach(function (hero) {
+            heroes.forEach(function(hero) {
                 html += `
                     <li class="hero-item">
                         <div class="color-box" style="background:${hero.color}"></div>
@@ -249,7 +251,8 @@ async function run() {
     // set up click handlers
     window.deleteHero = async (id) => {
         console.log(`delete doc ${id}`);
-        const doc = await db.hero.findOne(id).exec();
+        const doc = await db.hero.findOne(id)
+            .exec();
         if (doc) {
             console.log("got doc, remove it");
             try {
@@ -260,9 +263,11 @@ async function run() {
             }
         }
     };
-    insertButton.onclick = async function () {
-        const name = document.querySelector('input[name="name"]').value;
-        const color = document.querySelector('input[name="color"]').value;
+    insertButton.onclick = async function() {
+        const name = document.querySelector('input[name="name"]')
+            .value;
+        const color = document.querySelector('input[name="color"]')
+            .value;
         const obj = {
             id: crypto.randomUUID(), // Generate a new UUID for the id
             name: name,
@@ -274,11 +279,15 @@ async function run() {
         console.dir(obj);
 
         await db.hero.insert(obj);
-        document.querySelector('input[name="name"]').value = "";
-        document.querySelector('input[name="color"]').value = "";
+        document.querySelector('input[name="name"]')
+            .value = "";
+        document.querySelector('input[name="color"]')
+            .value = "";
     };
 }
-run().catch(err => {
-    console.log("run() threw an error:");
-    console.error(err);
-});
+
+run()
+    .catch(err => {
+        console.log("run() threw an error:");
+        console.error(err);
+    });

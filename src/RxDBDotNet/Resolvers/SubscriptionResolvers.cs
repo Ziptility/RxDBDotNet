@@ -12,8 +12,7 @@ namespace RxDBDotNet.Resolvers;
 /// <remarks>
 ///     Initializes a new instance of the <see cref="SubscriptionResolvers{TDocument}" /> class.
 /// </remarks>
-public class SubscriptionResolvers<TDocument>
-    where TDocument : class, IReplicatedDocument
+public class SubscriptionResolvers<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     ///     Subscribes to updates for the document type.
@@ -28,7 +27,8 @@ public class SubscriptionResolvers<TDocument>
 
         var documentSourceStream = await eventReceiver.SubscribeAsync<PullDocumentsResult<TDocument>>(streamName, cancellationToken);
 
-        await foreach (var pullDocumentResult in documentSourceStream.ReadEventsAsync().WithCancellation(cancellationToken))
+        await foreach (var pullDocumentResult in documentSourceStream.ReadEventsAsync()
+                           .WithCancellation(cancellationToken))
         {
             yield return pullDocumentResult;
         }

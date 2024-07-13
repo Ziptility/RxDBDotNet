@@ -7,6 +7,10 @@ namespace RxDBDotNet.GraphQL;
 
 public class Mutation<TDocument> where TDocument : class, IReplicatedDocument
 {
-    public Task<List<TDocument>> PushDocuments(List<PushDocumentRequest<TDocument>> documents, [Service] ReplicationResolvers<TDocument, DbContext> resolvers)
-        => resolvers.PushDocuments(documents);
+    public Task<List<TDocument>> PushDocuments(
+        List<PushDocumentRequest<TDocument>> documents,
+        [Service] ReplicationResolvers<TDocument, DbContext> resolvers)
+    {
+        return resolvers.PushDocuments(documents);
+    }
 }

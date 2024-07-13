@@ -16,9 +16,9 @@
  * Original Source: https://github.com/pubkey/rxdb
  */
 
-export const GRAPHQL_PORT = 10102;
+export const GRAPHQL_PORT = 5414;
 export const GRAPHQL_PATH = "/graphql";
-export const GRAPHQL_SUBSCRIPTION_PORT = 10103;
+export const GRAPHQL_SUBSCRIPTION_PORT = 5414;
 export const GRAPHQL_SUBSCRIPTION_PATH = "/subscriptions";
 
 /**
@@ -36,7 +36,8 @@ export const heroSchema = {
     properties: {
         id: {
             type: "string",
-            format: "uuid"
+            format: "uuid",
+            maxLength: 36
         },
         name: {
             type: "string",
@@ -48,7 +49,8 @@ export const heroSchema = {
         },
         updatedAt: {
             type: "string",
-            format: "date-time"
+            format: "date-time",
+            maxLength: 29
         },
         isDeleted: {
             type: "boolean"

@@ -9,12 +9,10 @@ namespace RxDBDotNet.Repositories;
 public interface IDocumentRepository<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
-    /// Retrieves documents based on a minimum UpdatedAt time and a limit.
+    /// Gets a queryable set of documents from the data source.
     /// </summary>
-    /// <param name="minUpdatedAt">The minimum UpdatedAt time to filter documents.</param>
-    /// <param name="limit">The maximum number of documents to retrieve.</param>
-    /// <returns>A list of documents ordered by UpdatedAt and then by Id.</returns>
-    IQueryable<TDocument> GetDocuments(DateTimeOffset? minUpdatedAt, int limit);
+    /// <returns>An unordered queryable set of documents.</returns>
+    IQueryable<TDocument> GetDocuments();
 
     /// <summary>
     /// Retrieves a document by its ID.

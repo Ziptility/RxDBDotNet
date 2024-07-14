@@ -1,10 +1,15 @@
 using Example.GraphQLApi.Models;
+using Example.GraphQLApi.Repositories;
 using HotChocolate.AspNetCore;
 using RxDBDotNet.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services
+    .AddSingleton<InMemoryDocumentRepository<Hero>>();
+
+// Configure the GraphQL server
 builder.Services.AddGraphQLServer()
     .ModifyRequestOptions(o =>
     {

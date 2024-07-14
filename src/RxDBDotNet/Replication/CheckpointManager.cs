@@ -23,7 +23,8 @@ namespace RxDBDotNet.Replication
             return documents
                 .Where(d => checkpoint == null ||
                             d.UpdatedAt > checkpoint.UpdatedAt ||
-                            (d.UpdatedAt == checkpoint.UpdatedAt && d.Id.CompareTo(checkpoint.LastDocumentId) > 0))
+                            (d.UpdatedAt == checkpoint.UpdatedAt
+                             && d.Id.CompareTo(checkpoint.LastDocumentId) > 0))
                 .OrderBy(d => d.UpdatedAt)
                 .ThenBy(d => d.Id);
         }

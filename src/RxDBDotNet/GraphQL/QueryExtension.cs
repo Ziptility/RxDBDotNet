@@ -29,9 +29,12 @@ namespace RxDBDotNet.GraphQL
             int limit,
             [Service] IDocumentRepository<TDocument> repository)
         {
-            var documents = repository.GetDocuments(checkpoint?.UpdatedAt, limit);
+            var documents = repository.GetDocuments();
 
-            var filteredDocuments = await documents.FilterAndOrderDocuments(checkpoint).ToListAsync();
+            var filteredDocuments = await documents
+                .FilterAndOrderDocuments(checkpoint)
+                .Take(limit)
+                .ToListAsync();
 
             var newCheckpoint = filteredDocuments.CreateCheckpoint(checkpoint);
 

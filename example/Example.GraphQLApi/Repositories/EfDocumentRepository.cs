@@ -18,19 +18,9 @@ public class EfDocumentRepository<TDocument, TContext>(TContext context) : IDocu
     where TContext : DbContext
 {
     /// <inheritdoc/>
-    public IQueryable<TDocument> GetDocuments(DateTimeOffset? minUpdatedAt, int limit)
+    public IQueryable<TDocument> GetDocuments()
     {
-        var query = context.Set<TDocument>().AsQueryable();
-
-        if (minUpdatedAt.HasValue)
-        {
-            query = query.Where(e => e.UpdatedAt >= minUpdatedAt.Value);
-        }
-
-        return query
-            .OrderBy(e => e.UpdatedAt)
-            .ThenBy(e => e.Id)
-            .Take(limit);
+        return context.Set<TDocument>().AsQueryable();
     }
 
     /// <inheritdoc/>

@@ -8,7 +8,7 @@ var cache = builder.AddRedis("cache");
 
 var graphQLApi = builder.AddProject<Example_GraphQLApi>("graphqlapi");
 
-builder.AddNpmApp("rxdbclient", "../Example.RxDBClient", "start:build")
+builder.AddNpmApp("rxdbclient", "../Example.RxDBClient", "run")
     .WithHttpEndpoint(port: 1337, env: "PORT")
     .WithExternalHttpEndpoints()
     .WithReference(graphQLApi)

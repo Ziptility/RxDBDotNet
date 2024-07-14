@@ -5,7 +5,8 @@ using RxDBDotNet.Resolvers;
 
 namespace RxDBDotNet.GraphQL;
 
-public class Mutation<TDocument> where TDocument : class, IReplicatedDocument
+[ExtendObjectType("Mutation")]
+public class MutationExtension<TDocument> where TDocument : class, IReplicatedDocument
 {
     public Task<List<TDocument>> PushDocuments(
         List<PushDocumentRequest<TDocument>> documents,

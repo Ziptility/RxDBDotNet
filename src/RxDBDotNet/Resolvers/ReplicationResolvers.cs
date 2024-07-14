@@ -30,10 +30,19 @@ public class ReplicationResolvers<TDocument, TContext>(TContext dbContext) where
     ///     and then by <c>Id</c> to maintain a consistent order. The checkpoint is set to the <c>Id</c> and <c>UpdatedAt</c>
     ///     of the last document in the batch. If no documents are found, it falls back to the current checkpoint values.
     /// </remarks>
-    public async Task<PullDocumentsResult<TDocument>> PullDocuments(Checkpoint checkpoint, int limit)
+    public async Task<PullDocumentsResult<TDocument>> PullDocuments(Checkpoint? checkpoint, int limit)
     {
-        var documents = await dbContext.Set<TDocument>()
-            .Where(e => e.UpdatedAt > checkpoint.UpdatedAt || e.UpdatedAt == checkpoint.UpdatedAt && e.Id.CompareTo(checkpoint.LastDocumentId) > 0)
+        IQueryable<TDocument> documentsQuery = dbContext.Set<TDocument>();
+
+        if (checkpoint != null)
+        {
+            documentsQuery = documentsQuery.Where(e =>
+                e.UpdatedAt > checkpoint.UpdatedAt
+                || e.UpdatedAt == checkpoint.UpdatedAt
+                && e.Id.CompareTo(checkpoint.LastDocumentId) > 0);
+        }
+
+        var documents = await documentsQuery
             .OrderBy(e => e.UpdatedAt)
             .ThenBy(e => e.Id)
             .Take(limit)
@@ -43,8 +52,8 @@ public class ReplicationResolvers<TDocument, TContext>(TContext dbContext) where
 
         var newCheckpoint = new Checkpoint
         {
-            LastDocumentId = lastDocument?.Id ?? checkpoint.LastDocumentId,
-            UpdatedAt = lastDocument?.UpdatedAt ?? checkpoint.UpdatedAt,
+            LastDocumentId = lastDocument?.Id ?? checkpoint?.LastDocumentId,
+            UpdatedAt = lastDocument?.UpdatedAt ?? checkpoint?.UpdatedAt,
         };
 
         return new PullDocumentsResult<TDocument>
@@ -80,9 +89,14 @@ public class ReplicationResolvers<TDocument, TContext>(TContext dbContext) where
     ///         </item>
     ///     </list>
     /// </remarks>
-    public async Task<List<TDocument>> PushDocuments(List<PushDocumentRequest<TDocument>> documents)
+    public async Task<List<TDocument>> PushDocuments(List<PushDocumentRequest<TDocument>>? documents)
     {
         var conflicts = new List<TDocument>();
+
+        if (documents == null)
+        {
+            return conflicts;
+        }
 
         foreach (var document in documents)
         {

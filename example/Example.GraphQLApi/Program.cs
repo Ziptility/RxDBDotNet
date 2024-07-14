@@ -1,15 +1,16 @@
-using Example.GraphQLApi;
 using Example.GraphQLApi.Models;
 using HotChocolate.AspNetCore;
-using RxDBDotNet.GraphQL;
+using RxDBDotNet.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGraphQLServer()
-    .AddQueryType<Query<Hero>>()
-    .AddMutationType<Mutation>()
-    .AddSubscriptionType<Subscription>()
+    .ModifyRequestOptions(o =>
+    {
+        o.IncludeExceptionDetails = true;
+    })
+    .AddReplicationSupport<Hero>()
     .AddInMemorySubscriptions();
 
 // Configure CORS

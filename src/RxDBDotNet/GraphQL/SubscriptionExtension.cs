@@ -5,7 +5,8 @@ using RxDBDotNet.Resolvers;
 
 namespace RxDBDotNet.GraphQL;
 
-public class Subscription<TDocument> where TDocument : class, IReplicatedDocument
+[ExtendObjectType("Subscription")]
+public class SubscriptionExtension<TDocument> where TDocument : class, IReplicatedDocument
 {
     public IAsyncEnumerable<PullDocumentsResult<TDocument>> OnDocumentChangedStream(
         [Service] SubscriptionResolvers<TDocument> resolvers,

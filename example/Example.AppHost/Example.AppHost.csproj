@@ -11,7 +11,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Example.GraphQLApi\Example.GraphQLApi.csproj" />
-        <!-- <ProjectReference Include="..\Example.RxDBClient\Example.RxDBClient.esproj" /> -->
     </ItemGroup>
 
     <ItemGroup>

@@ -64,7 +64,7 @@ export const graphQLGenerationInput = {
     hero: {
         schema: heroSchema,
         checkpointFields: [
-            "id",
+            "lastDocumentId",
             "updatedAt"
         ],
         deletedField: "isDeleted",

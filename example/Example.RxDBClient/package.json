@@ -26,7 +26,7 @@
         "start": "node server.js",
         "build": "webpack --mode development",
         "clean": "rimraf public/bundle.js",
-        "start:build": "npm run build && npm run start"
+        "run": "npm run clean && npm run build && npm run start"
     },
     "keywords": [],
     "license": "ISC"

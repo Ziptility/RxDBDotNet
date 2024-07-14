@@ -44,26 +44,3 @@ app.MapGraphQL()
     });
 
 app.Run();
-
-namespace Example.GraphQLApi
-{
-    // Sample query, mutation, and subscription types for demonstration purposes
-
-    public class Mutation
-    {
-        public string Echo(string message)
-        {
-            return message;
-        }
-    }
-
-    public class Subscription
-    {
-        [Subscribe]
-        [Topic]
-        public string OnMessageReceived([EventMessage] string message)
-        {
-            return message;
-        }
-    }
-}

@@ -22,13 +22,13 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Restore dependencies for main project
-      run: dotnet restore src/RxDB.NET/RxDB.NET.csproj
+      run: dotnet restore src/RxDBDotNet/RxDBDotNet.csproj
 
     - name: Restore dependencies for test project
-      run: dotnet restore tests/RxDB.NET.Tests/RxDB.NET.Tests.csproj
+      run: dotnet restore tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj
 
     - name: Build
-      run: dotnet build src/RxDB.NET/RxDB.NET.csproj --configuration Release --no-restore
+      run: dotnet build src/RxDBDotNet/RxDBDotNet.csproj --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test tests/RxDB.NET.Tests/RxDB.NET.Tests.csproj --no-restore --verbosity normal
+      run: dotnet test tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --no-restore --verbosity normal

@@ -39,7 +39,7 @@ public static class GraphQLServiceCollectionExtensions
         var documentTypeName = typeof(TDocument).Name;
         var pullDocumentsName = $"pull{documentTypeName}";
 
-        builder.AddType(new ObjectType<QueryExtension<TDocument>>(descriptor =>
+        builder.AddType(new ObjectType<DocumentQueries<TDocument>>(descriptor =>
         {
             descriptor.Name("Query");
             descriptor.Field(t => t.PullDocuments(default, default, default!, default))

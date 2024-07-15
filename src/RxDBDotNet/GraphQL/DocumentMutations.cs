@@ -10,7 +10,7 @@ namespace RxDBDotNet.GraphQL;
 /// </summary>
 /// <typeparam name="TDocument">The type of document being replicated, which must implement IReplicatedDocument.</typeparam>
 [ExtendObjectType("Mutation")]
-public class MutationExtension<TDocument> where TDocument : class, IReplicatedDocument
+public class DocumentMutations<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Pushes a set of documents to the server and handles any conflicts.

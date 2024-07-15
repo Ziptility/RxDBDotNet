@@ -15,7 +15,7 @@ namespace RxDBDotNet.GraphQL;
 /// to ensure that clients can receive live updates as documents change on the server.
 /// </remarks>
 [ExtendObjectType("Subscription")]
-public class SubscriptionExtension<TDocument> where TDocument : class, IReplicatedDocument
+public class DocumentSubscriptions<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Provides a stream of document changes for subscription.

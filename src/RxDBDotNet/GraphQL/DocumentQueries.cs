@@ -10,7 +10,7 @@ namespace RxDBDotNet.GraphQL;
 /// </summary>
 /// <typeparam name="TDocument">The type of the document to be pulled, which must implement IReplicatedDocument.</typeparam>
 [ExtendObjectType("Query")]
-public class QueryExtension<TDocument> where TDocument : class, IReplicatedDocument
+public class DocumentQueries<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Pulls documents from the backend based on the given checkpoint and limit.

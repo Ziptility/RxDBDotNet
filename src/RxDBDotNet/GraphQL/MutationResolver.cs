@@ -5,12 +5,11 @@ using RxDBDotNet.Repositories;
 namespace RxDBDotNet.GraphQL;
 
 /// <summary>
-/// Represents a GraphQL mutation extension for pushing documents.
+/// Represents a GraphQL mutation resolver for pushing documents.
 /// This class implements the server-side logic for the 'push' operation in the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being replicated, which must implement IReplicatedDocument.</typeparam>
-[ExtendObjectType("Mutation")]
-public class DocumentMutations<TDocument> where TDocument : class, IReplicatedDocument
+public class MutationResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Pushes a set of documents to the server and handles any conflicts.

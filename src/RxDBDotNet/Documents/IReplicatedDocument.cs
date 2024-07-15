@@ -13,10 +13,10 @@ public interface IReplicatedDocument
     /// <summary>
     ///     The timestamp of the last update to the document.
     /// </summary>
-    DateTimeOffset UpdatedAt { get; init; }
+    DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
     ///     Indicates whether the document has been marked as deleted.
     /// </summary>
-    bool IsDeleted { get; init; }
+    bool IsDeleted { get; set; }
 }

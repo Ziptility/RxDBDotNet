@@ -2,7 +2,7 @@
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
 
-namespace RxDBDotNet.GraphQL;
+namespace RxDBDotNet.Resolvers;
 
 /// <summary>
 /// Represents a GraphQL mutation resolver for pushing documents.
@@ -19,7 +19,7 @@ public class MutationResolver<TDocument> where TDocument : class, IReplicatedDoc
     /// <param name="repository">The document repository to be used for data access.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A task representing the asynchronous operation, with a result of any conflicting documents.</returns>
-    public async Task<List<TDocument>> PushDocuments(
+    public async Task<List<TDocument>> PushDocumentsAsync(
         List<DocumentPushRow<TDocument>?>? documents,
         [Service] IDocumentRepository<TDocument> repository,
         CancellationToken cancellationToken)

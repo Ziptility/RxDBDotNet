@@ -2,7 +2,7 @@
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
 
-namespace RxDBDotNet.GraphQL;
+namespace RxDBDotNet.Resolvers;
 
 /// <summary>
 /// Represents a GraphQL query resolver for pulling documents.
@@ -23,7 +23,7 @@ public class QueryResolver<TDocument> where TDocument : class, IReplicatedDocume
     /// A task that represents the asynchronous operation. The task result contains a
     /// <see cref="DocumentPullBulk{TDocument}"/> object containing the pulled documents and the new checkpoint.
     /// </returns>
-    public async Task<DocumentPullBulk<TDocument>> PullDocuments(
+    public async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
         [Service] IDocumentRepository<TDocument> repository,

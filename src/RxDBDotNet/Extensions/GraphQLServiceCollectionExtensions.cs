@@ -1,9 +1,9 @@
 ﻿using HotChocolate.Execution.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
-using RxDBDotNet.GraphQL;
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
+using RxDBDotNet.Resolvers;
 
 namespace RxDBDotNet.Extensions;
 
@@ -17,6 +17,7 @@ public static class GraphQLServiceCollectionExtensions
     /// <summary>
     /// Adds replication support for a specific document type to the GraphQL schema.
     /// This method configures all necessary types, queries, and mutations for the RxDB replication protocol.
+    /// The names are generated such that they match the expectations of the RxDB GraphQL extension.
     /// </summary>
     /// <typeparam name="TDocument">The type of document to support, which must implement IReplicatedDocument.</typeparam>
     /// <param name="builder">The IRequestExecutorBuilder to configure.</param>
@@ -112,7 +113,7 @@ public static class GraphQLServiceCollectionExtensions
                     var repository = context.Service<IDocumentRepository<TDocument>>();
                     var cancellationToken = context.RequestAborted;
 
-                    return await queryResolver.PullDocuments(checkpoint, limit, repository, cancellationToken);
+                    return await queryResolver.PullDocumentsAsync(checkpoint, limit, repository, cancellationToken);
                 });
         }));
     }
@@ -144,7 +145,7 @@ public static class GraphQLServiceCollectionExtensions
                     var repository = context.Service<IDocumentRepository<TDocument>>();
                     var cancellationToken = context.RequestAborted;
 
-                    return await mutation.PushDocuments(documents, repository, cancellationToken);
+                    return await mutation.PushDocumentsAsync(documents, repository, cancellationToken);
                 });
         }));
     }

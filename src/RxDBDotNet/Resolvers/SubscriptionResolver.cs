@@ -3,7 +3,7 @@ using HotChocolate.Subscriptions;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 
-namespace RxDBDotNet.GraphQL;
+namespace RxDBDotNet.Resolvers;
 
 /// <summary>
 /// Extends the GraphQL subscription type to support real-time updates for replicated documents.
@@ -14,8 +14,7 @@ namespace RxDBDotNet.GraphQL;
 /// for real-time updates to replicated documents. It works in conjunction with the RxDB replication protocol
 /// to ensure that clients can receive live updates as documents change on the server.
 /// </remarks>
-[ExtendObjectType("Subscription")]
-public class DocumentSubscriptions<TDocument> where TDocument : class, IReplicatedDocument
+public class SubscriptionResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Provides a stream of document changes for subscription.

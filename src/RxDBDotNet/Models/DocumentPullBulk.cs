@@ -6,7 +6,7 @@ namespace RxDBDotNet.Models;
 ///     Represents the result of a replication pull operation.
 /// </summary>
 /// <typeparam name="TDocument">The type of the documents being pulled.</typeparam>
-public class PullDocumentsResult<TDocument> where TDocument : class, IReplicatedDocument
+public class DocumentPullBulk<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     ///     The list of pulled documents.

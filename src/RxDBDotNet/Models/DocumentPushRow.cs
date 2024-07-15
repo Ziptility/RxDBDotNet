@@ -6,7 +6,7 @@ namespace RxDBDotNet.Models;
 ///     Represents a document being pushed, including its assumed master state.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being replicated.</typeparam>
-public class PushDocumentRequest<TDocument> where TDocument : class, IReplicatedDocument
+public class DocumentPushRow<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     ///     <para>

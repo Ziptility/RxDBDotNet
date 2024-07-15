@@ -30,7 +30,7 @@ public static class GraphQLServiceCollectionExtensions
                 d.Field(f => f.LastDocumentId)
                     .Type<IdType>();
             }))
-            .AddType(new ObjectType<PullDocumentsResult<TDocument>>(d => d.Name(pullBulkTypeName)));
+            .AddType(new ObjectType<DocumentPullBulk<TDocument>>(d => d.Name(pullBulkTypeName)));
     }
 
     private static IRequestExecutorBuilder AddDocumentTypeExtensions<TDocument>(this IRequestExecutorBuilder builder, string checkpointInputTypeName)
@@ -42,7 +42,7 @@ public static class GraphQLServiceCollectionExtensions
         builder.AddType(new ObjectType<QueryExtension<TDocument>>(descriptor =>
         {
             descriptor.Name("Query");
-            descriptor.Field(t => t.PullDocuments(default, default, default!))
+            descriptor.Field(t => t.PullDocuments(default, default, default!, default))
                 .Name(pullDocumentsName)
                 .Argument("checkpoint", a => a.Type(checkpointInputTypeName))
                 .Argument("limit", a => a.Type<NonNullType<IntType>>());

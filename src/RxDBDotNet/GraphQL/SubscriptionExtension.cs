@@ -22,14 +22,14 @@ public class SubscriptionExtension<TDocument> where TDocument : class, IReplicat
     /// </summary>
     /// <param name="eventReceiver">The topic event receiver for handling subscription events.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <returns>An asynchronous enumerable of <see cref="PullDocumentsResult{TDocument}"/> representing the stream of document changes.</returns>
-    public async IAsyncEnumerable<PullDocumentsResult<TDocument>> OnDocumentChangedStream(
+    /// <returns>An asynchronous enumerable of <see cref="DocumentPullBulk{TDocument}"/> representing the stream of document changes.</returns>
+    public async IAsyncEnumerable<DocumentPullBulk<TDocument>> OnDocumentChangedStream(
         [Service] ITopicEventReceiver eventReceiver,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var streamName = $"Stream_{typeof(TDocument).Name}";
 
-        var documentSourceStream = await eventReceiver.SubscribeAsync<PullDocumentsResult<TDocument>>(streamName, cancellationToken);
+        var documentSourceStream = await eventReceiver.SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken);
 
         await foreach (var pullDocumentResult in documentSourceStream.ReadEventsAsync()
                            .WithCancellation(cancellationToken))
@@ -42,13 +42,13 @@ public class SubscriptionExtension<TDocument> where TDocument : class, IReplicat
     /// Handles individual document change events within the subscription stream.
     /// </summary>
     /// <param name="changedDocument">The result containing the changed document(s) and updated checkpoint.</param>
-    /// <returns>The <see cref="PullDocumentsResult{TDocument}"/> representing the document change.</returns>
+    /// <returns>The <see cref="DocumentPullBulk{TDocument}"/> representing the document change.</returns>
     /// <remarks>
     /// This method is decorated with the [Subscribe] attribute and is linked to the OnDocumentChangedStream method.
     /// It processes each individual document change event in the subscription stream and makes it available to GraphQL clients.
     /// </remarks>
     [Subscribe(With = nameof(OnDocumentChangedStream))]
-    public PullDocumentsResult<TDocument> OnDocumentChanged([EventMessage] PullDocumentsResult<TDocument> changedDocument)
+    public DocumentPullBulk<TDocument> OnDocumentChanged([EventMessage] DocumentPullBulk<TDocument> changedDocument)
     {
         return changedDocument;
     }

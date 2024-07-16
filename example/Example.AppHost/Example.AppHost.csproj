@@ -3,10 +3,23 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <IsAspireHost>true</IsAspireHost>
         <UserSecretsId>38a0fd0e-34e3-406f-8941-d811f8744c55</UserSecretsId>
+        <Nullable>enable</Nullable>
+        <Features>strict</Features>
+        <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <AnalysisMode>All</AnalysisMode>
+        <AnalysisModeGlobalization>None</AnalysisModeGlobalization>
+        <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <WarningLevel>9999</WarningLevel>
+        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,9 +27,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.Hosting.AppHost" Version="8.0.0" />
+        <PackageReference Include="Aspire.Hosting.AppHost" Version="8.0.2" />
         <PackageReference Include="Aspire.Hosting.NodeJs" Version="8.0.2" />
-        <PackageReference Include="Aspire.Hosting.Redis" Version="8.0.0" />
+        <PackageReference Include="Aspire.Hosting.Redis" Version="8.0.2" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Example.GraphQLApi.Models;
+using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Documents;
-using RxDBDotNet.Exceptions;
 using RxDBDotNet.Repositories;
 
 namespace Example.GraphQLApi.Repositories;

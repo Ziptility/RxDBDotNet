@@ -9,7 +9,7 @@ namespace RxDBDotNet.Resolvers;
 /// This class implements the server-side logic for the 'pull' operation in the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TDocument">The type of the document to be pulled, which must implement IReplicatedDocument.</typeparam>
-public class QueryResolver<TDocument> where TDocument : class, IReplicatedDocument
+public sealed class QueryResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Pulls documents from the backend based on the given checkpoint and limit.

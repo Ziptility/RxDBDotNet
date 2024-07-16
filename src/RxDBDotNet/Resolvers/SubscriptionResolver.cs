@@ -14,7 +14,7 @@ namespace RxDBDotNet.Resolvers;
 /// for real-time updates to replicated documents. It works in conjunction with the RxDB replication protocol
 /// to ensure that clients can receive live updates as documents change on the server.
 /// </remarks>
-public class SubscriptionResolver<TDocument> where TDocument : class, IReplicatedDocument
+public sealed class SubscriptionResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Provides a stream of document changes for subscription.

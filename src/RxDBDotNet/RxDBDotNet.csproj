@@ -13,8 +13,9 @@
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
-        <NoWarn>$(NoWarn);CA1014;CA1812;CA1716;CA1008;S4136;CA1711;CA1027;S2094;RCS1123;RCS1206</NoWarn>
         <ImplicitUsings>enable</ImplicitUsings>
+        <WarningLevel>9999</WarningLevel>
+        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
+using Example.GraphQLApi.Models;
 using RxDBDotNet.Documents;
-using RxDBDotNet.Exceptions;
 using RxDBDotNet.Repositories;
 
 namespace Example.GraphQLApi.Repositories;
@@ -14,15 +14,17 @@ namespace Example.GraphQLApi.Repositories;
 /// Initializes a new instance of the <see cref="InMemoryDocumentRepository{TDocument}"/> class.
 /// </remarks>
 /// <param name="logger">The logger to use for logging operations and errors.</param>
-public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepository<TDocument>> logger) : IDocumentRepository<TDocument>
+public sealed class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepository<TDocument>> logger) : IDocumentRepository<TDocument>, IDisposable
     where TDocument : class, IReplicatedDocument
 {
     private readonly ConcurrentDictionary<Guid, TDocument> _documents = new();
     private readonly ReaderWriterLockSlim _lock = new();
+    private bool _disposed;
 
     /// <inheritdoc/>
     public IQueryable<TDocument> GetQueryableDocuments()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterReadLock();
         try
         {
@@ -37,6 +39,7 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     /// <inheritdoc/>
     public Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         // Since this is in-memory, we can execute the query immediately
         return Task.FromResult(query.ToList());
     }
@@ -44,6 +47,7 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     /// <inheritdoc/>
     public Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterReadLock();
         try
         {
@@ -59,6 +63,7 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     /// <inheritdoc/>
     public Task<TDocument> CreateDocumentAsync(TDocument document, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterWriteLock();
         try
         {
@@ -80,6 +85,7 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     /// <inheritdoc/>
     public Task<TDocument> UpdateDocumentAsync(TDocument document, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterWriteLock();
         try
         {
@@ -106,6 +112,7 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     /// <inheritdoc/>
     public Task MarkAsDeletedAsync(Guid id, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterWriteLock();
         try
         {
@@ -131,6 +138,7 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     /// <inheritdoc/>
     public Task SaveChangesAsync(CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         // For in-memory repository, changes are saved immediately, so this is a no-op
         logger.LogInformation("SaveChangesAsync called. No action required for in-memory repository.");
         return Task.CompletedTask;
@@ -139,6 +147,7 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     /// <inheritdoc/>
     public bool AreDocumentsEqual(TDocument doc1, TDocument doc2)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         var type = typeof(TDocument);
         var properties = type.GetProperties();
 
@@ -159,5 +168,17 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Disposes the resources used by the InMemoryDocumentRepository.
+    /// </summary>
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _lock.Dispose();
+            _disposed = true;
+        }
     }
 }

@@ -1,13 +1,19 @@
 # RxDBDotNet
 
-RxDBDotNet is an open-source library that facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate. It implements the server-side of the RxDB replication protocol, enabling seamless offline-first capabilities and real-time updates for any client application that supports RxDB, while providing a robust .NET backend implementation.
+RxDBDotNet is an open-source library that facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate. It implements the server side of the RxDB replication protocol, enabling seamless offline-first capabilities and real-time updates for any client application that supports RxDB while providing a robust .NET backend implementation.
 
 ## Key Points
 
 - **Backend**: Implements the server-side of the RxDB replication protocol in .NET
 - **Frontend**: Compatible with any client that supports the RxDB replication protocol (JavaScript, TypeScript, React Native, etc.)
 - **Protocol**: Uses GraphQL for communication, leveraging the Hot Chocolate library for .NET
-- **Features**: Supports real-time synchronization, offline-first capabilities, and conflict resolution
+- **Features**: 
+  - Supports real-time synchronization
+  - Enables offline-first capabilities
+  - Detects conflicts and reports them to the client
+  - Provides efficient data pull and push operations
+- **Conflict Handling**: Detects conflicts during push operations and returns them to the client for resolution
+- **Flexibility**: Can be integrated with various backend storage solutions through a repository pattern
 
 This library bridges the gap between RxDB-powered frontend applications and .NET backend services, allowing developers to build robust, real-time, offline-first applications with a .NET backend infrastructure.
 
@@ -37,24 +43,62 @@ To install and set up RxDBDotNet in your project, follow these steps:
    dotnet add package HotChocolate.Data
    ```
 
-3. In your `Program.cs` or `Startup.cs`, add the following configuration:
+3. In your `Program.cs`, add the following configuration:
 
    ```csharp
-   using RxDBDotNet.Extensions;
-
    var builder = WebApplication.CreateBuilder(args);
 
+   // Add services to the container
    builder.Services
        .AddSingleton<IDocumentRepository<YourDocumentType>, YourRepositoryImplementation>();
 
-   builder.Services
-       .AddGraphQLServer()
+   // Configure the GraphQL server
+   builder.Services.AddGraphQLServer()
+       .ModifyRequestOptions(o =>
+       {
+           // Enable debugging features in development
+           o.IncludeExceptionDetails = true;
+       })
+       // Add RxDBDotNet replication support
        .AddReplicationServer()
-       .AddReplicatedDocument<YourDocumentType>();
+       // Configure replication for your document type
+       .AddReplicatedDocument<YourDocumentType>()
+       // Enable pub/sub for GraphQL subscriptions
+       .AddInMemorySubscriptions();
+
+   // Configure CORS to allow requests from your RxDB client
+   builder.Services.AddCors(options =>
+   {
+       options.AddDefaultPolicy(corsPolicyBuilder =>
+       {
+           corsPolicyBuilder
+               // Replace with your RxDB client's origin
+               .WithOrigins("http://localhost:1337")
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               // Required for WebSocket connections
+               .AllowCredentials();
+       });
+   });
 
    var app = builder.Build();
 
-   app.MapGraphQL();
+   // Enable CORS
+   app.UseCors();
+
+   // Enable WebSockets (required for subscriptions)
+   app.UseWebSockets();
+
+   // Configure the GraphQL endpoint
+   app.MapGraphQL()
+       .WithOptions(new GraphQLServerOptions
+       {
+           // Configure GraphQL Playground or Banana Cake Pop
+           Tool =
+           {
+               Enable = true,
+           },
+       });
 
    app.Run();
    ```
@@ -158,9 +202,9 @@ We welcome contributions to RxDBDotNet! Here's how you can contribute:
 5. Push to the branch (`git push origin feature/amazing-feature`).
 6. Open a Pull Request.
 
-Please ensure your code adheres to our coding standards and includes appropriate tests and documentation.
+Please ensure your code meets our coding standards and includes appropriate tests and documentation.
 
-For more detailed guidelines, refer to our [Contributing Guide](CONTRIBUTING.md).
+Please refer to our [Contributing Guide](CONTRIBUTING.md) for more detailed guidelines.
 
 ## Code of Conduct
 
@@ -177,4 +221,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact Information
 
-For any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).
+If you have any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).

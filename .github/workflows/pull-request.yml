@@ -1,0 +1,41 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --no-restore --verbosity normal
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.10.2
+      with:
+        versionSpec: '5.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.10.2
+
+    - name: Display Version
+      run: |
+        echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
+        echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"

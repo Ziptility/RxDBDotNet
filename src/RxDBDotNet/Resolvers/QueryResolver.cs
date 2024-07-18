@@ -2,14 +2,14 @@
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
 
-namespace RxDBDotNet.GraphQL;
+namespace RxDBDotNet.Resolvers;
 
 /// <summary>
 /// Represents a GraphQL query resolver for pulling documents.
 /// This class implements the server-side logic for the 'pull' operation in the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TDocument">The type of the document to be pulled, which must implement IReplicatedDocument.</typeparam>
-public class QueryResolver<TDocument> where TDocument : class, IReplicatedDocument
+public sealed class QueryResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Pulls documents from the backend based on the given checkpoint and limit.
@@ -23,7 +23,8 @@ public class QueryResolver<TDocument> where TDocument : class, IReplicatedDocume
     /// A task that represents the asynchronous operation. The task result contains a
     /// <see cref="DocumentPullBulk{TDocument}"/> object containing the pulled documents and the new checkpoint.
     /// </returns>
-    public async Task<DocumentPullBulk<TDocument>> PullDocuments(
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "The method obtains its parameters from the DI context")]
+    internal async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
         [Service] IDocumentRepository<TDocument> repository,
@@ -43,9 +44,9 @@ public class QueryResolver<TDocument> where TDocument : class, IReplicatedDocume
             .ThenBy(d => d.Id)
             .Take(limit);
 
-        var documents = await repository.ExecuteQueryAsync(orderedQuery, cancellationToken);
+        var documents = await repository.ExecuteQueryAsync(orderedQuery, cancellationToken).ConfigureAwait(false);
 
-        if (!documents.Any())
+        if (documents.Count == 0)
         {
             // Return an empty array when there are no more documents to pull
             return new DocumentPullBulk<TDocument>

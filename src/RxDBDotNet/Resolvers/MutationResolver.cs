@@ -1,0 +1,217 @@
+﻿using RxDBDotNet.Documents;
+using RxDBDotNet.Models;
+using RxDBDotNet.Repositories;
+
+namespace RxDBDotNet.Resolvers;
+
+/// <summary>
+/// Represents a GraphQL mutation resolver for pushing documents.
+/// This class implements the server-side logic for the 'push' operation in the RxDB replication protocol.
+/// </summary>
+/// <typeparam name="TDocument">The type of document being replicated, which must implement IReplicatedDocument.</typeparam>
+/// <remarks>
+/// Initializes a new instance of the MutationResolver class.
+/// </remarks>
+/// <param name="repository">The document repository to be used for data access.</param>
+public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> repository) where TDocument : class, IReplicatedDocument
+{
+    /// <summary>
+    /// Pushes a set of documents to the server and handles any conflicts.
+    /// This method implements the conflict resolution part of the RxDB replication protocol.
+    /// </summary>
+    /// <param name="documents">The list of documents to push, including their assumed master state.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
+    /// <returns>A task representing the asynchronous operation, with a result of any conflicting documents.</returns>
+    internal async Task<List<TDocument>> PushDocumentsAsync(
+        List<DocumentPushRow<TDocument>?>? documents,
+        CancellationToken cancellationToken)
+    {
+        // Early return if no documents are provided.
+        // This is an optimization to avoid unnecessary processing.
+        if (documents?.Count == 0)
+        {
+            return [];
+        }
+
+        // Step 1: Categorize documents and detect conflicts
+        // This aligns with the RxDB protocol's requirement to detect conflicts before applying changes
+        var (conflicts, updates, creates) = await CategorizeDocumentsAsync(documents, cancellationToken).ConfigureAwait(false);
+
+        // Step 2: Apply changes only if there are no initial conflicts
+        // This ensures atomicity of operations as per the RxDB protocol
+        if (conflicts.Count == 0)
+        {
+            var applyConflicts = await ApplyChangesAsync(creates, updates, cancellationToken).ConfigureAwait(false);
+            conflicts.AddRange(applyConflicts);
+        }
+
+        // Step 3: Return all conflicts
+        // This allows the client to handle conflicts according to the RxDB protocol
+        return conflicts;
+    }
+
+    /// <summary>
+    /// Categorizes the incoming documents into conflicts, updates, and new creates.
+    /// This method aligns with the RxDB protocol's requirement to detect conflicts before applying changes.
+    /// </summary>
+    /// <param name="documents">The list of documents to categorize.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
+    /// <returns>A tuple containing lists of conflicting, updated, and new documents.</returns>
+    private async Task<(List<TDocument> Conflicts, List<TDocument> Updates, List<TDocument> Creates)> CategorizeDocumentsAsync(
+        List<DocumentPushRow<TDocument>?>? documents,
+        CancellationToken cancellationToken)
+    {
+        var conflicts = new List<TDocument>();
+        var updates = new List<TDocument>();
+        var creates = new List<TDocument>();
+
+        // If no documents are provided, return empty lists
+        if (documents == null)
+        {
+            return (conflicts, updates, creates);
+        }
+
+        // Iterate through each document to categorize it
+        foreach (var document in documents)
+        {
+            if (document == null)
+            {
+                continue;
+            }
+
+            // Fetch the current state of the document from the repository
+            // This is crucial for detecting conflicts as per the RxDB protocol
+            var existing = await repository.GetDocumentByIdAsync(document.NewDocumentState.Id, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (existing != null)
+            {
+                // Document exists in the repository, handle potential conflicts
+                HandleExistingDocument(document, existing, conflicts, updates);
+            }
+            else
+            {
+                // Document doesn't exist in the repository, handle as a new document
+                HandleNewDocument(document, conflicts, creates);
+            }
+        }
+
+        return (conflicts, updates, creates);
+    }
+
+    /// <summary>
+    /// Handles the categorization of an existing document.
+    /// This method implements the conflict detection mechanism as per the RxDB protocol.
+    /// </summary>
+    /// <param name="document">The document push row containing the new state and assumed master state.</param>
+    /// <param name="existing">The existing document in the repository.</param>
+    /// <param name="conflicts">The list to add conflicting documents to.</param>
+    /// <param name="updates">The list to add documents that need updating to.</param>
+    private void HandleExistingDocument(
+        DocumentPushRow<TDocument> document,
+        TDocument existing,
+        List<TDocument> conflicts,
+        List<TDocument> updates)
+    {
+        // Check if the assumed master state matches the current state in the repository
+        // This is a key part of the RxDB conflict detection mechanism
+        if (document.AssumedMasterState == null || !repository.AreDocumentsEqual(existing, document.AssumedMasterState))
+        {
+            // Conflict detected: The document has been modified since the client's last sync
+            conflicts.Add(existing);
+        }
+        else
+        {
+            // No conflict: The document can be updated
+            updates.Add(document.NewDocumentState);
+        }
+    }
+
+    /// <summary>
+    /// Handles the categorization of a new document.
+    /// This method deals with edge cases where the client might be out of sync.
+    /// </summary>
+    /// <param name="document">The document push row containing the new state and assumed master state.</param>
+    /// <param name="conflicts">The list to add conflicting documents to.</param>
+    /// <param name="creates">The list to add new documents to.</param>
+    private static void HandleNewDocument(
+        DocumentPushRow<TDocument> document,
+        List<TDocument> conflicts,
+        List<TDocument> creates)
+    {
+        if (document.AssumedMasterState == null)
+        {
+            // Document doesn't exist and client doesn't assume it does: This is a new document
+            creates.Add(document.NewDocumentState);
+        }
+        else
+        {
+            // Conflict: Client assumes a state for a non-existent document
+            // This handles edge cases where the client might be out of sync
+            conflicts.Add(document.AssumedMasterState);
+        }
+    }
+
+    /// <summary>
+    /// Applies the changes to the repository, including creating new documents and updating existing ones.
+    /// This method ensures atomicity of operations as per the RxDB protocol.
+    /// </summary>
+    /// <param name="creates">The list of new documents to create.</param>
+    /// <param name="updates">The list of existing documents to update.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
+    /// <returns>A list of documents that are considered conflicting if an error occurs during the process.</returns>
+    private async Task<List<TDocument>> ApplyChangesAsync(
+        List<TDocument> creates,
+        List<TDocument> updates,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Create new documents
+            foreach (var create in creates)
+            {
+                await repository.CreateDocumentAsync(create, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Update existing documents
+            foreach (var update in updates)
+            {
+                await HandleDocumentUpdateAsync(update, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Commit all changes in a single transaction
+            // This ensures atomicity of the entire operation, a key requirement of the RxDB protocol
+            await repository.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            // If we reach here, all changes were applied successfully
+            return [];
+        }
+        catch (Exception)
+        {
+            // If any exception occurs during the update process,
+            // we consider all documents as conflicting to ensure data integrity.
+            // This is a conservative approach to maintain consistency with the RxDB protocol.
+            return [.. creates, .. updates];
+        }
+    }
+
+    /// <summary>
+    /// Handles the update of a single document, including soft deletes as per RxDB protocol.
+    /// </summary>
+    /// <param name="update">The document to update.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
+    private async Task HandleDocumentUpdateAsync(TDocument update, CancellationToken cancellationToken)
+    {
+        if (update.IsDeleted)
+        {
+            // Handle soft deletes as per RxDB protocol
+            // Documents are never physically deleted, only marked as deleted
+            await repository.MarkAsDeletedAsync(update.Id, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            // Update the existing document
+            await repository.UpdateDocumentAsync(update, cancellationToken).ConfigureAwait(false);
+        }
+    }
+}

@@ -6,7 +6,7 @@
 ///     between the client and server, ensuring that only new or updated
 ///     documents are synchronized.
 /// </summary>
-public class Checkpoint
+public sealed class Checkpoint
 {
     /// <summary>
     ///     <para>

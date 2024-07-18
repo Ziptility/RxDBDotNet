@@ -1,7 +1,7 @@
 ﻿namespace RxDBDotNet.Documents;
 
 /// <summary>
-///     Represents the minimum requirements for a document to be replicated using this extension.
+///     Represents the minimum requirements for a document to be replicated using RxDbDotNet.
 /// </summary>
 public interface IReplicatedDocument
 {

@@ -1,28 +1,32 @@
 ﻿using System.Collections.Concurrent;
+using Example.GraphQLApi.Models;
 using RxDBDotNet.Documents;
-using RxDBDotNet.Exceptions;
 using RxDBDotNet.Repositories;
+using RxDBDotNet.Services;
 
 namespace Example.GraphQLApi.Repositories;
 
 /// <summary>
-/// An enhanced in-memory implementation of IDocumentRepository that simulates a database for testing and prototyping purposes.
+/// An in-memory implementation of IDocumentRepository that simulates a database for testing and prototyping purposes.
 /// This implementation is thread-safe, supports the full IDocumentRepository interface, and follows best practices.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being managed, which must implement IReplicatedDocument.</typeparam>
 /// <remarks>
-/// Initializes a new instance of the <see cref="InMemoryDocumentRepository{TDocument}"/> class.
+/// Initializes a new instance of the InMemoryDocumentRepository class.
 /// </remarks>
+/// <param name="eventPublisher">The event publisher used to publish document change events.</param>
 /// <param name="logger">The logger to use for logging operations and errors.</param>
-public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepository<TDocument>> logger) : IDocumentRepository<TDocument>
+public sealed class InMemoryDocumentRepository<TDocument>(IEventPublisher eventPublisher, ILogger<InMemoryDocumentRepository<TDocument>> logger) : BaseDocumentRepository<TDocument>(eventPublisher, logger), IDisposable
     where TDocument : class, IReplicatedDocument
 {
     private readonly ConcurrentDictionary<Guid, TDocument> _documents = new();
     private readonly ReaderWriterLockSlim _lock = new();
+    private bool _disposed;
 
     /// <inheritdoc/>
-    public IQueryable<TDocument> GetQueryableDocuments()
+    public override IQueryable<TDocument> GetQueryableDocuments()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterReadLock();
         try
         {
@@ -35,15 +39,16 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     }
 
     /// <inheritdoc/>
-    public Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)
+    public override Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)
     {
-        // Since this is in-memory, we can execute the query immediately
+        ObjectDisposedException.ThrowIf(_disposed, this);
         return Task.FromResult(query.ToList());
     }
 
     /// <inheritdoc/>
-    public Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
+    public override Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterReadLock();
         try
         {
@@ -57,18 +62,19 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     }
 
     /// <inheritdoc/>
-    public Task<TDocument> CreateDocumentAsync(TDocument document, CancellationToken cancellationToken)
+    protected override Task<TDocument> CreateDocumentInternalAsync(TDocument document, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(document);
+        
         _lock.EnterWriteLock();
         try
         {
             if (_documents.TryAdd(document.Id, document))
             {
-                logger.LogInformation("Document created successfully. ID: {DocumentId}", document.Id);
                 return Task.FromResult(document);
             }
 
-            logger.LogError("Document with ID {DocumentId} already exists.", document.Id);
             throw new ConcurrencyException($"Document with ID {document.Id} already exists.");
         }
         finally
@@ -78,8 +84,11 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     }
 
     /// <inheritdoc/>
-    public Task<TDocument> UpdateDocumentAsync(TDocument document, CancellationToken cancellationToken)
+    protected override Task<TDocument> UpdateDocumentInternalAsync(TDocument document, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(document);
+        
         _lock.EnterWriteLock();
         try
         {
@@ -89,12 +98,10 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
                 {
                     document.UpdatedAt = DateTimeOffset.UtcNow;
                     _documents[document.Id] = document;
-                    logger.LogInformation("Document updated successfully. ID: {DocumentId}", document.Id);
                 }
                 return Task.FromResult(document);
             }
 
-            logger.LogError("Document with ID {DocumentId} not found for update.", document.Id);
             throw new InvalidOperationException($"Document with ID {document.Id} not found for update.");
         }
         finally
@@ -104,8 +111,9 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     }
 
     /// <inheritdoc/>
-    public Task MarkAsDeletedAsync(Guid id, CancellationToken cancellationToken)
+    protected override Task<TDocument?> MarkAsDeletedInternalAsync(Guid id, CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         _lock.EnterWriteLock();
         try
         {
@@ -114,13 +122,9 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
                 document.IsDeleted = true;
                 document.UpdatedAt = DateTimeOffset.UtcNow;
                 _documents[id] = document;
-                logger.LogInformation("Document marked as deleted successfully. ID: {DocumentId}", id);
+                return Task.FromResult<TDocument?>(document);
             }
-            else
-            {
-                logger.LogWarning("Attempted to mark non-existent document as deleted. ID: {DocumentId}", id);
-            }
-            return Task.CompletedTask;
+            return Task.FromResult<TDocument?>(null);
         }
         finally
         {
@@ -129,16 +133,17 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
     }
 
     /// <inheritdoc/>
-    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    protected override Task SaveChangesInternalAsync(CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         // For in-memory repository, changes are saved immediately, so this is a no-op
-        logger.LogInformation("SaveChangesAsync called. No action required for in-memory repository.");
         return Task.CompletedTask;
     }
 
     /// <inheritdoc/>
-    public bool AreDocumentsEqual(TDocument doc1, TDocument doc2)
+    public override bool AreDocumentsEqual(TDocument doc1, TDocument doc2)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         var type = typeof(TDocument);
         var properties = type.GetProperties();
 
@@ -159,5 +164,17 @@ public class InMemoryDocumentRepository<TDocument>(ILogger<InMemoryDocumentRepos
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Disposes the resources used by the InMemoryDocumentRepository.
+    /// </summary>
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _lock.Dispose();
+            _disposed = true;
+        }
     }
 }

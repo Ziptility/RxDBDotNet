@@ -1,4 +1,4 @@
-﻿namespace RxDBDotNet.Exceptions;
+﻿namespace Example.GraphQLApi.Models;
 
 /// <summary>
 /// Represents errors that occur when a concurrency conflict is detected during document operations.

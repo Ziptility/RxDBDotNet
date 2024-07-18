@@ -5,6 +5,7 @@ using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
 using RxDBDotNet.Resolvers;
+using RxDBDotNet.Services;
 
 namespace RxDBDotNet.Extensions;
 
@@ -16,11 +17,29 @@ namespace RxDBDotNet.Extensions;
 public static class GraphQLServiceCollectionExtensions
 {
     /// <summary>
+    /// Adds replication support for RxDBDotNet to the GraphQL schema.
+    /// This method configures all necessary services and types for the RxDB replication protocol.
+    /// </summary>
+    /// <param name="builder">The IRequestExecutorBuilder to configure.</param>
+    /// <returns>The configured IRequestExecutorBuilder for method chaining.</returns>
+    /// <remarks>
+    /// This method should be called once before adding support for specific document types.
+    /// It registers core services like IEventPublisher that are shared across all document types.
+    /// </remarks>
+    public static IRequestExecutorBuilder AddReplicationServer(this IRequestExecutorBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddSingleton<IEventPublisher, DefaultEventPublisher>();
+        return builder;
+    }
+
+    /// <summary>
     /// Adds replication support for a specific document type to the GraphQL schema.
-    /// This method configures all necessary types, queries, and mutations for the RxDB replication protocol.
+    /// This method configures all necessary types, queries, mutations, and subscriptions for the RxDB replication protocol.
     /// </summary>
     /// <typeparam name="TDocument">The type of document to support, which must implement IReplicatedDocument.</typeparam>
-    /// <param name="builder">The IRequestExecutorBuilder to configure.</param>
+    /// <param name="builder">The HotChocolate IRequestExecutorBuilder to configure.</param>
     /// <returns>The configured IRequestExecutorBuilder for method chaining.</returns>
     /// <remarks>
     /// <para>
@@ -32,12 +51,13 @@ public static class GraphQLServiceCollectionExtensions
     /// Usage example:
     /// <code>
     /// services.AddGraphQLServer()
-    ///     .AddReplicationSupport&lt;MyDocument&gt;()
-    ///     .AddReplicationSupport&lt;AnotherDocument&gt;();
+    ///     .AddReplicationServer()
+    ///     .AddReplicatedDocument&lt;MyDocument&gt;()
+    ///     .AddReplicatedDocument&lt;AnotherDocument&gt;();
     /// </code>
     /// </para>
     /// </remarks>
-    public static IRequestExecutorBuilder AddReplicationSupport<TDocument>(this IRequestExecutorBuilder builder)
+    public static IRequestExecutorBuilder AddReplicatedDocument<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
         return builder
@@ -65,10 +85,10 @@ public static class GraphQLServiceCollectionExtensions
         var checkpointInputTypeName = $"{typeof(TDocument).Name}InputCheckpoint";
         return builder.AddType(new InputObjectType<Checkpoint>(d =>
         {
-            d.Name(checkpointInputTypeName);
-            d.Description($"Input type for the checkpoint of {typeof(TDocument).Name} replication.");
+            d.Name(checkpointInputTypeName)
+                .Description($"Input type for the checkpoint of {typeof(TDocument).Name} replication.");
             d.Field(f => f.UpdatedAt).Type<DateTimeType>().Description("The timestamp of the last update included in the synchronization batch.");
-            d.Field(f => f.LastDocumentId).Type<IdType>().Description("The ID of the last document included in the synchronization batch.");
+            d.Field(f => f.LastDocumentId).Type<UuidType>().Description("The ID of the last document included in the synchronization batch.");
         }));
     }
 
@@ -78,8 +98,8 @@ public static class GraphQLServiceCollectionExtensions
         var pullBulkTypeName = $"{typeof(TDocument).Name}PullBulk";
         return builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(d =>
         {
-            d.Name(pullBulkTypeName);
-            d.Description($"Represents the result of a pull operation for {typeof(TDocument).Name} documents.");
+            d.Name(pullBulkTypeName)
+                .Description($"Represents the result of a pull operation for {typeof(TDocument).Name} documents.");
             d.Field(f => f.Documents)
                 .Description($"The list of {typeof(TDocument).Name} documents pulled from the server.");
             d.Field(f => f.Checkpoint)
@@ -93,8 +113,8 @@ public static class GraphQLServiceCollectionExtensions
         var pushRowTypeName = $"{typeof(TDocument).Name}InputPushRow";
         return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(d =>
         {
-            d.Name(pushRowTypeName);
-            d.Description($"Input type for pushing {typeof(TDocument).Name} documents to the server.");
+            d.Name(pushRowTypeName)
+                .Description($"Input type for pushing {typeof(TDocument).Name} documents to the server.");
             d.Field(f => f.AssumedMasterState)
                 .Type<InputObjectType<TDocument>>()
                 .Description("The assumed state of the document on the server before the push.");
@@ -118,13 +138,13 @@ public static class GraphQLServiceCollectionExtensions
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("checkpoint", a =>
                 {
-                    a.Type(checkpointInputTypeName);
-                    a.Description($"The last known checkpoint for {documentTypeName} replication.");
+                    a.Type(checkpointInputTypeName)
+                        .Description($"The last known checkpoint for {documentTypeName} replication.");
                 })
                 .Argument("limit", a =>
                 {
-                    a.Type<NonNullType<IntType>>();
-                    a.Description($"The maximum number of {documentTypeName} documents to return.");
+                    a.Type<NonNullType<IntType>>()
+                        .Description($"The maximum number of {documentTypeName} documents to return.");
                 })
                 .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint and limit.")
                 .Resolve(ResolvePullDocuments<TDocument>);
@@ -157,23 +177,22 @@ public static class GraphQLServiceCollectionExtensions
                 .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
                 .Argument(pushRowArgName, a =>
                 {
-                    a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>();
-                    a.Description($"The list of {documentTypeName} documents to push to the server.");
+                    a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
+                        .Description($"The list of {documentTypeName} documents to push to the server.");
                 })
                 .Description($"Pushes {documentTypeName} documents to the server and handles any conflicts.")
                 .Resolve(context => ResolvePushDocuments<TDocument>(context, pushRowArgName));
         }));
     }
 
-    private static async Task<IReadOnlyList<TDocument>> ResolvePushDocuments<TDocument>(IResolverContext context, string pushRowArgName)
+    private static Task<List<TDocument>> ResolvePushDocuments<TDocument>(IResolverContext context, string pushRowArgName)
         where TDocument : class, IReplicatedDocument
     {
         var mutation = context.Resolver<MutationResolver<TDocument>>();
         var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
-        var repository = context.Service<IDocumentRepository<TDocument>>();
         var cancellationToken = context.RequestAborted;
 
-        return await mutation.PushDocumentsAsync(documents, repository, cancellationToken);
+        return mutation.PushDocumentsAsync(documents, cancellationToken);
     }
 
     private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(this IRequestExecutorBuilder builder)
@@ -191,8 +210,8 @@ public static class GraphQLServiceCollectionExtensions
                     .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                     .Argument("headers", a =>
                     {
-                        a.Type(headersInputTypeName);
-                        a.Description($"Headers for {documentTypeName} subscription authentication.");
+                        a.Type(headersInputTypeName)
+                            .Description($"Headers for {documentTypeName} subscription authentication.");
                     })
                     .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
                     .Subscribe(context =>

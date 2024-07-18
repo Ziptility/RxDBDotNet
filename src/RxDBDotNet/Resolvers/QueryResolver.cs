@@ -23,7 +23,8 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// A task that represents the asynchronous operation. The task result contains a
     /// <see cref="DocumentPullBulk{TDocument}"/> object containing the pulled documents and the new checkpoint.
     /// </returns>
-    public async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "The method obtains its parameters from the DI context")]
+    internal async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
         [Service] IDocumentRepository<TDocument> repository,
@@ -43,9 +44,9 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
             .ThenBy(d => d.Id)
             .Take(limit);
 
-        var documents = await repository.ExecuteQueryAsync(orderedQuery, cancellationToken);
+        var documents = await repository.ExecuteQueryAsync(orderedQuery, cancellationToken).ConfigureAwait(false);
 
-        if (!documents.Any())
+        if (documents.Count == 0)
         {
             // Return an empty array when there are no more documents to pull
             return new DocumentPullBulk<TDocument>

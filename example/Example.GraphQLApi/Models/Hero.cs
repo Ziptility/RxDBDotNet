@@ -5,7 +5,6 @@ namespace Example.GraphQLApi.Models;
 
 public class Hero : IReplicatedDocument
 {
-    [GraphQLType(typeof(IdType))]
     [Required]
     public required Guid Id { get; init; }
     

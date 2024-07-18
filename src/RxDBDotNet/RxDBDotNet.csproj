@@ -16,6 +16,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <WarningLevel>9999</WarningLevel>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+        <NoWarn>$(NoWarn);CA1848</NoWarn>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />

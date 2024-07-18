@@ -16,7 +16,8 @@ builder.Services.AddGraphQLServer()
     {
         o.IncludeExceptionDetails = true;
     })
-    .AddReplicationSupport<Hero>()
+    .AddReplicationServer()
+    .AddReplicatedDocument<Hero>()
     .AddInMemorySubscriptions();
 
 // Configure CORS

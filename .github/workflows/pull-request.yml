@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
       with:
@@ -17,10 +17,8 @@ jobs:
       with:
         dotnet-version: '8.0.x'
         
-    - name: Install .NET Framework 4.7.2 Developer Pack to build the client example app
-      run: |
-        wget https://download.visualstudio.microsoft.com/download/pr/9a1a5c45-09b2-4bbd-8a44-0638a6b2bc0f/2f5dcd31160f25762868d0cc58220013/ndp472-devpack-enu.exe
-        sudo wine ndp472-devpack-enu.exe /quiet /norestart
+    - name: Install .NET Framework 4.7.2 Developer Pack
+      run: choco install netfx-4.7.2-devpack
         
     - name: Install .NET Aspire workload
       run: dotnet workload install aspire

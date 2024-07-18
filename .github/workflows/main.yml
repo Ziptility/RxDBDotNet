@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-test-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
       with:
@@ -16,9 +16,18 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.0.x'
-        
-    - name: Install .NET Aspire workload
-      run: dotnet workload install aspire
+
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+
+    - name: Install .NET Framework 4.7.2 Developer Pack
+      run: choco install netfx-4.7.2-devpack
+      
+    - name: Install npm dependencies
+      working-directory: example/Example.RxDBClient
+      run: npm install
 
     - name: Restore dependencies
       run: dotnet restore
@@ -37,25 +46,19 @@ jobs:
     - name: Determine Version
       id: gitversion
       uses: gittools/actions/gitversion/execute@v0.10.2
+      
+    - name: Set release version
+      run: echo "RELEASE_VERSION=${{ steps.gitversion.outputs.SemVer }}-alpha" >> $GITHUB_ENV
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+    - name: Build NuGet package
+      run: dotnet pack ./src/RxDBDotNet/RxDBDotNet.csproj --configuration Release --output ./nuget /p:Version=${{ env.RELEASE_VERSION }}
+
+    - name: Publish NuGet package
+      run: dotnet nuget push ./nuget/RxDBDotNet.*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
+
+    - name: Release Drafter
+      uses: release-drafter/release-drafter@v5
+      with:
+        version: ${{ env.RELEASE_VERSION }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.gitversion.outputs.semVer }}
-        release_name: Release ${{ steps.gitversion.outputs.semVer }}
-        body: |
-          Release of version ${{ steps.gitversion.outputs.semVer }}
-          
-          Changes in this Release:
-          ${{ github.event.head_commit.message }}
-        draft: false
-        prerelease: false
-
-    - name: Pack
-      run: dotnet pack --no-build --configuration Release -p:PackageVersion=${{ steps.gitversion.outputs.semVer }}-alpha -o ./nupkg
-
-    - name: Push to NuGet
-      run: dotnet nuget push ./nupkg/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate

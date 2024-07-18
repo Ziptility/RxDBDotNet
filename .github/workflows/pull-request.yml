@@ -49,5 +49,4 @@ jobs:
 
     - name: Display Version
       run: |
-        echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
-        echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
+        echo "SemVer: ${{ steps.gitversion.outputs.SemVer }}"

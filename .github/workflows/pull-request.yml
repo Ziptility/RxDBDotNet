@@ -17,8 +17,17 @@ jobs:
       with:
         dotnet-version: '8.0.x'
         
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        
     - name: Install .NET Framework 4.7.2 Developer Pack
       run: choco install netfx-4.7.2-devpack
+      
+    - name: Install npm dependencies
+      working-directory: example/Example.RxDBClient
+      run: npm install
 
     - name: Restore dependencies
       run: dotnet restore

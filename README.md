@@ -43,24 +43,62 @@ To install and set up RxDBDotNet in your project, follow these steps:
    dotnet add package HotChocolate.Data
    ```
 
-3. In your `Program.cs` or `Startup.cs`, add the following configuration:
+3. In your `Program.cs`, add the following configuration:
 
    ```csharp
+   using Example.GraphQLApi.Models;
+   using Example.GraphQLApi.Repositories;
+   using HotChocolate.AspNetCore;
    using RxDBDotNet.Extensions;
+   using RxDBDotNet.Repositories;
 
    var builder = WebApplication.CreateBuilder(args);
 
+   // Add services to the container
    builder.Services
        .AddSingleton<IDocumentRepository<YourDocumentType>, YourRepositoryImplementation>();
 
-   builder.Services
-       .AddGraphQLServer()
-       .AddReplicationServer()
-       .AddReplicatedDocument<YourDocumentType>();
+   // Configure the GraphQL server
+   builder.Services.AddGraphQLServer()
+       .ModifyRequestOptions(o =>
+       {
+           // Enable debugging features in development
+           o.IncludeExceptionDetails = true;
+       })
+       .AddReplicationServer() // Add RxDBDotNet replication support
+       .AddReplicatedDocument<YourDocumentType>() // Configure replication for your document type
+       .AddInMemorySubscriptions(); // Enable in-memory pub/sub for GraphQL subscriptions
+
+   // Configure CORS to allow requests from your RxDB client
+   builder.Services.AddCors(options =>
+   {
+       options.AddDefaultPolicy(corsPolicyBuilder =>
+       {
+           corsPolicyBuilder
+               .WithOrigins("http://localhost:1337") // Replace with your RxDB client's origin
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials(); // Required for WebSocket connections
+       });
+   });
 
    var app = builder.Build();
 
-   app.MapGraphQL();
+   // Enable CORS
+   app.UseCors();
+
+   // Enable WebSockets (required for subscriptions)
+   app.UseWebSockets();
+
+   // Configure the GraphQL endpoint
+   app.MapGraphQL()
+       .WithOptions(new GraphQLServerOptions
+       {
+           Tool = // Configure GraphQL Playground or Banana Cake Pop
+           {
+               Enable = true,
+           },
+       });
 
    app.Run();
    ```

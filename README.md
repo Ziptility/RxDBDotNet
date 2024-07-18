@@ -1,6 +1,6 @@
 # RxDBDotNet
 
-RxDBDotNet is an open-source library that facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate. It implements the server-side of the RxDB replication protocol, enabling seamless offline-first capabilities and real-time updates for any client application that supports RxDB, while providing a robust .NET backend implementation.
+RxDBDotNet is an open-source library that facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate. It implements the server side of the RxDB replication protocol, enabling seamless offline-first capabilities and real-time updates for any client application that supports RxDB while providing a robust .NET backend implementation.
 
 ## Key Points
 
@@ -46,12 +46,6 @@ To install and set up RxDBDotNet in your project, follow these steps:
 3. In your `Program.cs`, add the following configuration:
 
    ```csharp
-   using Example.GraphQLApi.Models;
-   using Example.GraphQLApi.Repositories;
-   using HotChocolate.AspNetCore;
-   using RxDBDotNet.Extensions;
-   using RxDBDotNet.Repositories;
-
    var builder = WebApplication.CreateBuilder(args);
 
    // Add services to the container
@@ -65,9 +59,12 @@ To install and set up RxDBDotNet in your project, follow these steps:
            // Enable debugging features in development
            o.IncludeExceptionDetails = true;
        })
-       .AddReplicationServer() // Add RxDBDotNet replication support
-       .AddReplicatedDocument<YourDocumentType>() // Configure replication for your document type
-       .AddInMemorySubscriptions(); // Enable in-memory pub/sub for GraphQL subscriptions
+       // Add RxDBDotNet replication support
+       .AddReplicationServer()
+       // Configure replication for your document type
+       .AddReplicatedDocument<YourDocumentType>()
+       // Enable pub/sub for GraphQL subscriptions
+       .AddInMemorySubscriptions();
 
    // Configure CORS to allow requests from your RxDB client
    builder.Services.AddCors(options =>
@@ -75,10 +72,12 @@ To install and set up RxDBDotNet in your project, follow these steps:
        options.AddDefaultPolicy(corsPolicyBuilder =>
        {
            corsPolicyBuilder
-               .WithOrigins("http://localhost:1337") // Replace with your RxDB client's origin
+               // Replace with your RxDB client's origin
+               .WithOrigins("http://localhost:1337")
                .AllowAnyHeader()
                .AllowAnyMethod()
-               .AllowCredentials(); // Required for WebSocket connections
+               // Required for WebSocket connections
+               .AllowCredentials();
        });
    });
 
@@ -94,7 +93,8 @@ To install and set up RxDBDotNet in your project, follow these steps:
    app.MapGraphQL()
        .WithOptions(new GraphQLServerOptions
        {
-           Tool = // Configure GraphQL Playground or Banana Cake Pop
+           // Configure GraphQL Playground or Banana Cake Pop
+           Tool =
            {
                Enable = true,
            },
@@ -202,9 +202,9 @@ We welcome contributions to RxDBDotNet! Here's how you can contribute:
 5. Push to the branch (`git push origin feature/amazing-feature`).
 6. Open a Pull Request.
 
-Please ensure your code adheres to our coding standards and includes appropriate tests and documentation.
+Please ensure your code meets our coding standards and includes appropriate tests and documentation.
 
-For more detailed guidelines, refer to our [Contributing Guide](CONTRIBUTING.md).
+Please refer to our [Contributing Guide](CONTRIBUTING.md) for more detailed guidelines.
 
 ## Code of Conduct
 
@@ -221,4 +221,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact Information
 
-For any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).
+If you have any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).

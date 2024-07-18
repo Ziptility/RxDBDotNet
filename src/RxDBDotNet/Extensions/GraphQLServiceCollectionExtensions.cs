@@ -43,9 +43,11 @@ public static class GraphQLServiceCollectionExtensions
         return builder
             .AddResolver<QueryResolver<TDocument>>()
             .AddResolver<MutationResolver<TDocument>>()
+            .AddResolver<SubscriptionResolver<TDocument>>()
             .ConfigureDocumentTypes<TDocument>()
             .ConfigureDocumentQueries<TDocument>()
-            .ConfigureDocumentMutations<TDocument>();
+            .ConfigureDocumentMutations<TDocument>()
+            .ConfigureDocumentSubscriptions<TDocument>();
     }
 
     private static IRequestExecutorBuilder ConfigureDocumentTypes<TDocument>(this IRequestExecutorBuilder builder)
@@ -65,12 +67,8 @@ public static class GraphQLServiceCollectionExtensions
         {
             d.Name(checkpointInputTypeName);
             d.Description($"Input type for the checkpoint of {typeof(TDocument).Name} replication.");
-            d.Field(f => f.UpdatedAt)
-                .Type<DateTimeType>()
-                .Description("The timestamp of the last update included in the synchronization batch.");
-            d.Field(f => f.LastDocumentId)
-                .Type<IdType>()
-                .Description("The ID of the last document included in the synchronization batch.");
+            d.Field(f => f.UpdatedAt).Type<DateTimeType>().Description("The timestamp of the last update included in the synchronization batch.");
+            d.Field(f => f.LastDocumentId).Type<IdType>().Description("The ID of the last document included in the synchronization batch.");
         }));
     }
 
@@ -113,7 +111,7 @@ public static class GraphQLServiceCollectionExtensions
         var pullDocumentsName = $"pull{documentTypeName}";
         var checkpointInputTypeName = $"{documentTypeName}InputCheckpoint";
 
-        return builder.AddType(new ObjectType(d =>
+        return builder.AddQueryType(new ObjectType(d =>
         {
             d.Name("Query");
             d.Field(pullDocumentsName)
@@ -152,7 +150,7 @@ public static class GraphQLServiceCollectionExtensions
         var pushDocumentsName = $"push{documentTypeName}";
         var pushRowArgName = $"{char.ToLowerInvariant(documentTypeName[0])}{documentTypeName[1..]}PushRow";
 
-        return builder.AddType(new ObjectType(d =>
+        return builder.AddMutationType(new ObjectType(d =>
         {
             d.Name("Mutation");
             d.Field(pushDocumentsName)
@@ -176,5 +174,60 @@ public static class GraphQLServiceCollectionExtensions
         var cancellationToken = context.RequestAborted;
 
         return await mutation.PushDocumentsAsync(documents, repository, cancellationToken);
+    }
+
+    private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(this IRequestExecutorBuilder builder)
+        where TDocument : class, IReplicatedDocument
+    {
+        var documentTypeName = typeof(TDocument).Name;
+        var streamDocumentName = $"stream{documentTypeName}";
+        var headersInputTypeName = $"{documentTypeName}InputHeaders";
+
+        return builder
+            .AddSubscriptionType(d =>
+            {
+                d.Name("Subscription");
+                d.Field(streamDocumentName)
+                    .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
+                    .Argument("headers", a =>
+                    {
+                        a.Type(headersInputTypeName);
+                        a.Description($"Headers for {documentTypeName} subscription authentication.");
+                    })
+                    .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
+                    .Subscribe(context =>
+                    {
+                        var headers = context.ArgumentValue<Headers>("headers");
+                        // You can add authentication logic here using the headers
+                        if (!IsAuthorized(headers))
+                        {
+                            // Handle unauthorized access
+                            throw new UnauthorizedAccessException("Invalid or missing authorization token");
+                        }
+
+                        var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
+
+                        return subscription.DocumentChangedStream(context.RequestAborted);
+                    });
+            })
+            .AddType(new InputObjectType<Headers>(d =>
+            {
+                d.Name(headersInputTypeName);
+                d.Field(f => f.Authorization)
+                    .Type<NonNullType<StringType>>()
+                    .Name("Authorization")
+                    .Description("The JWT bearer token for authentication.");
+            }));
+    }
+
+    private static bool IsAuthorized(Headers? headers)
+    {
+        if (headers != null)
+        {
+            // Implement your authorization logic here
+            // For example, validate the JWT token in headers.Authorization
+        }
+
+        return true;
     }
 }

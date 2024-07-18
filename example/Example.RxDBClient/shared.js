@@ -19,7 +19,7 @@
 export const GRAPHQL_PORT = 5414;
 export const GRAPHQL_PATH = "/graphql";
 export const GRAPHQL_SUBSCRIPTION_PORT = 5414;
-export const GRAPHQL_SUBSCRIPTION_PATH = "/subscriptions";
+export const GRAPHQL_SUBSCRIPTION_PATH = "/graphql";
 
 /**
  * to demonstrate how auth would work,

@@ -19,9 +19,6 @@ jobs:
         
     - name: Install .NET Framework 4.7.2 Developer Pack
       run: choco install netfx-4.7.2-devpack
-        
-    - name: Install .NET Aspire workload
-      run: dotnet workload install aspire
 
     - name: Restore dependencies
       run: dotnet restore

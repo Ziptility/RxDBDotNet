@@ -33,7 +33,7 @@ jobs:
 
     - name: Test
       run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --no-restore --verbosity normal
-
+      
     - name: Auto-label the PR
       uses: release-drafter/release-drafter@v5
       with:

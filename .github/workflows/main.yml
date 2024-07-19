@@ -47,18 +47,31 @@ jobs:
       id: gitversion
       uses: gittools/actions/gitversion/execute@v0.10.2
       
-    - name: Set release version
-      run: echo "RELEASE_VERSION=${{ steps.gitversion.outputs.SemVer }}-alpha" >> $GITHUB_ENV
-
     - name: Build NuGet package
-      run: dotnet pack ./src/RxDBDotNet/RxDBDotNet.csproj --configuration Release --output ./nuget /p:Version=${{ env.RELEASE_VERSION }}
+      run: |
+        dotnet pack ./src/RxDBDotNet/RxDBDotNet.csproj `
+          --configuration Release `
+          --output ./nuget `
+          /p:Version=${{ steps.gitversion.outputs.SemVer }} `
+          /p:AssemblyVersion=${{ steps.gitversion.outputs.AssemblySemVer }} `
+          /p:FileVersion=${{ steps.gitversion.outputs.AssemblySemFileVer }} `
+          /p:InformationalVersion=${{ steps.gitversion.outputs.InformationalVersion }}
 
-    - name: Publish NuGet package
-      run: dotnet nuget push ./nuget/RxDBDotNet.*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
+    - name: Publish NuGet package to GitHub Packages
+      run: |
+        $package = Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.nupkg | Select-Object -First 1
+        dotnet nuget push $package.FullName -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/Ziptility/index.json
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Release Drafter
+    - name: Display Package Info
+      run: |
+        echo "Package file:"
+        Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.nupkg | Format-Table Name, FullName
+
+    - name: Draft a Release
       uses: release-drafter/release-drafter@v5
       with:
-        version: ${{ env.RELEASE_VERSION }}
+        version: ${{ steps.gitversion.outputs.SemVer }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

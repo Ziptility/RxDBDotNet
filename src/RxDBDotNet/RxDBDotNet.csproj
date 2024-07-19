@@ -17,6 +17,18 @@
         <WarningLevel>9999</WarningLevel>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
         <NoWarn>$(NoWarn);CA1848</NoWarn>
+
+        <PackageId>RxDBDotNet</PackageId>
+        <Authors>Ziptility;RxDBDotNet Contributors</Authors>
+        <Company>RxDBDotNet Open Source Project</Company>
+        <Copyright>© $([System.DateTime]::Now.Year) Ziptility and RxDBDotNet Contributors</Copyright>
+        <Description>RxDBDotNet facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate.</Description>
+        <PackageTags>rxdb;graphql;replication;offline-first;realtime;dotnet</PackageTags>
+        <PackageProjectUrl>https://github.com/Ziptility/RxDBDotNet</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Ziptility/RxDBDotNet.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />

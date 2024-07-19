@@ -1,5 +1,7 @@
 # RxDBDotNet
 
+[![NuGet](https://img.shields.io/nuget/v/RxDBDotNet.svg)](https://www.nuget.org/packages/RxDBDotNet/)
+
 RxDBDotNet is an open-source library that facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate. It implements the server side of the RxDB replication protocol, enabling seamless offline-first capabilities and real-time updates for any client application that supports RxDB while providing a robust .NET backend implementation.
 
 ## Key Points

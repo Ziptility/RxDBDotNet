@@ -4,7 +4,7 @@ RxDBDotNet is an open-source library that facilitates real-time data replication
 
 ## Key Points
 
-- **Backend**: Implements the server-side of the RxDB replication protocol in .NET
+- **Backend**: Implements the server-side of the [RxDB replication protocol](https://rxdb.info/replication.html) in .NET
 - **Frontend**: Compatible with any client that supports the RxDB replication protocol (JavaScript, TypeScript, React Native, etc.)
 - **Protocol**: Uses GraphQL for communication, leveraging the Hot Chocolate library for .NET
 - **Features**: 
@@ -183,7 +183,7 @@ Here's a basic example of how to use RxDBDotNet in your application:
 
 ## Features
 
-- **RxDB Replication Protocol**: Implements the full RxDB replication protocol, including pull, push, and real-time subscriptions.
+- **RxDB Replication Protocol**: Implements the full [RxDB replication protocol](https://rxdb.info/replication.html), including pull, push, and real-time subscriptions.
 - **GraphQL Integration**: Seamlessly integrates with GraphQL using the Hot Chocolate library.
 - **Offline-First**: Supports offline-first application architecture.
 - **Real-Time Updates**: Provides real-time updates through GraphQL subscriptions.

@@ -6,6 +6,8 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2C564665-EC40-49B0-91EF-97F024604D98}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+		CONTRIBUTING.md = CONTRIBUTING.md
 		GitVersion.yml = GitVersion.yml
 		README.md = README.md
 	EndProjectSection
@@ -15,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{4121
 		.github\dependabot.yml = .github\dependabot.yml
 		.github\workflows\main.yml = .github\workflows\main.yml
 		.github\workflows\pull-request.yml = .github\workflows\pull-request.yml
+		.github\release-drafter.yml = .github\release-drafter.yml
 		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject

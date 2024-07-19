@@ -38,9 +38,16 @@ We use a trunk-based development model:
 
 1. Push your changes to your fork on GitHub.
 2. Create a pull request from your fork to the main RxDBDotNet repository.
-3. Provide a clear description of the changes in your pull request.
-4. Link any relevant issues in the pull request description.
-5. Be prepared to address feedback and make additional changes if requested.
+3. Provide a clear title for your pull request that follows the [Conventional Commits](https://www.conventionalcommits.org/) syntax.
+4. Provide a clear description of the changes in your pull request.
+5. Link any relevant issues in the pull request description.
+6. Be prepared to address feedback and make additional changes if requested.
+
+Note: We use squash merges for all pull requests. The pull request title will be used as the commit message in the main branch, so it's crucial that it follows the Conventional Commits syntax.
+
+## Pull Request Titles
+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for our pull request titles. This leads to more readable messages that are easy to follow when looking through the project history.
 
 ## Coding Standards
 

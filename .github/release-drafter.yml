@@ -1,5 +1,5 @@
-name-template: '$RELEASE_VERSION'
-tag-template: '$RELEASE_VERSION'
+name-template: '$RESOLVED_VERSION'
+tag-template: '$RESOLVED_VERSION'
 categories:
   - title: '🚀 Features'
     labels:
@@ -25,13 +25,45 @@ categories:
   - title: '🧪 Tests'
     labels:
       - 'test'
-change-template: '- $TITLE (#$NUMBER) by @$AUTHOR'
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'minor'
+  patch:
+    labels:
+      - 'patch'
+  default: patch
 template: |
-  ## Changes
+  ## What’s Changed
 
   $CHANGES
-
-  ## Contributors
-
-  Thanks to everyone who contributed to this release:
-  $CONTRIBUTORS
+autolabeler:
+  - label: 'feat'
+    title:
+      - '/^feat(\([^)]+\))?:/i'
+  - label: 'fix'
+    title:
+      - '/^fix(\([^)]+\))?:/i'
+  - label: 'chore'
+    title:
+      - '/^chore(\([^)]+\))?:/i'
+  - label: 'docs'
+    title:
+      - '/^docs(\([^)]+\))?:/i'
+  - label: 'style'
+    title:
+      - '/^style(\([^)]+\))?:/i'
+  - label: 'refactor'
+    title:
+      - '/^refactor(\([^)]+\))?:/i'
+  - label: 'perf'
+    title:
+      - '/^perf(\([^)]+\))?:/i'
+  - label: 'test'
+    title:
+      - '/^test(\([^)]+\))?:/i'

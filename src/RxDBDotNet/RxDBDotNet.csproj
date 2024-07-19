@@ -28,7 +28,6 @@
         <RepositoryUrl>https://github.com/Ziptility/RxDBDotNet.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />

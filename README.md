@@ -198,11 +198,13 @@ We welcome contributions to RxDBDotNet! Here's how you can contribute:
 1. Fork the repository.
 2. Create a new branch (`git checkout -b feature/amazing-feature`).
 3. Make your changes.
-4. Commit your changes (`git commit -m 'Add some amazing feature'`).
+4. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/) syntax.
 5. Push to the branch (`git push origin feature/amazing-feature`).
-6. Open a Pull Request.
+6. Open a Pull Request with a title that follows the Conventional Commits syntax.
 
 Please ensure your code meets our coding standards and includes appropriate tests and documentation.
+
+We use squash merges for all pull requests. The pull request title will be used as the commit message in the main branch, so it must follow the Conventional Commits syntax.
 
 Please refer to our [Contributing Guide](CONTRIBUTING.md) for more detailed guidelines.
 

@@ -3,6 +3,7 @@ name: Pull Request
 on:
   pull_request:
     branches: [ main ]
+    types: [opened, reopened, synchronize]
 
 jobs:
   build-and-test:
@@ -37,3 +38,13 @@ jobs:
 
     - name: Test
       run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --no-restore --verbosity normal
+
+  update_release_draft:
+    runs-on: ubuntu-latest
+    steps:
+      # Drafts your next Release notes as Pull Requests are merged into "main"
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

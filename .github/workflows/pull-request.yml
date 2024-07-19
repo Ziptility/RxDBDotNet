@@ -48,13 +48,10 @@ jobs:
       uses: gittools/actions/gitversion/execute@v0.10.2
 
     - name: Set release version
-      run: echo "RELEASE_VERSION=${{ steps.gitversion.outputs.SemVer }}-alpha" >> $GITHUB_ENV
+      run: echo "RELEASE_VERSION=${{ steps.gitversion.outputs.SemVer }}-alpha" >> $env:GITHUB_ENV
 
     - name: Build NuGet package
-      run: |
-        RELEASE_VERSION=${{ steps.gitversion.outputs.SemVer }}-alpha
-        echo "Release Version is $RELEASE_VERSION"
-        dotnet pack ./src/RxDBDotNet/RxDBDotNet.csproj --configuration Release --output ./nuget /p:PackageVersion=$RELEASE_VERSION
+      run: dotnet pack ./src/RxDBDotNet/RxDBDotNet.csproj --configuration Release --output ./nuget /p:PackageVersion=$env:RELEASE_VERSION
 
     - name: Publish NuGet package to GitHub Packages
       run: dotnet nuget push ./nuget/RxDBDotNet.*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/Ziptility/index.json

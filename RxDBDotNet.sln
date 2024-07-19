@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{4121
 		.github\dependabot.yml = .github\dependabot.yml
 		.github\workflows\main.yml = .github\workflows\main.yml
 		.github\workflows\pull-request.yml = .github\workflows\pull-request.yml
+		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{EFEB7370-F4D3-4F5A-A2D7-C2AA18C8BF27}"

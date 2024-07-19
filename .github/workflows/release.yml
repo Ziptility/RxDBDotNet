@@ -1,20 +1,17 @@
-name: Release and Deploy NuGet Package
+name: Deploy NuGet Package after Release
 
 on:
   workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
-  release-deploy:
+  deploy-nuget-package:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
 
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@v0.10.2
@@ -51,10 +48,3 @@ jobs:
       run: |
         echo "Package file:"
         Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.nupkg | Format-Table Name, FullName
-
-    - name: Draft a Release
-      uses: release-drafter/release-drafter@v5
-      with:
-        version: ${{ env.NUGET_VERSION }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

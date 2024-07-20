@@ -37,12 +37,15 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test with coverage
-      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/Coverage/ /p:Include="[RxDBDotNet*]*" /p:Exclude="[RxDBDotNet.Tests]*"
+      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./coverage.opencover.xml /p:Include="[RxDBDotNet*]*" /p:Exclude="[RxDBDotNet.Tests]*"
+
+    - name: List coverage directory
+      run: Get-ChildItem -Path ./tests/RxDBDotNet.Tests -Recurse
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        files: ./tests/RxDBDotNet.Tests/TestResults/Coverage/coverage.opencover.xml
+        files: ./tests/RxDBDotNet.Tests/coverage.opencover.xml
         fail_ci_if_error: true
         flags: unittests
         token: ${{ secrets.CODECOV_TOKEN }}

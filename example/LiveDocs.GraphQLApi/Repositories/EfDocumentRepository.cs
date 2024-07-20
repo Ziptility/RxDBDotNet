@@ -1,10 +1,10 @@
-﻿using Example.GraphQLApi.Models;
+﻿using LiveDocs.GraphQLApi.Models;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Repositories;
 using RxDBDotNet.Services;
 
-namespace Example.GraphQLApi.Repositories;
+namespace LiveDocs.GraphQLApi.Repositories;
 
 /// <summary>
 /// An implementation of IDocumentRepository using Entity Framework Core.

@@ -1,10 +1,10 @@
 ﻿using System.Collections.Concurrent;
-using Example.GraphQLApi.Models;
+using LiveDocs.GraphQLApi.Models;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Repositories;
 using RxDBDotNet.Services;
 
-namespace Example.GraphQLApi.Repositories;
+namespace LiveDocs.GraphQLApi.Repositories;
 
 /// <summary>
 /// An in-memory implementation of IDocumentRepository that simulates a database for testing and prototyping purposes.

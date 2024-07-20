@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RxDBDotNet\RxDBDotNet.csproj" />
-    <ProjectReference Include="..\Example.ServiceDefaults\Example.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\LiveDocs.ServiceDefaults\LiveDocs.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,13 +3,13 @@ using System.Net;
 
 namespace RxDBDotNet.Tests
 {
-    public class UserMutationTests
+    public class PushUserTests
     {
         [Fact]
-        public async Task TestMethod1()
+        public async Task PushUser_ShouldAddNewUser_WhenUserDetailsAreValid()
         {
             // Arrange
-            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.Example_AppHost>();
+            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.LiveDocs_AppHost>();
             await using var app = await appHost.BuildAsync();
             await app.StartAsync();
 

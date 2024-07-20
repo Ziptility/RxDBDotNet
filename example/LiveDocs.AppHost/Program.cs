@@ -6,9 +6,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var cache = builder.AddRedis("cache");
 
-var graphQLApi = builder.AddProject<Example_GraphQLApi>("graphqlapi");
+var graphQLApi = builder.AddProject<LiveDocs_GraphQLApi>("graphqlapi");
 
-builder.AddNpmApp("rxdbclient", "../Example.RxDBClient", "run")
+builder.AddNpmApp("rxdbclient", "../LiveDocs.RxDBClient", "run")
     .WithHttpEndpoint(port: 1337, env: "PORT")
     .WithExternalHttpEndpoints()
     .WithReference(graphQLApi)

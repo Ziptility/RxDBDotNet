@@ -1,6 +1,6 @@
-using Example.GraphQLApi.Models;
-using Example.GraphQLApi.Repositories;
-using Example.ServiceDefaults;
+using LiveDocs.GraphQLApi.Models;
+using LiveDocs.GraphQLApi.Repositories;
+using LiveDocs.ServiceDefaults;
 using HotChocolate.AspNetCore;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;

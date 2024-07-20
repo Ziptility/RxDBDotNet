@@ -1,7 +1,7 @@
 {
     "name": "example.rx-dbclient",
     "version": "0.0.0",
-    "description": "Example.RxDBClient",
+    "description": "LiveDocs.RxDBClient",
     "main": "server.js",
     "author": "",
     "devDependencies": {

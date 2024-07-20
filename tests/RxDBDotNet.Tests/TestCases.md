@@ -2,48 +2,74 @@
 
 LiveDocs is a real-time collaborative document editing GraphQL API built on RxDBDotNet. It enables users to create, edit, and share documents seamlessly across multiple devices and users, all while maintaining data integrity and ensuring a smooth, responsive experience.
 
-As a tester, you'll be verifying not just the individual operations like creating or editing documents, but also the seamless interaction between multiple users and devices. You'll need to ensure that data remains consistent across all clients, that offline changes are correctly merged when a connection is re-established, and that the system gracefully handles various edge cases like conflicting edits or intermittent connectivity.
+This test case document outlines a comprehensive set of scenarios designed to validate the functionality, performance, and reliability of the RxDBDotNet library in a real-world application context. Using LiveDocs, a real-time collaborative document editing application, as a test bed, these test cases go beyond simple CRUD operations to explore the intricacies of multi-user interactions and device synchronization.
+The test cases encompass a wide range of scenarios, including:
 
-Your test cases will cover everything from basic CRUD operations to complex scenarios involving multiple users making simultaneous edits, simulated network failures, and stress testing with large documents and high user loads. By thoroughly testing LiveDocs, we'll be able to validate the robustness and reliability of the RxDBDotNet library in a real-world, demanding application scenario.
+1. Verification of data consistency across multiple clients
+2. Proper merging of offline changes upon reconnection
+3. Handling of edge cases such as conflicting edits and intermittent connectivity
+4. Complex multi-user scenarios with simultaneous edits
+5. Simulated network failures and recovery
+
+By executing these test cases, we aim to thoroughly validate the robustness and reliability of the RxDBDotNet library under demanding, real-world conditions. This comprehensive approach ensures that RxDBDotNet can effectively support applications requiring seamless real-time collaboration and data synchronization across multiple users and devices.
 
 ## Test Data Model
 
 ```csharp
 /// <summary>
-/// Represents a generic document in the system.
+/// Represents a live, collaborative document within the LiveDocs system.
 /// </summary>
-public class TestDocument : IReplicatedDocument
+/// <remarks>
+/// <para>
+/// A LiveDoc is the core entity in the LiveDocs collaborative editing platform. It encapsulates
+/// the content and metadata of a single document that can be collaboratively edited in real-time
+/// by multiple users. This class implements the IReplicatedDocument interface, enabling it to be
+/// efficiently synchronized across multiple clients and the server using the RxDB replication protocol.
+/// </para>
+/// <para>
+/// Each LiveDoc has a unique identifier, content that can be edited, an owner, and timestamps for
+/// tracking updates. The IsDeleted property supports soft deletion, allowing for document recovery
+/// and maintaining a consistent history of changes.
+/// </para>
+/// <para>
+/// As an IReplicatedDocument, LiveDoc instances are automatically handled by the RxDBDotNet
+/// replication system, ensuring real-time updates, conflict resolution, and offline support
+/// across all connected clients.
+/// </para>
+/// </remarks>
+/// <seealso cref="IReplicatedDocument"/>
+public class LiveDoc : IReplicatedDocument
 {
     /// <summary>
-    /// Gets or initializes the unique identifier for the document.
+    /// Gets or initializes the unique identifier for the live doc.
     /// </summary>
     public required Guid Id { get; init; }
 
     /// <summary>
-    /// Gets or sets the content of the document.
+    /// Gets or sets the content of the live doc.
     /// </summary>
     public required string Content { get; set; }
 
     /// <summary>
-    /// Gets or initializes the unique identifier of the document's owner.
+    /// Gets or initializes the unique identifier of the live doc's owner.
     /// </summary>
     public required Guid OwnerId { get; init; }
 
     /// <summary>
-    /// Gets or sets the date and time when the document was last updated.
+    /// Gets or sets the date and time when the live doc was last updated.
     /// </summary>
     public required DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the document has been deleted.
+    /// Gets or sets a value indicating whether the live doc has been deleted.
     /// </summary>
     public required bool IsDeleted { get; set; }
 }
 
 /// <summary>
-/// Represents a user in the system.
+/// Represents a user of the LiveDocs system.
 /// </summary>
-public class TestUser : IReplicatedDocument
+public class User : IReplicatedDocument
 {
     /// <summary>
     /// Gets or initializes the unique identifier for the user.

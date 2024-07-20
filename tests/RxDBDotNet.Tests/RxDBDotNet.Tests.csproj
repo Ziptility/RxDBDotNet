@@ -62,4 +62,8 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\example\Example.GraphQLApi\Example.GraphQLApi.csproj" />
+    </ItemGroup>
+
 </Project>

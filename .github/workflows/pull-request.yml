@@ -13,6 +13,11 @@ jobs:
       with:
         fetch-depth: 0
         
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
     - name: Install Node.js
       uses: actions/setup-node@v3
       with:
@@ -31,15 +36,21 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
-    - name: Test
-      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --no-restore --verbosity normal
+    - name: Test with coverage
+      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/Coverage/ /p:Include="[RxDBDotNet.*]*"
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./tests/RxDBDotNet.Tests/TestResults/Coverage/coverage.opencover.xml
+        fail_ci_if_error: true
+        flags: unittests
+        token: ${{ secrets.CODECOV_TOKEN }}
       
     - name: Auto-label the PR
       uses: release-drafter/release-drafter@v5
       with:
         config-name: release-drafter.yml
-        # We only want the auto-labeling feature.
-        # The release will get drafted when the PR is merged to main.
         disable-releaser: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

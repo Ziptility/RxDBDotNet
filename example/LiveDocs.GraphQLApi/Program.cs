@@ -10,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
 
+// see https://learn.microsoft.com/en-us/dotnet/aspire/database/sql-server-components
+// https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/external-parameters#parameter-example
+
 // Add services to the container.
 builder.Services
     .AddProblemDetails()

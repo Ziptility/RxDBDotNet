@@ -40,7 +40,7 @@
 
     <ItemGroup>
         <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.0.0-beta" />
-        <PackageReference Include="Meziantou.Analyzer" Version="2.0.160">
+        <PackageReference Include="Meziantou.Analyzer" Version="2.0.161">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -60,6 +60,10 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\example\Example.GraphQLApi\Example.GraphQLApi.csproj" />
     </ItemGroup>
 
 </Project>

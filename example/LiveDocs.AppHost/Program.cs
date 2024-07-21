@@ -4,23 +4,30 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var cache = builder.AddRedis("cache");
+//var cache = builder.AddRedis("cache");
 
-var graphQLApi = builder.AddProject<LiveDocs_GraphQLApi>("graphqlapi");
+// Add SQL Server
+var sqlDb = builder.AddSqlServer("sql", port: 16032)
+    .AddDatabase("sqldata")
+    .WithEndpoint(port: 16033);
+
+builder.AddProject<LiveDocs_GraphQLApi>("replicationApi")
+    .WithReference(sqlDb);
 
 // Add SQL Server with the specified password and port
-var passwordParameter = builder.AddParameter("sqlpassword", true);
-var sqlDb = builder.AddSqlServer("SqlServer", passwordParameter, 16032)
-    .PublishAsConnectionString()
-    .AddDatabase("SqlDb", "LiveDocsDb");
+// var password = builder.AddParameter("sqlpassword", true);
+// var sqlDb = builder.AddSqlServer("SqlServer", password: password, port: 16032)
+//     .AddDatabase("SqlDb", "LiveDocsDb")
+//     .WithEndpoint(port: 16033);
+
 
 builder.AddNpmApp("rxdbclient", "../LiveDocs.RxDBClient", "run")
     .WithHttpEndpoint(port: 1337, env: "PORT")
-    .WithExternalHttpEndpoints()
-    .WithReference(graphQLApi)
-    .WithReference(cache)
-    .WithReference(sqlDb)
-    .WithEnvironment("SQL_PASSWORD", passwordParameter);
+    .WithExternalHttpEndpoints();
+    //.WithReference(replicationApi)
+    //.WithReference(cache)
+    //.WithReference(sqlDb);
+    //.WithEnvironment("SQL_PASSWORD", password);
 
 builder.Build()
     .Run();

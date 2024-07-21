@@ -2,21 +2,29 @@ using LiveDocs.GraphQLApi.Models;
 using LiveDocs.GraphQLApi.Repositories;
 using LiveDocs.ServiceDefaults;
 using HotChocolate.AspNetCore;
+using LiveDocs.GraphQLApi.Data;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
+using LiveDocs.GraphQLApi.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add service defaults & Aspire components.
-builder.AddServiceDefaults();
 
 // see https://learn.microsoft.com/en-us/dotnet/aspire/database/sql-server-components
 // https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/external-parameters#parameter-example
 
+// Configure the LiveDocsDbContext
+builder.AddSqlServerDbContext<LiveDocsDbContext>("sqldata");
+
+// Add service defaults & Aspire components.
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services
     .AddProblemDetails()
-    .AddSingleton<IDocumentRepository<Hero>, InMemoryDocumentRepository<Hero>>();
+    .AddSingleton<IDocumentRepository<Hero>, InMemoryDocumentRepository<Hero>>()
+    .AddScoped<IDocumentRepository<User>, EfDocumentRepository<User, LiveDocsDbContext>>()
+    .AddScoped<IDocumentRepository<Workspace>, EfDocumentRepository<Workspace, LiveDocsDbContext>>()
+    .AddScoped<IDocumentRepository<LiveDoc>, EfDocumentRepository<LiveDoc, LiveDocsDbContext>>();
 
 // Configure the GraphQL server
 builder.Services.AddGraphQLServer()
@@ -26,6 +34,9 @@ builder.Services.AddGraphQLServer()
     })
     .AddReplicationServer()
     .AddReplicatedDocument<Hero>()
+    .AddReplicatedDocument<User>()
+    .AddReplicatedDocument<Workspace>()
+    .AddReplicatedDocument<LiveDoc>()
     .AddInMemorySubscriptions();
 
 // Configure CORS
@@ -42,11 +53,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.MapDefaultEndpoints();
+
 // Enable CORS
 app.UseCors();
 
 // Enable WebSockets
 app.UseWebSockets();
+
+// Initialize and seed the database
+await LiveDocsDbInitializer.InitializeAsync(app.Services);
 
 // Configure the GraphQL endpoint
 app.MapGraphQL()
@@ -58,4 +74,4 @@ app.MapGraphQL()
         },
     });
 
-app.Run();
+await app.RunAsync();

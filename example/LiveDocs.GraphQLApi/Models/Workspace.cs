@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Documents;
+﻿using System.ComponentModel.DataAnnotations;
+using RxDBDotNet.Documents;
 
 namespace LiveDocs.GraphQLApi.Models;
 
@@ -19,6 +20,8 @@ public class Workspace : IReplicatedDocument
     /// <summary>
     /// Gets or sets the name of the workspace. This must be globally unique.
     /// </summary>
+    [Required]
+    [MaxLength(100)]
     public required string Name { get; set; }
 
     /// <summary>

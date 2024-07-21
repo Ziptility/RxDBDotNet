@@ -4,15 +4,18 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-//var cache = builder.AddRedis("cache");
+var cache = builder.AddRedis("cache");
 
 // Add SQL Server
-var sqlDb = builder.AddSqlServer("sql", port: 16032)
+var password = builder.AddParameter("sqlpassword", true);
+var sqlDb = builder.AddSqlServer("sql", password: password, port: 16032)
     .AddDatabase("sqldata")
     .WithEndpoint(port: 16033);
 
 builder.AddProject<LiveDocs_GraphQLApi>("replicationApi")
-    .WithReference(sqlDb);
+    .WithReference(sqlDb)
+    .WithReference(cache)
+    .WithEnvironment("SQL_PASSWORD", password);
 
 // Add SQL Server with the specified password and port
 // var password = builder.AddParameter("sqlpassword", true);

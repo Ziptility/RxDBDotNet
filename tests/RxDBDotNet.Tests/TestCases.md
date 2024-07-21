@@ -3,6 +3,7 @@
 LiveDocs is a real-time collaborative document editing GraphQL API built on RxDBDotNet. It enables users to create, edit, and share documents seamlessly across multiple devices and users, all while maintaining data integrity and ensuring a smooth, responsive experience.
 
 This test case document outlines a comprehensive set of scenarios designed to validate the functionality, performance, and reliability of the RxDBDotNet library in a real-world application context. Using LiveDocs, a real-time collaborative document editing application, as a test bed, these test cases go beyond simple CRUD operations to explore the intricacies of multi-user interactions and device synchronization.
+
 The test cases encompass a wide range of scenarios, including:
 
 1. Verification of data consistency across multiple clients
@@ -13,222 +14,277 @@ The test cases encompass a wide range of scenarios, including:
 
 By executing these test cases, we aim to thoroughly validate the robustness and reliability of the RxDBDotNet library under demanding, real-world conditions. This comprehensive approach ensures that RxDBDotNet can effectively support applications requiring seamless real-time collaboration and data synchronization across multiple users and devices.
 
-## Test Data Model
-
-```csharp
-/// <summary>
-/// Represents a live, collaborative document within the LiveDocs system.
-/// </summary>
-/// <remarks>
-/// <para>
-/// A LiveDoc is the core entity in the LiveDocs collaborative editing platform. It encapsulates
-/// the content and metadata of a single document that can be collaboratively edited in real-time
-/// by multiple users. This class implements the IReplicatedDocument interface, enabling it to be
-/// efficiently synchronized across multiple clients and the server using the RxDB replication protocol.
-/// </para>
-/// <para>
-/// Each LiveDoc has a unique identifier, content that can be edited, an owner, and timestamps for
-/// tracking updates. The IsDeleted property supports soft deletion, allowing for document recovery
-/// and maintaining a consistent history of changes.
-/// </para>
-/// <para>
-/// As an IReplicatedDocument, LiveDoc instances are automatically handled by the RxDBDotNet
-/// replication system, ensuring real-time updates, conflict resolution, and offline support
-/// across all connected clients.
-/// </para>
-/// </remarks>
-/// <seealso cref="IReplicatedDocument"/>
-public class LiveDoc : IReplicatedDocument
-{
-    /// <summary>
-    /// Gets or initializes the unique identifier for the live doc.
-    /// </summary>
-    public required Guid Id { get; init; }
-
-    /// <summary>
-    /// Gets or sets the content of the live doc.
-    /// </summary>
-    public required string Content { get; set; }
-
-    /// <summary>
-    /// Gets or initializes the unique identifier of the live doc's owner.
-    /// </summary>
-    public required Guid OwnerId { get; init; }
-
-    /// <summary>
-    /// Gets or sets the date and time when the live doc was last updated.
-    /// </summary>
-    public required DateTimeOffset UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the live doc has been deleted.
-    /// </summary>
-    public required bool IsDeleted { get; set; }
-}
-
-/// <summary>
-/// Represents a user of the LiveDocs system.
-/// </summary>
-public class User : IReplicatedDocument
-{
-    /// <summary>
-    /// Gets or initializes the unique identifier for the user.
-    /// </summary>
-    public required Guid Id { get; init; }
-
-    /// <summary>
-    /// Gets or sets the username of the user.
-    /// </summary>
-    public required string Username { get; set; }
-
-    /// <summary>
-    /// Gets or sets the role of the user.
-    /// </summary>
-    public required string Role { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date and time when the user account was last updated.
-    /// </summary>
-    public required DateTimeOffset UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the user account has been deleted.
-    /// </summary>
-    public required bool IsDeleted { get; set; }
-}
-```
-
 ## Test Cases
 
-### 1. User Management
+### 0. Database Seeding
 
-#### Test Case 1.1: Create a new user
+#### Test Case 0.1: Seed Initial Data
 
-**Objective:** Verify that a new user can be created in the system.
+**Objective:** Verify that the database is correctly seeded with initial data, including a super admin user and the "LiveDocs" workspace.
+
+**Preconditions:**
+- The database is empty
+- The seeding process is implemented
+
+**Data Setup:**
+- Super admin user data:
+  ```csharp
+  var superAdminUser = new User
+  {
+      Id = Guid.NewGuid(),
+      FirstName = "Super",
+      LastName = "Admin",
+      Email = "superadmin@livedocs.com",
+      Role = UserRole.SuperAdmin,
+      WorkspaceId = [LiveDocs Workspace Id],
+      UpdatedAt = DateTimeOffset.UtcNow,
+      IsDeleted = false
+  };
+  ```
+- LiveDocs workspace data:
+  ```csharp
+  var liveDocsWorkspace = new Workspace
+  {
+      Id = Guid.NewGuid(),
+      Name = "LiveDocs",
+      UpdatedAt = DateTimeOffset.UtcNow,
+      IsDeleted = false
+  };
+  ```
+
+**Execution Flow:**
+1. Run the database seeding process
+2. Query the database for the seeded super admin user
+3. Query the database for the seeded LiveDocs workspace
+
+**Expected Results:**
+- The super admin user should be present in the database with the correct data
+- The LiveDocs workspace should be present in the database with the correct data
+- The super admin user should be associated with the LiveDocs workspace
+
+### 1. Workspace Management
+
+#### Test Case 1.1: Create a new workspace
+
+**Objective:** Verify that a new workspace can be created in the system.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- User collection is empty
+- A super admin user exists in the system
+
+**Data Setup:**
+- New workspace data:
+  ```csharp
+  var newWorkspace = new Workspace
+  {
+      Id = Guid.NewGuid(),
+      Name = "Test Workspace",
+      UpdatedAt = DateTimeOffset.UtcNow,
+      IsDeleted = false
+  };
+  ```
+
+**Execution Flow:**
+1. Authenticate as the super admin user
+2. Send a GraphQL mutation to create the new workspace
+3. Retrieve the created workspace using a GraphQL query
+
+**Expected Results:**
+- The mutation should return a success response
+- The query should return a workspace object matching the input data
+- The workspace should be present in the database
+
+**Additional Notes:**
+- Verify that the UpdatedAt field is set to the current time
+- Ensure that the IsDeleted field is set to false
+
+#### Test Case 1.2: Attempt to create a workspace with a duplicate name
+
+**Objective:** Verify that the system prevents the creation of workspaces with duplicate names.
+
+**Preconditions:**
+- RxDBDotNet server is running and accessible
+- A workspace named "Test Workspace" already exists in the system
+
+**Data Setup:**
+- Duplicate workspace data:
+  ```csharp
+  var duplicateWorkspace = new Workspace
+  {
+      Id = Guid.NewGuid(),
+      Name = "Test Workspace",
+      UpdatedAt = DateTimeOffset.UtcNow,
+      IsDeleted = false
+  };
+  ```
+
+**Execution Flow:**
+1. Authenticate as the super admin user
+2. Send a GraphQL mutation to create the duplicate workspace
+
+**Expected Results:**
+- The mutation should return an error response indicating that the workspace name is already in use
+- No new workspace should be created in the database
+
+### 2. User Management
+
+#### Test Case 2.1: Create a new user
+
+**Objective:** Verify that a new user can be created in the system and associated with a workspace.
+
+**Preconditions:**
+- RxDBDotNet server is running and accessible
+- At least one workspace exists in the system
 
 **Data Setup:**
 - New user data:
   ```csharp
-  var newUser = new TestUser
+  var newUser = new User
   {
       Id = Guid.NewGuid(),
-      Username = "testuser1",
-      Role = "User",
+      FirstName = "John",
+      LastName = "Doe",
+      Email = "john.doe@example.com",
+      Role = UserRole.User,
+      WorkspaceId = [Existing Workspace Id],
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Send a GraphQL mutation to create the new user
-2. Retrieve the created user using a GraphQL query
+1. Authenticate as an admin user
+2. Send a GraphQL mutation to create the new user
+3. Retrieve the created user using a GraphQL query
 
 **Expected Results:**
 - The mutation should return a success response
 - The query should return a user object matching the input data
-- The user should be present in the database
+- The user should be present in the database and associated with the correct workspace
 
 **Additional Notes:**
 - Verify that the UpdatedAt field is set to the current time
 - Ensure that the IsDeleted field is set to false
+- Check that the WorkspaceId matches the specified workspace
 
-#### Test Case 1.2: Retrieve an existing user
+#### Test Case 2.2: Retrieve users within a workspace
 
-**Objective:** Verify that an existing user can be retrieved from the system.
+**Objective:** Verify that users can be retrieved within the context of their workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- At least one user exists in the system (created in Test Case 1.1)
+- Multiple users exist in different workspaces
 
 **Data Setup:**
-- Use the user created in Test Case 1.1
+- Use existing users and workspaces
 
 **Execution Flow:**
-1. Send a GraphQL query to retrieve the user by ID
+1. Authenticate as an admin user of a specific workspace
+2. Send a GraphQL query to retrieve all users in the admin's workspace
 
 **Expected Results:**
-- The query should return the user object matching the given ID
-- All fields should match the data from Test Case 1.1
+- The query should return only the users associated with the admin's workspace
+- Users from other workspaces should not be included in the results
 
-### 2. Document Operations
+### 3. Document Operations
 
-#### Test Case 2.1: Create a new document
+#### Test Case 3.1: Create a new document within a workspace
 
-**Objective:** Verify that a new document can be created in the system.
+**Objective:** Verify that a new document can be created in the system and associated with a specific workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- At least one user exists in the system
-- Document collection is empty
+- At least one user and one workspace exist in the system
 
 **Data Setup:**
-- Existing user ID: [Use the ID of the user created in Test Case 1.1]
 - New document data:
   ```csharp
-  var newDocument = new TestDocument
+  var newDocument = new LiveDoc
   {
       Id = Guid.NewGuid(),
       Content = "This is a test document.",
-      OwnerId = [Existing user ID],
+      OwnerId = [Existing User Id],
+      WorkspaceId = [Existing Workspace Id],
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Send a GraphQL mutation to create the new document
-2. Retrieve the created document using a GraphQL query
+1. Authenticate as a user within the target workspace
+2. Send a GraphQL mutation to create the new document
+3. Retrieve the created document using a GraphQL query
 
 **Expected Results:**
 - The mutation should return a success response
 - The query should return a document object matching the input data
-- The document should be present in the database
+- The document should be present in the database and associated with the correct workspace and owner
 
 **Additional Notes:**
 - Verify that the UpdatedAt field is set to the current time
 - Ensure that the IsDeleted field is set to false
-- Check that the OwnerId matches the ID of the user who created the document
+- Check that the WorkspaceId and OwnerId match the specified workspace and user
 
-### 3. Pull Operations
+#### Test Case 3.2: Attempt to access a document from a different workspace
 
-#### Test Case 3.1: Initial Pull (Checkpoint Iteration)
-
-**Objective:** Verify the correct implementation of the initial pull operation with a null checkpoint.
+**Objective:** Verify that users cannot access documents from workspaces they don't belong to.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- Multiple documents exist in the system
+- At least two workspaces exist, each with their own users and documents
 
 **Data Setup:**
-- Create at least 3 documents with known content and timestamps:
+- Use existing workspaces, users, and documents
+
+**Execution Flow:**
+1. Authenticate as a user from Workspace A
+2. Attempt to retrieve a document that belongs to Workspace B using a GraphQL query
+
+**Expected Results:**
+- The query should return an error or null result
+- The user should not be able to access or view the document from the other workspace
+
+### 4. Pull Operations
+
+#### Test Case 4.1: Initial Pull (Checkpoint Iteration) within a Workspace
+
+**Objective:** Verify the correct implementation of the initial pull operation with a null checkpoint within a specific workspace.
+
+**Preconditions:**
+- RxDBDotNet server is running and accessible
+- Multiple documents exist in different workspaces
+
+**Data Setup:**
+- Create at least 3 documents in a specific workspace with known content and timestamps:
   ```csharp
-  var documents = new List<TestDocument>
+  var workspace = new Workspace { Id = Guid.NewGuid(), Name = "Test Workspace", UpdatedAt = DateTimeOffset.UtcNow, IsDeleted = false };
+  var user = new User { Id = Guid.NewGuid(), FirstName = "John", LastName = "Doe", Email = "john@example.com", Role = UserRole.User, WorkspaceId = workspace.Id, UpdatedAt = DateTimeOffset.UtcNow, IsDeleted = false };
+  var documents = new List<LiveDoc>
   {
-      new TestDocument
+      new LiveDoc
       {
           Id = Guid.NewGuid(),
           Content = "First document",
-          OwnerId = [Existing user ID],
+          OwnerId = user.Id,
+          WorkspaceId = workspace.Id,
           UpdatedAt = DateTimeOffset.UtcNow.AddHours(-2),
           IsDeleted = false
       },
-      new TestDocument
+      new LiveDoc
       {
           Id = Guid.NewGuid(),
           Content = "Second document",
-          OwnerId = [Existing user ID],
+          OwnerId = user.Id,
+          WorkspaceId = workspace.Id,
           UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1),
           IsDeleted = false
       },
-      new TestDocument
+      new LiveDoc
       {
           Id = Guid.NewGuid(),
           Content = "Third document",
-          OwnerId = [Existing user ID],
+          OwnerId = user.Id,
+          WorkspaceId = workspace.Id,
           UpdatedAt = DateTimeOffset.UtcNow,
           IsDeleted = false
       }
@@ -236,296 +292,294 @@ public class User : IReplicatedDocument
   ```
 
 **Execution Flow:**
-1. Send a GraphQL query to pull documents with null checkpoint and a limit of 10
+1. Authenticate as the user in the test workspace
+2. Send a GraphQL query to pull documents with null checkpoint and a limit of 10
 
 **Expected Results:**
-- The query should return all documents, ordered by their UpdatedAt timestamp
-- The response should include a new checkpoint based on the latest document
+- The query should return only the documents from the user's workspace, ordered by their UpdatedAt timestamp
+- The response should include a new checkpoint based on the latest document in the workspace
+- Documents from other workspaces should not be included in the results
 
 **Additional Notes:**
 - Verify that the documents are returned in the correct order (oldest to newest)
-- Ensure that the checkpoint in the response matches the UpdatedAt and ID of the newest document
+- Ensure that the checkpoint in the response matches the UpdatedAt and Id of the newest document in the workspace
 
-#### Test Case 3.2: Subsequent Pull
+#### Test Case 4.2: Subsequent Pull within a Workspace
 
-**Objective:** Ensure proper handling of pulls with a valid checkpoint.
+**Objective:** Ensure proper handling of pulls with a valid checkpoint within a specific workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- Multiple documents exist in the system, including some created after the checkpoint
+- Multiple documents exist in different workspaces, including some created after the checkpoint in the test workspace
 
 **Data Setup:**
-- Use the documents from Test Case 3.1
-- Create a new document after recording the checkpoint from the previous pull:
+- Use the documents from Test Case 4.1
+- Create a new document in the test workspace after recording the checkpoint from the previous pull:
   ```csharp
-  var newDocument = new TestDocument
+  var newDocument = new LiveDoc
   {
       Id = Guid.NewGuid(),
       Content = "Fourth document",
-      OwnerId = [Existing user ID],
+      OwnerId = user.Id,
+      WorkspaceId = workspace.Id,
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Send a GraphQL query to pull documents with the checkpoint from Test Case 3.1 and a limit of 10
+1. Authenticate as the user in the test workspace
+2. Send a GraphQL query to pull documents with the checkpoint from Test Case 4.1 and a limit of 10
 
 **Expected Results:**
-- The query should return only the documents created or updated after the given checkpoint
+- The query should return only the documents created or updated after the given checkpoint within the user's workspace
 - In this case, it should return only the "Fourth document"
-- The response should include a new checkpoint based on the latest document
+- The response should include a new checkpoint based on the latest document in the workspace
+- Documents from other workspaces should not be included, even if they were created after the checkpoint
 
 **Additional Notes:**
 - Verify that documents created before or at the checkpoint time are not included in the response
-- Ensure that the new checkpoint in the response matches the UpdatedAt and ID of the newest document
+- Ensure that the new checkpoint in the response matches the UpdatedAt and Id of the newest document in the workspace
 
-#### Test Case 3.3: Checkpoint iteration to pull a large number of documents in small "batches"
+#### Test Case 4.3: Checkpoint Iteration to Pull a Large Number of Documents in Small "Batches" within a Workspace
 
-**Objective:** Verify correct implementation of checkpoint iteration operations using checkpoints and limits.
+**Objective:** Verify correct implementation of checkpoint iteration operations using checkpoints and limits within a specific workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- A large number of documents exist in the system (e.g., 250)
+- A large number of documents (e.g., 250) exist in the test workspace
 
 **Data Setup:**
-- Create 250 documents with incremental UpdatedAt timestamps
+- Create 250 documents with incremental UpdatedAt timestamps in the test workspace
 
 **Execution Flow:**
-1. Send an initial GraphQL query to pull documents with null checkpoint and a limit of 100
-2. Record the returned checkpoint
-3. Send a second query using the checkpoint from step 2 and the same limit
-4. Record the new checkpoint
-5. Send a third query using the checkpoint from step 4 and the same limit
+1. Authenticate as the user in the test workspace
+2. Send an initial GraphQL query to pull documents with null checkpoint and a limit of 100
+3. Record the returned checkpoint
+4. Send a second query using the checkpoint from step 2 and the same limit
+5. Record the new checkpoint
+6. Send a third query using the checkpoint from step 4 and the same limit
 
 **Expected Results:**
-- The first query should return 100 documents and a checkpoint
-- The second query should return 100 different documents and a new checkpoint
-- The third query should return the remaining 50 documents and a final checkpoint
+- The first query should return 100 documents from the user's workspace and a checkpoint
+- The second query should return 100 different documents from the same workspace and a new checkpoint
+- The third query should return the remaining 50 documents from the workspace and a final checkpoint
 - Documents in each batch should be newer than those in the previous batch
-- The final query should return an empty array of documents, indicating no more data to pull
+- The final query should return an empty array of documents, indicating no more data to pull in the workspace
 
 **Additional Notes:**
 - Verify that each batch contains the correct documents based on their UpdatedAt timestamps
 - Ensure that no documents are missed or duplicated across batches
 - Check that the checkpoint in each response correctly represents the last document in that batch
+- Confirm that no documents from other workspaces are included in any of the batches
 
-### 4. Push Operations
+### 5. Push Operations
 
-#### Test Case 4.1: Push a new document
+#### Test Case 5.1: Push a New Document within a Workspace
 
-**Objective:** Verify correct handling of pushing a new document to the server.
+**Objective:** Verify correct handling of pushing a new document to the server within a specific workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- A user exists in the system
+- A user exists in a specific workspace
 
 **Data Setup:**
-- Existing user ID: [Use the ID of a previously created user]
+- Existing user and workspace from previous test cases
 - New document data:
   ```csharp
-  var newDocument = new TestDocument
+  var newDocument = new LiveDoc
   {
       Id = Guid.NewGuid(),
       Content = "This document was pushed from the client",
-      OwnerId = [Existing user ID],
+      OwnerId = user.Id,
+      WorkspaceId = workspace.Id,
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Send a GraphQL mutation to push the new document
-2. Retrieve the pushed document using a GraphQL query
+1. Authenticate as the user in the test workspace
+2. Send a GraphQL mutation to push the new document
+3. Retrieve the pushed document using a GraphQL query
 
 **Expected Results:**
 - The mutation should return a success response
-- The query should return a document matching the pushed data
+- The query should return a document matching the pushed data within the user's workspace
 - The document should be present in the database with all fields matching the pushed data
+- The document should be associated with the correct workspace
 
 **Additional Notes:**
 - Verify that the server doesn't modify any fields of the pushed document
-- Ensure that a subsequent pull operation would include this new document
+- Ensure that a subsequent pull operation within the same workspace would include this new document
+- Confirm that users from other workspaces cannot access this document
 
-#### Test Case 4.2: Push an updated document
+#### Test Case 5.2: Push an Updated Document within a Workspace
 
-**Objective:** Ensure proper updating of existing documents through push operations.
+**Objective:** Ensure proper updating of existing documents through push operations within a specific workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- A document exists in the system
+- A document exists in the user's workspace
 
 **Data Setup:**
-- Existing document ID: [Use the ID of a previously created document]
+- Existing document ID from the user's workspace
 - Updated document data:
   ```csharp
-  var updatedDocument = new TestDocument
+  var updatedDocument = new LiveDoc
   {
       Id = [Existing document ID],
       Content = "This document was updated from the client",
-      OwnerId = [Existing user ID],
+      OwnerId = user.Id,
+      WorkspaceId = workspace.Id,
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Retrieve the current state of the document
-2. Send a GraphQL mutation to push the updated document, including the current server state as the assumedMasterState
-3. Retrieve the updated document using a GraphQL query
+1. Authenticate as the user in the test workspace
+2. Retrieve the current state of the document
+3. Send a GraphQL mutation to push the updated document, including the current server state as the assumedMasterState
+4. Retrieve the updated document using a GraphQL query
 
 **Expected Results:**
 - The mutation should return a success response
-- The query should return a document with the updated fields
-- The document in the database should reflect the changes
+- The query should return a document with the updated fields within the user's workspace
+- The document in the database should reflect the changes and remain associated with the correct workspace
 
 **Additional Notes:**
 - Verify that unchanged fields remain the same
-- Ensure that a subsequent pull operation would include this updated document
+- Ensure that a subsequent pull operation within the same workspace would include this updated document
+- Confirm that users from other workspaces cannot access or modify this document
 
-### 5. Conflict Handling
+### 6. Conflict Handling
 
-#### Test Case 5.1: Detect and Report Conflict
+#### Test Case 6.1: Detect and Report Conflict within a Workspace
 
-**Objective:** Verify that conflicts are correctly detected and reported when pushing changes.
+**Objective:** Verify that conflicts are correctly detected and reported when pushing changes within a specific workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- A document exists in the system
+- A document exists in the user's workspace
 
 **Data Setup:**
-- Existing document ID: [Use the ID of a previously created document]
+- Existing document ID from the user's workspace
 - Two client updates:
   ```csharp
-  var clientUpdate1 = new TestDocument
+  var clientUpdate1 = new LiveDoc
   {
       Id = [Existing document ID],
       Content = "Update from Client 1",
-      OwnerId = [Existing user ID],
+      OwnerId = user.Id,
+      WorkspaceId = workspace.Id,
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
 
-  var clientUpdate2 = new TestDocument
+  var clientUpdate2 = new LiveDoc
   {
       Id = [Existing document ID],
       Content = "Update from Client 2",
-      OwnerId = [Existing user ID],
+      OwnerId = user.Id,
+      WorkspaceId = workspace.Id,
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Both clients retrieve the current state of the document
-2. Client 1 sends a push mutation with its update
-3. Immediately after, Client 2 sends a push mutation with its update (using the original server state as assumedMasterState)
-4. Both clients attempt to pull the latest document state
+1. Authenticate as the user in the test workspace
+2. Both clients retrieve the current state of the document
+3. Client 1 sends a push mutation with its update
+4. Immediately after, Client 2 sends a push mutation with its update (using the original server state as assumedMasterState)
+5. Both clients attempt to pull the latest document state
 
 **Expected Results:**
 - Client 1's push should succeed
 - Client 2's push should be rejected due to conflict
 - The pull operation should return the document with Client 1's update
 - Client 2 should receive conflict information
+- All operations should be contained within the same workspace
 
 **Additional Notes:**
-- Verify that the server correctly identifies the conflict
+- Verify that the server correctly identifies the conflict within the workspace
 - Ensure that the conflict information allows Client 2 to resolve the conflict locally
-
-### 6. Real-time Updates (Subscriptions)
-
-#### Test Case 6.1: Subscribe to Changes
-
-**Objective:** Verify that subscriptions correctly emit real-time updates for document changes.
-
-**Preconditions:**
-- RxDBDotNet server is running and accessible
-- GraphQL subscriptions are properly configured
-
-**Execution Flow:**
-1. Start a GraphQL subscription for document changes
-2. Create a new document
-3. Update an existing document
-4. Delete (soft delete) an existing document
-
-**Expected Results:**
-- The subscription should receive a notification for each change (creation, update, deletion)
-- Each notification should include the changed document and a new checkpoint
-
-**Additional Notes:**
-- Verify that the subscription receives changes in real-time
-- Ensure that the checkpoint in each notification is updated correctly
+- Confirm that this conflict handling does not affect documents or users in other workspaces
 
 ### 7. Security Policy Testing
 
-#### Test Case 7.1: Enforce Read Policy
+#### Test Case 7.1: Enforce Read Policy Across Workspaces
 
-**Objective:** Verify that the read policy is correctly enforced for different user roles.
+**Objective:** Verify that the read policy is correctly enforced across different workspaces and user roles.
 
 **Preconditions:**
 - RxDBDotNet server is running with security policies configured
-- Users with different roles exist in the system
-- Documents with different owners exist in the system
+- Users with different roles exist in different workspaces
+- Documents exist in different workspaces
 
 **Data Setup:**
-- Create users with different roles:
+- Create users with different roles in different workspaces:
   ```csharp
-  var adminUser = new TestUser { Id = Guid.NewGuid(), Username = "admin", Role = "Admin", ... };
-  var regularUser = new TestUser { Id = Guid.NewGuid(), Username = "user", Role = "User", ... };
+  var superAdmin = new User { Id = Guid.NewGuid(), FirstName = "Super", LastName = "Admin", Email = "superadmin@livedocs.com", Role = UserRole.SuperAdmin, WorkspaceId = liveDocsWorkspaceId, UpdatedAt = DateTimeOffset.UtcNow, IsDeleted = false };
+  var workspaceAAdmin = new User { Id = Guid.NewGuid(), FirstName = "Admin", LastName = "A", Email = "admin@workspacea.com", Role = UserRole.Admin, WorkspaceId = workspaceAId, UpdatedAt = DateTimeOffset.UtcNow, IsDeleted = false };
+  var workspaceBUser = new User { Id = Guid.NewGuid(), FirstName = "User", LastName = "B", Email = "user@workspaceb.com", Role = UserRole.User, WorkspaceId = workspaceBId, UpdatedAt = DateTimeOffset.UtcNow, IsDeleted = false };
   ```
-- Create documents owned by different users
+- Create documents in different workspaces
 
 **Execution Flow:**
-1. Attempt to read documents as an admin user
-2. Attempt to read documents as a regular user
-3. Attempt to read documents as an unauthenticated user
+1. Attempt to read documents as a super admin user
+2. Attempt to read documents as a workspace admin user
+3. Attempt to read documents as a regular user
+4. Attempt to read documents from a different workspace for each user role
 
 **Expected Results:**
-- Admin user should be able to read all documents
-- Regular user should only be able to read their own documents
-- Unauthenticated user should not be able to read any documents
+- Super admin user should be able to read all documents across all workspaces
+- Workspace admin user should be able to read all documents within their workspace but not from other workspaces
+- Regular user should only be able to read documents within their workspace
+- No user should be able to read documents from workspaces they don't belong to (except super admin)
 
-#### Test Case 7.2: Enforce Write Policy
+#### Test Case 7.2: Enforce Write Policy Across Workspaces
 
-**Objective:** Verify that the write policy is correctly enforced for different user roles.
+**Objective:** Verify that the write policy is correctly enforced across different workspaces and user roles.
 
 **Preconditions:**
 - RxDBDotNet server is running with security policies configured
-- Users with different roles exist in the system
-- Documents with different owners exist in the system
+- Users with different roles exist in different workspaces
+- Documents exist in different workspaces
 
 **Data Setup:**
 - Use the users and documents from Test Case 7.1
 
 **Execution Flow:**
-1. Attempt to create a new document as different user roles
-2. Attempt to update an existing document as different user roles
-3. Attempt to delete a document as different user roles
+1. Attempt to create a new document in various workspaces as different user roles
+2. Attempt to update existing documents in various workspaces as different user roles
+3. Attempt to delete documents in various workspaces as different user roles
 
 **Expected Results:**
-- Admin user should be able to create, update, and delete any document
-- Regular user should only be able to create new documents and update/delete their own documents
-- Unauthenticated user should not be able to perform any write operations
+- Super admin user should be able to create, update, and delete documents across all workspaces
+- Workspace admin user should be able to create, update, and delete documents only within their workspace
+- Regular user should be able to create new documents within their workspace, update their own documents, but not delete any documents
+- No user should be able to modify documents in workspaces they don't belong to (except super admin)
 
-#### Test Case 7.3: Policy-based Subscription Filtering
+#### Test Case 7.3: Workspace-based Subscription Filtering
 
-**Objective:** Verify that subscriptions only emit updates for documents the user has permission to access.
+**Objective:** Verify that subscriptions only emit updates for documents within the user's workspace.
 
 **Preconditions:**
 - RxDBDotNet server is running with security policies configured
-- Users with different roles exist in the system
-- Documents with different owners exist in the system
+- Users with different roles exist in different workspaces
+- Documents exist in different workspaces
 
 **Data Setup:**
 - Use the users and documents from Test Case 7.1
 
 **Execution Flow:**
-1. Start subscriptions for document changes as different user roles
-2. Perform various document operations (create, update, delete) on documents owned by different users
+1. Start subscriptions for document changes as different user roles in different workspaces
+2. Perform various document operations (create, update, delete) across different workspaces
 
 **Expected Results:**
-- Admin subscription should receive updates for all document changes
-- Regular user subscription should only receive updates for their own documents
-- Unauthenticated user subscription should not receive any updates
-
-These test cases provide a comprehensive coverage of RxDBDotNet's functionality, including the core replication features and security policy enforcement. They are ordered logically, building upon each other to create a complete test scenario. By implementing these test cases, you should achieve high code coverage of the RxDBDotNet library while also validating the security features you plan to implement.
+- Super admin subscription should receive updates for document changes across all workspaces
+- Workspace admin subscription should only receive updates for document changes within their workspace
+- Regular user subscription should only receive updates for document changes within their workspace
+- No user should receive updates for document changes in workspaces they don't belong to (except super admin)

@@ -6,7 +6,7 @@ namespace RxDBDotNet.Tests
     public class PushUserTests
     {
         [Fact]
-        public async Task PushUser_ShouldAddNewUser_WhenUserDetailsAreValid()
+        public async Task PushUser_ShouldAddNewUser_WhenUserDetailsAreValid_1_1()
         {
             // Arrange
             var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.LiveDocs_AppHost>();

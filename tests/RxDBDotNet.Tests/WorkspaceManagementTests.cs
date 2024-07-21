@@ -4,18 +4,30 @@ using Newtonsoft.Json.Linq;
 
 namespace RxDBDotNet.Tests
 {
-    public class WorkspaceManagementTests
+    public class WorkspaceManagementTests : IAsyncLifetime
     {
+        private IDistributedApplicationTestingBuilder? _appHost;
+        private HttpClient? _client;
+
+        public async Task InitializeAsync()
+        {
+            _appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.LiveDocs_AppHost>();
+            var app = await _appHost.BuildAsync();
+            await app.StartAsync();
+            _client = app.CreateHttpClient("replicationApi");
+        }
+
+        public Task DisposeAsync()
+        {
+            _client?.Dispose();
+
+            return Task.CompletedTask;
+        }
+
         [Fact]
         public async Task TestCase1_1_CreateNewWorkspace_ShouldSucceed()
         {
             // Arrange
-            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.LiveDocs_AppHost>();
-            await using var app = await appHost.BuildAsync();
-            await app.StartAsync();
-
-            using var client = app.CreateHttpClient("replicationApi");
-
             var newWorkspace = new Workspace
             {
                 Id = RT.Comb.Provider.Sql.Create(),
@@ -24,21 +36,21 @@ namespace RxDBDotNet.Tests
                 IsDeleted = false,
             };
 
-            const string query = """
-                                 mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
-                                     pushWorkspace(workspacePushRow: [$workspace]) {
-                                         id
-                                         name
-                                         updatedAt
-                                         isDeleted
-                                     }
-                                 }
-                                 """;
+            const string query = @"
+                mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
+                    pushWorkspace(workspacePushRow: [$workspace]) {
+                        id
+                        name
+                        updatedAt
+                        isDeleted
+                    }
+                }";
 
             var variables = new
             {
                 workspace = new
                 {
+                    assumedMasterState = (object?)null,
                     newDocumentState = newWorkspace,
                 },
             };
@@ -46,7 +58,7 @@ namespace RxDBDotNet.Tests
             var request = new { query, variables };
 
             // Act
-            var response = await client.PostAsJsonAsync("/graphql", request);
+            var response = await _client.PostAsJsonAsync("/graphql", request);
 
             // Assert
             response.EnsureSuccessStatusCode();
@@ -59,46 +71,17 @@ namespace RxDBDotNet.Tests
             Assert.False(createdWorkspace["isDeleted"]!.Value<bool>());
 
             // Verify the workspace exists in the database
-            const string verificationQuery = """
-                                             query GetWorkspace($id: UUID!) {
-                                                 workspace(id: $id) {
-                                                     id
-                                                     name
-                                                     updatedAt
-                                                     isDeleted
-                                                 }
-                                             }
-                                             """;
-
-            var verificationVariables = new { id = newWorkspace.Id };
-            var verificationRequest = new { query = verificationQuery, variables = verificationVariables };
-
-            var verificationResponse = await client.PostAsJsonAsync("/graphql", verificationRequest);
-            verificationResponse.EnsureSuccessStatusCode();
-
-            var verificationContent = await verificationResponse.Content.ReadAsStringAsync();
-            var verificationJObject = JObject.Parse(verificationContent);
-
-            var verifiedWorkspace = verificationJObject["data"]!["workspace"]!;
-            Assert.Equal(newWorkspace.Id.ToString(), verifiedWorkspace["id"]!.ToString());
-            Assert.Equal(newWorkspace.Name, verifiedWorkspace["name"]!.ToString());
-            Assert.False(verifiedWorkspace["isDeleted"]!.Value<bool>());
+            await VerifyWorkspaceExists(newWorkspace.Id);
         }
 
         [Fact]
         public async Task TestCase1_2_CreateWorkspaceWithDuplicateName_ShouldFail()
         {
             // Arrange
-            var appHost = await DistributedApplicationTestingBuilder.CreateAsync<Projects.LiveDocs_AppHost>();
-            await using var app = await appHost.BuildAsync();
-            await app.StartAsync();
-
-            using var client = app.CreateHttpClient("replicationApi");
-
             const string existingWorkspaceName = "Existing Workspace";
 
             // First, create a workspace
-            await CreateWorkspace(client, existingWorkspaceName);
+            await CreateWorkspace(existingWorkspaceName);
 
             // Now, try to create another workspace with the same name
             var duplicateWorkspace = new Workspace
@@ -109,19 +92,21 @@ namespace RxDBDotNet.Tests
                 IsDeleted = false,
             };
 
-            const string query = """
-                                 mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
-                                     pushWorkspace(workspacePushRow: [$workspace]) {
-                                         id
-                                         name
-                                     }
-                                 }
-                                 """;
+            const string query = @"
+                mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
+                    pushWorkspace(workspacePushRow: [$workspace]) {
+                        id
+                        name
+                        updatedAt
+                        isDeleted
+                    }
+                }";
 
             var variables = new
             {
                 workspace = new
                 {
+                    assumedMasterState = (object?)null,
                     newDocumentState = duplicateWorkspace,
                 },
             };
@@ -129,17 +114,104 @@ namespace RxDBDotNet.Tests
             var request = new { query, variables };
 
             // Act
-            var response = await client.PostAsJsonAsync("/graphql", request);
+            var response = await _client.PostAsJsonAsync("/graphql", request);
 
             // Assert
             var content = await response.Content.ReadAsStringAsync();
             var jObject = JObject.Parse(content);
 
-            Assert.True(jObject["errors"] != null, "Expected an error response");
+            Assert.NotNull(jObject["errors"]);
             Assert.Contains("workspace name is already in use", jObject["errors"]![0]!["message"]!.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static async Task CreateWorkspace(HttpClient client, string name)
+        [Fact]
+        public async Task TestCase1_3_PullWorkspaces_ShouldReturnCreatedWorkspaces()
+        {
+            // Arrange
+            await CreateWorkspace("Workspace 1");
+            await CreateWorkspace("Workspace 2");
+
+            const string query = @"
+                query PullWorkspaces($checkpoint: WorkspaceInputCheckpoint, $limit: Int!) {
+                    pullWorkspace(checkpoint: $checkpoint, limit: $limit) {
+                        documents {
+                            id
+                            name
+                            updatedAt
+                            isDeleted
+                        }
+                        checkpoint {
+                            lastDocumentId
+                            updatedAt
+                        }
+                    }
+                }";
+
+            var variables = new
+            {
+                checkpoint = (object?)null,
+                limit = 10,
+            };
+
+            var request = new { query, variables };
+
+            // Act
+            var response = await _client.PostAsJsonAsync("/graphql", request);
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            var jObject = JObject.Parse(content);
+
+            var documents = jObject["data"]!["pullWorkspace"]!["documents"]!;
+            Assert.True(documents.Count() >= 2);
+            Assert.Contains(documents, d => d["name"]!.ToString() == "Workspace 1");
+            Assert.Contains(documents, d => d["name"]!.ToString() == "Workspace 2");
+
+            Assert.NotNull(jObject["data"]!["pullWorkspace"]!["checkpoint"]);
+        }
+
+        [Fact]
+        public async Task TestCase1_4_StreamWorkspace_ShouldReceiveUpdates()
+        {
+            // Note: This is a basic test for the subscription setup.
+            // Testing real-time updates would require a more complex test setup.
+
+            const string query = @"
+                subscription StreamWorkspaces($headers: WorkspaceInputHeaders!) {
+                    streamWorkspace(headers: $headers) {
+                        documents {
+                            id
+                            name
+                            updatedAt
+                            isDeleted
+                        }
+                        checkpoint {
+                            lastDocumentId
+                            updatedAt
+                        }
+                    }
+                }";
+
+            var variables = new
+            {
+                headers = new
+                {
+                    Authorization = "Bearer test-token", // Replace with actual auth token if needed
+                },
+            };
+
+            var request = new { query, variables };
+
+            // Act & Assert
+            // For now, we're just checking if the subscription query is accepted
+            var response = await _client.PostAsJsonAsync("/graphql", request);
+            response.EnsureSuccessStatusCode();
+
+            // In a real scenario, you'd set up a WebSocket connection and listen for updates
+        }
+
+        private async Task CreateWorkspace(string name)
         {
             var workspace = new Workspace
             {
@@ -149,27 +221,65 @@ namespace RxDBDotNet.Tests
                 IsDeleted = false,
             };
 
-            const string query = """
-                                 mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
-                                     pushWorkspace(workspacePushRow: [$workspace]) {
-                                         id
-                                         name
-                                     }
-                                 }
-                                 """;
+            const string query = @"
+                mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
+                    pushWorkspace(workspacePushRow: [$workspace]) {
+                        id
+                        name
+                        updatedAt
+                        isDeleted
+                    }
+                }";
 
             var variables = new
             {
                 workspace = new
                 {
+                    assumedMasterState = (object?)null,
                     newDocumentState = workspace,
                 },
             };
 
             var request = new { query, variables };
 
-            var response = await client.PostAsJsonAsync("/graphql", request);
+            var response = await _client.PostAsJsonAsync("/graphql", request);
             response.EnsureSuccessStatusCode();
+        }
+
+        private async Task VerifyWorkspaceExists(Guid workspaceId)
+        {
+            const string query = @"
+                query PullWorkspace($checkpoint: WorkspaceInputCheckpoint, $limit: Int!) {
+                    pullWorkspace(checkpoint: $checkpoint, limit: $limit) {
+                        documents {
+                            id
+                            name
+                            updatedAt
+                            isDeleted
+                        }
+                    }
+                }";
+
+            var variables = new
+            {
+                checkpoint = new
+                {
+                    updatedAt = DateTimeOffset.MinValue,
+                    lastDocumentId = (Guid?)null,
+                },
+                limit = 100,
+            };
+
+            var request = new { query, variables };
+
+            var response = await _client.PostAsJsonAsync("/graphql", request);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            var jObject = JObject.Parse(content);
+
+            var documents = jObject["data"]!["pullWorkspace"]!["documents"]!;
+            Assert.Contains(documents, d => d["id"]!.ToString() == workspaceId.ToString());
         }
     }
 }

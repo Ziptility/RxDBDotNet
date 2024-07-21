@@ -9,7 +9,7 @@ var cache = builder.AddRedis("cache");
 // Add SQL Server
 var password = builder.AddParameter("sqlpassword", true);
 var sqlDb = builder.AddSqlServer("sql", password: password, port: 16032)
-    .AddDatabase("sqldata")
+    .AddDatabase("sqldata", databaseName: "LiveDocsDb")
     .WithEndpoint(port: 16033);
 
 builder.AddProject<LiveDocs_GraphQLApi>("replicationApi")

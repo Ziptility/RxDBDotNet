@@ -25,7 +25,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
 
             var liveDocsWorkspace = new Workspace
             {
-                Id = Guid.NewGuid(),
+                Id = RT.Comb.Provider.Sql.Create(),
                 Name = "LiveDocs",
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
@@ -35,7 +35,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
 
             var superAdminUser = new User
             {
-                Id = Guid.NewGuid(),
+                Id = RT.Comb.Provider.Sql.Create(),
                 FirstName = "Super",
                 LastName = "Admin",
                 Email = "superadmin@livedocs.org",

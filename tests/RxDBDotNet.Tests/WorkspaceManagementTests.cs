@@ -18,7 +18,7 @@ namespace RxDBDotNet.Tests
 
             var newWorkspace = new Workspace
             {
-                Id = Guid.NewGuid(),
+                Id = RT.Comb.Provider.Sql.Create(),
                 Name = "Test Workspace",
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
@@ -103,7 +103,7 @@ namespace RxDBDotNet.Tests
             // Now, try to create another workspace with the same name
             var duplicateWorkspace = new Workspace
             {
-                Id = Guid.NewGuid(),
+                Id = RT.Comb.Provider.Sql.Create(),
                 Name = existingWorkspaceName,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
@@ -143,7 +143,7 @@ namespace RxDBDotNet.Tests
         {
             var workspace = new Workspace
             {
-                Id = Guid.NewGuid(),
+                Id = RT.Comb.Provider.Sql.Create(),
                 Name = name,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,

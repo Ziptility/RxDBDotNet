@@ -28,6 +28,7 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.2" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />
+    <PackageReference Include="RT.Comb" Version="4.0.1" />
   </ItemGroup>
 
 </Project>

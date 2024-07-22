@@ -21,6 +21,11 @@
         <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <CodeCoverageInclude>[RxDBDotNet*]*</CodeCoverageInclude>
+        <CodeCoverageExclude>[RxDBDotNet.Tests]*,[RxDBDotNet.LiveDocs]*</CodeCoverageExclude>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="Aspire.Hosting.Testing" Version="8.0.2" />
         <PackageReference Include="coverlet.collector" Version="6.0.2">

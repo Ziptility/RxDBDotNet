@@ -16,7 +16,7 @@ var cache = builder.AddRedis("cache");
 var sqlDb = builder.AddSqlServer("sql", port: 16032)
     .AddDatabase("sqldata", databaseName: "LiveDocsDb");
 
-builder.AddProject<LiveDocs_GraphQLApi>("replicationApi")
+builder.AddProject<LiveDocs_GraphQLApi>("replicationApi", "http")
     .WithReference(sqlDb)
     .WithReference(cache);
     //.WithEnvironment("SQL_PASSWORD", password);

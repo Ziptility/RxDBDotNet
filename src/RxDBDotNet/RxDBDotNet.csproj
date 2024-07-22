@@ -16,7 +16,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <WarningLevel>9999</WarningLevel>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <NoWarn>$(NoWarn);CA1848;NU5104</NoWarn>
+        <NoWarn>$(NoWarn);CA1848;NU5104;RCS1181</NoWarn>
 
         <PackageId>RxDBDotNet</PackageId>
         <Authors>Ziptility;RxDBDotNet Contributors</Authors>

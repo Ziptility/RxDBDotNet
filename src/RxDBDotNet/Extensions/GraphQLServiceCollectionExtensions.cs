@@ -134,6 +134,7 @@ public static class GraphQLServiceCollectionExtensions
     }
 
 #pragma warning disable CA1812
+    // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class QueryExtension<TDocument> : ObjectTypeExtension
 #pragma warning restore CA1812
         where TDocument : class, IReplicatedDocument
@@ -171,6 +172,7 @@ public static class GraphQLServiceCollectionExtensions
     }
 
 #pragma warning disable CA1812
+    // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class MutationExtension<TDocument> : ObjectTypeExtension
 #pragma warning restore CA1812
         where TDocument : class, IReplicatedDocument
@@ -216,6 +218,7 @@ public static class GraphQLServiceCollectionExtensions
     }
 
 #pragma warning disable CA1812
+    // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class SubscriptionExtension<TDocument> : ObjectTypeExtension
 #pragma warning restore CA1812
         where TDocument : class, IReplicatedDocument
@@ -244,7 +247,7 @@ public static class GraphQLServiceCollectionExtensions
                         throw new UnauthorizedAccessException("Invalid or missing authorization token");
                     }
 
-                    var subscription = context.Service<SubscriptionResolver<TDocument>>();
+                    var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
                     return subscription.DocumentChangedStream(context.RequestAborted);
                 });
         }

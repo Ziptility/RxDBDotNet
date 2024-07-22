@@ -9,10 +9,6 @@ namespace RxDBDotNet.Tests.Setup;
 
 public class TestStartup : Startup
 {
-    public TestStartup(IConfiguration configuration) : base(configuration)
-    {
-    }
-
     public override void ConfigureServices(
         IServiceCollection services,
         IHostEnvironment environment,
@@ -43,13 +39,5 @@ public class TestStartup : Startup
         builder.Logging.SetMinimumLevel(LogLevel.Critical);
 
         builder.Configuration.AddEnvironmentVariables();
-    }
-
-    protected override void ConfigureDatabase(
-        IServiceCollection services,
-        IHostEnvironment environment,
-        WebApplicationBuilder builder,
-        bool isAspireEnvironment)
-    {
     }
 }

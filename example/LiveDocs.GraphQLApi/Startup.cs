@@ -6,13 +6,12 @@ using LiveDocs.GraphQLApi.Data;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
 using Microsoft.EntityFrameworkCore;
+using LiveDocs.GraphQLApi.Infrastructure;
 
 namespace LiveDocs.GraphQLApi;
 
-public class Startup(IConfiguration configuration)
+public class Startup
 {
-    public IConfiguration Configuration { get; } = configuration;
-
     public virtual void ConfigureServices(
         IServiceCollection services,
         IHostEnvironment environment,
@@ -61,7 +60,7 @@ public class Startup(IConfiguration configuration)
         });
     }
 
-    protected virtual void ConfigureDatabase(
+    protected void ConfigureDatabase(
         IServiceCollection services,
         IHostEnvironment environment,
         WebApplicationBuilder builder,
@@ -75,8 +74,8 @@ public class Startup(IConfiguration configuration)
         else
         {
             // Use a standard SQL Server configuration when not running with Aspire
-            services.AddDbContext<LiveDocsDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<LiveDocsDbContext>(options => options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
+                                                                                     ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
         }
     }
 

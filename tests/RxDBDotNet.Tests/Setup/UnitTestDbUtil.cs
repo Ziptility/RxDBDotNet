@@ -1,4 +1,5 @@
-﻿using Testcontainers.MsSql;
+﻿using LiveDocs.GraphQLApi.Infrastructure;
+using Testcontainers.MsSql;
 using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests.Setup;
@@ -11,7 +12,7 @@ public static class UnitTestDbUtil
 
     private static volatile bool _isInitialized;
 
-    public static async Task InitializeAsync(ITestOutputHelper output)
+    public static async Task InitializeAsync(IServiceProvider serviceProvider, ITestOutputHelper output)
     {
         ArgumentNullException.ThrowIfNull(output);
 
@@ -32,35 +33,13 @@ public static class UnitTestDbUtil
 
                 var connectionStringToMaster = sqlServerDockerContainer.GetConnectionString();
 
-                var connectionStringToTestDb = connectionStringToMaster.Replace("master", "LiveDocsTestDb");
+                var connectionStringToTestDb = connectionStringToMaster.Replace("master", "LiveDocsTestDb", StringComparison.OrdinalIgnoreCase);
 
-                // Environment.SetEnvironmentVariable(
-                //     ConfigKeys.DbConnectionString,
-                //     connectionStringToTestDb);
+                Environment.SetEnvironmentVariable(
+                    ConfigKeys.DbConnectionString,
+                    connectionStringToTestDb);
 
-                // var dockerPortId = await DockerSqlDatabaseUtilities
-                //     .EnsureDockerStartedAndGetContainerIdAndPortAsync();
-                //
-                // const string dbName = "UnitTestDatabase";
-                //
-                // var sqlConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionStringToTestDb(
-                //     dbName,
-                //     dockerPortId);
-                //
-                // Environment.SetEnvironmentVariable(
-                //     ConfigKeys.DbConnectionString,
-                //     sqlConnectionString);
-                //
-                // var databaseUpgradeResult = DbUpScriptRunner.Run(
-                //     sqlConnectionString,
-                //     ZiptilityEnvironment.UnitTest);
-                //
-                // if (!databaseUpgradeResult.Successful)
-                // {
-                //     throw new InvalidStateException(
-                //         "Database migration failed. See inner exception for details",
-                //         databaseUpgradeResult.Error);
-                // }
+                await LiveDocsDbInitializer.InitializeAsync(serviceProvider);
 
                 _isInitialized = true;
             }

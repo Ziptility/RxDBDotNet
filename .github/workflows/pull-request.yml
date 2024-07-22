@@ -18,20 +18,16 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Install .NET Aspire workload
-      run: dotnet workload install aspire
-
     - name: Install Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18.x'
       
-    - name: Install npm dependencies
+    - name: Install dependencies and build
       working-directory: example/LiveDocs.RxDBClient
-      run: npm install
-
-    - name: Ensure Docker is running
-      run: docker info
+      run: |
+        npm ci
+        npm run build
 
     - name: Restore dependencies
       run: dotnet restore

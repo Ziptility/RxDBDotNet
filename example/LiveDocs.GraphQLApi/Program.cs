@@ -9,7 +9,7 @@ public sealed class Program
         // Check if we're running in an Aspire environment
         var isAspireEnvironment = builder.Configuration.GetValue<bool>("IsAspireEnvironment");
 
-        var startup = new Startup(builder.Configuration);
+        var startup = new Startup();
         startup.ConfigureServices(builder.Services, builder.Environment, builder, isAspireEnvironment);
 
         var app = builder.Build();

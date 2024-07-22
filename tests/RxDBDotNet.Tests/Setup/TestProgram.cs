@@ -15,7 +15,7 @@ public sealed class TestProgram
 
         var builder = WebApplication.CreateBuilder(args);
 
-        var startup = new TestStartup(builder.Configuration);
+        var startup = new TestStartup();
         startup.ConfigureServices(builder.Services, builder.Environment, builder, isAspireEnvironment: false);
 
         var webApplication = builder.Build();

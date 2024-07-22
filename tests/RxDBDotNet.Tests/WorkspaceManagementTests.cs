@@ -10,7 +10,7 @@ namespace RxDBDotNet.Tests;
 public class WorkspaceManagementTests(ITestOutputHelper output) : TestBase(output)
 {
     [Fact]
-    public async Task TestCase1_1_CreateNewWorkspace_ShouldSucceed()
+    public async Task TestCase1_1_CreateSingleDocument_ShouldSucceed()
     {
         // Arrange
         var newWorkspace = new Workspace
@@ -63,7 +63,7 @@ public class WorkspaceManagementTests(ITestOutputHelper output) : TestBase(outpu
     }
 
     [Fact(Skip = "Work in progress")]
-    public async Task TestCase1_2_CreateWorkspaceWithDuplicateName_ShouldFail()
+    public async Task TestCase1_2_CreateDocumentsWithDuplicateName_ShouldFail()
     {
         // Arrange
         const string existingWorkspaceName = "Existing Workspace";
@@ -117,7 +117,7 @@ public class WorkspaceManagementTests(ITestOutputHelper output) : TestBase(outpu
     }
 
     [Fact(Skip = "Work in progress")]
-    public async Task TestCase1_3_PullWorkspaces_ShouldReturnCreatedWorkspaces()
+    public async Task TestCase1_3_PullDocument_ShouldReturnCreatedDocuments()
     {
         // Arrange
         await CreateWorkspace("Workspace 1");
@@ -168,7 +168,7 @@ public class WorkspaceManagementTests(ITestOutputHelper output) : TestBase(outpu
     }
 
     [Fact(Skip = "Work in progress")]
-    public async Task TestCase1_4_StreamWorkspace_ShouldReceiveUpdates()
+    public async Task TestCase1_4_StreamDocument_ShouldReceiveUpdates()
     {
         // Note: This is a basic test for the subscription setup.
         // Testing real-time updates would require a more complex test setup.

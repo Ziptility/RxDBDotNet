@@ -43,15 +43,15 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
     {
         await Semaphore.WaitAsync();
 
-        await UnitTestDbUtil.InitializeAsync(Output);
-
-        // Disposed in call to FinishAsync()
+        // Disposed in DisposeAsync()
 #pragma warning disable CA2000
         Factory = new WebApplicationFactory<TestProgram>().WithWebHostBuilder(builder => builder
 #pragma warning restore CA2000
-            .UseSolutionRelativeContentRoot("LiveDocs.GraphQLApi"));
+            .UseSolutionRelativeContentRoot("example/LiveDocs.GraphQLApi"));
 
         _asyncTestServiceScope = Factory.Services.CreateAsyncScope();
+
+        await UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output);
     }
 
     public async Task DisposeAsync()

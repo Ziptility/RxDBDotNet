@@ -109,7 +109,33 @@ The test cases are organized to progress from basic operations to more complex s
 - Multiple documents exist in the system
 
 **Data Setup:**
-- Create at least 3 workspace documents with known content and timestamps
+- Create at least 3 workspace documents with known content and timestamps:
+  ```csharp
+  var documents = new List<Workspace>
+  {
+      new Workspace
+      {
+          Id = Guid.NewGuid(),
+          Name = "Workspace 1",
+          UpdatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+          IsDeleted = false
+      },
+      new Workspace
+      {
+          Id = Guid.NewGuid(),
+          Name = "Workspace 2",
+          UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1),
+          IsDeleted = false
+      },
+      new Workspace
+      {
+          Id = Guid.NewGuid(),
+          Name = "Workspace 3",
+          UpdatedAt = DateTimeOffset.UtcNow,
+          IsDeleted = false
+      }
+  };
+  ```
 
 **Execution Flow:**
 1. Send a GraphQL query to pull documents with null checkpoint and a limit of 10
@@ -132,7 +158,16 @@ The test cases are organized to progress from basic operations to more complex s
 
 **Data Setup:**
 - Use the documents from Test Case 2.1
-- Create a new document after recording the checkpoint from the previous pull
+- Create a new document after recording the checkpoint from the previous pull:
+  ```csharp
+  var newDocument = new Workspace
+  {
+      Id = Guid.NewGuid(),
+      Name = "Workspace 4",
+      UpdatedAt = DateTimeOffset.UtcNow,
+      IsDeleted = false
+  };
+  ```
 
 **Execution Flow:**
 1. Send a GraphQL query to pull documents with the checkpoint from Test Case 2.1 and a limit of 10
@@ -142,7 +177,40 @@ The test cases are organized to progress from basic operations to more complex s
 - The response should include a new checkpoint based on the latest document
 - Documents created before or at the checkpoint time should not be included
 
-#### Test Case 2.3: Push Operation
+**Additional Notes:**
+- Verify that documents created before or at the checkpoint time are not included in the response
+- Ensure that the new checkpoint in the response matches the UpdatedAt and Id of the newest document
+
+#### Test Case 2.3: Checkpoint Iteration to Pull a Large Number of Documents
+
+**Objective:** Verify correct implementation of checkpoint iteration for retrieving a large dataset.
+
+**Preconditions:**
+- A large number of documents (e.g., 250) exist in the system
+
+**Data Setup:**
+- Create 250 workspace documents with incremental UpdatedAt timestamps
+
+**Execution Flow:**
+1. Send an initial GraphQL query to pull documents with null checkpoint and a limit of 100
+2. Record the returned checkpoint
+3. Send a second query using the checkpoint from step 2 and the same limit
+4. Record the new checkpoint
+5. Send a third query using the checkpoint from step 4 and the same limit
+
+**Expected Results:**
+- The first query should return 100 documents and a checkpoint
+- The second query should return 100 different documents and a new checkpoint
+- The third query should return the remaining 50 documents and a final checkpoint
+- Documents in each batch should be newer than those in the previous batch
+- The final query should return an empty array of documents, indicating no more data to pull
+
+**Additional Notes:**
+- Verify that each batch contains the correct documents based on their UpdatedAt timestamps
+- Ensure that no documents are missed or duplicated across batches
+- Check that the checkpoint in each response correctly represents the last document in that batch
+
+#### Test Case 2.4: Push Operation
 
 **Objective:** Verify correct handling of pushing new and updated documents to the server.
 
@@ -189,7 +257,7 @@ The test cases are organized to progress from basic operations to more complex s
 - The retrieved documents should match the pushed data
 - The server should correctly handle both the creation of a new document and the update of an existing one
 
-#### Test Case 2.4: Conflict Detection and Resolution
+#### Test Case 2.5: Conflict Detection and Resolution
 
 **Objective:** Ensure that the server correctly detects and reports conflicts during push operations.
 

@@ -20,14 +20,16 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <WarningLevel>9999</WarningLevel>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+        <NoWarn>$(NoWarn);CA1848;CA2007</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Example.GraphQLApi\Example.GraphQLApi.csproj" />
+        <ProjectReference Include="..\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Aspire.Hosting.AppHost" Version="8.0.2" />
+        <PackageReference Include="Aspire.Hosting.SqlServer" Version="8.0.2" />
         <PackageReference Include="Aspire.Hosting.NodeJs" Version="8.0.2" />
         <PackageReference Include="Aspire.Hosting.Redis" Version="8.0.2" />
     </ItemGroup>

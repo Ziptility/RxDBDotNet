@@ -397,3 +397,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /example/Example.RxDBClient/public/bundle.js
+/example/LiveDocs.RxDBClient/public/bundle.js

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -14,19 +14,26 @@
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
-        <NoWarn>$(NoWarn);CA1014;CA1812;CA1716;CA1008;S4136;CA1711;CA1027;S2094;RCS1123;RCS1206</NoWarn>
+        <NoWarn>$(NoWarn);CA2007;CA1707;MA0051;MA0004;CA2234</NoWarn>
         <ImplicitUsings>enable</ImplicitUsings>
-
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <GenerateProgramFile>false</GenerateProgramFile>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <CodeCoverageInclude>[RxDBDotNet*]*</CodeCoverageInclude>
+        <CodeCoverageExclude>[RxDBDotNet.Tests]*,[LiveDocs*]*,[Example*]*</CodeCoverageExclude>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.7" />
         <PackageReference Include="coverlet.collector" Version="6.0.2">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="Testcontainers.MsSql" Version="3.9.0" />
         <PackageReference Include="xunit" Version="2.9.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
           <PrivateAssets>all</PrivateAssets>
@@ -63,7 +70,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\example\Example.GraphQLApi\Example.GraphQLApi.csproj" />
+      <ProjectReference Include="..\..\example\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
     </ItemGroup>
 
 </Project>

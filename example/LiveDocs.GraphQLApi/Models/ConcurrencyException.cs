@@ -1,4 +1,4 @@
-﻿namespace Example.GraphQLApi.Models;
+﻿namespace LiveDocs.GraphQLApi.Models;
 
 /// <summary>
 /// Represents errors that occur when a concurrency conflict is detected during document operations.

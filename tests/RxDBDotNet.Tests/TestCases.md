@@ -1,234 +1,136 @@
-# RxDBDotNet E2E Test Cases using the LiveDocs test API
+# RxDBDotNet E2E Test Cases
 
-LiveDocs is a real-time collaborative document editing GraphQL API built on RxDBDotNet. It enables users to create, edit, and share documents seamlessly across multiple devices and users, all while maintaining data integrity and ensuring a smooth, responsive experience.
+This document outlines a comprehensive set of end-to-end (E2E) test cases designed to validate the functionality, performance, and reliability of the RxDBDotNet library. These tests focus on the correct implementation of the RxDB replication protocol, integration with Hot Chocolate GraphQL, and the proper handling of Entity Framework Core (EF Core) in a distributed application context.
 
-This test case document outlines a comprehensive set of scenarios designed to validate the functionality, performance, and reliability of the RxDBDotNet library in a real-world application context. Using LiveDocs, a real-time collaborative document editing application, as a test bed, these test cases go beyond simple CRUD operations to explore the intricacies of multi-user interactions and device synchronization.
-The test cases encompass a wide range of scenarios, including:
-
-1. Verification of data consistency across multiple clients
-2. Proper merging of offline changes upon reconnection
-3. Handling of edge cases such as conflicting edits and intermittent connectivity
-4. Complex multi-user scenarios with simultaneous edits
-5. Simulated network failures and recovery
-
-By executing these test cases, we aim to thoroughly validate the robustness and reliability of the RxDBDotNet library under demanding, real-world conditions. This comprehensive approach ensures that RxDBDotNet can effectively support applications requiring seamless real-time collaboration and data synchronization across multiple users and devices.
-
-## Test Data Model
-
-```csharp
-/// <summary>
-/// Represents a live, collaborative document within the LiveDocs system.
-/// </summary>
-/// <remarks>
-/// <para>
-/// A LiveDoc is the core entity in the LiveDocs collaborative editing platform. It encapsulates
-/// the content and metadata of a single document that can be collaboratively edited in real-time
-/// by multiple users. This class implements the IReplicatedDocument interface, enabling it to be
-/// efficiently synchronized across multiple clients and the server using the RxDB replication protocol.
-/// </para>
-/// <para>
-/// Each LiveDoc has a unique identifier, content that can be edited, an owner, and timestamps for
-/// tracking updates. The IsDeleted property supports soft deletion, allowing for document recovery
-/// and maintaining a consistent history of changes.
-/// </para>
-/// <para>
-/// As an IReplicatedDocument, LiveDoc instances are automatically handled by the RxDBDotNet
-/// replication system, ensuring real-time updates, conflict resolution, and offline support
-/// across all connected clients.
-/// </para>
-/// </remarks>
-/// <seealso cref="IReplicatedDocument"/>
-public class LiveDoc : IReplicatedDocument
-{
-    /// <summary>
-    /// Gets or initializes the unique identifier for the live doc.
-    /// </summary>
-    public required Guid Id { get; init; }
-
-    /// <summary>
-    /// Gets or sets the content of the live doc.
-    /// </summary>
-    public required string Content { get; set; }
-
-    /// <summary>
-    /// Gets or initializes the unique identifier of the live doc's owner.
-    /// </summary>
-    public required Guid OwnerId { get; init; }
-
-    /// <summary>
-    /// Gets or sets the date and time when the live doc was last updated.
-    /// </summary>
-    public required DateTimeOffset UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the live doc has been deleted.
-    /// </summary>
-    public required bool IsDeleted { get; set; }
-}
-
-/// <summary>
-/// Represents a user of the LiveDocs system.
-/// </summary>
-public class User : IReplicatedDocument
-{
-    /// <summary>
-    /// Gets or initializes the unique identifier for the user.
-    /// </summary>
-    public required Guid Id { get; init; }
-
-    /// <summary>
-    /// Gets or sets the username of the user.
-    /// </summary>
-    public required string Username { get; set; }
-
-    /// <summary>
-    /// Gets or sets the role of the user.
-    /// </summary>
-    public required string Role { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date and time when the user account was last updated.
-    /// </summary>
-    public required DateTimeOffset UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the user account has been deleted.
-    /// </summary>
-    public required bool IsDeleted { get; set; }
-}
-```
+The test cases are organized to progress from basic operations to more complex scenarios, ensuring that fundamental functionalities are tested before moving on to advanced features. This approach allows for a systematic validation of the library's capabilities and its adherence to the RxDB replication protocol.
 
 ## Test Cases
 
-### 1. User Management
+### 1. Basic Document Operations
 
-#### Test Case 1.1: Create a new user
+#### Test Case 1.1: Create a Single Document
 
-**Objective:** Verify that a new user can be created in the system.
+**Objective:** Verify that a single document can be created and stored correctly using the RxDBDotNet library.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- User collection is empty
+- GraphQL endpoint is configured and operational
 
 **Data Setup:**
-- New user data:
+- Workspace document data:
   ```csharp
-  var newUser = new TestUser
+  var newWorkspace = new Workspace
   {
       Id = Guid.NewGuid(),
-      Username = "testuser1",
-      Role = "User",
+      Name = "Test Workspace",
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Send a GraphQL mutation to create the new user
-2. Retrieve the created user using a GraphQL query
-
-**Expected Results:**
-- The mutation should return a success response
-- The query should return a user object matching the input data
-- The user should be present in the database
-
-**Additional Notes:**
-- Verify that the UpdatedAt field is set to the current time
-- Ensure that the IsDeleted field is set to false
-
-#### Test Case 1.2: Retrieve an existing user
-
-**Objective:** Verify that an existing user can be retrieved from the system.
-
-**Preconditions:**
-- RxDBDotNet server is running and accessible
-- At least one user exists in the system (created in Test Case 1.1)
-
-**Data Setup:**
-- Use the user created in Test Case 1.1
-
-**Execution Flow:**
-1. Send a GraphQL query to retrieve the user by ID
-
-**Expected Results:**
-- The query should return the user object matching the given ID
-- All fields should match the data from Test Case 1.1
-
-### 2. Document Operations
-
-#### Test Case 2.1: Create a new document
-
-**Objective:** Verify that a new document can be created in the system.
-
-**Preconditions:**
-- RxDBDotNet server is running and accessible
-- At least one user exists in the system
-- Document collection is empty
-
-**Data Setup:**
-- Existing user ID: [Use the ID of the user created in Test Case 1.1]
-- New document data:
-  ```csharp
-  var newDocument = new TestDocument
-  {
-      Id = Guid.NewGuid(),
-      Content = "This is a test document.",
-      OwnerId = [Existing user ID],
-      UpdatedAt = DateTimeOffset.UtcNow,
-      IsDeleted = false
-  };
-  ```
-
-**Execution Flow:**
-1. Send a GraphQL mutation to create the new document
+1. Send a GraphQL mutation to create the new workspace document
 2. Retrieve the created document using a GraphQL query
 
 **Expected Results:**
 - The mutation should return a success response
-- The query should return a document object matching the input data
-- The document should be present in the database
+- The query should return a document matching the input data
+- The document should be present in the underlying database
 
 **Additional Notes:**
 - Verify that the UpdatedAt field is set to the current time
 - Ensure that the IsDeleted field is set to false
-- Check that the OwnerId matches the ID of the user who created the document
 
-### 3. Pull Operations
+#### Test Case 1.2: Retrieve a Single Document
 
-#### Test Case 3.1: Initial Pull (Checkpoint Iteration)
+**Objective:** Confirm that a previously created document can be retrieved accurately.
+
+**Preconditions:**
+- A workspace document exists in the system (created in Test Case 1.1)
+
+**Execution Flow:**
+1. Send a GraphQL query to retrieve the workspace document by its ID
+
+**Expected Results:**
+- The query should return the correct workspace document
+- All fields should match the data from the creation step
+
+#### Test Case 1.3: Update a Single Document
+
+**Objective:** Verify that an existing document can be updated correctly.
+
+**Preconditions:**
+- A workspace document exists in the system (created in Test Case 1.1)
+
+**Data Setup:**
+- Updated workspace data:
+  ```csharp
+  var updatedWorkspace = new Workspace
+  {
+      Id = [Existing Workspace Id],
+      Name = "Updated Workspace Name",
+      UpdatedAt = DateTimeOffset.UtcNow,
+      IsDeleted = false
+  };
+  ```
+
+**Execution Flow:**
+1. Send a GraphQL mutation to update the existing workspace document
+2. Retrieve the updated document using a GraphQL query
+
+**Expected Results:**
+- The mutation should return a success response
+- The query should return the document with updated fields
+- The UpdatedAt field should be more recent than the original creation time
+
+#### Test Case 1.4: Soft Delete a Document
+
+**Objective:** Ensure that the soft delete functionality works as expected.
+
+**Preconditions:**
+- A workspace document exists in the system (created in Test Case 1.1)
+
+**Execution Flow:**
+1. Send a GraphQL mutation to soft delete the workspace document
+2. Retrieve the soft-deleted document using a GraphQL query
+
+**Expected Results:**
+- The mutation should return a success response
+- The query should return the document with IsDeleted set to true
+- The document should still be present in the database, not physically deleted
+
+### 2. RxDB Replication Protocol Implementation
+
+#### Test Case 2.1: Initial Pull (Checkpoint Iteration)
 
 **Objective:** Verify the correct implementation of the initial pull operation with a null checkpoint.
 
 **Preconditions:**
-- RxDBDotNet server is running and accessible
 - Multiple documents exist in the system
 
 **Data Setup:**
-- Create at least 3 documents with known content and timestamps:
+- Create at least 3 workspace documents with known content and timestamps:
   ```csharp
-  var documents = new List<TestDocument>
+  var documents = new List<Workspace>
   {
-      new TestDocument
+      new Workspace
       {
           Id = Guid.NewGuid(),
-          Content = "First document",
-          OwnerId = [Existing user ID],
+          Name = "Workspace 1",
           UpdatedAt = DateTimeOffset.UtcNow.AddHours(-2),
           IsDeleted = false
       },
-      new TestDocument
+      new Workspace
       {
           Id = Guid.NewGuid(),
-          Content = "Second document",
-          OwnerId = [Existing user ID],
+          Name = "Workspace 2",
           UpdatedAt = DateTimeOffset.UtcNow.AddHours(-1),
           IsDeleted = false
       },
-      new TestDocument
+      new Workspace
       {
           Id = Guid.NewGuid(),
-          Content = "Third document",
-          OwnerId = [Existing user ID],
+          Name = "Workspace 3",
           UpdatedAt = DateTimeOffset.UtcNow,
           IsDeleted = false
       }
@@ -241,55 +143,53 @@ public class User : IReplicatedDocument
 **Expected Results:**
 - The query should return all documents, ordered by their UpdatedAt timestamp
 - The response should include a new checkpoint based on the latest document
+- The number of returned documents should not exceed the specified limit
 
 **Additional Notes:**
 - Verify that the documents are returned in the correct order (oldest to newest)
-- Ensure that the checkpoint in the response matches the UpdatedAt and ID of the newest document
+- Ensure that the checkpoint in the response matches the UpdatedAt and Id of the newest document
 
-#### Test Case 3.2: Subsequent Pull
+#### Test Case 2.2: Subsequent Pull (Checkpoint Iteration)
 
 **Objective:** Ensure proper handling of pulls with a valid checkpoint.
 
 **Preconditions:**
-- RxDBDotNet server is running and accessible
-- Multiple documents exist in the system, including some created after the checkpoint
+- Multiple documents exist in the system, including some created after the checkpoint from Test Case 2.1
 
 **Data Setup:**
-- Use the documents from Test Case 3.1
+- Use the documents from Test Case 2.1
 - Create a new document after recording the checkpoint from the previous pull:
   ```csharp
-  var newDocument = new TestDocument
+  var newDocument = new Workspace
   {
       Id = Guid.NewGuid(),
-      Content = "Fourth document",
-      OwnerId = [Existing user ID],
+      Name = "Workspace 4",
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Send a GraphQL query to pull documents with the checkpoint from Test Case 3.1 and a limit of 10
+1. Send a GraphQL query to pull documents with the checkpoint from Test Case 2.1 and a limit of 10
 
 **Expected Results:**
 - The query should return only the documents created or updated after the given checkpoint
-- In this case, it should return only the "Fourth document"
 - The response should include a new checkpoint based on the latest document
+- Documents created before or at the checkpoint time should not be included
 
 **Additional Notes:**
 - Verify that documents created before or at the checkpoint time are not included in the response
-- Ensure that the new checkpoint in the response matches the UpdatedAt and ID of the newest document
+- Ensure that the new checkpoint in the response matches the UpdatedAt and Id of the newest document
 
-#### Test Case 3.3: Checkpoint iteration to pull a large number of documents in small "batches"
+#### Test Case 2.3: Checkpoint Iteration to Pull a Large Number of Documents
 
-**Objective:** Verify correct implementation of checkpoint iteration operations using checkpoints and limits.
+**Objective:** Verify correct implementation of checkpoint iteration for retrieving a large dataset.
 
 **Preconditions:**
-- RxDBDotNet server is running and accessible
-- A large number of documents exist in the system (e.g., 250)
+- A large number of documents (e.g., 250) exist in the system
 
 **Data Setup:**
-- Create 250 documents with incremental UpdatedAt timestamps
+- Create 250 workspace documents with incremental UpdatedAt timestamps
 
 **Execution Flow:**
 1. Send an initial GraphQL query to pull documents with null checkpoint and a limit of 100
@@ -310,222 +210,265 @@ public class User : IReplicatedDocument
 - Ensure that no documents are missed or duplicated across batches
 - Check that the checkpoint in each response correctly represents the last document in that batch
 
-### 4. Push Operations
+#### Test Case 2.4: Push Operation
 
-#### Test Case 4.1: Push a new document
-
-**Objective:** Verify correct handling of pushing a new document to the server.
+**Objective:** Verify correct handling of pushing new and updated documents to the server.
 
 **Preconditions:**
 - RxDBDotNet server is running and accessible
-- A user exists in the system
 
 **Data Setup:**
-- Existing user ID: [Use the ID of a previously created user]
 - New document data:
   ```csharp
-  var newDocument = new TestDocument
+  var newUser = new User
   {
       Id = Guid.NewGuid(),
-      Content = "This document was pushed from the client",
-      OwnerId = [Existing user ID],
+      FirstName = "John",
+      LastName = "Doe",
+      Email = "john.doe@example.com",
+      Role = UserRole.User,
+      WorkspaceId = [Existing Workspace Id],
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
-
-**Execution Flow:**
-1. Send a GraphQL mutation to push the new document
-2. Retrieve the pushed document using a GraphQL query
-
-**Expected Results:**
-- The mutation should return a success response
-- The query should return a document matching the pushed data
-- The document should be present in the database with all fields matching the pushed data
-
-**Additional Notes:**
-- Verify that the server doesn't modify any fields of the pushed document
-- Ensure that a subsequent pull operation would include this new document
-
-#### Test Case 4.2: Push an updated document
-
-**Objective:** Ensure proper updating of existing documents through push operations.
-
-**Preconditions:**
-- RxDBDotNet server is running and accessible
-- A document exists in the system
-
-**Data Setup:**
-- Existing document ID: [Use the ID of a previously created document]
-- Updated document data:
+- Updated document data (assuming an existing user):
   ```csharp
-  var updatedDocument = new TestDocument
+  var updatedUser = new User
   {
-      Id = [Existing document ID],
-      Content = "This document was updated from the client",
-      OwnerId = [Existing user ID],
+      Id = [Existing User Id],
+      FirstName = "Jane",
+      LastName = "Doe",
+      Email = "jane.doe@example.com",
+      Role = UserRole.User,
+      WorkspaceId = [Existing Workspace Id],
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Retrieve the current state of the document
-2. Send a GraphQL mutation to push the updated document, including the current server state as the assumedMasterState
-3. Retrieve the updated document using a GraphQL query
+1. Send a GraphQL mutation to push the new user document
+2. Send another GraphQL mutation to push the updated user document
+3. Retrieve both documents using GraphQL queries
 
 **Expected Results:**
-- The mutation should return a success response
-- The query should return a document with the updated fields
-- The document in the database should reflect the changes
+- Both push mutations should return success responses
+- The retrieved documents should match the pushed data
+- The server should correctly handle both the creation of a new document and the update of an existing one
 
-**Additional Notes:**
-- Verify that unchanged fields remain the same
-- Ensure that a subsequent pull operation would include this updated document
+#### Test Case 2.5: Conflict Detection and Resolution
 
-### 5. Conflict Handling
-
-#### Test Case 5.1: Detect and Report Conflict
-
-**Objective:** Verify that conflicts are correctly detected and reported when pushing changes.
+**Objective:** Ensure that the server correctly detects and reports conflicts during push operations.
 
 **Preconditions:**
-- RxDBDotNet server is running and accessible
-- A document exists in the system
+- An existing user document in the system
 
 **Data Setup:**
-- Existing document ID: [Use the ID of a previously created document]
-- Two client updates:
+- Two conflicting updates to the same user document:
   ```csharp
-  var clientUpdate1 = new TestDocument
+  var update1 = new User
   {
-      Id = [Existing document ID],
-      Content = "Update from Client 1",
-      OwnerId = [Existing user ID],
+      Id = [Existing User Id],
+      FirstName = "Alice",
+      LastName = "Smith",
+      Email = "alice.smith@example.com",
+      Role = UserRole.User,
+      WorkspaceId = [Existing Workspace Id],
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
 
-  var clientUpdate2 = new TestDocument
+  var update2 = new User
   {
-      Id = [Existing document ID],
-      Content = "Update from Client 2",
-      OwnerId = [Existing user ID],
+      Id = [Existing User Id],
+      FirstName = "Bob",
+      LastName = "Johnson",
+      Email = "bob.johnson@example.com",
+      Role = UserRole.User,
+      WorkspaceId = [Existing Workspace Id],
       UpdatedAt = DateTimeOffset.UtcNow,
       IsDeleted = false
   };
   ```
 
 **Execution Flow:**
-1. Both clients retrieve the current state of the document
-2. Client 1 sends a push mutation with its update
-3. Immediately after, Client 2 sends a push mutation with its update (using the original server state as assumedMasterState)
-4. Both clients attempt to pull the latest document state
+1. Send a GraphQL mutation to push update1
+2. Immediately after, send another GraphQL mutation to push update2 (using the original server state as assumedMasterState)
+3. Attempt to retrieve the latest document state
 
 **Expected Results:**
-- Client 1's push should succeed
-- Client 2's push should be rejected due to conflict
-- The pull operation should return the document with Client 1's update
-- Client 2 should receive conflict information
+- The first push should succeed
+- The second push should be rejected due to conflict
+- The server should return conflict information
+- A subsequent query should return the document with the first update applied
 
-**Additional Notes:**
-- Verify that the server correctly identifies the conflict
-- Ensure that the conflict information allows Client 2 to resolve the conflict locally
+### 3. GraphQL and EF Core Integration
 
-### 6. Real-time Updates (Subscriptions)
+#### Test Case 3.1: Complex Query with Filtering and Pagination
 
-#### Test Case 6.1: Subscribe to Changes
-
-**Objective:** Verify that subscriptions correctly emit real-time updates for document changes.
+**Objective:** Verify that complex GraphQL queries are correctly translated to EF Core queries.
 
 **Preconditions:**
-- RxDBDotNet server is running and accessible
-- GraphQL subscriptions are properly configured
+- Multiple user and workspace documents exist in the system
 
 **Execution Flow:**
-1. Start a GraphQL subscription for document changes
-2. Create a new document
-3. Update an existing document
-4. Delete (soft delete) an existing document
+1. Send a GraphQL query to retrieve users with specific criteria (e.g., by role, email domain) with pagination
 
 **Expected Results:**
-- The subscription should receive a notification for each change (creation, update, deletion)
-- Each notification should include the changed document and a new checkpoint
+- The query should return the correct set of users based on the specified criteria
+- The results should be properly paginated
+- The query should be efficiently executed at the database level (verify with query plan if possible)
 
-**Additional Notes:**
-- Verify that the subscription receives changes in real-time
-- Ensure that the checkpoint in each notification is updated correctly
+#### Test Case 3.2: Nested Document Queries
 
-### 7. Security Policy Testing
-
-#### Test Case 7.1: Enforce Read Policy
-
-**Objective:** Verify that the read policy is correctly enforced for different user roles.
+**Objective:** Ensure that queries for nested or related documents are handled correctly.
 
 **Preconditions:**
-- RxDBDotNet server is running with security policies configured
-- Users with different roles exist in the system
-- Documents with different owners exist in the system
-
-**Data Setup:**
-- Create users with different roles:
-  ```csharp
-  var adminUser = new TestUser { Id = Guid.NewGuid(), Username = "admin", Role = "Admin", ... };
-  var regularUser = new TestUser { Id = Guid.NewGuid(), Username = "user", Role = "User", ... };
-  ```
-- Create documents owned by different users
+- Workspaces with associated users exist in the system
 
 **Execution Flow:**
-1. Attempt to read documents as an admin user
-2. Attempt to read documents as a regular user
-3. Attempt to read documents as an unauthenticated user
+1. Send a GraphQL query to retrieve workspaces along with their associated users
 
 **Expected Results:**
-- Admin user should be able to read all documents
-- Regular user should only be able to read their own documents
-- Unauthenticated user should not be able to read any documents
+- The query should return workspaces with their related user documents
+- The nested data should be correctly structured in the GraphQL response
+- The query should be efficiently executed, avoiding N+1 query problems
 
-#### Test Case 7.2: Enforce Write Policy
+### 4. Authorization and Authentication
 
-**Objective:** Verify that the write policy is correctly enforced for different user roles.
+#### Test Case 4.1: Basic Authorization Check
+
+**Objective:** Verify that basic authorization rules are enforced.
 
 **Preconditions:**
-- RxDBDotNet server is running with security policies configured
-- Users with different roles exist in the system
-- Documents with different owners exist in the system
-
-**Data Setup:**
-- Use the users and documents from Test Case 7.1
+- Users with different roles (User, Admin, SuperAdmin) exist in the system
 
 **Execution Flow:**
-1. Attempt to create a new document as different user roles
-2. Attempt to update an existing document as different user roles
-3. Attempt to delete a document as different user roles
+1. Attempt to perform operations (e.g., create a workspace) with different user roles
 
 **Expected Results:**
-- Admin user should be able to create, update, and delete any document
-- Regular user should only be able to create new documents and update/delete their own documents
-- Unauthenticated user should not be able to perform any write operations
+- Operations should be allowed or denied based on the user's role
+- Unauthorized attempts should be rejected with appropriate error messages
 
-#### Test Case 7.3: Policy-based Subscription Filtering
+#### Test Case 4.2: Cross-Workspace Access Control
 
-**Objective:** Verify that subscriptions only emit updates for documents the user has permission to access.
+**Objective:** Ensure that users cannot access or modify data from workspaces they don't belong to.
 
 **Preconditions:**
-- RxDBDotNet server is running with security policies configured
-- Users with different roles exist in the system
-- Documents with different owners exist in the system
-
-**Data Setup:**
-- Use the users and documents from Test Case 7.1
+- Multiple workspaces with associated users exist
 
 **Execution Flow:**
-1. Start subscriptions for document changes as different user roles
-2. Perform various document operations (create, update, delete) on documents owned by different users
+1. Authenticate as a user from Workspace A
+2. Attempt to retrieve or modify data from Workspace B
 
 **Expected Results:**
-- Admin subscription should receive updates for all document changes
-- Regular user subscription should only receive updates for their own documents
-- Unauthenticated user subscription should not receive any updates
+- The server should reject attempts to access or modify data from other workspaces
+- Appropriate error messages should be returned
 
-These test cases provide a comprehensive coverage of RxDBDotNet's functionality, including the core replication features and security policy enforcement. They are ordered logically, building upon each other to create a complete test scenario. By implementing these test cases, you should achieve high code coverage of the RxDBDotNet library while also validating the security features you plan to implement.
+#### Test Case 4.3: Admin Operations
+
+**Objective:** Verify that admin users can perform privileged operations within their workspace.
+
+**Preconditions:**
+- Admin users exist in different workspaces
+
+**Execution Flow:**
+1. Authenticate as an admin user
+2. Perform admin-only operations (e.g., create new users, modify workspace settings)
+
+**Expected Results:**
+- Admin operations should be successful within the admin's workspace
+- The same operations should be rejected for non-admin users
+
+### 5. Real-time Updates and Subscriptions
+
+#### Test Case 5.1: Document Change Subscription
+
+**Objective:** Verify that real-time updates are correctly propagated through GraphQL subscriptions.
+
+**Preconditions:**
+- GraphQL subscription endpoint is configured and operational
+
+**Execution Flow:**
+1. Start a subscription for document changes (e.g., user document updates)
+2. Perform a series of mutations (create, update, delete) on user documents
+3. Observe the subscription stream
+
+**Expected Results:**
+- The subscription should receive real-time updates for each document change
+- Updates should include the full updated document state
+- The subscription should handle different types of changes (creation, update, deletion) correctly
+
+#### Test Case 5.2: Filtered Subscriptions
+
+**Objective:** Ensure that subscriptions can be filtered to receive only relevant updates.
+
+**Preconditions:**
+- Multiple types of documents (e.g., users, workspaces) exist in the system
+
+**Execution Flow:**
+1. Start a filtered subscription (e.g., only for workspace updates)
+2. Perform mutations on various document types
+
+**Expected Results:**
+- The subscription should only receive updates for the specified document type
+- Updates for other document types should not be received
+
+### 6. Performance and Scalability
+
+#### Test Case 6.1: Large Dataset Handling
+
+**Objective:** Verify that the system can handle large datasets efficiently.
+
+**Preconditions:**
+- A large number of documents (e.g., 10,000+ users across multiple workspaces) exist in the system
+
+**Execution Flow:**
+1. Perform various operations (queries, mutations, subscriptions) on the large dataset
+
+**Expected Results:**
+- Operations should complete within acceptable time limits
+- The system should not experience significant performance degradation
+- Memory usage should remain within acceptable bounds
+
+#### Test Case 6.2: Concurrent Operations
+
+**Objective:** Ensure that the system can handle multiple concurrent operations without issues.
+
+**Execution Flow:**
+1. Simulate multiple clients performing various operations (queries, mutations, subscriptions) concurrently
+
+**Expected Results:**
+- The system should handle concurrent operations without errors
+- Data consistency should be maintained across all operations
+- Performance should not degrade significantly under concurrent load
+
+### 7. Error Handling and Edge Cases
+
+#### Test Case 7.1: Invalid Data Handling
+
+**Objective:** Verify that the system properly handles and reports attempts to insert or update invalid data.
+
+**Execution Flow:**
+1. Attempt to create or update documents with invalid data (e.g., missing required fields, incorrect data types)
+
+**Expected Results:**
+- The system should reject invalid data with appropriate error messages
+- The database should not be polluted with invalid data
+
+#### Test Case 7.2: Network Interruption Handling
+
+**Objective:** Ensure that the system gracefully handles network interruptions during replication.
+
+**Execution Flow:**
+1. Start a long-running operation (e.g., pulling a large dataset)
+2. Simulate a network interruption
+3. Restore the network connection and attempt to resume the operation
+
+**Expected Results:**
+- The system should detect the network interruption
+- Upon network restoration, the operation should either resume or restart cleanly
+- Data consistency should be maintained
+
+These test cases provide a comprehensive validation of the RxDBDotNet library's functionality, focusing on its implementation of the RxDB replication protocol, integration with GraphQL and EF Core, and handling of various operational scenarios. By progressing from basic operations to more complex scenarios, the test suite ensures thorough coverage of the library's capabilities and its behavior under different conditions.

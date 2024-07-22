@@ -1,7 +1,7 @@
 {
-    "name": "example.rx-dbclient",
+    "name": "livedocs.rx-dbclient",
     "version": "0.0.0",
-    "description": "Example.RxDBClient",
+    "description": "LiveDocs.RxDBClient",
     "main": "server.js",
     "author": "",
     "devDependencies": {
@@ -19,7 +19,7 @@
         "dexie": "^4.0.8",
         "express": "^4.19.2",
         "lokijs": "^1.5.12",
-        "rxdb": "^15.28.0",
+        "rxdb": "^15.28.1",
         "rxjs": "^7.8.1"
     },
     "scripts": {

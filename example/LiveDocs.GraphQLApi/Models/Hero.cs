@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using RxDBDotNet.Documents;
 
-namespace Example.GraphQLApi.Models;
+namespace LiveDocs.GraphQLApi.Models;
 
 public class Hero : IReplicatedDocument
 {

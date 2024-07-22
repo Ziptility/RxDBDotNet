@@ -17,20 +17,24 @@
       <ImplicitUsings>enable</ImplicitUsings>
       <WarningLevel>9999</WarningLevel>
       <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-      <NoWarn>$(NoWarn);CA1848</NoWarn>
+      <NoWarn>$(NoWarn);CA1848;CA2007</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RxDBDotNet\RxDBDotNet.csproj" />
-    <ProjectReference Include="..\Example.ServiceDefaults\Example.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\LiveDocs.ServiceDefaults\LiveDocs.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.2" />
     <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />
+    <PackageReference Include="RT.Comb" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
+    <None Update="Properties\launchSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

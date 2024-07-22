@@ -1,5 +1,4 @@
 ﻿using HotChocolate.Execution.Configuration;
-using HotChocolate.Resolvers;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
@@ -31,7 +30,11 @@ public static class GraphQLServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.Services.AddSingleton<IEventPublisher, DefaultEventPublisher>();
-        return builder;
+
+        // Ensure Query, Mutation, and Subscription types exist
+        EnsureRootTypesExist(builder);
+
+        return builder.InitializeOnStartup();
     }
 
     /// <summary>
@@ -88,7 +91,7 @@ public static class GraphQLServiceCollectionExtensions
             d.Name(checkpointInputTypeName)
                 .Description($"Input type for the checkpoint of {typeof(TDocument).Name} replication.");
             d.Field(f => f.UpdatedAt).Type<DateTimeType>().Description("The timestamp of the last update included in the synchronization batch.");
-            d.Field(f => f.LastDocumentId).Type<UuidType>().Description("The ID of the last document included in the synchronization batch.");
+            d.Field(f => f.LastDocumentId).Type<IdType>().Description("The ID of the last document included in the synchronization batch.");
         }));
     }
 
@@ -127,111 +130,86 @@ public static class GraphQLServiceCollectionExtensions
     private static IRequestExecutorBuilder ConfigureDocumentQueries<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        var documentTypeName = typeof(TDocument).Name;
-        var pullDocumentsName = $"pull{documentTypeName}";
-        var checkpointInputTypeName = $"{documentTypeName}InputCheckpoint";
-
-        return builder.AddQueryType(new ObjectType(d =>
-        {
-            d.Name("Query");
-            d.Field(pullDocumentsName)
-                .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
-                .Argument("checkpoint", a =>
-                {
-                    a.Type(checkpointInputTypeName)
-                        .Description($"The last known checkpoint for {documentTypeName} replication.");
-                })
-                .Argument("limit", a =>
-                {
-                    a.Type<NonNullType<IntType>>()
-                        .Description($"The maximum number of {documentTypeName} documents to return.");
-                })
-                .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint and limit.")
-                .Resolve(ResolvePullDocuments<TDocument>);
-        }));
+        return builder.AddTypeExtension<QueryExtension<TDocument>>();
     }
 
-    private static Task<DocumentPullBulk<TDocument>> ResolvePullDocuments<TDocument>(IResolverContext context)
+#pragma warning disable CA1812
+    // ReSharper disable once ClassNeverInstantiated.Local
+    private sealed class QueryExtension<TDocument> : ObjectTypeExtension
+#pragma warning restore CA1812
         where TDocument : class, IReplicatedDocument
     {
-        var queryResolver = context.Resolver<QueryResolver<TDocument>>();
-        var checkpoint = context.ArgumentValue<Checkpoint?>("checkpoint");
-        var limit = context.ArgumentValue<int>("limit");
-        var repository = context.Service<IDocumentRepository<TDocument>>();
-        var cancellationToken = context.RequestAborted;
+        protected override void Configure(IObjectTypeDescriptor descriptor)
+        {
+            var documentTypeName = typeof(TDocument).Name;
+            var pullDocumentsName = $"pull{documentTypeName}";
+            var checkpointInputTypeName = $"{documentTypeName}InputCheckpoint";
 
-        return queryResolver.PullDocumentsAsync(checkpoint, limit, repository, cancellationToken);
+            descriptor
+                .Name("Query")
+                .Field(pullDocumentsName)
+                .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
+                .Argument("checkpoint", a => a.Type(checkpointInputTypeName).Description($"The last known checkpoint for {documentTypeName} replication."))
+                .Argument("limit", a => a.Type<NonNullType<IntType>>().Description($"The maximum number of {documentTypeName} documents to return."))
+                .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint and limit.")
+                .Resolve(context =>
+                {
+                    var queryResolver = context.Resolver<QueryResolver<TDocument>>();
+                    var checkpoint = context.ArgumentValue<Checkpoint?>("checkpoint");
+                    var limit = context.ArgumentValue<int>("limit");
+                    var repository = context.Service<IDocumentRepository<TDocument>>();
+                    var cancellationToken = context.RequestAborted;
+
+                    return queryResolver.PullDocumentsAsync(checkpoint, limit, repository, cancellationToken);
+                });
+        }
     }
 
     private static IRequestExecutorBuilder ConfigureDocumentMutations<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        var documentTypeName = typeof(TDocument).Name;
-        var pushDocumentsName = $"push{documentTypeName}";
-        var pushRowArgName = $"{char.ToLowerInvariant(documentTypeName[0])}{documentTypeName[1..]}PushRow";
-
-        return builder.AddMutationType(new ObjectType(d =>
-        {
-            d.Name("Mutation");
-            d.Field(pushDocumentsName)
-                .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
-                .Argument(pushRowArgName, a =>
-                {
-                    a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
-                        .Description($"The list of {documentTypeName} documents to push to the server.");
-                })
-                .Description($"Pushes {documentTypeName} documents to the server and handles any conflicts.")
-                .Resolve(context => ResolvePushDocuments<TDocument>(context, pushRowArgName));
-        }));
+        return builder.AddTypeExtension<MutationExtension<TDocument>>();
     }
 
-    private static Task<List<TDocument>> ResolvePushDocuments<TDocument>(IResolverContext context, string pushRowArgName)
+#pragma warning disable CA1812
+    // ReSharper disable once ClassNeverInstantiated.Local
+    private sealed class MutationExtension<TDocument> : ObjectTypeExtension
+#pragma warning restore CA1812
         where TDocument : class, IReplicatedDocument
     {
-        var mutation = context.Resolver<MutationResolver<TDocument>>();
-        var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
-        var cancellationToken = context.RequestAborted;
+        protected override void Configure(IObjectTypeDescriptor descriptor)
+        {
+            var documentTypeName = typeof(TDocument).Name;
+            var pushDocumentsName = $"push{documentTypeName}";
+            var pushRowArgName = $"{char.ToLowerInvariant(documentTypeName[0])}{documentTypeName[1..]}PushRow";
 
-        return mutation.PushDocumentsAsync(documents, cancellationToken);
+            descriptor
+                .Name("Mutation")
+                .Field(pushDocumentsName)
+                .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
+                .Argument(pushRowArgName, a => a
+                    .Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
+                    .Description($"The list of {documentTypeName} documents to push to the server."))
+                .Description($"Pushes {documentTypeName} documents to the server and handles any conflicts.")
+                .Resolve(context =>
+                {
+                    var mutation = context.Resolver<MutationResolver<TDocument>>();
+                    var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
+                    var cancellationToken = context.RequestAborted;
+
+                    return mutation.PushDocumentsAsync(documents, cancellationToken);
+                });
+        }
     }
 
     private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        var documentTypeName = typeof(TDocument).Name;
-        var streamDocumentName = $"stream{documentTypeName}";
-        var headersInputTypeName = $"{documentTypeName}InputHeaders";
-
         return builder
-            .AddSubscriptionType(d =>
-            {
-                d.Name("Subscription");
-                d.Field(streamDocumentName)
-                    .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
-                    .Argument("headers", a =>
-                    {
-                        a.Type(headersInputTypeName)
-                            .Description($"Headers for {documentTypeName} subscription authentication.");
-                    })
-                    .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
-                    .Subscribe(context =>
-                    {
-                        var headers = context.ArgumentValue<Headers>("headers");
-                        // You can add authentication logic here using the headers
-                        if (!IsAuthorized(headers))
-                        {
-                            // Handle unauthorized access
-                            throw new UnauthorizedAccessException("Invalid or missing authorization token");
-                        }
-
-                        var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
-
-                        return subscription.DocumentChangedStream(context.RequestAborted);
-                    });
-            })
+            .AddTypeExtension<SubscriptionExtension<TDocument>>()
             .AddType(new InputObjectType<Headers>(d =>
             {
-                d.Name(headersInputTypeName);
+                d.Name($"{typeof(TDocument).Name}InputHeaders");
                 d.Field(f => f.Authorization)
                     .Type<NonNullType<StringType>>()
                     .Name("Authorization")
@@ -239,14 +217,66 @@ public static class GraphQLServiceCollectionExtensions
             }));
     }
 
-    private static bool IsAuthorized(Headers? headers)
+#pragma warning disable CA1812
+    // ReSharper disable once ClassNeverInstantiated.Local
+    private sealed class SubscriptionExtension<TDocument> : ObjectTypeExtension
+#pragma warning restore CA1812
+        where TDocument : class, IReplicatedDocument
     {
-        if (headers != null)
+        protected override void Configure(IObjectTypeDescriptor descriptor)
         {
-            // Implement your authorization logic here
-            // For example, validate the JWT token in headers.Authorization
+            var documentTypeName = typeof(TDocument).Name;
+            var streamDocumentName = $"stream{documentTypeName}";
+            var headersInputTypeName = $"{documentTypeName}InputHeaders";
+
+            descriptor
+                .Name("Subscription")
+                .Field(streamDocumentName)
+                .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
+                .Argument("headers", a => a
+                    .Type(headersInputTypeName)
+                    .Description($"Headers for {documentTypeName} subscription authentication."))
+                .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
+                .Subscribe(context =>
+                {
+                    var headers = context.ArgumentValue<Headers>("headers");
+                    // You can add authentication logic here using the headers
+                    if (!IsAuthorized(headers))
+                    {
+                        // Handle unauthorized access
+                        throw new UnauthorizedAccessException("Invalid or missing authorization token");
+                    }
+
+                    var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
+                    return subscription.DocumentChangedStream(context.RequestAborted);
+                });
         }
 
-        return true;
+        private static bool IsAuthorized(Headers? headers)
+        {
+            if (headers != null)
+            {
+                // Implement your authorization logic here
+                // For example, validate the JWT token in headers.Authorization
+            }
+
+            return true;
+        }
+    }
+
+    private static void EnsureRootTypesExist(IRequestExecutorBuilder builder)
+    {
+        if (builder.Services.All(d => d.ServiceType != typeof(ObjectType<Query>)))
+        {
+            builder.AddQueryType<Query>();
+        }
+        if (builder.Services.All(d => d.ServiceType != typeof(ObjectType<Mutation>)))
+        {
+            builder.AddMutationType<Mutation>();
+        }
+        if (builder.Services.All(d => d.ServiceType != typeof(ObjectType<Subscription>)))
+        {
+            builder.AddSubscriptionType<Subscription>();
+        }
     }
 }

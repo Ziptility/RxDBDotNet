@@ -1,35 +1,14 @@
 ﻿using System.Net.Http.Json;
 using LiveDocs.GraphQLApi.Models;
 using Newtonsoft.Json.Linq;
-using Projects;
 using RT.Comb;
+using RxDBDotNet.Tests.Setup;
+using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
 
-public class WorkspaceManagementTests : IAsyncLifetime
+public class WorkspaceManagementTests(ITestOutputHelper output) : TestBase(output)
 {
-    private DistributedApplication? _app;
-    private HttpClient _client = null!;
-
-    public async Task InitializeAsync()
-    {
-        var appHost = await DistributedApplicationTestingBuilder.CreateAsync<LiveDocs_AppHost>();
-        _app = await appHost.BuildAsync();
-        await _app.StartAsync();
-        _client = _app.CreateHttpClient("replicationApi");
-    }
-
-    public async Task DisposeAsync()
-    {
-        _client.Dispose();
-
-        if (_app != null)
-        {
-            await _app.StopAsync();
-            await _app.DisposeAsync();
-        }
-    }
-
     [Fact]
     public async Task TestCase1_1_CreateNewWorkspace_ShouldSucceed()
     {
@@ -68,7 +47,7 @@ public class WorkspaceManagementTests : IAsyncLifetime
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -77,7 +56,7 @@ public class WorkspaceManagementTests : IAsyncLifetime
 
         var pushResult = jObject["data"]!["pushWorkspace"];
         Assert.NotNull(pushResult);
-        Assert.Empty(pushResult!);
+        Assert.Empty(pushResult);
 
         // Verify the workspace exists in the database
         await VerifyWorkspaceExists(newWorkspace.Id);
@@ -127,7 +106,7 @@ public class WorkspaceManagementTests : IAsyncLifetime
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
 
         // Assert
         var content = await response.Content.ReadAsStringAsync();
@@ -173,7 +152,7 @@ public class WorkspaceManagementTests : IAsyncLifetime
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -226,7 +205,7 @@ public class WorkspaceManagementTests : IAsyncLifetime
 
         // Act & Assert
         // For now, we're just checking if the subscription query is accepted
-        var response = await _client.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
         response.EnsureSuccessStatusCode();
 
         // In a real scenario, you'd set up a WebSocket connection and listen for updates
@@ -267,7 +246,7 @@ public class WorkspaceManagementTests : IAsyncLifetime
             variables,
         };
 
-        var response = await _client.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
         response.EnsureSuccessStatusCode();
     }
 
@@ -301,7 +280,7 @@ public class WorkspaceManagementTests : IAsyncLifetime
             variables,
         };
 
-        var response = await _client.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
         response.EnsureSuccessStatusCode();
 
         var content = await response.Content.ReadAsStringAsync();

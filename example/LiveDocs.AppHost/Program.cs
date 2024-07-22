@@ -15,7 +15,8 @@ var sqlDb = builder.AddSqlServer("sql", password: password, port: 16032)
 builder.AddProject<LiveDocs_GraphQLApi>("replicationApi", "http")
     .WithReference(sqlDb)
     .WithReference(cache)
-    .WithEnvironment("SQL_PASSWORD", password);
+    .WithEnvironment("SQL_PASSWORD", password)
+    .WithEnvironment("IsAspireEnvironment", "true");
 
 builder.AddNpmApp("rxdbclient", "../LiveDocs.RxDBClient", "run")
     .WithHttpEndpoint(port: 1337, env: "PORT")

@@ -16,9 +16,9 @@
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
         <NoWarn>$(NoWarn);CA2007;CA1707;MA0051;MA0004;CA2234</NoWarn>
         <ImplicitUsings>enable</ImplicitUsings>
-
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -27,12 +27,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.Hosting.Testing" Version="8.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.6" />
         <PackageReference Include="coverlet.collector" Version="6.0.2">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="Testcontainers.MsSql" Version="3.9.0" />
         <PackageReference Include="xunit" Version="2.9.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
           <PrivateAssets>all</PrivateAssets>
@@ -41,7 +42,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Aspire.Hosting.Testing" />
         <Using Include="Xunit" />
     </ItemGroup>
 
@@ -70,7 +70,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\example\LiveDocs.AppHost\LiveDocs.AppHost.csproj" />
       <ProjectReference Include="..\..\example\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
     </ItemGroup>
 

@@ -20,6 +20,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <WarningLevel>9999</WarningLevel>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+        <NoWarn>$(NoWarn);CA1848;CA2007</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

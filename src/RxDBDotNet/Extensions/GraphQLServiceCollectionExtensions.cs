@@ -153,7 +153,7 @@ public static class GraphQLServiceCollectionExtensions
                 .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint and limit.")
                 .Resolve(context =>
                 {
-                    var queryResolver = context.Service<QueryResolver<TDocument>>();
+                    var queryResolver = context.Resolver<QueryResolver<TDocument>>();
                     var checkpoint = context.ArgumentValue<Checkpoint?>("checkpoint");
                     var limit = context.ArgumentValue<int>("limit");
                     var repository = context.Service<IDocumentRepository<TDocument>>();
@@ -191,7 +191,7 @@ public static class GraphQLServiceCollectionExtensions
                 .Description($"Pushes {documentTypeName} documents to the server and handles any conflicts.")
                 .Resolve(context =>
                 {
-                    var mutation = context.Service<MutationResolver<TDocument>>();
+                    var mutation = context.Resolver<MutationResolver<TDocument>>();
                     var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
                     var cancellationToken = context.RequestAborted;
 

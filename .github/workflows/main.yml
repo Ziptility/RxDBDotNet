@@ -26,7 +26,7 @@ jobs:
       run: choco install netfx-4.7.2-devpack
       
     - name: Install npm dependencies
-      working-directory: example/Example.RxDBClient
+      working-directory: example/LiveDocs.RxDBClient
       run: npm install
 
     - name: Restore dependencies

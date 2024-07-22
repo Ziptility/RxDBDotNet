@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-test-pr:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
       with:
@@ -18,22 +18,17 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Install .NET Aspire workload
+      run: dotnet workload install aspire
+
     - name: Install Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18.x'
-        
-    - name: Install .NET Framework 4.7.2 Developer Pack
-      run: choco install netfx-4.7.2-devpack
       
     - name: Install npm dependencies
       working-directory: example/LiveDocs.RxDBClient
       run: npm install
-
-    - name: Setup Docker
-      uses: docker/setup-buildx-action@v1
-      with:
-        version: 'latest'
 
     - name: Ensure Docker is running
       run: docker info

@@ -21,8 +21,8 @@ builder.AddProject<LiveDocs_GraphQLApi>("replicationApi")
     .WithReference(cache);
     //.WithEnvironment("SQL_PASSWORD", password);
 
-builder.AddNpmApp("rxdbclient", "../LiveDocs.RxDBClient", "run")
-    .WithHttpEndpoint(port: 1337, env: "PORT")
-    .WithExternalHttpEndpoints();
+// builder.AddNpmApp("rxdbclient", "../LiveDocs.RxDBClient", "run")
+//     .WithHttpEndpoint(port: 1337, env: "PORT")
+//     .WithExternalHttpEndpoints();
 
 builder.Build().Run();

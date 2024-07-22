@@ -23,7 +23,7 @@
 
     <PropertyGroup>
         <CodeCoverageInclude>[RxDBDotNet*]*</CodeCoverageInclude>
-        <CodeCoverageExclude>[RxDBDotNet.Tests]*,[RxDBDotNet.LiveDocs]*</CodeCoverageExclude>
+        <CodeCoverageExclude>[RxDBDotNet.Tests]*,[LiveDocs*]*</CodeCoverageExclude>
     </PropertyGroup>
 
     <ItemGroup>

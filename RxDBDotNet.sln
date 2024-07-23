@@ -40,7 +40,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BB53E83A-96E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1B5323DD-D124-4F5D-AFED-27F0F20DD545}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxDBDotNet.LiveDocsTestClientGenerator", "tests\RxDBDotNet.LiveDocsTestClientGenerator\RxDBDotNet.LiveDocsTestClientGenerator.csproj", "{3B5E5664-FCF8-49A0-BA8D-5AF8F4F5AE83}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxDBDotNet.LiveDocsTestModelGenerator", "tests\RxDBDotNet.LiveDocsTestClientGenerator\RxDBDotNet.LiveDocsTestModelGenerator.csproj", "{3B5E5664-FCF8-49A0-BA8D-5AF8F4F5AE83}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxDBDotNet.Tests.Setup", "RxDBDotNet.Tests.Setup\RxDBDotNet.Tests.Setup.csproj", "{0A2E064F-CAAD-4097-9EA0-588CDF10746C}"
 EndProject

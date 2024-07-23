@@ -92,12 +92,12 @@ public static class GraphQLBuilderExtensions
         where TDocument : class, IReplicatedDocument
     {
         var checkpointInputTypeName = $"{typeof(TDocument).Name}InputCheckpoint";
-        return builder.AddType(new InputObjectType<Checkpoint>(d =>
+        return builder.AddType(new InputObjectType<Checkpoint>(inputObjectTypeDescriptor =>
         {
-            d.Name(checkpointInputTypeName)
+            inputObjectTypeDescriptor.Name(checkpointInputTypeName)
                 .Description($"Input type for the checkpoint of {typeof(TDocument).Name} replication.");
-            d.Field(f => f.UpdatedAt).Type<DateTimeType>().Description("The timestamp of the last update included in the synchronization batch.");
-            d.Field(f => f.LastDocumentId).Type<IdType>().Description("The ID of the last document included in the synchronization batch.");
+            inputObjectTypeDescriptor.Field(f => f.UpdatedAt).Type<DateTimeType>().Description("The timestamp of the last update included in the synchronization batch.");
+            inputObjectTypeDescriptor.Field(f => f.LastDocumentId).Type<IdType>().Description("The ID of the last document included in the synchronization batch.");
         }));
     }
 
@@ -105,13 +105,14 @@ public static class GraphQLBuilderExtensions
         where TDocument : class, IReplicatedDocument
     {
         var pullBulkTypeName = $"{typeof(TDocument).Name}PullBulk";
-        return builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(descriptor =>
+        return builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(objectTypeDescriptor =>
         {
-            descriptor.Name(pullBulkTypeName)
+            objectTypeDescriptor.Name(pullBulkTypeName)
                 .Description($"Represents the result of a pull operation for {typeof(TDocument).Name} documents.");
-            descriptor.Field(f => f.Documents)
+            objectTypeDescriptor.Field(f => f.Documents)
+                .UseFiltering<TDocument>()
                 .Description($"The list of {typeof(TDocument).Name} documents pulled from the server.");
-            descriptor.Field(f => f.Checkpoint)
+            objectTypeDescriptor.Field(f => f.Checkpoint)
                 .Description("The new checkpoint after this pull operation.");
         }));
     }
@@ -120,14 +121,14 @@ public static class GraphQLBuilderExtensions
         where TDocument : class, IReplicatedDocument
     {
         var pushRowTypeName = $"{typeof(TDocument).Name}InputPushRow";
-        return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(descriptor =>
+        return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(inputObjectTypeDescriptor =>
         {
-            descriptor.Name(pushRowTypeName)
+            inputObjectTypeDescriptor.Name(pushRowTypeName)
                 .Description($"Input type for pushing {typeof(TDocument).Name} documents to the server.");
-            descriptor.Field(f => f.AssumedMasterState)
+            inputObjectTypeDescriptor.Field(f => f.AssumedMasterState)
                 .Type<InputObjectType<TDocument>>()
                 .Description("The assumed state of the document on the server before the push.");
-            descriptor.Field(f => f.NewDocumentState)
+            inputObjectTypeDescriptor.Field(f => f.NewDocumentState)
                 .Type<NonNullType<InputObjectType<TDocument>>>()
                 .Description("The new state of the document being pushed.");
         }));
@@ -154,9 +155,8 @@ public static class GraphQLBuilderExtensions
             descriptor
                 .Name("Query")
                 .Field(pullDocumentsName)
-                .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
-                .UseProjection()
                 .UseFiltering()
+                .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("checkpoint", a => a.Type(checkpointInputTypeName).Description($"The last known checkpoint for {documentTypeName} replication."))
                 .Argument("limit", a => a.Type<NonNullType<IntType>>().Description($"The maximum number of {documentTypeName} documents to return."))
                 .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")

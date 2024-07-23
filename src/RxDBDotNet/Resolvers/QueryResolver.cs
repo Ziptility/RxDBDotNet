@@ -19,7 +19,7 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// <param name="checkpoint">The last known checkpoint, or null if this is the initial pull.</param>
     /// <param name="limit">The maximum number of documents to return.</param>
     /// <param name="repository">The document repository to be used for data access.</param>
-    /// /// <param name="context">The GraphQL context which contains any filters or projections.</param>
+    /// <param name="context">The GraphQL context which contains any filters or projections.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a
@@ -32,8 +32,6 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// </remarks>
 // Method is too long. This is because of the extensive documentation, which is acceptable in this case for maintainability.
 #pragma warning disable MA0051, CA1822
-    [UseProjection]
-    [UseFiltering]
     internal async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
@@ -75,10 +73,10 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
         }
 
         // Apply projections from the GraphQL context
-        var projectedQuery = query.Project(context);
+        //var projectedQuery = query.Project(context);
 
-        // Apply any additional filters defined by the client in the GraphQL query
-        var filteredQuery = projectedQuery.Filter(context);
+        // Apply any filters defined by the client in the GraphQL query
+        var filteredQuery = query.Filter(context);
 
         // We order the results to ensure consistent pagination across multiple pulls
         var orderedQuery = filteredQuery

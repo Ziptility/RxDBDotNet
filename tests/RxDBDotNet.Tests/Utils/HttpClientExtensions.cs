@@ -194,18 +194,16 @@ internal static class HttpClientExtensions
     ///     Send a POST request to the specified Uri as an asynchronous operation.
     /// </summary>
     /// <param name="httpClient">The HTTP client.</param>
-    /// <param name="uri">The URI.</param>
     /// <param name="queryBuilder">The graph ql string.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">queryBuilder</exception>
     public static Task<GqlQueryResponse> PostGqlQueryAsync(
         this HttpClient httpClient,
-        string uri,
         QueryQueryBuilderGql queryBuilder)
     {
         ThrowIfInvalidParams(
             httpClient,
-            uri);
+            Routes.GraphQL);
 
         ArgumentNullException.ThrowIfNull(queryBuilder);
 
@@ -329,7 +327,7 @@ internal static class HttpClientExtensions
             "application/json");
 
         var response = await httpClient.PostAsync(
-            "/graphql",
+            Routes.GraphQL,
             stringContent);
 
         if (expectSuccess && !response.IsSuccessStatusCode)

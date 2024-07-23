@@ -1,7 +1,4 @@
-﻿using System.Net.Http.Json;
-using FluentAssertions;
-using LiveDocs.GraphQLApi.Models;
-using Newtonsoft.Json.Linq;
+﻿using FluentAssertions;
 using RT.Comb;
 using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
@@ -12,21 +9,21 @@ namespace RxDBDotNet.Tests;
 public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(output)
 {
     [Fact]
-    public async Task TestCase1_1_CreateSingleDocument_ShouldSucceed()
+    public async Task TestCase1_1_PushNewRowShouldCreateSingleDocument()
     {
         // Arrange
-        var newWorkspaceId = Provider.Sql.Create();
+        var newWorkspace = new WorkspaceInputGql
+        {
+            Id = Provider.Sql.Create(),
+            Name = Strings.CreateString(),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false,
+        };
 
         var workspaceInput = new WorkspaceInputPushRowGql
         {
             AssumedMasterState = null,
-            NewDocumentState = new WorkspaceInputGql
-            {
-                Id = newWorkspaceId,
-                Name = Strings.CreateString(),
-                UpdatedAt = DateTimeOffset.UtcNow,
-                IsDeleted = false,
-            },
+            NewDocumentState = newWorkspace,
         };
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
@@ -50,234 +47,32 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
             .BeNullOrEmpty();
 
         // Verify the workspace exists in the database
-        await VerifyWorkspaceExists(newWorkspaceId);
+        await HttpClient.VerifyWorkspaceExists(newWorkspace);
     }
 
-    [Fact(Skip = "Work in progress")]
-    public async Task TestCase1_2_CreateDocumentsWithDuplicateName_ShouldFail()
+    [Fact]
+    public async Task TestCase1_2_PullBulkByDocumentIdShouldReturnSingleDocument()
     {
         // Arrange
-        const string existingWorkspaceName = "Existing Workspace";
+        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync();
 
-        // First, create a workspace
-        await CreateWorkspace(existingWorkspaceName);
-
-        // Now, try to create another workspace with the same name
-        var duplicateWorkspace = new Workspace
-        {
-            Id = Provider.Sql.Create(),
-            Name = existingWorkspaceName,
-            UpdatedAt = DateTimeOffset.UtcNow,
-            IsDeleted = false,
-        };
-
-        const string query = @"
-            mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
-                pushWorkspace(workspacePushRow: [$workspace]) {
-                    id
-                    name
-                    updatedAt
-                    isDeleted
-                }
-            }";
-
-        var variables = new
-        {
-            workspace = new
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields(), new WorkspaceFilterInputGql
             {
-                assumedMasterState = (object?)null,
-                newDocumentState = duplicateWorkspace,
-            },
-        };
-
-        var request = new
-        {
-            query,
-            variables,
-        };
+                Id = new UuidOperationFilterInputGql
+                {
+                    Eq = newWorkspace.Id?.Value,
+                },
+            }), 10);
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostGqlQueryAsync(query);
 
         // Assert
-        var content = await response.Content.ReadAsStringAsync();
-        var jObject = JObject.Parse(content);
+        response.Errors.Should()
+            .BeNullOrEmpty();
 
-        Assert.NotNull(jObject["errors"]);
-        Assert.Contains("workspace name is already in use", jObject["errors"]![0]!["message"]!.ToString(), StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact(Skip = "Work in progress")]
-    public async Task TestCase1_3_PullDocument_ShouldReturnCreatedDocuments()
-    {
-        // Arrange
-        await CreateWorkspace("Workspace 1");
-        await CreateWorkspace("Workspace 2");
-
-        const string query = @"
-            query PullWorkspaces($checkpoint: WorkspaceInputCheckpoint, $limit: Int!) {
-                pullWorkspace(checkpoint: $checkpoint, limit: $limit) {
-                    documents {
-                        id
-                        name
-                        updatedAt
-                        isDeleted
-                    }
-                    checkpoint {
-                        lastDocumentId
-                        updatedAt
-                    }
-                }
-            }";
-
-        var variables = new
-        {
-            checkpoint = (object?)null,
-            limit = 10,
-        };
-
-        var request = new
-        {
-            query,
-            variables,
-        };
-
-        // Act
-        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
-
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        var jObject = JObject.Parse(content);
-
-        var documents = jObject["data"]!["pullWorkspace"]!["documents"]!;
-        Assert.True(documents.Count() >= 2);
-        Assert.Contains(documents, d => string.Equals(d["name"]!.ToString(), "Workspace 1", StringComparison.Ordinal));
-        Assert.Contains(documents, d => string.Equals(d["name"]!.ToString(), "Workspace 2", StringComparison.Ordinal));
-
-        Assert.NotNull(jObject["data"]!["pullWorkspace"]!["checkpoint"]);
-    }
-
-    [Fact(Skip = "Work in progress")]
-    public async Task TestCase1_4_StreamDocument_ShouldReceiveUpdates()
-    {
-        // Note: This is a basic test for the subscription setup.
-        // Testing real-time updates would require a more complex test setup.
-
-        const string query = @"
-            subscription StreamWorkspaces($headers: WorkspaceInputHeaders!) {
-                streamWorkspace(headers: $headers) {
-                    documents {
-                        id
-                        name
-                        updatedAt
-                        isDeleted
-                    }
-                    checkpoint {
-                        lastDocumentId
-                        updatedAt
-                    }
-                }
-            }";
-
-        var variables = new
-        {
-            headers = new
-            {
-                Authorization = "Bearer test-token", // Replace with actual auth token if needed
-            },
-        };
-
-        var request = new
-        {
-            query,
-            variables,
-        };
-
-        // Act & Assert
-        // For now, we're just checking if the subscription query is accepted
-        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
-        response.EnsureSuccessStatusCode();
-
-        // In a real scenario, you'd set up a WebSocket connection and listen for updates
-    }
-
-    private async Task CreateWorkspace(string name)
-    {
-        var workspace = new Workspace
-        {
-            Id = Provider.Sql.Create(),
-            Name = name,
-            UpdatedAt = DateTimeOffset.UtcNow,
-            IsDeleted = false,
-        };
-
-        const string query = @"
-            mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
-                pushWorkspace(workspacePushRow: [$workspace]) {
-                    id
-                    name
-                    updatedAt
-                    isDeleted
-                }
-            }";
-
-        var variables = new
-        {
-            workspace = new
-            {
-                assumedMasterState = (object?)null,
-                newDocumentState = workspace,
-            },
-        };
-
-        var request = new
-        {
-            query,
-            variables,
-        };
-
-        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
-        response.EnsureSuccessStatusCode();
-    }
-
-    private async Task VerifyWorkspaceExists(Guid workspaceId)
-    {
-        const string query = @"
-                query PullWorkspace($checkpoint: WorkspaceInputCheckpoint, $limit: Int!) {
-                    pullWorkspace(checkpoint: $checkpoint, limit: $limit) {
-                        documents {
-                            id
-                            name
-                            updatedAt
-                            isDeleted
-                        }
-                    }
-                }";
-
-        var variables = new
-        {
-            checkpoint = new
-            {
-                updatedAt = DateTimeOffset.MinValue,
-                lastDocumentId = (Guid?)null,
-            },
-            limit = 100,
-        };
-
-        var request = new
-        {
-            query,
-            variables,
-        };
-
-        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
-        response.EnsureSuccessStatusCode();
-
-        var content = await response.Content.ReadAsStringAsync();
-        var jObject = JObject.Parse(content);
-
-        var documents = jObject["data"]!["pullWorkspace"]!["documents"]!;
-        Assert.Contains(documents, d => string.Equals(d["id"]!.ToString(), workspaceId.ToString(), StringComparison.Ordinal));
+        response.Data.PullWorkspace?.Documents.Should()
+            .HaveCount(1);
     }
 }

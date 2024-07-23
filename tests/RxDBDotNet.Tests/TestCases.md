@@ -41,7 +41,7 @@ The test cases are organized to progress from basic operations to more complex s
 - Verify that the UpdatedAt field is set to the current time
 - Ensure that the IsDeleted field is set to false
 
-#### Test Case 1.2: Retrieve a Single Document
+#### Test Case 1.2: Retrieve a Single Document by Id
 
 **Objective:** Confirm that a previously created document can be retrieved accurately.
 

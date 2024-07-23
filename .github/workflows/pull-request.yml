@@ -39,7 +39,15 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test with coverage
-      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage;Format=opencover"
+      run: |
+        dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj \
+          --configuration Release \
+          --no-build \
+          --collect:"XPlat Code Coverage;Format=opencover" \
+          /p:CoverletOutputFormat=opencover \
+          /p:Include=\"[RxDBDotNet*]*\"
+          /p:Exclude=\"[RxDBDotNet.Tests*]*,[LiveDocs*]*,[Example*]*,[RxDBDotNet.LiveDocsTestClientGenerator*]*\"
+
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1

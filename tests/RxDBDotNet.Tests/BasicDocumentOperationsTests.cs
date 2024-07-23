@@ -1,8 +1,10 @@
 ﻿using System.Net.Http.Json;
+using FluentAssertions;
 using LiveDocs.GraphQLApi.Models;
 using Newtonsoft.Json.Linq;
 using RT.Comb;
-using RxDBDotNet.Tests.Setup;
+using RxDBDotNet.Tests.Model;
+using RxDBDotNet.Tests.Utils;
 using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
@@ -13,53 +15,42 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
     public async Task TestCase1_1_CreateSingleDocument_ShouldSucceed()
     {
         // Arrange
-        var newWorkspace = new WorkspaceGql
-        {
-            Id = Provider.Sql.Create(),
-            Name = "Test Workspace",
-            UpdatedAt = DateTimeOffset.UtcNow,
-            IsDeleted = false,
-        };
+        var newWorkspaceId = Provider.Sql.Create();
 
-        const string query = @"
-                 mutation CreateWorkspace($workspace: WorkspaceInputPushRow!) {
-                     pushWorkspace(workspacePushRow: [$workspace]) {
-                         id
-                         name
-                         updatedAt
-                         isDeleted
-                     }
-                 }";
-
-        var variables = new
+        var workspaceInput = new WorkspaceInputPushRowGql
         {
-            workspace = new
+            AssumedMasterState = null,
+            NewDocumentState = new WorkspaceInputGql
             {
-                assumedMasterState = (object?)null,
-                newDocumentState = newWorkspace,
+                Id = newWorkspaceId,
+                Name = Strings.CreateString(),
+                UpdatedAt = DateTimeOffset.UtcNow,
+                IsDeleted = false,
             },
         };
 
-        var request = new
+        var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            query,
-            variables,
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInput,
+            },
         };
 
+        var createWorkspace =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+
         // Act
-        var response = await HttpClient.PostAsJsonAsync("/graphql", request);
+        var response = await HttpClient.PostGqlMutationAsync(createWorkspace);
 
         // Assert
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        var jObject = JObject.Parse(content);
-
-        var pushResult = jObject["data"]!["pushWorkspace"];
-        Assert.NotNull(pushResult);
-        Assert.Empty(pushResult);
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
 
         // Verify the workspace exists in the database
-        await VerifyWorkspaceExists(newWorkspace.Id);
+        await VerifyWorkspaceExists(newWorkspaceId);
     }
 
     [Fact(Skip = "Work in progress")]

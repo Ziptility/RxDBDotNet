@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Tests.Utils;
 using Xunit.Abstractions;
 
-namespace RxDBDotNet.Tests.Setup;
+namespace RxDBDotNet.Tests;
 
 public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
 {
@@ -43,17 +43,11 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
     {
         await Semaphore.WaitAsync();
 
-        // Disposed in DisposeAsync()
-#pragma warning disable CA2000
-        Factory = new WebApplicationFactory<TestProgram>().WithWebHostBuilder(builder => builder
-#pragma warning restore CA2000
-            .UseSolutionRelativeContentRoot("example/LiveDocs.GraphQLApi"));
+        Factory = WebApplicationFactorySetup.CreateWebApplicationFactory();
 
         _asyncTestServiceScope = Factory.Services.CreateAsyncScope();
 
         await UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output);
-
-        await HttpClient.GenerateLiveDocsGraphQLClientAsync();
     }
 
     public async Task DisposeAsync()

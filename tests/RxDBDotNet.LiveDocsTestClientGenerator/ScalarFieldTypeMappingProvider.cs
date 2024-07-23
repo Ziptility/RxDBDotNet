@@ -2,7 +2,7 @@
 using GraphQlClientGenerator;
 using LiveDocs.GraphQLApi.Models;
 
-namespace RxDBDotNet.Tests.Setup;
+namespace RxDBDotNet.LiveDocsTestClientGenerator;
 
 internal sealed class ScalarFieldTypeMappingProvider : IScalarFieldTypeMappingProvider
 {

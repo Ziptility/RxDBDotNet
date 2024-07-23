@@ -105,13 +105,13 @@ public static class GraphQLBuilderExtensions
         where TDocument : class, IReplicatedDocument
     {
         var pullBulkTypeName = $"{typeof(TDocument).Name}PullBulk";
-        return builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(d =>
+        return builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(descriptor =>
         {
-            d.Name(pullBulkTypeName)
+            descriptor.Name(pullBulkTypeName)
                 .Description($"Represents the result of a pull operation for {typeof(TDocument).Name} documents.");
-            d.Field(f => f.Documents)
+            descriptor.Field(f => f.Documents)
                 .Description($"The list of {typeof(TDocument).Name} documents pulled from the server.");
-            d.Field(f => f.Checkpoint)
+            descriptor.Field(f => f.Checkpoint)
                 .Description("The new checkpoint after this pull operation.");
         }));
     }
@@ -120,14 +120,14 @@ public static class GraphQLBuilderExtensions
         where TDocument : class, IReplicatedDocument
     {
         var pushRowTypeName = $"{typeof(TDocument).Name}InputPushRow";
-        return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(d =>
+        return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(descriptor =>
         {
-            d.Name(pushRowTypeName)
+            descriptor.Name(pushRowTypeName)
                 .Description($"Input type for pushing {typeof(TDocument).Name} documents to the server.");
-            d.Field(f => f.AssumedMasterState)
+            descriptor.Field(f => f.AssumedMasterState)
                 .Type<InputObjectType<TDocument>>()
                 .Description("The assumed state of the document on the server before the push.");
-            d.Field(f => f.NewDocumentState)
+            descriptor.Field(f => f.NewDocumentState)
                 .Type<NonNullType<InputObjectType<TDocument>>>()
                 .Description("The new state of the document being pushed.");
         }));
@@ -155,10 +155,10 @@ public static class GraphQLBuilderExtensions
                 .Name("Query")
                 .Field(pullDocumentsName)
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
+                .UseProjection()
+                .UseFiltering()
                 .Argument("checkpoint", a => a.Type(checkpointInputTypeName).Description($"The last known checkpoint for {documentTypeName} replication."))
                 .Argument("limit", a => a.Type<NonNullType<IntType>>().Description($"The maximum number of {documentTypeName} documents to return."))
-                .UseProjection<TDocument>() // Add projection support
-                .UseFiltering<TDocument>() // Add filtering support
                 .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")
                 .Resolve(context =>
                 {

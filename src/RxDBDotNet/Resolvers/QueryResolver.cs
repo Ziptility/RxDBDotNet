@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Documents;
+﻿using HotChocolate.Resolvers;
+using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
 
@@ -18,6 +19,7 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// <param name="checkpoint">The last known checkpoint, or null if this is the initial pull.</param>
     /// <param name="limit">The maximum number of documents to return.</param>
     /// <param name="repository">The document repository to be used for data access.</param>
+    /// /// <param name="context">The GraphQL context which contains any filters or projections.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a
@@ -28,12 +30,15 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// It uses a combination of the UpdatedAt timestamp and the document ID to ensure consistent and complete results,
     /// even when multiple documents have the same UpdatedAt value.
     /// </remarks>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "The method obtains its parameters from the DI context")]
-#pragma warning disable MA0051 // Method is too long. This is because of the extensive documentation, which is acceptable in this case for maintainability.
+// Method is too long. This is because of the extensive documentation, which is acceptable in this case for maintainability.
+#pragma warning disable MA0051, CA1822
+    [UseProjection]
+    [UseFiltering]
     internal async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
         IDocumentRepository<TDocument> repository,
+        IResolverContext context,
         CancellationToken cancellationToken)
     {
         var query = repository.GetQueryableDocuments();
@@ -69,14 +74,22 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
                  d.Id.ToString().CompareTo(checkpointLastDocumentId.ToString()) > 0));
         }
 
+        // Apply projections from the GraphQL context
+        var projectedQuery = query.Project(context);
+
+        // Apply any additional filters defined by the client in the GraphQL query
+        var filteredQuery = projectedQuery.Filter(context);
+
         // We order the results to ensure consistent pagination across multiple pulls
-        var orderedQuery = query
+        var orderedQuery = filteredQuery
             .OrderBy(d => d.UpdatedAt)
             // We order by ID as a secondary sort to handle documents with the same UpdatedAt
-            .ThenBy(d => d.Id.ToString())
-            .Take(limit);
+            .ThenBy(d => d.Id.ToString());
 
-        var documents = await repository.ExecuteQueryAsync(orderedQuery, cancellationToken).ConfigureAwait(false);
+        // Limit the query to the specified number of documents
+        var limitedQuery = orderedQuery.Take(limit);
+
+        var documents = await repository.ExecuteQueryAsync(limitedQuery, cancellationToken).ConfigureAwait(false);
 
         // If no documents are returned, we return an empty result with a null checkpoint
         // This signals to the client that there are no more documents to pull

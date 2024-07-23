@@ -7,13 +7,13 @@ using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
 
-public class WorkspaceManagementTests(ITestOutputHelper output) : TestBase(output)
+public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(output)
 {
     [Fact]
     public async Task TestCase1_1_CreateSingleDocument_ShouldSucceed()
     {
         // Arrange
-        var newWorkspace = new Workspace
+        var newWorkspace = new WorkspaceGql
         {
             Id = Provider.Sql.Create(),
             Name = "Test Workspace",

@@ -13,7 +13,7 @@ namespace RxDBDotNet.Extensions;
 /// This class integrates the RxDB replication protocol with Hot Chocolate GraphQL server,
 /// enabling seamless real-time data synchronization between clients and the server.
 /// </summary>
-public static class GraphQLServiceCollectionExtensions
+public static class GraphQLBuilderExtensions
 {
     /// <summary>
     /// Adds replication support for RxDBDotNet to the GraphQL schema.
@@ -31,8 +31,14 @@ public static class GraphQLServiceCollectionExtensions
 
         builder.Services.AddSingleton<IEventPublisher, DefaultEventPublisher>();
 
+        // Add projections and filtering support in the correct order
+        builder.AddProjections()
+            .AddFiltering();
+
         // Ensure Query, Mutation, and Subscription types exist
         EnsureRootTypesExist(builder);
+
+        builder.AddMutationConventions();
 
         return builder.InitializeOnStartup();
     }
@@ -151,7 +157,9 @@ public static class GraphQLServiceCollectionExtensions
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("checkpoint", a => a.Type(checkpointInputTypeName).Description($"The last known checkpoint for {documentTypeName} replication."))
                 .Argument("limit", a => a.Type<NonNullType<IntType>>().Description($"The maximum number of {documentTypeName} documents to return."))
-                .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint and limit.")
+                .UseProjection<TDocument>() // Add projection support
+                .UseFiltering<TDocument>() // Add filtering support
+                .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")
                 .Resolve(context =>
                 {
                     var queryResolver = context.Resolver<QueryResolver<TDocument>>();
@@ -160,7 +168,7 @@ public static class GraphQLServiceCollectionExtensions
                     var repository = context.Service<IDocumentRepository<TDocument>>();
                     var cancellationToken = context.RequestAborted;
 
-                    return queryResolver.PullDocumentsAsync(checkpoint, limit, repository, cancellationToken);
+                    return queryResolver.PullDocumentsAsync(checkpoint, limit, repository, context, cancellationToken);
                 });
         }
     }

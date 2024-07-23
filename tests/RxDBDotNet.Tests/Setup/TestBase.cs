@@ -52,6 +52,8 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
         _asyncTestServiceScope = Factory.Services.CreateAsyncScope();
 
         await UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output);
+
+        await HttpClient.GenerateLiveDocsGraphQLClientAsync();
     }
 
     public async Task DisposeAsync()

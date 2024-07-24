@@ -1,4 +1,5 @@
 ﻿using HotChocolate.Execution.Configuration;
+using HotChocolate.Language;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
@@ -9,21 +10,21 @@ using RxDBDotNet.Services;
 namespace RxDBDotNet.Extensions;
 
 /// <summary>
-/// Provides extension methods for configuring GraphQL services with RxDBDotNet replication support.
-/// This class integrates the RxDB replication protocol with Hot Chocolate GraphQL server,
-/// enabling seamless real-time data synchronization between clients and the server.
+///     Provides extension methods for configuring GraphQL services with RxDBDotNet replication support.
+///     This class integrates the RxDB replication protocol with Hot Chocolate GraphQL server,
+///     enabling seamless real-time data synchronization between clients and the server.
 /// </summary>
 public static class GraphQLBuilderExtensions
 {
     /// <summary>
-    /// Adds replication support for RxDBDotNet to the GraphQL schema.
-    /// This method configures all necessary services and types for the RxDB replication protocol.
+    ///     Adds replication support for RxDBDotNet to the GraphQL schema.
+    ///     This method configures all necessary services and types for the RxDB replication protocol.
     /// </summary>
     /// <param name="builder">The IRequestExecutorBuilder to configure.</param>
     /// <returns>The configured IRequestExecutorBuilder for method chaining.</returns>
     /// <remarks>
-    /// This method should be called once before adding support for specific document types.
-    /// It registers core services like IEventPublisher that are shared across all document types.
+    ///     This method should be called once before adding support for specific document types.
+    ///     It registers core services like IEventPublisher that are shared across all document types.
     /// </remarks>
     public static IRequestExecutorBuilder AddReplicationServer(this IRequestExecutorBuilder builder)
     {
@@ -44,33 +45,33 @@ public static class GraphQLBuilderExtensions
     }
 
     /// <summary>
-    /// Adds replication support for a specific document type to the GraphQL schema.
-    /// This method configures all necessary types, queries, mutations, and subscriptions for the RxDB replication protocol.
+    ///     Adds replication support for a specific document type to the GraphQL schema.
+    ///     This method configures all necessary types, queries, mutations, and subscriptions for the RxDB replication
+    ///     protocol.
     /// </summary>
     /// <typeparam name="TDocument">The type of document to support, which must implement IReplicatedDocument.</typeparam>
     /// <param name="builder">The HotChocolate IRequestExecutorBuilder to configure.</param>
     /// <returns>The configured IRequestExecutorBuilder for method chaining.</returns>
     /// <remarks>
-    /// <para>
-    /// This method should be called for each document type that needs to be replicated.
-    /// It's typically used in the ConfigureServices method of the Startup class or in the
-    /// service configuration of a minimal API setup.
-    /// </para>
-    /// <para>
-    /// Usage example:
-    /// <code>
+    ///     <para>
+    ///         This method should be called for each document type that needs to be replicated.
+    ///         It's typically used in the ConfigureServices method of the Startup class or in the
+    ///         service configuration of a minimal API setup.
+    ///     </para>
+    ///     <para>
+    ///         Usage example:
+    ///         <code>
     /// services.AddGraphQLServer()
     ///     .AddReplicationServer()
     ///     .AddReplicatedDocument&lt;MyDocument&gt;()
     ///     .AddReplicatedDocument&lt;AnotherDocument&gt;();
     /// </code>
-    /// </para>
+    ///     </para>
     /// </remarks>
     public static IRequestExecutorBuilder AddReplicatedDocument<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        return builder
-            .AddResolver<QueryResolver<TDocument>>()
+        return builder.AddResolver<QueryResolver<TDocument>>()
             .AddResolver<MutationResolver<TDocument>>()
             .AddResolver<SubscriptionResolver<TDocument>>()
             .ConfigureDocumentTypes<TDocument>()
@@ -82,8 +83,7 @@ public static class GraphQLBuilderExtensions
     private static IRequestExecutorBuilder ConfigureDocumentTypes<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        return builder
-            .AddCheckpointInputType<TDocument>()
+        return builder.AddCheckpointInputType<TDocument>()
             .AddDocumentPullBulkType<TDocument>()
             .AddDocumentPushRowInputType<TDocument>();
     }
@@ -96,8 +96,12 @@ public static class GraphQLBuilderExtensions
         {
             inputObjectTypeDescriptor.Name(checkpointInputTypeName)
                 .Description($"Input type for the checkpoint of {typeof(TDocument).Name} replication.");
-            inputObjectTypeDescriptor.Field(f => f.UpdatedAt).Type<DateTimeType>().Description("The timestamp of the last update included in the synchronization batch.");
-            inputObjectTypeDescriptor.Field(f => f.LastDocumentId).Type<IdType>().Description("The ID of the last document included in the synchronization batch.");
+            inputObjectTypeDescriptor.Field(f => f.UpdatedAt)
+                .Type<DateTimeType>()
+                .Description("The timestamp of the last update included in the synchronization batch.");
+            inputObjectTypeDescriptor.Field(f => f.LastDocumentId)
+                .Type<IdType>()
+                .Description("The ID of the last document included in the synchronization batch.");
         }));
     }
 
@@ -140,6 +144,52 @@ public static class GraphQLBuilderExtensions
         return builder.AddTypeExtension<QueryExtension<TDocument>>();
     }
 
+    private static IRequestExecutorBuilder ConfigureDocumentMutations<TDocument>(this IRequestExecutorBuilder builder)
+        where TDocument : class, IReplicatedDocument
+    {
+        return builder.AddTypeExtension<MutationExtension<TDocument>>();
+    }
+
+    private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(this IRequestExecutorBuilder builder)
+        where TDocument : class, IReplicatedDocument
+    {
+        return builder.AddTypeExtension<SubscriptionExtension<TDocument>>()
+            .AddType(new InputObjectType<Headers>(d =>
+            {
+                d.Name($"{typeof(TDocument).Name}InputHeaders");
+                d.Field(f => f.Authorization)
+                    .Type<NonNullType<StringType>>()
+                    .Name("Authorization")
+                    .Description("The JWT bearer token for authentication.");
+            }));
+    }
+
+    /// <summary>
+    ///     Ensures that root types (Query, Mutation, Subscription) exist in the GraphQL schema.
+    ///     If any root type has not been registered, this method will add the default RxDBDotNet root type.
+    /// </summary>
+    /// <param name="builder">The IRequestExecutorBuilder to configure.</param>
+    /// <remarks>
+    ///     This method allows for flexible schema configuration:
+    ///     - If the user has already registered custom root types, those will be preserved.
+    ///     - Default RxDBDotNet root types are only added for operations that don't have a registered type.
+    ///     - This supports scenarios where users might want to use custom root types for some operations
+    ///     while defaulting to RxDBDotNet types for others.
+    ///     - Custom root types should follow the naming convention of starting with "Query", "Mutation", or "Subscription"
+    ///     (case-insensitive).
+    /// </remarks>
+    private static void EnsureRootTypesExist(IRequestExecutorBuilder builder)
+    {
+        // Register a root Query type if not already added
+        builder.ConfigureSchema(schemaBuilder => schemaBuilder.TryAddRootType(() => new ObjectType<Query>(), OperationType.Query));
+
+        // Register a root Mutation type if not already added
+        builder.ConfigureSchema(schemaBuilder => schemaBuilder.TryAddRootType(() => new ObjectType<Mutation>(), OperationType.Mutation));
+
+        // Register a root Subscription type if not already added
+        builder.ConfigureSchema(schemaBuilder => schemaBuilder.TryAddRootType(() => new ObjectType<Subscription>(), OperationType.Subscription));
+    }
+
 #pragma warning disable CA1812
     // ReSharper disable once ClassNeverInstantiated.Local
     private sealed class QueryExtension<TDocument> : ObjectTypeExtension
@@ -152,14 +202,16 @@ public static class GraphQLBuilderExtensions
             var pullDocumentsName = $"pull{documentTypeName}";
             var checkpointInputTypeName = $"{documentTypeName}InputCheckpoint";
 
-            descriptor
-                .Name("Query")
+            descriptor.Name("Query")
                 .Field(pullDocumentsName)
                 .UseFiltering()
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
-                .Argument("checkpoint", a => a.Type(checkpointInputTypeName).Description($"The last known checkpoint for {documentTypeName} replication."))
-                .Argument("limit", a => a.Type<NonNullType<IntType>>().Description($"The maximum number of {documentTypeName} documents to return."))
-                .Description($"Pulls {documentTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")
+                .Argument("checkpoint", a => a.Type(checkpointInputTypeName)
+                    .Description($"The last known checkpoint for {documentTypeName} replication."))
+                .Argument("limit", a => a.Type<NonNullType<IntType>>()
+                    .Description($"The maximum number of {documentTypeName} documents to return."))
+                .Description(
+                    $"Pulls {documentTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")
                 .Resolve(context =>
                 {
                     var queryResolver = context.Resolver<QueryResolver<TDocument>>();
@@ -168,15 +220,10 @@ public static class GraphQLBuilderExtensions
                     var repository = context.Service<IDocumentRepository<TDocument>>();
                     var cancellationToken = context.RequestAborted;
 
-                    return queryResolver.PullDocumentsAsync(checkpoint, limit, repository, context, cancellationToken);
+                    return queryResolver.PullDocumentsAsync(checkpoint, limit, repository, context,
+                        cancellationToken);
                 });
         }
-    }
-
-    private static IRequestExecutorBuilder ConfigureDocumentMutations<TDocument>(this IRequestExecutorBuilder builder)
-        where TDocument : class, IReplicatedDocument
-    {
-        return builder.AddTypeExtension<MutationExtension<TDocument>>();
     }
 
 #pragma warning disable CA1812
@@ -191,12 +238,10 @@ public static class GraphQLBuilderExtensions
             var pushDocumentsName = $"push{documentTypeName}";
             var pushRowArgName = $"{char.ToLowerInvariant(documentTypeName[0])}{documentTypeName[1..]}PushRow";
 
-            descriptor
-                .Name("Mutation")
+            descriptor.Name("Mutation")
                 .Field(pushDocumentsName)
                 .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
-                .Argument(pushRowArgName, a => a
-                    .Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
+                .Argument(pushRowArgName, a => a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
                     .Description($"The list of {documentTypeName} documents to push to the server."))
                 .Description($"Pushes {documentTypeName} documents to the server and handles any conflicts.")
                 .Resolve(context =>
@@ -208,21 +253,6 @@ public static class GraphQLBuilderExtensions
                     return mutation.PushDocumentsAsync(documents, cancellationToken);
                 });
         }
-    }
-
-    private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(this IRequestExecutorBuilder builder)
-        where TDocument : class, IReplicatedDocument
-    {
-        return builder
-            .AddTypeExtension<SubscriptionExtension<TDocument>>()
-            .AddType(new InputObjectType<Headers>(d =>
-            {
-                d.Name($"{typeof(TDocument).Name}InputHeaders");
-                d.Field(f => f.Authorization)
-                    .Type<NonNullType<StringType>>()
-                    .Name("Authorization")
-                    .Description("The JWT bearer token for authentication.");
-            }));
     }
 
 #pragma warning disable CA1812
@@ -237,12 +267,10 @@ public static class GraphQLBuilderExtensions
             var streamDocumentName = $"stream{documentTypeName}";
             var headersInputTypeName = $"{documentTypeName}InputHeaders";
 
-            descriptor
-                .Name("Subscription")
+            descriptor.Name("Subscription")
                 .Field(streamDocumentName)
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
-                .Argument("headers", a => a
-                    .Type(headersInputTypeName)
+                .Argument("headers", a => a.Type(headersInputTypeName)
                     .Description($"Headers for {documentTypeName} subscription authentication."))
                 .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
                 .Subscribe(context =>
@@ -269,22 +297,6 @@ public static class GraphQLBuilderExtensions
             }
 
             return true;
-        }
-    }
-
-    private static void EnsureRootTypesExist(IRequestExecutorBuilder builder)
-    {
-        if (builder.Services.All(d => d.ServiceType != typeof(ObjectType<Query>)))
-        {
-            builder.AddQueryType<Query>();
-        }
-        if (builder.Services.All(d => d.ServiceType != typeof(ObjectType<Mutation>)))
-        {
-            builder.AddMutationType<Mutation>();
-        }
-        if (builder.Services.All(d => d.ServiceType != typeof(ObjectType<Subscription>)))
-        {
-            builder.AddSubscriptionType<Subscription>();
         }
     }
 }

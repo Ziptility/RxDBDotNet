@@ -4,7 +4,8 @@
         <DataCollectors>
             <DataCollector friendlyName="XPlat code coverage">
                 <Configuration>
-                    <Format>opencover</Format>
+                    <Format>lcov</Format>
+                    <Output>coverage.lcov</Output>
                     <Include>[RxDBDotNet]*</Include>
                     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
                     <ExcludeByFile>**/Program.cs,**/Startup.cs</ExcludeByFile>

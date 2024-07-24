@@ -38,12 +38,12 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test with coverage
-      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --collect:"XPlat Code Coverage;Format=opencover" --settings coverlet.runsettings /p:CoverletOutputFormat=opencover
+      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --collect:"XPlat Code Coverage" --settings coverlet.runsettings
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1
       with:
-        files: ./tests/RxDBDotNet.Tests/TestResults/*/coverage.opencover.xml
+        files: ./tests/RxDBDotNet.Tests/TestResults/*/coverage.lcov
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
 

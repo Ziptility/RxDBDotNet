@@ -41,7 +41,7 @@ The test cases are organized to progress from basic operations to more complex s
 - Verify that the UpdatedAt field is set to the current time
 - Ensure that the IsDeleted field is set to false
 
-#### Test Case 1.2: Retrieve a Single Document
+#### Test Case 1.2: Retrieve a Single Document by Id
 
 **Objective:** Confirm that a previously created document can be retrieved accurately.
 
@@ -149,7 +149,213 @@ The test cases are organized to progress from basic operations to more complex s
 - Verify that the documents are returned in the correct order (oldest to newest)
 - Ensure that the checkpoint in the response matches the UpdatedAt and Id of the newest document
 
-#### Test Case 2.2: Subsequent Pull (Checkpoint Iteration)
+#### Test Case 2.2: Pull Documents with Filtering
+
+**Objective:** Verify that documents can be pulled with filtering applied, ensuring that the filtering works correctly while adhering to the RxDB replication protocol.
+
+**Preconditions:**
+- Multiple documents of various types exist in the system
+- The GraphQL server is configured with filtering support
+
+**Data Setup:**
+- Create at least 10 User documents with varied attributes:
+  ```csharp
+  var users = new List<User>
+  {
+      new User
+      {
+          Id = Guid.NewGuid(),
+          FirstName = "John",
+          LastName = "Doe",
+          Email = "john.doe@example.com",
+          Role = UserRole.User,
+          WorkspaceId = workspaceId,
+          UpdatedAt = DateTimeOffset.UtcNow.AddDays(-5),
+          IsDeleted = false
+      },
+      new User
+      {
+          Id = Guid.NewGuid(),
+          FirstName = "Jane",
+          LastName = "Smith",
+          Email = "jane.smith@example.com",
+          Role = UserRole.Admin,
+          WorkspaceId = workspaceId,
+          UpdatedAt = DateTimeOffset.UtcNow.AddDays(-3),
+          IsDeleted = false
+      },
+      // ... (add more users with varying attributes)
+  };
+  ```
+
+**Execution Flow:**
+1. Send a GraphQL query to pull User documents with the following filters:
+   - `FirstName` contains "Jo"
+   - `Role` is `User`
+   - `UpdatedAt` is greater than 7 days ago
+2. Set a limit of 5 documents
+3. Use a null checkpoint (initial pull)
+
+**GraphQL Query:**
+```graphql
+query {
+  pullUser(
+    checkpoint: null,
+    limit: 5,
+    where: {
+      firstName: { contains: "Jo" },
+      role: { eq: USER },
+      updatedAt: { gt: "2023-07-11T00:00:00Z" }  # Assuming current date is 2023-07-18
+    }
+  ) {
+    documents {
+      id
+      firstName
+      lastName
+      email
+      role
+      updatedAt
+      isDeleted
+    }
+    checkpoint {
+      lastDocumentId
+      updatedAt
+    }
+  }
+}
+```
+
+**Expected Results:**
+- The query should return only User documents that match all the specified criteria:
+  - First names containing "Jo"
+  - Role is User
+  - Updated within the last 7 days
+- The number of returned documents should not exceed the specified limit (5)
+- The returned documents should be ordered by their `UpdatedAt` timestamp (oldest to newest)
+- The response should include a valid checkpoint based on the latest returned document
+- Verify that the filtering does not interfere with the checkpoint mechanism of the RxDB replication protocol
+
+**Additional Verifications:**
+1. Perform a subsequent pull operation using the checkpoint from the first query:
+   - It should only return documents that were updated after the checkpoint
+   - The filtering should still be applied
+2. Modify the filter to include deleted documents (`isDeleted: true`) and verify that soft-deleted documents are included when explicitly requested
+3. Test with various combination of filters to ensure all filterable fields work correctly
+4. Verify that invalid filter inputs are handled gracefully with appropriate error messages
+
+**Execution Steps:**
+1. Execute the initial filtered pull query
+2. Verify the results match the expected criteria
+3. Extract the checkpoint from the response
+4. Create or update some documents that match the filter criteria
+5. Execute a subsequent pull query using the checkpoint from step 3
+6. Verify that only new or updated documents are returned, and they still match the filter criteria
+
+**Additional Notes:**
+- Ensure that the filtering logic is applied at the database level for efficiency
+- Verify that the filtering does not break the RxDB replication protocol's consistency guarantees
+- Check that the performance of filtered queries is acceptable, especially with large datasets
+
+#### Test Case 2.3: Pull Documents with Projections and Filtering
+
+**Objective:** Verify that documents can be pulled with both projections and filtering applied, ensuring that these features work correctly while adhering to the RxDB replication protocol.
+
+**Preconditions:**
+- Multiple documents of various types exist in the system
+- The GraphQL server is configured with both projection and filtering support
+- The middleware order is correct: UseProjections > UseFiltering
+
+**Data Setup:**
+- Create at least 10 User documents with varied attributes:
+  ```csharp
+  var users = new List<User>
+  {
+      new User
+      {
+          Id = Guid.NewGuid(),
+          FirstName = "John",
+          LastName = "Doe",
+          Email = "john.doe@example.com",
+          Role = UserRole.User,
+          WorkspaceId = workspaceId,
+          UpdatedAt = DateTimeOffset.UtcNow.AddDays(-5),
+          IsDeleted = false
+      },
+      new User
+      {
+          Id = Guid.NewGuid(),
+          FirstName = "Jane",
+          LastName = "Smith",
+          Email = "jane.smith@example.com",
+          Role = UserRole.Admin,
+          WorkspaceId = workspaceId,
+          UpdatedAt = DateTimeOffset.UtcNow.AddDays(-3),
+          IsDeleted = false
+      },
+      // ... (add more users with varying attributes)
+  };
+  ```
+
+**Execution Flow:**
+1. Send a GraphQL query to pull User documents with the following:
+   - Projection: Include only `id`, `firstName`, and `email`
+   - Filter: `Role` is `User`
+   - Limit: 5 documents
+   - Checkpoint: null (initial pull)
+
+**GraphQL Query:**
+```graphql
+query {
+  pullUser(
+    checkpoint: null,
+    limit: 5,
+    where: { role: { eq: USER } }
+  ) {
+    documents {
+      id
+      firstName
+      email
+    }
+    checkpoint {
+      lastDocumentId
+      updatedAt
+    }
+  }
+}
+```
+
+**Expected Results:**
+- The query should return User documents that match the specified criteria:
+  - Role is User
+- The returned documents should only include the projected fields: `id`, `firstName`, and `email`
+- Other fields like `lastName`, `role`, `updatedAt`, and `isDeleted` should not be present in the response
+- The number of returned documents should not exceed the specified limit (5)
+- The response should include a valid checkpoint based on the latest returned document
+- Verify that the projection and filtering do not interfere with the checkpoint mechanism of the RxDB replication protocol
+
+**Additional Verifications:**
+1. Perform a subsequent pull operation using the checkpoint from the first query:
+   - It should only return documents that were updated after the checkpoint
+   - The projection and filtering should still be applied
+2. Test with various combinations of projections and filters to ensure all fields can be projected and filtered correctly
+3. Verify that requesting non-existent fields in the projection is handled gracefully with appropriate error messages
+4. Check that the `UpdatedAt` field is always included in the actual database query, even if not projected, to ensure proper ordering and checkpoint functionality
+
+**Execution Steps:**
+1. Execute the initial projected and filtered pull query
+2. Verify the results match the expected criteria and only include the projected fields
+3. Extract the checkpoint from the response
+4. Create or update some documents that match the filter criteria
+5. Execute a subsequent pull query using the checkpoint from step 3
+6. Verify that only new or updated documents are returned, they still match the filter criteria, and only include the projected fields
+
+**Additional Notes:**
+- Ensure that the projection logic is applied at the database level for efficiency
+- Verify that the projection does not break the RxDB replication protocol's consistency guarantees
+- Check that the performance of projected queries is acceptable, especially with large datasets
+- Confirm that the ordering by `UpdatedAt` and `Id` is maintained even when these fields are not projected
+
+#### Test Case 2.4: Subsequent Pull (Checkpoint Iteration)
 
 **Objective:** Ensure proper handling of pulls with a valid checkpoint.
 
@@ -181,7 +387,7 @@ The test cases are organized to progress from basic operations to more complex s
 - Verify that documents created before or at the checkpoint time are not included in the response
 - Ensure that the new checkpoint in the response matches the UpdatedAt and Id of the newest document
 
-#### Test Case 2.3: Checkpoint Iteration to Pull a Large Number of Documents
+#### Test Case 2.5: Checkpoint Iteration to Pull a Large Number of Documents
 
 **Objective:** Verify correct implementation of checkpoint iteration for retrieving a large dataset.
 
@@ -210,7 +416,7 @@ The test cases are organized to progress from basic operations to more complex s
 - Ensure that no documents are missed or duplicated across batches
 - Check that the checkpoint in each response correctly represents the last document in that batch
 
-#### Test Case 2.4: Push Operation
+#### Test Case 2.6: Push New and Updated Documents in Single Operation
 
 **Objective:** Verify correct handling of pushing new and updated documents to the server.
 
@@ -257,7 +463,7 @@ The test cases are organized to progress from basic operations to more complex s
 - The retrieved documents should match the pushed data
 - The server should correctly handle both the creation of a new document and the update of an existing one
 
-#### Test Case 2.5: Conflict Detection and Resolution
+#### Test Case 2.7: Conflict Detection and Resolution
 
 **Objective:** Ensure that the server correctly detects and reports conflicts during push operations.
 

@@ -14,26 +14,25 @@
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
-        <NoWarn>$(NoWarn);CA2007;CA1707;MA0051;MA0004;CA2234</NoWarn>
+        <NoWarn>$(NoWarn);CA2007;CA1707;MA0051;MA0004;CA2234;MA0009;CA1054</NoWarn>
+        <DefineConstants>GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON</DefineConstants>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
-        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <CodeCoverageInclude>[RxDBDotNet*]*</CodeCoverageInclude>
-        <CodeCoverageExclude>[RxDBDotNet.Tests]*,[LiveDocs*]*,[Example*]*</CodeCoverageExclude>
-    </PropertyGroup>
+    <Target Name="GenerateLiveDocsGraphQLClient" BeforeTargets="CoreCompile">
+        <Exec Command="dotnet run --project ../RxDBDotNet.LiveDocsTestModelGenerator/RxDBDotNet.LiveDocsTestModelGenerator.csproj" />
+    </Target>
 
     <ItemGroup>
+        <PackageReference Include="FluentAssertions" Version="6.12.0" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.7" />
         <PackageReference Include="coverlet.collector" Version="6.0.2">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
-        <PackageReference Include="Testcontainers.MsSql" Version="3.9.0" />
         <PackageReference Include="xunit" Version="2.9.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
           <PrivateAssets>all</PrivateAssets>
@@ -71,6 +70,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\example\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
+      <ProjectReference Include="..\RxDBDotNet.Tests.Setup\RxDBDotNet.Tests.Setup.csproj" />
     </ItemGroup>
 
 </Project>

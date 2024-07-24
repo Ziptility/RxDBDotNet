@@ -1,23 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <RunSettings>
-    <DataCollectionRunSettings>
-        <DataCollectors>
-            <DataCollector friendlyName="XPlat Code Coverage">
-                <Configuration>
-                    <Include>
-                        <ModulePath>.*RxDBDotNet.*</ModulePath>
-                    </Include>
-                    <Exclude>
-                        <ModulePath>.*RxDBDotNet.Tests.*</ModulePath>
-                        <ModulePath>.*RxDBDotNet.Tests.Setup.*</ModulePath>
-                        <ModulePath>.*LiveDocs.GraphQLApi.*</ModulePath>
-                        <ModulePath>.*LiveDocs.ServiceDefaults.*</ModulePath>
-                        <ModulePath>.*LiveDocs.AppHost.*</ModulePath>
-                        <ModulePath>.*Example.*</ModulePath>
-                        <ModulePath>.*RxDBDotNet.LiveDocsTestModelGenerator.*</ModulePath>
-                    </Exclude>
-                </Configuration>
-            </DataCollector>
-        </DataCollectors>
-    </DataCollectionRunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>opencover</Format>
+          <Include>[RxDBDotNet]*</Include>
+          <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
+          <ExcludeByFile>**/Program.cs,**/Startup.cs</ExcludeByFile>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
 </RunSettings>

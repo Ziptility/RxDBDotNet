@@ -48,6 +48,9 @@ public class Startup
             .AddReplicatedDocument<User>()
             .AddReplicatedDocument<Workspace>()
             .AddReplicatedDocument<LiveDoc>()
+            // A class to validate that the [GraphQLName] attribute is respected
+            // when building the schema
+            .AddReplicatedDocument<DocumentWithGraphQLName>()
             .AddInMemorySubscriptions();
 
         // Configure CORS

@@ -1,23 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using RxDBDotNet.Documents;
 
 namespace LiveDocs.GraphQLApi.Models;
 
-public class Hero : IReplicatedDocument
+public class Hero : ReplicatedDocument
 {
-    [Required]
-    public required Guid Id { get; init; }
-    
     [MaxLength(100)]
     public string? Name { get; init; }
 
     [Required]
     [MaxLength(30)]
     public required string Color { get; init; }
-
-    [Required]
-    public required DateTimeOffset UpdatedAt { get; set; }
-
-    [Required]
-    public required bool IsDeleted { get; set; }
 }

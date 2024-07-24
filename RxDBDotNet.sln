@@ -44,6 +44,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDBDotNet.LiveDocsTestMode
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RxDBDotNet.Tests.Setup", "tests\RxDBDotNet.Tests.Setup\RxDBDotNet.Tests.Setup.csproj", "{9E5A3A3E-D100-48B3-ABC9-3A5C80CF98E9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "worflows", "worflows", "{5DB93DDB-67AD-4567-9447-DB02A6898BEE}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\main.yml = .github\workflows\main.yml
+		.github\workflows\pull-request.yml = .github\workflows\pull-request.yml
+		.github\workflows\release.yml = .github\workflows\release.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -92,6 +99,7 @@ Global
 		{3ACC4CC0-E7A3-4738-94BE-AE1B6E0DA0EC} = {A12DF744-A396-4895-8E1F-3C44349EE0A9}
 		{8CB00FE2-5DA2-4785-A5A8-157A97AFBCDD} = {1B5323DD-D124-4F5D-AFED-27F0F20DD545}
 		{9E5A3A3E-D100-48B3-ABC9-3A5C80CF98E9} = {1B5323DD-D124-4F5D-AFED-27F0F20DD545}
+		{5DB93DDB-67AD-4567-9447-DB02A6898BEE} = {41216137-D61B-414F-BE61-FABEA436ABA8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {33885AAE-E818-451C-9604-9002D28B4F7B}

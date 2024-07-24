@@ -22,13 +22,8 @@
     </PropertyGroup>
 
     <Target Name="GenerateLiveDocsGraphQLClient" BeforeTargets="CoreCompile">
-        <Exec Command="dotnet run --project ../RxDBDotNet.LiveDocsTestClientGenerator/RxDBDotNet.LiveDocsTestClientGenerator.csproj" />
+        <Exec Command="dotnet run --project ../RxDBDotNet.LiveDocsTestModelGenerator/RxDBDotNet.LiveDocsTestModelGenerator.csproj" />
     </Target>
-
-    <PropertyGroup>
-        <CodeCoverageInclude>[RxDBDotNet*]*</CodeCoverageInclude>
-        <CodeCoverageExclude>[RxDBDotNet.Tests*]*,[LiveDocs*]*,[Example*]*,[RxDBDotNet.LiveDocsTestClientGenerator*]*</CodeCoverageExclude>
-    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="6.12.0" />
@@ -75,7 +70,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\example\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
-      <ProjectReference Include="..\..\RxDBDotNet.Tests.Setup\RxDBDotNet.Tests.Setup.csproj" />
+      <ProjectReference Include="..\RxDBDotNet.Tests.Setup\RxDBDotNet.Tests.Setup.csproj" />
     </ItemGroup>
 
 </Project>

@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\example\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
-    <ProjectReference Include="..\..\RxDBDotNet.Tests.Setup\RxDBDotNet.Tests.Setup.csproj" />
+    <ProjectReference Include="..\RxDBDotNet.Tests.Setup\RxDBDotNet.Tests.Setup.csproj" />
   </ItemGroup>
 
 </Project>

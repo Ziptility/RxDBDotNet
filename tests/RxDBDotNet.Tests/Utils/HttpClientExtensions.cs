@@ -5,7 +5,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using RxDBDotNet.Tests.Model;
-using static Ziptility.Common.Utilities.SerializationUtils;
+using static RxDBDotNet.Tests.Utils.SerializationUtils;
 using BadRequest = RxDBDotNet.Tests.Model.BadRequest;
 using GraphQLRequest = RxDBDotNet.Tests.Model.GraphQLRequest;
 

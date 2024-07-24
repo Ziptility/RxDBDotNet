@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\example\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
+      <ProjectReference Include="..\..\example\LiveDocs.GraphQLApi\LiveDocs.GraphQLApi.csproj" />
     </ItemGroup>
 
 </Project>

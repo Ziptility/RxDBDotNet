@@ -2,7 +2,7 @@
 using GraphQlClientGenerator;
 using Newtonsoft.Json;
 
-namespace RxDBDotNet.LiveDocsTestClientGenerator;
+namespace RxDBDotNet.LiveDocsTestModelGenerator;
 
 public static class GraphQlClientFactory
 {
@@ -48,7 +48,11 @@ public static class GraphQlClientFactory
             // Join the lines back into a single string
             var modifiedCsharpCode = string.Join(Environment.NewLine, lines);
 
-            await File.WriteAllTextAsync("../RxDBDotNet.Tests/Model/LiveDocsGraphQLClient.cs", modifiedCsharpCode);
+            var currentDirectory = Directory.GetCurrentDirectory();
+            
+            Console.WriteLine($"The current directory is '{currentDirectory}'");
+
+            await File.WriteAllTextAsync("./Model/LiveDocsGraphQLClient.cs", modifiedCsharpCode);
         }
         catch (Exception e)
         {

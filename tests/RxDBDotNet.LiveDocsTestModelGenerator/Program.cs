@@ -1,6 +1,6 @@
 ﻿using RxDBDotNet.Tests.Setup;
 
-namespace RxDBDotNet.LiveDocsTestClientGenerator;
+namespace RxDBDotNet.LiveDocsTestModelGenerator;
 
 public class Program
 {

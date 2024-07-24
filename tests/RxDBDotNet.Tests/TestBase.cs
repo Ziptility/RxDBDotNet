@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using RxDBDotNet.Tests.Setup;
 using RxDBDotNet.Tests.Utils;
 using Xunit.Abstractions;
 

@@ -1,10 +1,10 @@
-﻿using System.Text.Json;
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 
-namespace Ziptility.Common.Utilities;
+namespace RxDBDotNet.Tests.Utils;
 
 public static class SerializationUtils
 {

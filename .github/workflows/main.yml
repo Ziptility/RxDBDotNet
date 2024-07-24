@@ -44,8 +44,8 @@ jobs:
           --no-build \
           --collect:"XPlat Code Coverage;Format=opencover" \
           /p:CoverletOutputFormat=opencover \
-          /p:Include=\"[RxDBDotNet*]*\"
-          /p:Exclude=\"[RxDBDotNet.Tests*]*,[LiveDocs*]*,[Example*]*,[RxDBDotNet.LiveDocsTestClientGenerator*]*\"
+          /p:Include=\"[RxDBDotNet*]*\" \
+          /p:Exclude=\"[RxDBDotNet.Tests*]*,[LiveDocs*]*,[Example*]*,[RxDBDotNet.LiveDocsTestModelGenerator*]*\"
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1

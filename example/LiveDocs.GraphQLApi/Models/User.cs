@@ -1,17 +1,10 @@
-﻿using RxDBDotNet.Documents;
-
-namespace LiveDocs.GraphQLApi.Models;
+﻿namespace LiveDocs.GraphQLApi.Models;
 
 /// <summary>
 /// Represents a user of the LiveDocs system.
 /// </summary>
-public class User : IReplicatedDocument
+public class User : ReplicatedDocument
 {
-    /// <summary>
-    /// Gets or initializes the unique identifier for the user.
-    /// </summary>
-    public required Guid Id { get; init; }
-
     /// <summary>
     /// Gets or sets the first name of the user.
     /// </summary>
@@ -36,14 +29,4 @@ public class User : IReplicatedDocument
     /// Gets or initializes the unique identifier of the workspace to which the user belongs.
     /// </summary>
     public required Guid WorkspaceId { get; init; }
-
-    /// <summary>
-    /// Gets or sets the date and time when the user account was last updated.
-    /// </summary>
-    public required DateTimeOffset UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the user account has been deleted.
-    /// </summary>
-    public required bool IsDeleted { get; set; }
 }

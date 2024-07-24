@@ -25,13 +25,8 @@ namespace LiveDocs.GraphQLApi.Models;
 /// </para>
 /// </remarks>
 /// <seealso cref="IReplicatedDocument"/>
-public class LiveDoc : IReplicatedDocument
+public class LiveDoc : ReplicatedDocument
 {
-    /// <summary>
-    /// Gets or initializes the unique identifier for the live doc.
-    /// </summary>
-    public required Guid Id { get; init; }
-
     /// <summary>
     /// Gets or sets the content of the live doc.
     /// </summary>
@@ -46,14 +41,4 @@ public class LiveDoc : IReplicatedDocument
     /// Gets or initializes the unique identifier of the workspace to which the live doc belongs.
     /// </summary>
     public required Guid WorkspaceId { get; init; }
-
-    /// <summary>
-    /// Gets or sets the date and time when the live doc was last updated.
-    /// </summary>
-    public required DateTimeOffset UpdatedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the live doc has been deleted.
-    /// </summary>
-    public required bool IsDeleted { get; set; }
 }

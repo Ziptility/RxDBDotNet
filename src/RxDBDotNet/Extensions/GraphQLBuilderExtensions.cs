@@ -1,4 +1,5 @@
-﻿using HotChocolate.Execution.Configuration;
+﻿using System.Reflection;
+using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
@@ -80,22 +81,30 @@ public static class GraphQLBuilderExtensions
             .ConfigureDocumentSubscriptions<TDocument>();
     }
 
+    private static string GetGraphQLTypeName<TDocument>() where TDocument : class, IReplicatedDocument
+    {
+        var attribute = typeof(TDocument).GetCustomAttribute<GraphQLNameAttribute>();
+        return attribute?.Name ?? typeof(TDocument).Name;
+    }
+
     private static IRequestExecutorBuilder ConfigureDocumentTypes<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        return builder.AddCheckpointInputType<TDocument>()
-            .AddDocumentPullBulkType<TDocument>()
-            .AddDocumentPushRowInputType<TDocument>();
+        var graphQLTypeName = GetGraphQLTypeName<TDocument>();
+        return builder.AddCheckpointInputType<TDocument>(graphQLTypeName)
+            .AddDocumentPullBulkType<TDocument>(graphQLTypeName)
+            .AddDocumentPushRowInputType<TDocument>(graphQLTypeName);
     }
 
-    private static IRequestExecutorBuilder AddCheckpointInputType<TDocument>(this IRequestExecutorBuilder builder)
+    private static IRequestExecutorBuilder AddCheckpointInputType<TDocument>(this IRequestExecutorBuilder builder, string graphQLTypeName)
         where TDocument : class, IReplicatedDocument
     {
-        var checkpointInputTypeName = $"{typeof(TDocument).Name}InputCheckpoint";
+        var checkpointInputTypeName = $"{graphQLTypeName}InputCheckpoint";
+
         return builder.AddType(new InputObjectType<Checkpoint>(inputObjectTypeDescriptor =>
         {
             inputObjectTypeDescriptor.Name(checkpointInputTypeName)
-                .Description($"Input type for the checkpoint of {typeof(TDocument).Name} replication.");
+                .Description($"Input type for the checkpoint of {graphQLTypeName} replication.");
             inputObjectTypeDescriptor.Field(f => f.UpdatedAt)
                 .Type<DateTimeType>()
                 .Description("The timestamp of the last update included in the synchronization batch.");
@@ -105,30 +114,32 @@ public static class GraphQLBuilderExtensions
         }));
     }
 
-    private static IRequestExecutorBuilder AddDocumentPullBulkType<TDocument>(this IRequestExecutorBuilder builder)
+    private static IRequestExecutorBuilder AddDocumentPullBulkType<TDocument>(this IRequestExecutorBuilder builder, string graphQLTypeName)
         where TDocument : class, IReplicatedDocument
     {
-        var pullBulkTypeName = $"{typeof(TDocument).Name}PullBulk";
+        var pullBulkTypeName = $"{graphQLTypeName}PullBulk";
+
         return builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(objectTypeDescriptor =>
         {
             objectTypeDescriptor.Name(pullBulkTypeName)
-                .Description($"Represents the result of a pull operation for {typeof(TDocument).Name} documents.");
+                .Description($"Represents the result of a pull operation for {graphQLTypeName} documents.");
             objectTypeDescriptor.Field(f => f.Documents)
                 .UseFiltering<TDocument>()
-                .Description($"The list of {typeof(TDocument).Name} documents pulled from the server.");
+                .Description($"The list of {graphQLTypeName} documents pulled from the server.");
             objectTypeDescriptor.Field(f => f.Checkpoint)
                 .Description("The new checkpoint after this pull operation.");
         }));
     }
 
-    private static IRequestExecutorBuilder AddDocumentPushRowInputType<TDocument>(this IRequestExecutorBuilder builder)
+    private static IRequestExecutorBuilder AddDocumentPushRowInputType<TDocument>(this IRequestExecutorBuilder builder, string graphQLTypeName)
         where TDocument : class, IReplicatedDocument
     {
-        var pushRowTypeName = $"{typeof(TDocument).Name}InputPushRow";
+        var pushRowTypeName = $"{graphQLTypeName}InputPushRow";
+
         return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(inputObjectTypeDescriptor =>
         {
             inputObjectTypeDescriptor.Name(pushRowTypeName)
-                .Description($"Input type for pushing {typeof(TDocument).Name} documents to the server.");
+                .Description($"Input type for pushing {graphQLTypeName} documents to the server.");
             inputObjectTypeDescriptor.Field(f => f.AssumedMasterState)
                 .Type<InputObjectType<TDocument>>()
                 .Description("The assumed state of the document on the server before the push.");
@@ -153,10 +164,11 @@ public static class GraphQLBuilderExtensions
     private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
+        var graphQLTypeName = GetGraphQLTypeName<TDocument>();
         return builder.AddTypeExtension<SubscriptionExtension<TDocument>>()
             .AddType(new InputObjectType<Headers>(d =>
             {
-                d.Name($"{typeof(TDocument).Name}InputHeaders");
+                d.Name($"{graphQLTypeName}InputHeaders");
                 d.Field(f => f.Authorization)
                     .Type<NonNullType<StringType>>()
                     .Name("Authorization")
@@ -198,20 +210,20 @@ public static class GraphQLBuilderExtensions
     {
         protected override void Configure(IObjectTypeDescriptor descriptor)
         {
-            var documentTypeName = typeof(TDocument).Name;
-            var pullDocumentsName = $"pull{documentTypeName}";
-            var checkpointInputTypeName = $"{documentTypeName}InputCheckpoint";
+            var graphQLTypeName = GetGraphQLTypeName<TDocument>();
+            var pullDocumentsName = $"pull{graphQLTypeName}";
+            var checkpointInputTypeName = $"{graphQLTypeName}InputCheckpoint";
 
             descriptor.Name("Query")
                 .Field(pullDocumentsName)
                 .UseFiltering()
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("checkpoint", a => a.Type(checkpointInputTypeName)
-                    .Description($"The last known checkpoint for {documentTypeName} replication."))
+                    .Description($"The last known checkpoint for {graphQLTypeName} replication."))
                 .Argument("limit", a => a.Type<NonNullType<IntType>>()
-                    .Description($"The maximum number of {documentTypeName} documents to return."))
+                    .Description($"The maximum number of {graphQLTypeName} documents to return."))
                 .Description(
-                    $"Pulls {documentTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")
+                    $"Pulls {graphQLTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")
                 .Resolve(context =>
                 {
                     var queryResolver = context.Resolver<QueryResolver<TDocument>>();
@@ -234,16 +246,16 @@ public static class GraphQLBuilderExtensions
     {
         protected override void Configure(IObjectTypeDescriptor descriptor)
         {
-            var documentTypeName = typeof(TDocument).Name;
-            var pushDocumentsName = $"push{documentTypeName}";
-            var pushRowArgName = $"{char.ToLowerInvariant(documentTypeName[0])}{documentTypeName[1..]}PushRow";
+            var graphQLTypeName = GetGraphQLTypeName<TDocument>();
+            var pushDocumentsName = $"push{graphQLTypeName}";
+            var pushRowArgName = $"{char.ToLowerInvariant(graphQLTypeName[0])}{graphQLTypeName[1..]}PushRow";
 
             descriptor.Name("Mutation")
                 .Field(pushDocumentsName)
                 .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
                 .Argument(pushRowArgName, a => a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
-                    .Description($"The list of {documentTypeName} documents to push to the server."))
-                .Description($"Pushes {documentTypeName} documents to the server and handles any conflicts.")
+                    .Description($"The list of {graphQLTypeName} documents to push to the server."))
+                .Description($"Pushes {graphQLTypeName} documents to the server and handles any conflicts.")
                 .Resolve(context =>
                 {
                     var mutation = context.Resolver<MutationResolver<TDocument>>();
@@ -263,15 +275,15 @@ public static class GraphQLBuilderExtensions
     {
         protected override void Configure(IObjectTypeDescriptor descriptor)
         {
-            var documentTypeName = typeof(TDocument).Name;
-            var streamDocumentName = $"stream{documentTypeName}";
-            var headersInputTypeName = $"{documentTypeName}InputHeaders";
+            var graphQLTypeName = GetGraphQLTypeName<TDocument>();
+            var streamDocumentName = $"stream{graphQLTypeName}";
+            var headersInputTypeName = $"{graphQLTypeName}InputHeaders";
 
             descriptor.Name("Subscription")
                 .Field(streamDocumentName)
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("headers", a => a.Type(headersInputTypeName)
-                    .Description($"Headers for {documentTypeName} subscription authentication."))
+                    .Description($"Headers for {graphQLTypeName} subscription authentication."))
                 .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
                 .Subscribe(context =>
                 {

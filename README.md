@@ -24,6 +24,7 @@ RxDBDotNet is an open-source library that facilitates real-time data replication
   - Enables offline-first capabilities
   - Detects conflicts and reports them to the client
   - Provides efficient data pull and push operations
+  - Supports GraphQL filtering for pull operations
 - **Conflict Handling**: Detects conflicts during push operations and returns them to the client for resolution
 - **Flexibility**: Can be integrated with various backend storage solutions through a repository pattern
 
@@ -32,7 +33,7 @@ This library bridges the gap between RxDB-powered frontend applications and .NET
 ## Table of Contents
 
 - [Installation](#installation)
-- [Usage](#usage)
+- [Quick Start](#quick-start)
 - [Features](#features)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
@@ -55,26 +56,57 @@ To install and set up RxDBDotNet in your project, follow these steps:
    dotnet add package HotChocolate.Data
    ```
 
-3. In your `Program.cs`, add the following configuration:
+## Quick Start
+
+Here's a step-by-step guide to get you started with RxDBDotNet:
+
+1. Define your document type:
+
+   ```csharp
+   public class Hero : IReplicatedDocument
+   {
+       public required Guid Id { get; init; }
+       public string? Name { get; set; }
+       public required DateTimeOffset UpdatedAt { get; set; }
+       public required bool IsDeleted { get; set; }
+   }
+   ```
+
+2. Implement the `IDocumentRepository<T>` interface for your document type:
+
+   ```csharp
+   public class HeroRepository : BaseDocumentRepository<Hero>
+   {
+       public HeroRepository(IEventPublisher eventPublisher, ILogger<HeroRepository> logger)
+           : base(eventPublisher, logger)
+       {
+       }
+
+       // Implement the required methods
+       // ...
+   }
+   ```
+
+3. In your `Program.cs`, configure the services and GraphQL schema:
 
    ```csharp
    var builder = WebApplication.CreateBuilder(args);
 
    // Add services to the container
    builder.Services
-       .AddSingleton<IDocumentRepository<YourDocumentType>, YourRepositoryImplementation>();
+       .AddSingleton<IDocumentRepository<Hero>, HeroRepository>();
 
    // Configure the GraphQL server
    builder.Services.AddGraphQLServer()
        .ModifyRequestOptions(o =>
        {
            // Enable debugging features in development
-           o.IncludeExceptionDetails = true;
+           o.IncludeExceptionDetails = builder.Environment.IsDevelopment();
        })
        // Add RxDBDotNet replication support
        .AddReplicationServer()
        // Configure replication for your document type
-       .AddReplicatedDocument<YourDocumentType>()
+       .AddReplicatedDocument<Hero>()
        // Enable pub/sub for GraphQL subscriptions
        .AddInMemorySubscriptions();
 
@@ -105,58 +137,45 @@ To install and set up RxDBDotNet in your project, follow these steps:
    app.MapGraphQL()
        .WithOptions(new GraphQLServerOptions
        {
-           // Configure GraphQL Playground or Banana Cake Pop
            Tool =
            {
-               Enable = true,
+               Enable = app.Environment.IsDevelopment(),
            },
        });
 
    app.Run();
    ```
 
-## Usage
-
-Here's a basic example of how to use RxDBDotNet in your application:
-
-1. Define your document type:
-
-   ```csharp
-   public class Hero : IReplicatedDocument
-   {
-       public Guid Id { get; init; }
-       public string Name { get; set; }
-       public DateTimeOffset UpdatedAt { get; set; }
-       public bool IsDeleted { get; set; }
-   }
-   ```
-
-2. Implement the `IDocumentRepository<T>` interface for your document type:
-
-   ```csharp
-   public class HeroRepository : BaseDocumentRepository<Hero>
-   {
-       // Implement the required methods
-   }
-   ```
-
-3. Configure your GraphQL schema:
-
-   ```csharp
-   builder.Services
-       .AddGraphQLServer()
-       .AddReplicationServer()
-       .AddReplicatedDocument<Hero>();
-   ```
-
 4. Use the GraphQL API to interact with your documents:
 
    ```graphql
+   # Push a new hero
+   mutation PushHero {
+     pushHero(heroPushRow: [{
+       newDocumentState: {
+         id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+         name: "New Hero",
+         updatedAt: "2023-07-18T12:00:00Z",
+         isDeleted: false
+       }
+     }]) {
+       id
+       name
+       updatedAt
+       isDeleted
+     }
+   }
+
+   # Pull heroes with filtering
    query PullHeroes {
-     pullHero(checkpoint: null, limit: 10) {
-       documents {
+     pullHero(
+       limit: 10
+     ) {
+       documents(where: { name: { eq: "New Hero" } }) {
          id
          name
+         updatedAt
+         isDeleted
        }
        checkpoint {
          updatedAt
@@ -165,25 +184,14 @@ Here's a basic example of how to use RxDBDotNet in your application:
      }
    }
 
-   mutation PushHero {
-     pushHero(heroPushRow: [{
-       newDocumentState: {
-         id: "new-hero-id",
-         name: "New Hero",
-         updatedAt: "2023-07-18T12:00:00Z",
-         isDeleted: false
-       }
-     }]) {
-       id
-       name
-     }
-   }
-
+   # Subscribe to hero updates
    subscription StreamHeroes {
-     streamHero {
+     streamHero(headers: { Authorization: "Bearer your-auth-token" }) {
        documents {
          id
          name
+         updatedAt
+         isDeleted
        }
        checkpoint {
          updatedAt
@@ -199,8 +207,9 @@ Here's a basic example of how to use RxDBDotNet in your application:
 - **GraphQL Integration**: Seamlessly integrates with GraphQL using the Hot Chocolate library.
 - **Offline-First**: Supports offline-first application architecture.
 - **Real-Time Updates**: Provides real-time updates through GraphQL subscriptions.
-- **Conflict Resolution**: Implements server-side conflict detection and resolution.
-- **Extensible**: Easily extendable to support different storage backends.
+- **Conflict Detection**: Implements server-side conflict detection and reports conflicts to the client for resolution.
+- **GraphQL Filtering**: Supports filtering of documents during pull operations using GraphQL filters.
+- **Extensible**: Easily extendable to support different storage backends through the repository pattern.
 - **Type-Safe**: Fully supports C# nullable reference types for improved type safety.
 
 ## Contributing

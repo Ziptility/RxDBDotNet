@@ -40,6 +40,9 @@ public class Startup
             {
                 o.IncludeExceptionDetails = environment.IsDevelopment();
             })
+            // Simulate scenario where the library user
+            // has already added their own root query type.
+            .AddQueryType<Models.Query>()
             .AddReplicationServer()
             .AddReplicatedDocument<Hero>()
             .AddReplicatedDocument<User>()

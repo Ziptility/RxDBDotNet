@@ -6,9 +6,10 @@
 public interface IReplicatedDocument
 {
     /// <summary>
-    ///     The unique identifier for the document.
+    /// Gets the client-assigned identifier for this document.
+    /// This property is used for client-side identification and replication purposes.
     /// </summary>
-    Guid Id { get; init; }
+    Guid Id { get; }
 
     /// <summary>
     ///     The timestamp of the last update to the document.

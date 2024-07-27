@@ -89,13 +89,12 @@ public static class GraphQLBuilderExtensions
         where TDocument : class, IReplicatedDocument
     {
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
-        return builder.AddCheckpointInputType<TDocument>(graphQLTypeName)
+        return builder.AddCheckpointInputType(graphQLTypeName)
             .AddDocumentPullBulkType<TDocument>(graphQLTypeName)
             .AddDocumentPushRowInputType<TDocument>(graphQLTypeName);
     }
 
-    private static IRequestExecutorBuilder AddCheckpointInputType<TDocument>(this IRequestExecutorBuilder builder, string graphQLTypeName)
-        where TDocument : class, IReplicatedDocument
+    private static IRequestExecutorBuilder AddCheckpointInputType(this IRequestExecutorBuilder builder, string graphQLTypeName)
     {
         var checkpointInputTypeName = $"{graphQLTypeName}InputCheckpoint";
 
@@ -250,6 +249,10 @@ public static class GraphQLBuilderExtensions
 
             descriptor.Name("Mutation")
                 .Field(pushDocumentsName)
+                .UseMutationConvention(new MutationFieldOptions
+                {
+                    Disable = true,
+                })
                 .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
                 .Argument(pushRowArgName, a => a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
                     .Description($"The list of {graphQLTypeName} documents to push to the server."))

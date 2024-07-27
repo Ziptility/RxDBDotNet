@@ -40,8 +40,6 @@ public static class GraphQLBuilderExtensions
         // Ensure Query, Mutation, and Subscription types exist
         EnsureRootTypesExist(builder);
 
-        builder.AddMutationConventions();
-
         return builder.InitializeOnStartup();
     }
 

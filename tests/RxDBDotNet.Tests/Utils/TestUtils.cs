@@ -23,16 +23,13 @@ internal static class TestUtils
             NewDocumentState = newWorkspace,
         };
 
-        var pushWorkspaceInputGql = new PushWorkspaceInputGql
+        var pushWorkspaceInputGql = new List<WorkspaceInputPushRowGql?>
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
-            {
-                workspaceInput,
-            },
+            workspaceInput,
         };
 
         var createWorkspace =
-            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+            new MutationQueryBuilderGql().WithPushWorkspace(new WorkspaceQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
         var response = await httpClient.PostGqlMutationAsync(createWorkspace);
@@ -40,7 +37,7 @@ internal static class TestUtils
         // Assert
         response.Errors.Should()
             .BeNullOrEmpty();
-        response.Data.PushWorkspace?.Workspace.Should()
+        response.Data.PushWorkspace?.Should()
             .BeNullOrEmpty();
 
         return newWorkspace;

@@ -26,16 +26,13 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
             NewDocumentState = newWorkspace,
         };
 
-        var pushWorkspaceInputGql = new PushWorkspaceInputGql
+        var pushWorkspaceInputGql = new List<WorkspaceInputPushRowGql?>
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
-            {
-                workspaceInput,
-            },
+            workspaceInput,
         };
 
         var createWorkspace =
-            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+            new MutationQueryBuilderGql().WithPushWorkspace(new WorkspaceQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
         var response = await HttpClient.PostGqlMutationAsync(createWorkspace);
@@ -43,7 +40,7 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
         // Assert
         response.Errors.Should()
             .BeNullOrEmpty();
-        response.Data.PushWorkspace?.Workspace.Should()
+        response.Data.PushWorkspace?.Should()
             .BeNullOrEmpty();
 
         // Verify the workspace exists in the database

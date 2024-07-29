@@ -33,7 +33,7 @@
         <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.7" />
         <PackageReference Include="HotChocolate.AspNetCore.Subscriptions" Version="10.5.5" />
         <PackageReference Include="HotChocolate.Data" Version="13.9.7" />
-        <PackageReference Include="HotChocolate.Types" Version="13.9.7" />
+        <PackageReference Include="HotChocolate.Types" Version="13.9.8" />
         <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.0.0-beta" />
         <PackageReference Include="Meziantou.Analyzer" Version="2.0.161">
             <PrivateAssets>all</PrivateAssets>

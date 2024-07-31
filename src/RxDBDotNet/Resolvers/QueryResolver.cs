@@ -8,7 +8,13 @@ namespace RxDBDotNet.Resolvers;
 /// <summary>
 /// Represents a GraphQL query resolver for pulling documents.
 /// This class implements the server-side logic for the 'pull' operation in the RxDB replication protocol.
+/// Note that this class must not use constructor injection per:
+/// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </summary>
+/// <remarks>
+/// Note that this class must not use constructor injection per:
+/// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
+/// </remarks>
 /// <typeparam name="TDocument">The type of the document to be pulled, which must implement IReplicatedDocument.</typeparam>
 public sealed class QueryResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
@@ -35,7 +41,7 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     internal async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
-        IDocumentRepository<TDocument> repository,
+        [Service] IDocumentRepository<TDocument> repository,
         IResolverContext context,
         CancellationToken cancellationToken)
     {

@@ -13,40 +13,52 @@ namespace RxDBDotNet.Resolvers;
 /// </summary>
 /// <typeparam name="TDocument">The type of document being replicated. Must implement <see cref="IReplicatedDocument"/>.</typeparam>
 /// <remarks>
-/// Initializes a new instance of the SubscriptionResolver class.
+/// Note that this class must not use constructor injection per:
+/// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
-/// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
-/// <param name="logger">The logger used for logging information and errors.</param>
-public sealed class SubscriptionResolver<TDocument>(ITopicEventReceiver eventReceiver, ILogger<SubscriptionResolver<TDocument>> logger) where TDocument : class, IReplicatedDocument
+public sealed class SubscriptionResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Provides a stream of document changes for subscription.
     /// This method is the entry point for GraphQL subscriptions and implements
     /// the server-side push mechanism of the RxDB replication protocol.
     /// </summary>
+    /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
+    /// <param name="logger">The logger used for logging information and errors.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <returns>An asynchronous enumerable of <see cref="DocumentPullBulk{TDocument}"/> representing the stream of document changes.</returns>
-    public async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStream(
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+#pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
+    internal IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStream(
+        ITopicEventReceiver eventReceiver,
+        ILogger<SubscriptionResolver<TDocument>> logger,
+        CancellationToken cancellationToken)
     {
-        // Create a unique stream name for this document type
-        // This allows multiple document types to have separate streams
-        var streamName = $"Stream_{typeof(TDocument).Name}";
+        ArgumentNullException.ThrowIfNull(eventReceiver);
+        ArgumentNullException.ThrowIfNull(logger);
 
-        // Use a channel to decouple the event receiving and yielding processes
-        // This is crucial for managing backpressure and ensuring smooth operation
-        // when clients consume events at different rates
-        var channel = Channel.CreateUnbounded<DocumentPullBulk<TDocument>>();
+        return DocumentIteratorAsync(cancellationToken);
 
-        // Start processing events in a separate task
-        // This allows us to handle events asynchronously without blocking the main thread
-        _ = ProcessEventsAsync(streamName, channel.Writer, cancellationToken);
-
-        // Yield items from the channel as they become available
-        // This creates a push-based subscription stream that clients can consume
-        await foreach (var item in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+        async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentIteratorAsync([EnumeratorCancellation] CancellationToken localCancellationToken)
         {
-            yield return item;
+            // Create a unique stream name for this document type
+            // This allows multiple document types to have separate streams
+            var streamName = $"Stream_{typeof(TDocument).Name}";
+
+            // Use a channel to decouple the event receiving and yielding processes
+            // This is crucial for managing backpressure and ensuring smooth operation
+            // when clients consume events at different rates
+            var channel = Channel.CreateUnbounded<DocumentPullBulk<TDocument>>();
+
+            // Start processing events in a separate task
+            // This allows us to handle events asynchronously without blocking the main thread
+            _ = ProcessEventsAsync(streamName, channel.Writer, eventReceiver, logger, localCancellationToken);
+
+            // Yield items from the channel as they become available
+            // This creates a push-based subscription stream that clients can consume
+            await foreach (var item in channel.Reader.ReadAllAsync(localCancellationToken).ConfigureAwait(false))
+            {
+                yield return item;
+            }
         }
     }
 
@@ -56,8 +68,15 @@ public sealed class SubscriptionResolver<TDocument>(ITopicEventReceiver eventRec
     /// </summary>
     /// <param name="streamName">The name of the event stream to subscribe to.</param>
     /// <param name="writer">The channel writer to which processed events are written.</param>
+    /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
+    /// <param name="logger">The logger used for logging information and errors.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    private async Task ProcessEventsAsync(string streamName, ChannelWriter<DocumentPullBulk<TDocument>> writer, CancellationToken cancellationToken)
+    private static async Task ProcessEventsAsync(
+        string streamName,
+        ChannelWriter<DocumentPullBulk<TDocument>> writer,
+        ITopicEventReceiver eventReceiver,
+        ILogger<SubscriptionResolver<TDocument>> logger,
+        CancellationToken cancellationToken)
     {
         try
         {

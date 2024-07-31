@@ -10,20 +10,23 @@ namespace RxDBDotNet.Resolvers;
 /// </summary>
 /// <typeparam name="TDocument">The type of document being replicated, which must implement IReplicatedDocument.</typeparam>
 /// <remarks>
-/// Initializes a new instance of the MutationResolver class.
+/// Note that this class must not use constructor injection per:
+/// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
-/// <param name="repository">The document repository to be used for data access.</param>
-public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> repository) where TDocument : class, IReplicatedDocument
+public sealed class MutationResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Pushes a set of documents to the server and handles any conflicts.
     /// This method implements the conflict resolution part of the RxDB replication protocol.
     /// </summary>
     /// <param name="documents">The list of documents to push, including their assumed master state.</param>
+    /// <param name="repository">The document repository to be used for data access.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A task representing the asynchronous operation, with a result of any conflicting documents.</returns>
+#pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
     internal async Task<List<TDocument>> PushDocumentsAsync(
         List<DocumentPushRow<TDocument>?>? documents,
+        [Service] IDocumentRepository<TDocument> repository,
         CancellationToken cancellationToken)
     {
         // Early return if no documents are provided.
@@ -35,13 +38,13 @@ public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> r
 
         // Step 1: Categorize documents and detect conflicts
         // This aligns with the RxDB protocol's requirement to detect conflicts before applying changes
-        var (conflicts, updates, creates) = await CategorizeDocumentsAsync(documents, cancellationToken).ConfigureAwait(false);
+        var (conflicts, updates, creates) = await CategorizeDocumentsAsync(documents, repository, cancellationToken).ConfigureAwait(false);
 
         // Step 2: Apply changes only if there are no initial conflicts
         // This ensures atomicity of operations as per the RxDB protocol
         if (conflicts.Count == 0)
         {
-            var applyConflicts = await ApplyChangesAsync(creates, updates, cancellationToken).ConfigureAwait(false);
+            var applyConflicts = await ApplyChangesAsync(creates, updates, repository, cancellationToken).ConfigureAwait(false);
             conflicts.AddRange(applyConflicts);
         }
 
@@ -55,10 +58,12 @@ public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> r
     /// This method aligns with the RxDB protocol's requirement to detect conflicts before applying changes.
     /// </summary>
     /// <param name="documents">The list of documents to categorize.</param>
+    /// <param name="repository">The document repository to be used for data access.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A tuple containing lists of conflicting, updated, and new documents.</returns>
-    private async Task<(List<TDocument> Conflicts, List<TDocument> Updates, List<TDocument> Creates)> CategorizeDocumentsAsync(
+    private static async Task<(List<TDocument> Conflicts, List<TDocument> Updates, List<TDocument> Creates)> CategorizeDocumentsAsync(
         List<DocumentPushRow<TDocument>?>? documents,
+        IDocumentRepository<TDocument> repository,
         CancellationToken cancellationToken)
     {
         var conflicts = new List<TDocument>();
@@ -87,7 +92,7 @@ public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> r
             if (existing != null)
             {
                 // Document exists in the repository, handle potential conflicts
-                HandleExistingDocument(document, existing, conflicts, updates);
+                MutationResolver<TDocument>.HandleExistingDocument(document, existing, conflicts, updates, repository);
             }
             else
             {
@@ -107,11 +112,13 @@ public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> r
     /// <param name="existing">The existing document in the repository.</param>
     /// <param name="conflicts">The list to add conflicting documents to.</param>
     /// <param name="updates">The list to add documents that need updating to.</param>
-    private void HandleExistingDocument(
+    /// <param name="repository">The document repository to be used for data access.</param>
+    private static void HandleExistingDocument(
         DocumentPushRow<TDocument> document,
         TDocument existing,
         List<TDocument> conflicts,
-        List<TDocument> updates)
+        List<TDocument> updates,
+        IDocumentRepository<TDocument> repository)
     {
         // Check if the assumed master state matches the current state in the repository
         // This is a key part of the RxDB conflict detection mechanism
@@ -158,11 +165,13 @@ public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> r
     /// </summary>
     /// <param name="creates">The list of new documents to create.</param>
     /// <param name="updates">The list of existing documents to update.</param>
+    /// <param name="repository">The document repository to be used for data access.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A list of documents that are considered conflicting if an error occurs during the process.</returns>
-    private async Task<List<TDocument>> ApplyChangesAsync(
+    private static async Task<List<TDocument>> ApplyChangesAsync(
         List<TDocument> creates,
         List<TDocument> updates,
+        IDocumentRepository<TDocument> repository,
         CancellationToken cancellationToken)
     {
         try
@@ -176,7 +185,7 @@ public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> r
             // Update existing documents
             foreach (var update in updates)
             {
-                await HandleDocumentUpdateAsync(update, cancellationToken).ConfigureAwait(false);
+                await HandleDocumentUpdateAsync(update, repository, cancellationToken).ConfigureAwait(false);
             }
 
             // Commit all changes in a single transaction
@@ -199,8 +208,9 @@ public sealed class MutationResolver<TDocument>(IDocumentRepository<TDocument> r
     /// Handles the update of a single document, including soft deletes as per RxDB protocol.
     /// </summary>
     /// <param name="update">The document to update.</param>
+    /// <param name="repository">The document repository to be used for data access.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
-    private async Task HandleDocumentUpdateAsync(TDocument update, CancellationToken cancellationToken)
+    private static async Task HandleDocumentUpdateAsync(TDocument update, IDocumentRepository<TDocument> repository, CancellationToken cancellationToken)
     {
         if (update.IsDeleted)
         {

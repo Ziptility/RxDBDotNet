@@ -44,6 +44,7 @@ public class Startup
             // has already added their own root query type.
             .AddQueryType<Models.Query>()
             .AddReplicationServer()
+            .RegisterService<IDocumentRepository<Workspace>>()
             .AddReplicatedDocument<Hero>()
             .AddReplicatedDocument<User>()
             .AddReplicatedDocument<Workspace>()

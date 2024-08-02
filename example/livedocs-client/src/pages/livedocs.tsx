@@ -1,0 +1,112 @@
+import React, { useState, useEffect } from 'react';
+import { Typography, Box, Button } from '@mui/material';
+import LiveDocList from '../components/LiveDocList';
+import LiveDocForm from '../components/LiveDocForm';
+import { getDatabase } from '../lib/database';
+import { setupReplication } from '../lib/replication';
+import { LiveDoc, User, Workspace } from '../types';
+
+const LiveDocsPage: React.FC = () => {
+  const [db, setDb] = useState<Awaited<ReturnType<typeof getDatabase>> | null>(null);
+  const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+
+  useEffect(() => {
+    const initDb = async () => {
+      const database = await getDatabase();
+      await setupReplication(database);
+      setDb(database);
+
+      const usersSubscription = database.users.find({
+        selector: {
+          isDeleted: false
+        }
+      }).$
+        .subscribe(docs => {
+          setUsers(docs.map(doc => doc.toJSON()));
+        });
+
+      const workspacesSubscription = database.workspaces.find({
+        selector: {
+          isDeleted: false
+        }
+      }).$
+        .subscribe(docs => {
+          setWorkspaces(docs.map(doc => doc.toJSON()));
+        });
+
+      return () => {
+        usersSubscription.unsubscribe();
+        workspacesSubscription.unsubscribe();
+      };
+    };
+    initDb();
+  }, []);
+
+  const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => {
+    if (db) {
+      await db.liveDocs.insert({
+        id: Date.now().toString(),
+        ...liveDoc,
+        updatedAt: new Date().toISOString(),
+        isDeleted: false
+      });
+    }
+  };
+
+  const handleUpdate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => {
+    if (db && editingLiveDoc) {
+      await db.liveDocs.atomicUpdate(editingLiveDoc.id, (oldDoc) => {
+        oldDoc.content = liveDoc.content;
+        oldDoc.ownerId = liveDoc.ownerId;
+        oldDoc.workspaceId = liveDoc.workspaceId;
+        oldDoc.updatedAt = new Date().toISOString();
+        return oldDoc;
+      });
+      setEditingLiveDoc(null);
+    }
+  };
+
+  const handleDelete = async (liveDoc: LiveDoc) => {
+    if (db) {
+      await db.liveDocs.atomicUpdate(liveDoc.id, (oldDoc) => {
+        oldDoc.isDeleted = true;
+        oldDoc.updatedAt = new Date().toISOString();
+        return oldDoc;
+      });
+    }
+  };
+
+  if (!db) {
+    return <Typography>Loading...</Typography>;
+  }
+
+  return (
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Live Documents
+      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <LiveDocForm
+          liveDoc={editingLiveDoc || undefined}
+          users={users.map(u => ({ id: u.id, name: `${u.firstName} ${u.lastName}` }))}
+          workspaces={workspaces.map(w => ({ id: w.id, name: w.name }))}
+          onSubmit={editingLiveDoc ? handleUpdate : handleCreate}
+        />
+      </Box>
+      {editingLiveDoc && (
+        <Button onClick={() => setEditingLiveDoc(null)} sx={{ mb: 2 }}>
+          Cancel Editing
+        </Button>
+      )}
+      <LiveDocList
+        db={db}
+        onEdit={setEditingLiveDoc}
+        onDelete={handleDelete}
+      />
+    </Box>
+  );
+};
+
+export default LiveDocsPage;

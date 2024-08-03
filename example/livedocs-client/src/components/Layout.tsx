@@ -3,11 +3,11 @@ import { AppBar, Toolbar, Typography, Container, Box, Button } from '@mui/materi
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import NetworkStatus from './NetworkStatus';
-import { RxReplicationState } from 'rxdb';
+import { RxReplicationState } from '../types';
 
 interface LayoutProps {
   children: ReactNode;
-  replicationStates: RxReplicationState<any, any>[];
+  replicationStates: RxReplicationState[];
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, replicationStates }) => {

@@ -4,13 +4,13 @@ import LiveDocList from '../components/LiveDocList';
 import LiveDocForm from '../components/LiveDocForm';
 import { getDatabase } from '../lib/database';
 import { setupReplication } from '../lib/replication';
-import { LiveDoc, User, Workspace } from '../types';
+import { LiveDocDocType, UserDocType, WorkspaceDocType } from '../lib/schemas';
 
 const LiveDocsPage: React.FC = () => {
   const [db, setDb] = useState<Awaited<ReturnType<typeof getDatabase>> | null>(null);
-  const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDocDocType | null>(null);
+  const [users, setUsers] = useState<UserDocType[]>([]);
+  const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
 
   useEffect(() => {
     const initDb = async () => {
@@ -44,7 +44,7 @@ const LiveDocsPage: React.FC = () => {
     initDb();
   }, []);
 
-  const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleCreate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db) {
       await db.liveDocs.insert({
         id: Date.now().toString(),
@@ -55,12 +55,10 @@ const LiveDocsPage: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleUpdate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db && editingLiveDoc) {
       await db.liveDocs.atomicUpdate(editingLiveDoc.id, (oldDoc) => {
-        oldDoc.content = liveDoc.content;
-        oldDoc.ownerId = liveDoc.ownerId;
-        oldDoc.workspaceId = liveDoc.workspaceId;
+        Object.assign(oldDoc, liveDoc);
         oldDoc.updatedAt = new Date().toISOString();
         return oldDoc;
       });
@@ -68,7 +66,7 @@ const LiveDocsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (liveDoc: LiveDoc) => {
+  const handleDelete = async (liveDoc: LiveDocDocType) => {
     if (db) {
       await db.liveDocs.atomicUpdate(liveDoc.id, (oldDoc) => {
         oldDoc.isDeleted = true;

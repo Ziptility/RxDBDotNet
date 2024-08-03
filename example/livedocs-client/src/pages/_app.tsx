@@ -1,11 +1,9 @@
 import React from 'react';
 import { AppProps } from 'next/app';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import theme from '../theme';  // Adjust the import path if needed
 import Layout from '@/components/Layout';
-import '@/styles/globals.css';
-
-const theme = createTheme();
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

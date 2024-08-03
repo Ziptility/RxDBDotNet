@@ -1,12 +1,22 @@
 import React, { ReactNode } from 'react';
-import { AppBar, Toolbar, Typography, Container, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Container, Box, Button } from '@mui/material';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const router = useRouter();
+
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Workspaces', path: '/workspaces' },
+    { label: 'Users', path: '/users' },
+    { label: 'LiveDocs', path: '/livedocs' },
+  ];
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="static">
@@ -14,19 +24,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             LiveDocs
           </Typography>
-          <Box sx={{ '& > *': { ml: 2 } }}>
-            <Link href="/" passHref>
-              <Typography component="a" color="inherit">Home</Typography>
-            </Link>
-            <Link href="/workspaces" passHref>
-              <Typography component="a" color="inherit">Workspaces</Typography>
-            </Link>
-            <Link href="/users" passHref>
-              <Typography component="a" color="inherit">Users</Typography>
-            </Link>
-            <Link href="/livedocs" passHref>
-              <Typography component="a" color="inherit">LiveDocs</Typography>
-            </Link>
+          <Box>
+            {navItems.map((item) => (
+              <Button
+                key={item.path}
+                color="inherit"
+                component={Link}
+                href={item.path}
+                sx={{ 
+                  textTransform: 'none',
+                  fontWeight: router.pathname === item.path ? 'bold' : 'normal',
+                  borderBottom: router.pathname === item.path ? '2px solid white' : 'none',
+                }}
+              >
+                {item.label}
+              </Button>
+            ))}
           </Box>
         </Toolbar>
       </AppBar>

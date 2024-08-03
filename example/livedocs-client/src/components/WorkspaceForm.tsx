@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box } from '@mui/material';
-import { Workspace } from '@/types';
+import { WorkspaceDocType } from '@/lib/schemas';
 
 interface WorkspaceFormProps {
-  workspace?: Workspace;
-  onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => void;
+  workspace?: WorkspaceDocType;
+  onSubmit: (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>) => void;
 }
 
 const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) => {

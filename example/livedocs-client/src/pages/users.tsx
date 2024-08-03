@@ -4,12 +4,12 @@ import UserList from '../components/UserList';
 import UserForm from '../components/UserForm';
 import { getDatabase } from '../lib/database';
 import { setupReplication } from '../lib/replication';
-import { User, Workspace } from '../types';
+import { UserDocType, WorkspaceDocType } from '../lib/schemas';
 
 const UsersPage: React.FC = () => {
   const [db, setDb] = useState<Awaited<ReturnType<typeof getDatabase>> | null>(null);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [editingUser, setEditingUser] = useState<UserDocType | null>(null);
+  const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
 
   useEffect(() => {
     const initDb = async () => {
@@ -31,7 +31,7 @@ const UsersPage: React.FC = () => {
     initDb();
   }, []);
 
-  const handleCreate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleCreate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db) {
       await db.users.insert({
         id: Date.now().toString(),
@@ -42,14 +42,10 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleUpdate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db && editingUser) {
       await db.users.atomicUpdate(editingUser.id, (oldDoc) => {
-        oldDoc.firstName = user.firstName;
-        oldDoc.lastName = user.lastName;
-        oldDoc.email = user.email;
-        oldDoc.role = user.role;
-        oldDoc.workspaceId = user.workspaceId;
+        Object.assign(oldDoc, user);
         oldDoc.updatedAt = new Date().toISOString();
         return oldDoc;
       });
@@ -57,7 +53,7 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (user: User) => {
+  const handleDelete = async (user: UserDocType) => {
     if (db) {
       await db.users.atomicUpdate(user.id, (oldDoc) => {
         oldDoc.isDeleted = true;

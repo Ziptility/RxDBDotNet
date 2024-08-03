@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { User } from '@/types';
+import { UserDocType } from '@/lib/schemas';
 
 interface UserFormProps {
-  user?: User;
+  user?: UserDocType;
   workspaces: { id: string; name: string }[];
-  onSubmit: (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => void;
+  onSubmit: (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => void;
 }
 
 const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'User' | 'Admin' | 'SuperAdmin'>('User');
+  const [role, setRole] = useState<UserDocType['role']>('User');
   const [workspaceId, setWorkspaceId] = useState('');
 
   useEffect(() => {
@@ -61,7 +61,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
           <InputLabel>Role</InputLabel>
           <Select
             value={role}
-            onChange={(e) => setRole(e.target.value as 'User' | 'Admin' | 'SuperAdmin')}
+            onChange={(e) => setRole(e.target.value as UserDocType['role'])}
             required
           >
             <MenuItem value="User">User</MenuItem>

@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { LiveDocsDatabase } from '@/lib/database';
-import { User } from '@/types';
+import { UserDocType } from '@/lib/schemas';
 
 interface UserListProps {
   db: LiveDocsDatabase;
-  onEdit: (user: User) => void;
-  onDelete: (user: User) => void;
+  onEdit: (user: UserDocType) => void;
+  onDelete: (user: UserDocType) => void;
 }
 
 const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }) => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserDocType[]>([]);
 
   useEffect(() => {
     const subscription = db.users.find({

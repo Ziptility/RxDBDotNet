@@ -4,11 +4,11 @@ import WorkspaceList from '../components/WorkspaceList';
 import WorkspaceForm from '../components/WorkspaceForm';
 import { getDatabase } from '../lib/database';
 import { setupReplication } from '../lib/replication';
-import { Workspace } from '../types';
+import { WorkspaceDocType } from '../lib/schemas';
 
 const WorkspacesPage: React.FC = () => {
   const [db, setDb] = useState<Awaited<ReturnType<typeof getDatabase>> | null>(null);
-  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
+  const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceDocType | null>(null);
 
   useEffect(() => {
     const initDb = async () => {
@@ -19,7 +19,7 @@ const WorkspacesPage: React.FC = () => {
     initDb();
   }, []);
 
-  const handleCreate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleCreate = async (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db) {
       await db.workspaces.insert({
         id: Date.now().toString(),
@@ -30,7 +30,7 @@ const WorkspacesPage: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleUpdate = async (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db && editingWorkspace) {
       await db.workspaces.atomicUpdate(editingWorkspace.id, (oldDoc) => {
         oldDoc.name = workspace.name;
@@ -41,7 +41,7 @@ const WorkspacesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (workspace: Workspace) => {
+  const handleDelete = async (workspace: WorkspaceDocType) => {
     if (db) {
       await db.workspaces.atomicUpdate(workspace.id, (oldDoc) => {
         oldDoc.isDeleted = true;

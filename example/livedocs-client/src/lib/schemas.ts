@@ -1,5 +1,6 @@
-import { toTypedRxJsonSchema, RxJsonSchema } from 'rxdb';
+import { toTypedRxJsonSchema, RxJsonSchema, ExtractDocumentTypeFromTypedRxJsonSchema } from 'rxdb';
 
+// Workspace Schema
 const workspaceSchemaLiteral = {
     version: 0,
     primaryKey: 'id',
@@ -23,6 +24,7 @@ const workspaceSchemaLiteral = {
     required: ['id', 'name', 'updatedAt', 'isDeleted']
 } as const;
 
+// User Schema
 const userSchemaLiteral = {
     version: 0,
     primaryKey: 'id',
@@ -39,7 +41,8 @@ const userSchemaLiteral = {
             type: 'string'
         },
         email: {
-            type: 'string'
+            type: 'string',
+            format: 'email'
         },
         role: {
             type: 'string',
@@ -60,6 +63,7 @@ const userSchemaLiteral = {
     required: ['id', 'firstName', 'lastName', 'email', 'role', 'workspaceId', 'updatedAt', 'isDeleted']
 } as const;
 
+// LiveDoc Schema
 const liveDocSchemaLiteral = {
     version: 0,
     primaryKey: 'id',
@@ -91,10 +95,27 @@ const liveDocSchemaLiteral = {
     required: ['id', 'content', 'ownerId', 'workspaceId', 'updatedAt', 'isDeleted']
 } as const;
 
-export type WorkspaceDocType = typeof workspaceSchemaLiteral.properties;
-export type UserDocType = typeof userSchemaLiteral.properties;
-export type LiveDocDocType = typeof liveDocSchemaLiteral.properties;
+// Create typed schemas
+const workspaceSchema: RxJsonSchema<ExtractDocumentTypeFromTypedRxJsonSchema<typeof workspaceSchemaLiteral>> = 
+    toTypedRxJsonSchema(workspaceSchemaLiteral);
 
-export const workspaceSchema: RxJsonSchema<WorkspaceDocType> = toTypedRxJsonSchema(workspaceSchemaLiteral);
-export const userSchema: RxJsonSchema<UserDocType> = toTypedRxJsonSchema(userSchemaLiteral);
-export const liveDocSchema: RxJsonSchema<LiveDocDocType> = toTypedRxJsonSchema(liveDocSchemaLiteral);
+const userSchema: RxJsonSchema<ExtractDocumentTypeFromTypedRxJsonSchema<typeof userSchemaLiteral>> = 
+    toTypedRxJsonSchema(userSchemaLiteral);
+
+const liveDocSchema: RxJsonSchema<ExtractDocumentTypeFromTypedRxJsonSchema<typeof liveDocSchemaLiteral>> = 
+    toTypedRxJsonSchema(liveDocSchemaLiteral);
+
+// Export types
+export type WorkspaceDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof workspaceSchemaLiteral>;
+export type UserDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof userSchemaLiteral>;
+export type LiveDocDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof liveDocSchemaLiteral>;
+
+// Export schemas
+export { workspaceSchema, userSchema, liveDocSchema };
+
+// Define and export enum for User roles
+export enum UserRole {
+    User = 'User',
+    Admin = 'Admin',
+    SuperAdmin = 'SuperAdmin'
+}

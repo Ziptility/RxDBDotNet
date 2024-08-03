@@ -10,9 +10,9 @@ interface LiveDocFormProps {
 }
 
 const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }) => {
-  const [content, setContent] = useState('');
-  const [ownerId, setOwnerId] = useState('');
-  const [workspaceId, setWorkspaceId] = useState('');
+  const [content, setContent] = useState<string>('');
+  const [ownerId, setOwnerId] = useState<string>('');
+  const [workspaceId, setWorkspaceId] = useState<string>('');
 
   useEffect(() => {
     if (liveDoc) {

@@ -2,12 +2,15 @@ import React, { ReactNode } from 'react';
 import { AppBar, Toolbar, Typography, Container, Box, Button } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import NetworkStatus from './NetworkStatus';
+import { RxReplicationState } from 'rxdb';
 
 interface LayoutProps {
   children: ReactNode;
+  replicationStates: RxReplicationState<any, any>[];
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, replicationStates }) => {
   const router = useRouter();
 
   const navItems = [
@@ -40,6 +43,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {item.label}
               </Button>
             ))}
+          </Box>
+          <Box ml={2}>
+            <NetworkStatus replicationStates={replicationStates} />
           </Box>
         </Toolbar>
       </AppBar>

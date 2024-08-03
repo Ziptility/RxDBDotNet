@@ -2,9 +2,10 @@ import { LiveDocsDatabase } from '@/lib/database';
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { createClient } from 'graphql-ws';
 import { lastValueFrom, Subject } from 'rxjs';
-import { RxCollection, RxReplicationState, ReplicationPullHandler, ReplicationPushHandler } from 'rxdb';
+import { RxCollection, ReplicationPullHandler, ReplicationPushHandler } from 'rxdb';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
 import { WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
+import { RxReplicationState } from '../types';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:5414/graphql';
 const WS_ENDPOINT = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:5414/graphql';

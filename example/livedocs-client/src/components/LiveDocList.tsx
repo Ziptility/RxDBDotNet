@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { LiveDocsDatabase } from '@/lib/database';
+import { LiveDocsDatabase } from '@/types';
 import { LiveDocDocType } from '@/lib/schemas';
 
 interface LiveDocListProps {

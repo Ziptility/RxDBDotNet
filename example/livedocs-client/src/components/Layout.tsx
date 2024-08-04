@@ -2,23 +2,23 @@ import React, { ReactNode } from 'react';
 import { AppBar, Toolbar, Typography, Container, Box, Button } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import NetworkStatus from './NetworkStatus';
-import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
+import dynamic from 'next/dynamic';
+
+const NetworkStatus = dynamic(() => import('./NetworkStatus'), { ssr: false });
 
 interface LayoutProps {
   children: ReactNode;
-  replicationStates: RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[];
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, replicationStates }) => {
-  const router = useRouter();
+const navItems = [
+  { label: 'Home', path: '/' },
+  { label: 'Workspaces', path: '/workspaces' },
+  { label: 'Users', path: '/users' },
+  { label: 'LiveDocs', path: '/livedocs' },
+];
 
-  const navItems = [
-    { label: 'Home', path: '/' },
-    { label: 'Workspaces', path: '/workspaces' },
-    { label: 'Users', path: '/users' },
-    { label: 'LiveDocs', path: '/livedocs' },
-  ];
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const router = useRouter();
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -45,7 +45,7 @@ const Layout: React.FC<LayoutProps> = ({ children, replicationStates }) => {
             ))}
           </Box>
           <Box ml={2}>
-            <NetworkStatus replicationStates={replicationStates} />
+            <NetworkStatus />
           </Box>
         </Toolbar>
       </AppBar>

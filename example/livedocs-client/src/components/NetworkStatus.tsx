@@ -1,28 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Switch, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { getDatabase } from '@/lib/database';
+import { setupReplication } from '@/lib/replication';
 import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
 import { combineLatest } from 'rxjs';
 
-interface NetworkStatusProps {
-  replicationStates: RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[];
-}
-
-const NetworkStatus: React.FC<NetworkStatusProps> = ({ replicationStates }) => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+const NetworkStatus: React.FC = () => {
+  const isOnline = useOnlineStatus();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [replicationStates, setReplicationStates] = useState<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]>([]);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+    const initReplication = async () => {
+      const db = await getDatabase();
+      const states = await setupReplication(db);
+      setReplicationStates(states);
     };
+
+    initReplication();
   }, []);
 
   useEffect(() => {
@@ -30,45 +27,25 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ replicationStates }) => {
 
     const subscription = combineLatest(replicationStates.map(state => state.active$))
       .subscribe(activeStates => {
-        const anySyncing = activeStates.some(isActive => isActive);
-        setIsSyncing(anySyncing);
+        setIsSyncing(activeStates.some(Boolean));
       });
 
     return () => subscription.unsubscribe();
   }, [replicationStates]);
 
-  const toggleOnlineStatus = () => {
-    if (isOnline) {
-      // Go offline
-      replicationStates.forEach(state => state.cancel());
-      setIsOnline(false);
-    } else {
-      // Go online
-      replicationStates.forEach(state => state.reSync());
-      setIsOnline(true);
-    }
-  };
-
   return (
     <Box display="flex" alignItems="center" gap={2}>
-      <Switch
-        checked={isOnline}
-        onChange={toggleOnlineStatus}
-        color="primary"
-        inputProps={{ 'aria-label': 'toggle online/offline status' }}
-      />
       <Typography>
         {isOnline ? 'Online' : 'Offline'}
       </Typography>
-      {isOnline && (
+      {isOnline ? (
         <Chip
           icon={isSyncing ? <SyncIcon /> : <WifiIcon />}
           label={isSyncing ? 'Syncing' : 'Synced'}
           color={isSyncing ? 'warning' : 'success'}
           size="small"
         />
-      )}
-      {!isOnline && (
+      ) : (
         <Chip
           icon={<WifiOffIcon />}
           label="Offline"

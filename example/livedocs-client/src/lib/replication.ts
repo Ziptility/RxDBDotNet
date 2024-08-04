@@ -5,11 +5,12 @@ import {
   pullStreamBuilderFromRxSchema,
   replicateGraphQL
 } from 'rxdb/plugins/replication-graphql';
-import { RxCollection, RxDocument } from 'rxdb';
+import { RxCollection } from 'rxdb';
 import { lastValueFrom } from 'rxjs';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
-import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
+import { LiveDocsDocType, ReplicationCheckpoint } from '@/types';
+import { RxReplicationState } from 'rxdb/plugins/replication';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:5414/graphql';
 const WS_ENDPOINT = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:5414/graphql';
@@ -65,7 +66,7 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
   );
 
   return replicateGraphQL<T, ReplicationCheckpoint>({
-    collection,
+    collection: collection as any, // Type assertion to avoid the mismatch
     url: {
       http: GRAPHQL_ENDPOINT,
       ws: WS_ENDPOINT,
@@ -83,11 +84,10 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
     liveInterval: 1000 * 60 * 10, // 10 minutes
     deletedField: 'isDeleted',
     retryTime: 1000 * 30, // 30 seconds
-  });
+  }) as RxReplicationState<T, ReplicationCheckpoint>; // Type assertion to match the return type
 }
 
-export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
-  const collectionNames = ['Workspace', 'User', 'LiveDoc'];
+export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {  const collectionNames = ['Workspace', 'User', 'LiveDoc'];
   const replicationStates = collectionNames.map(name => 
     setupReplicationForCollection(db[name.toLowerCase() + 's' as keyof LiveDocsDatabase] as RxCollection<LiveDocsDocType>, name)
   );
@@ -126,10 +126,10 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
   return replicationStates;
 };
 
-export const cancelAllReplications = (replicationStates: RxReplicationState<RxDocument<LiveDocsDocType>, ReplicationCheckpoint>[]) => {
+export const cancelAllReplications = (replicationStates: RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]) => {
   replicationStates.forEach(state => state.cancel());
 };
 
-export const resumeAllReplications = (replicationStates: RxReplicationState<RxDocument<LiveDocsDocType>, ReplicationCheckpoint>[]) => {
+export const resumeAllReplications = (replicationStates: RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]) => {
   replicationStates.forEach(state => state.reSync());
 };

@@ -44,21 +44,21 @@ const UsersPage: React.FC = () => {
 
   const handleUpdate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db && editingUser) {
-      await db.users.atomicUpdate(editingUser.id, (oldDoc) => {
-        Object.assign(oldDoc, user);
-        oldDoc.updatedAt = new Date().toISOString();
-        return oldDoc;
+      await db.users.upsert({
+        ...editingUser,
+        ...user,
+        updatedAt: new Date().toISOString()
       });
       setEditingUser(null);
     }
   };
-
+  
   const handleDelete = async (user: UserDocType) => {
     if (db) {
-      await db.users.atomicUpdate(user.id, (oldDoc) => {
-        oldDoc.isDeleted = true;
-        oldDoc.updatedAt = new Date().toISOString();
-        return oldDoc;
+      await db.users.upsert({
+        ...user,
+        isDeleted: true,
+        updatedAt: new Date().toISOString()
       });
     }
   };

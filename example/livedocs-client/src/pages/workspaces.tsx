@@ -32,21 +32,21 @@ const WorkspacesPage: React.FC = () => {
 
   const handleUpdate = async (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db && editingWorkspace) {
-      await db.workspaces.atomicUpdate(editingWorkspace.id, (oldDoc) => {
-        oldDoc.name = workspace.name;
-        oldDoc.updatedAt = new Date().toISOString();
-        return oldDoc;
+      await db.workspaces.upsert({
+        ...editingWorkspace,
+        ...workspace,
+        updatedAt: new Date().toISOString()
       });
       setEditingWorkspace(null);
     }
   };
-
+  
   const handleDelete = async (workspace: WorkspaceDocType) => {
     if (db) {
-      await db.workspaces.atomicUpdate(workspace.id, (oldDoc) => {
-        oldDoc.isDeleted = true;
-        oldDoc.updatedAt = new Date().toISOString();
-        return oldDoc;
+      await db.workspaces.upsert({
+        ...workspace,
+        isDeleted: true,
+        updatedAt: new Date().toISOString()
       });
     }
   };

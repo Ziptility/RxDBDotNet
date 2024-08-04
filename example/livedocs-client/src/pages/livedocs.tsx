@@ -57,10 +57,10 @@ const LiveDocsPage: React.FC = () => {
 
   const handleUpdate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db && editingLiveDoc) {
-      await db.liveDocs.atomicUpdate(editingLiveDoc.id, (oldDoc) => {
-        Object.assign(oldDoc, liveDoc);
-        oldDoc.updatedAt = new Date().toISOString();
-        return oldDoc;
+      await db.liveDocs.upsert({
+        ...editingLiveDoc,
+        ...liveDoc,
+        updatedAt: new Date().toISOString()
       });
       setEditingLiveDoc(null);
     }
@@ -68,10 +68,10 @@ const LiveDocsPage: React.FC = () => {
 
   const handleDelete = async (liveDoc: LiveDocDocType) => {
     if (db) {
-      await db.liveDocs.atomicUpdate(liveDoc.id, (oldDoc) => {
-        oldDoc.isDeleted = true;
-        oldDoc.updatedAt = new Date().toISOString();
-        return oldDoc;
+      await db.liveDocs.upsert({
+        ...liveDoc,
+        isDeleted: true,
+        updatedAt: new Date().toISOString()
       });
     }
   };

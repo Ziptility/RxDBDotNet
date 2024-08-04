@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Switch, Typography, Chip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
-import { RxReplicationState } from '../types';
+import { RxReplicationState } from '@/types';
 
 interface NetworkStatusProps {
   replicationStates: RxReplicationState[];

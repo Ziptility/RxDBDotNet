@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Box, Switch, Typography, Chip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
 import { RxReplicationState, DocType, Checkpoint } from '@/types';
-import { RxDocument } from 'rxdb';
 
 interface NetworkStatusProps {
   replicationStates: RxReplicationState<DocType, Checkpoint>[];

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import NetworkStatus from './NetworkStatus';
 import { RxReplicationState, DocType, Checkpoint } from '@/types';
-import { RxDocument } from 'rxdb';
 
 interface LayoutProps {
   children: ReactNode;

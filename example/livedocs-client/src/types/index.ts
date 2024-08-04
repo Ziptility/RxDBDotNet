@@ -24,3 +24,6 @@ export type Checkpoint = {
   id: string;
   updatedAt: string;
 };
+
+// Generic type for document types
+export type DocType = WorkspaceDocType | UserDocType | LiveDocDocType;

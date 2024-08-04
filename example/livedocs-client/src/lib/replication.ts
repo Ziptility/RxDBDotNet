@@ -6,10 +6,10 @@ import {
   replicateGraphQL
 } from 'rxdb/plugins/replication-graphql';
 import { lastValueFrom } from 'rxjs';
-import { RxCollection, RxDocument } from 'rxdb';
+import { RxDocument } from 'rxdb';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
 import { WorkspaceDocType, UserDocType, LiveDocDocType, workspaceSchema, userSchema, liveDocSchema } from './schemas';
-import { RxReplicationState } from 'rxdb/plugins/replication';
+import { RxReplicationState, DocType, Checkpoint } from '@/types';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:5414/graphql';
 const WS_ENDPOINT = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:5414/graphql';
@@ -95,7 +95,7 @@ function setupReplicationForCollection<T extends DocType>(
   });
 }
 
-export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<RxDocument<DocType>, Checkpoint>[]> => {
+export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<DocType, Checkpoint>[]> => {
   const replicationStates = [
     setupReplicationForCollection<WorkspaceDocType>(db.workspaces, 'Workspace'),
     setupReplicationForCollection<UserDocType>(db.users, 'User'),

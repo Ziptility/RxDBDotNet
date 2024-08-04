@@ -1,10 +1,14 @@
 import { LiveDocsDatabase } from '@/lib/database';
-import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
-import { createClient } from 'graphql-ws';
-import { lastValueFrom, Subject } from 'rxjs';
-import { RxCollection, ReplicationPullHandler, ReplicationPushHandler } from 'rxdb';
+import {
+  pullQueryBuilderFromRxSchema,
+  pushQueryBuilderFromRxSchema,
+  pullStreamBuilderFromRxSchema,
+  replicateGraphQL
+} from 'rxdb/plugins/replication-graphql';
+import { lastValueFrom } from 'rxjs';
+import { RxCollection } from 'rxdb';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
-import { WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
+import { WorkspaceDocType, UserDocType, LiveDocDocType, workspaceSchema, userSchema, liveDocSchema } from './schemas';
 import { RxReplicationState } from '../types';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:5414/graphql';
@@ -19,126 +23,17 @@ type Checkpoint = {
 // Generic type for document types
 type DocType = WorkspaceDocType | UserDocType | LiveDocDocType;
 
-// Helper function to create a pull handler
-function createPullHandler<T extends DocType>(collectionName: string): ReplicationPullHandler<T, Checkpoint> {
-  return {
-    async handler(lastCheckpoint: Checkpoint | undefined, batchSize: number) {
-      try {
-        const response = await fetch(GRAPHQL_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: `
-              query Pull${collectionName}($checkpoint: ${collectionName}InputCheckpoint, $limit: Int!) {
-                pull${collectionName}(checkpoint: $checkpoint, limit: $limit) {
-                  documents {
-                    id
-                    updatedAt
-                    isDeleted
-                    # Add other fields specific to this collection
-                    ${getCollectionSpecificFields(collectionName)}
-                  }
-                  checkpoint {
-                    id
-                    updatedAt
-                  }
-                }
-              }
-            `,
-            variables: {
-              checkpoint: lastCheckpoint,
-              limit: batchSize,
-            },
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (result.errors) {
-          throw new Error(result.errors[0].message);
-        }
-
-        return {
-          documents: result.data[`pull${collectionName}`].documents,
-          checkpoint: result.data[`pull${collectionName}`].checkpoint,
-        };
-      } catch (error) {
-        logError(error as Error, `Pull handler for ${collectionName}`);
-        throw error;
-      }
-    },
-    batchSize: 50,
-    modifier: (doc) => doc,
-  };
-}
-
-// Helper function to create a push handler
-function createPushHandler<T extends DocType>(collectionName: string): ReplicationPushHandler<T, any> {
-  return {
-    async handler(docs) {
-      try {
-        const response = await fetch(GRAPHQL_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: `
-              mutation Push${collectionName}($input: Push${collectionName}Input!) {
-                push${collectionName}(input: $input) {
-                  ${collectionName.toLowerCase()} {
-                    id
-                    updatedAt
-                    isDeleted
-                    # Add other fields specific to this collection
-                    ${getCollectionSpecificFields(collectionName)}
-                  }
-                }
-              }
-            `,
-            variables: {
-              input: {
-                [`${collectionName.toLowerCase()}PushRow`]: docs.map((d) => ({
-                  assumedMasterState: null,
-                  newDocumentState: d,
-                })),
-              },
-            },
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (result.errors) {
-          throw new Error(result.errors[0].message);
-        }
-
-        return result.data[`push${collectionName}`][collectionName.toLowerCase()];
-      } catch (error) {
-        logError(error as Error, `Push handler for ${collectionName}`);
-        throw error;
-      }
-    },
-    batchSize: 5,
-    modifier: (doc) => doc,
-  };
-}
-
-// Helper function to get collection-specific fields
-function getCollectionSpecificFields(collectionName: string): string {
+// Helper function to get the schema for a collection
+function getSchemaForCollection(collectionName: string) {
   switch (collectionName) {
     case 'Workspace':
-      return 'name';
+      return workspaceSchema;
     case 'User':
-      return 'firstName lastName email role workspaceId';
+      return userSchema;
     case 'LiveDoc':
-      return 'content ownerId workspaceId';
+      return liveDocSchema;
     default:
-      return '';
+      throw new Error(`Unknown collection name: ${collectionName}`);
   }
 }
 
@@ -147,14 +42,52 @@ function setupReplicationForCollection<T extends DocType>(
   collection: RxCollection<T>,
   collectionName: string
 ): RxReplicationState<T, Checkpoint> {
+  const schema = getSchemaForCollection(collectionName);
+  const batchSize = 50;
+
+  const pullQueryBuilder = pullQueryBuilderFromRxSchema(
+    collectionName.toLowerCase(),
+    {
+      schema,
+      checkpointFields: ['id', 'updatedAt'],
+      deletedField: 'isDeleted'
+    },
+    batchSize
+  );
+
+  const pushQueryBuilder = pushQueryBuilderFromRxSchema(
+    collectionName.toLowerCase(),
+    {
+      schema,
+      checkpointFields: ['id', 'updatedAt'],
+      deletedField: 'isDeleted'
+    }
+  );
+
+  const pullStreamBuilder = pullStreamBuilderFromRxSchema(
+    collectionName.toLowerCase(),
+    {
+      schema,
+      checkpointFields: ['id', 'updatedAt'],
+      deletedField: 'isDeleted'
+    }
+  );
+
   return replicateGraphQL<T, Checkpoint>({
     collection,
     url: {
       http: GRAPHQL_ENDPOINT,
       ws: WS_ENDPOINT,
     },
-    pull: createPullHandler<T>(collectionName),
-    push: createPushHandler<T>(collectionName),
+    pull: {
+      queryBuilder: pullQueryBuilder,
+      streamQueryBuilder: pullStreamBuilder,
+      batchSize
+    },
+    push: {
+      queryBuilder: pushQueryBuilder,
+      batchSize: 5
+    },
     live: true,
     liveInterval: 1000 * 60 * 10, // 10 minutes
     deletedField: 'isDeleted',
@@ -163,39 +96,6 @@ function setupReplicationForCollection<T extends DocType>(
 }
 
 export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<DocType, Checkpoint>[]> => {
-  const wsClient = createClient({
-    url: WS_ENDPOINT,
-    connectionParams: {
-      // Add any authentication headers here
-    },
-  });
-
-  const pullStream$ = new Subject<any>();
-
-  wsClient.subscribe(
-    {
-      query: `
-        subscription {
-          streamWorkspace { documents { id name updatedAt isDeleted } checkpoint { id updatedAt } }
-          streamUser { documents { id firstName lastName email role workspaceId updatedAt isDeleted } checkpoint { id updatedAt } }
-          streamLiveDoc { documents { id content ownerId workspaceId updatedAt isDeleted } checkpoint { id updatedAt } }
-        }
-      `,
-    },
-    {
-      next: (data) => {
-        if (data.data.streamWorkspace) pullStream$.next(data.data.streamWorkspace);
-        if (data.data.streamUser) pullStream$.next(data.data.streamUser);
-        if (data.data.streamLiveDoc) pullStream$.next(data.data.streamLiveDoc);
-      },
-      error: (err) => {
-        logError(err, 'WebSocket subscription');
-        notifyUser('Error in live updates. Please refresh the page.');
-      },
-      complete: () => console.log('Subscription completed'),
-    }
-  );
-
   const replicationStates = [
     setupReplicationForCollection<WorkspaceDocType>(db.workspaces, 'Workspace'),
     setupReplicationForCollection<UserDocType>(db.users, 'User'),

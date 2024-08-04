@@ -4,6 +4,7 @@ import { toTypedRxJsonSchema, RxJsonSchema, ExtractDocumentTypeFromTypedRxJsonSc
 const workspaceSchemaLiteral = {
     version: 0,
     primaryKey: 'id',
+    format: "uuid",
     type: 'object',
     properties: {
         id: {
@@ -32,6 +33,7 @@ const userSchemaLiteral = {
     properties: {
         id: {
             type: 'string',
+            format: "uuid",
             maxLength: 36
         },
         firstName: {
@@ -71,6 +73,7 @@ const liveDocSchemaLiteral = {
     properties: {
         id: {
             type: 'string',
+            format: "uuid",
             maxLength: 36
         },
         content: {

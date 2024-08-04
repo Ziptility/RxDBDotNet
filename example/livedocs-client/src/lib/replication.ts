@@ -6,11 +6,10 @@ import {
   replicateGraphQL
 } from 'rxdb/plugins/replication-graphql';
 import { RxCollection } from 'rxdb';
-import { lastValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
-import { LiveDocsDocType, ReplicationCheckpoint } from '@/types';
-import { RxReplicationState } from 'rxdb/plugins/replication';
+import { LiveDocsDocType, ReplicationCheckpoint, RxReplicationState } from '@/types';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:5414/graphql';
 const WS_ENDPOINT = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:5414/graphql';
@@ -66,7 +65,7 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
   );
 
   return replicateGraphQL<T, ReplicationCheckpoint>({
-    collection: collection as any, // Type assertion to avoid the mismatch
+    collection: collection,
     url: {
       http: GRAPHQL_ENDPOINT,
       ws: WS_ENDPOINT,
@@ -84,7 +83,7 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
     deletedField: 'isDeleted',
     retryTime: 1000 * 30, // 30 seconds
     replicationIdentifier: `livedocs-${collectionName.toLowerCase()}-replication`,
-  }) as RxReplicationState<T, ReplicationCheckpoint>; // Type assertion to match the return type
+  });
 }
 
 export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
@@ -94,9 +93,11 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
   );
 
   try {
-    await Promise.all(replicationStates.map((state) => 
-      retryWithBackoff(() => lastValueFrom(state.awaitInitialReplication()))
-    ));
+    await Promise.all(replicationStates.map(async (state) => {
+      await retryWithBackoff(async () => {
+        await firstValueFrom(state.awaitInitialReplication());
+      });
+    }));
     console.log('Initial replication completed successfully');
   } catch (error) {
     logError(error as Error, 'Initial replication');
@@ -114,9 +115,9 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
         notifyUser(`Error saving ${collectionName} changes. Please try again later.`, 'error');
       }
 
-      retryWithBackoff(() => {
+      retryWithBackoff(async () => {
         console.log(`Retrying ${error.parameters.direction} replication for ${collectionName}...`);
-        return lastValueFrom(state.reSync());
+        await state.reSync();
       }).catch((retryError) => {
         logError(retryError, `Retry failed for ${collectionName}`);
         notifyUser(`Persistent error in ${collectionName} synchronization. Please contact support.`, 'error');

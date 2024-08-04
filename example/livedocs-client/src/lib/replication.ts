@@ -6,7 +6,6 @@ import {
   replicateGraphQL
 } from 'rxdb/plugins/replication-graphql';
 import { RxCollection } from 'rxdb';
-import { firstValueFrom } from 'rxjs';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
 import { LiveDocsDocType, ReplicationCheckpoint, RxReplicationState } from '@/types';
@@ -95,7 +94,7 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
   try {
     await Promise.all(replicationStates.map(async (state) => {
       await retryWithBackoff(async () => {
-        await firstValueFrom(state.awaitInitialReplication());
+        await state.awaitInitialReplication();
       });
     }));
     console.log('Initial replication completed successfully');

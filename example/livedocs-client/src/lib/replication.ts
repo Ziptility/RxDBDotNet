@@ -8,60 +8,60 @@ import {
 import { RxCollection, RxDocument } from 'rxdb';
 import { lastValueFrom } from 'rxjs';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
-import { WorkspaceDocType, UserDocType, LiveDocDocType, workspaceSchema, userSchema, liveDocSchema } from './schemas';
+import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
 import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:5414/graphql';
 const WS_ENDPOINT = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:5414/graphql';
 
-// Helper function to get the schema for a collection
-function getSchemaForCollection(collectionName: string) {
-  switch (collectionName) {
-    case 'Workspace':
-      return workspaceSchema;
-    case 'User':
-      return userSchema;
-    case 'LiveDoc':
-      return liveDocSchema;
-    default:
-      throw new Error(`Unknown collection name: ${collectionName}`);
-  }
+const BATCH_SIZE = 50;
+
+interface SchemaConfig {
+  schema: any;
+  checkpointFields: string[];
+  deletedField: string;
 }
 
-// Helper function to set up replication for a collection
+const schemaConfigs: Record<string, SchemaConfig> = {
+  Workspace: {
+    schema: workspaceSchema,
+    checkpointFields: ['id', 'updatedAt'],
+    deletedField: 'isDeleted'
+  },
+  User: {
+    schema: userSchema,
+    checkpointFields: ['id', 'updatedAt'],
+    deletedField: 'isDeleted'
+  },
+  LiveDoc: {
+    schema: liveDocSchema,
+    checkpointFields: ['id', 'updatedAt'],
+    deletedField: 'isDeleted'
+  }
+};
+
 function setupReplicationForCollection<T extends LiveDocsDocType>(
   collection: RxCollection<T>,
   collectionName: string
 ): RxReplicationState<T, ReplicationCheckpoint> {
-  const schema = getSchemaForCollection(collectionName);
-  const batchSize = 50;
+  const config = schemaConfigs[collectionName];
+  if (!config) {
+    throw new Error(`Unknown collection name: ${collectionName}`);
+  }
 
   const pullQueryBuilder = pullQueryBuilderFromRxSchema(
     collectionName.toLowerCase(),
-    {
-      schema,
-      checkpointFields: ['id', 'updatedAt'],
-      deletedField: 'isDeleted'
-    },
-    batchSize
+    config
   );
 
   const pushQueryBuilder = pushQueryBuilderFromRxSchema(
     collectionName.toLowerCase(),
-    {
-      schema,
-      checkpointFields: ['id', 'updatedAt'],
-      deletedField: 'isDeleted'
-    }
+    config
   );
 
   const pullStreamBuilder = pullStreamBuilderFromRxSchema(
     collectionName.toLowerCase(),
-    {
-      schema,
-      checkpointFields: ['id', 'updatedAt'],
-      deletedField: 'isDeleted'
-    }
+    config
   );
 
   return replicateGraphQL<T, ReplicationCheckpoint>({
@@ -73,7 +73,7 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
     pull: {
       queryBuilder: pullQueryBuilder,
       streamQueryBuilder: pullStreamBuilder,
-      batchSize
+      batchSize: BATCH_SIZE
     },
     push: {
       queryBuilder: pushQueryBuilder,
@@ -87,11 +87,10 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
 }
 
 export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
-  const replicationStates = [
-    setupReplicationForCollection<WorkspaceDocType>(db.workspaces, 'Workspace'),
-    setupReplicationForCollection<UserDocType>(db.users, 'User'),
-    setupReplicationForCollection<LiveDocDocType>(db.liveDocs, 'LiveDoc'),
-  ];
+  const collectionNames = ['Workspace', 'User', 'LiveDoc'];
+  const replicationStates = collectionNames.map(name => 
+    setupReplicationForCollection(db[name.toLowerCase() + 's' as keyof LiveDocsDatabase] as RxCollection<LiveDocsDocType>, name)
+  );
 
   try {
     await Promise.all(replicationStates.map((state) => 
@@ -103,11 +102,9 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
     notifyUser('Failed to complete initial data sync. Some data may be outdated.');
   }
 
-  // Set up error handling for ongoing replication
   replicationStates.forEach((state, index) => {
-    const collectionNames = ['Workspace', 'User', 'LiveDoc'];
+    const collectionName = collectionNames[index];
     state.error$.subscribe((error) => {
-      const collectionName = collectionNames[index];
       logError(new ReplicationError(`Replication error in ${collectionName}`, error), 'Ongoing replication');
 
       if (error.parameters.direction === 'pull') {
@@ -116,7 +113,6 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
         notifyUser(`Error saving ${collectionName} changes. Please try again later.`, 'error');
       }
 
-      // Implement retry logic
       retryWithBackoff(() => {
         console.log(`Retrying ${error.parameters.direction} replication for ${collectionName}...`);
         return lastValueFrom(state.reSync());
@@ -130,12 +126,10 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
   return replicationStates;
 };
 
-// Function to cancel all replications
 export const cancelAllReplications = (replicationStates: RxReplicationState<RxDocument<LiveDocsDocType>, ReplicationCheckpoint>[]) => {
   replicationStates.forEach(state => state.cancel());
 };
 
-// Function to resume all replications
 export const resumeAllReplications = (replicationStates: RxReplicationState<RxDocument<LiveDocsDocType>, ReplicationCheckpoint>[]) => {
   replicationStates.forEach(state => state.reSync());
 };

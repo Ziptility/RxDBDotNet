@@ -19,23 +19,27 @@ interface SchemaConfig {
   schema: any;
   checkpointFields: string[];
   deletedField: string;
+  headerFields: string[];
 }
 
 const schemaConfigs: Record<string, SchemaConfig> = {
   Workspace: {
     schema: workspaceSchema,
-    checkpointFields: ['id', 'updatedAt'],
-    deletedField: 'isDeleted'
+    checkpointFields: ['lastDocumentId', 'updatedAt'],
+    deletedField: 'isDeleted',
+    headerFields: ['Authorization']
   },
   User: {
     schema: userSchema,
-    checkpointFields: ['id', 'updatedAt'],
-    deletedField: 'isDeleted'
+    checkpointFields: ['lastDocumentId', 'updatedAt'],
+    deletedField: 'isDeleted',
+    headerFields: ['Authorization']
   },
   LiveDoc: {
     schema: liveDocSchema,
-    checkpointFields: ['id', 'updatedAt'],
-    deletedField: 'isDeleted'
+    checkpointFields: ['lastDocumentId', 'updatedAt'],
+    deletedField: 'isDeleted',
+    headerFields: ['Authorization']
   }
 };
 

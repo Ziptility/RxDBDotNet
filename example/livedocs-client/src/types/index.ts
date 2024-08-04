@@ -18,8 +18,8 @@ export type LiveDocsDatabase = RxDatabase<LiveDocsCollections>;
 export type RxReplicationState<T, C> = RxDBReplicationState<T, C>;
 
 export type ReplicationCheckpoint = {
-  id: string;
-  updatedAt: string;
+  lastDocumentId: string | null;
+  updatedAt: string | null;
 };
 
 export type LiveDocsDocType = WorkspaceDocType | UserDocType | LiveDocDocType;

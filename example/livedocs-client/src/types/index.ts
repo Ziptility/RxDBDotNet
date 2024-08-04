@@ -1,23 +1,10 @@
 import { WorkspaceDocType, UserDocType, LiveDocDocType } from '@/lib/schemas';
-import { RxCollection, RxDatabase } from 'rxdb';
+import { RxCollection, RxDatabase, RxDocument } from 'rxdb';
+import { RxReplicationState as RxDBReplicationState } from 'rxdb/plugins/replication';
 
 export interface Workspace extends WorkspaceDocType {}
 export interface User extends UserDocType {}
 export interface LiveDoc extends LiveDocDocType {}
-
-// Define a simplified RxReplicationState type
-export interface RxReplicationState {
-  cancel: () => Promise<void>;
-  reSync: () => void;
-  awaitInitialReplication: () => Promise<void>;
-  error$: {
-    subscribe: (callback: (error: any) => void) => { unsubscribe: () => void };
-  };
-  active$: {
-    getValue: () => boolean;
-    subscribe: (callback: (active: boolean) => void) => { unsubscribe: () => void };
-  };
-}
 
 // Define the LiveDocsCollections type
 export type LiveDocsCollections = {
@@ -28,3 +15,12 @@ export type LiveDocsCollections = {
 
 // Define the LiveDocsDatabase type
 export type LiveDocsDatabase = RxDatabase<LiveDocsCollections>;
+
+// Use the RxReplicationState type from RxDB
+export type RxReplicationState<T, C> = RxDBReplicationState<RxDocument<T>, C>;
+
+// Type for the checkpoint
+export type Checkpoint = {
+  id: string;
+  updatedAt: string;
+};

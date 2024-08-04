@@ -6,10 +6,11 @@ import theme from '../theme';
 import Layout from '@/components/Layout';
 import { getDatabase } from '@/lib/database';
 import { setupReplication } from '@/lib/replication';
-import { RxReplicationState } from '@/types';
+import { RxReplicationState, DocType, Checkpoint } from '@/types';
+import { RxDocument } from 'rxdb';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [replicationStates, setReplicationStates] = useState<RxReplicationState[]>([]);
+  const [replicationStates, setReplicationStates] = useState<RxReplicationState<DocType, Checkpoint>[]>([]);
 
   useEffect(() => {
     const initDb = async () => {

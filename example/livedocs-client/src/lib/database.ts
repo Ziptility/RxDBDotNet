@@ -1,17 +1,10 @@
-import { createRxDatabase, RxDatabase, RxCollection, addRxPlugin } from 'rxdb';
+import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
-import { workspaceSchema, userSchema, liveDocSchema, WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
+import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
+import { LiveDocsDatabase, LiveDocsCollections } from '@/types';
 
 addRxPlugin(RxDBDevModePlugin);
-
-export type LiveDocsCollections = {
-  workspaces: RxCollection<WorkspaceDocType>;
-  users: RxCollection<UserDocType>;
-  liveDocs: RxCollection<LiveDocDocType>;
-};
-
-export type LiveDocsDatabase = RxDatabase<LiveDocsCollections>;
 
 let dbPromise: Promise<LiveDocsDatabase> | null = null;
 

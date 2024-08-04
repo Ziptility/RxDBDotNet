@@ -5,23 +5,14 @@ import {
   pullStreamBuilderFromRxSchema,
   replicateGraphQL
 } from 'rxdb/plugins/replication-graphql';
+import { RxCollection, RxDocument } from 'rxdb';
 import { lastValueFrom } from 'rxjs';
-import { RxDocument } from 'rxdb';
 import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
 import { WorkspaceDocType, UserDocType, LiveDocDocType, workspaceSchema, userSchema, liveDocSchema } from './schemas';
-import { RxReplicationState, DocType, Checkpoint } from '@/types';
+import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:5414/graphql';
 const WS_ENDPOINT = process.env.NEXT_PUBLIC_WS_ENDPOINT || 'ws://localhost:5414/graphql';
-
-// Checkpoint type used for replication
-type Checkpoint = {
-  id: string;
-  updatedAt: string;
-};
-
-// Generic type for document types
-type DocType = WorkspaceDocType | UserDocType | LiveDocDocType;
 
 // Helper function to get the schema for a collection
 function getSchemaForCollection(collectionName: string) {
@@ -38,10 +29,10 @@ function getSchemaForCollection(collectionName: string) {
 }
 
 // Helper function to set up replication for a collection
-function setupReplicationForCollection<T extends DocType>(
+function setupReplicationForCollection<T extends LiveDocsDocType>(
   collection: RxCollection<T>,
   collectionName: string
-): RxReplicationState<RxDocument<T>, Checkpoint> {
+): RxReplicationState<T, ReplicationCheckpoint> {
   const schema = getSchemaForCollection(collectionName);
   const batchSize = 50;
 
@@ -73,7 +64,7 @@ function setupReplicationForCollection<T extends DocType>(
     }
   );
 
-  return replicateGraphQL<T, Checkpoint>({
+  return replicateGraphQL<T, ReplicationCheckpoint>({
     collection,
     url: {
       http: GRAPHQL_ENDPOINT,
@@ -95,7 +86,7 @@ function setupReplicationForCollection<T extends DocType>(
   });
 }
 
-export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<DocType, Checkpoint>[]> => {
+export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
   const replicationStates = [
     setupReplicationForCollection<WorkspaceDocType>(db.workspaces, 'Workspace'),
     setupReplicationForCollection<UserDocType>(db.users, 'User'),
@@ -140,11 +131,11 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicat
 };
 
 // Function to cancel all replications
-export const cancelAllReplications = (replicationStates: RxReplicationState<RxDocument<DocType>, Checkpoint>[]) => {
+export const cancelAllReplications = (replicationStates: RxReplicationState<RxDocument<LiveDocsDocType>, ReplicationCheckpoint>[]) => {
   replicationStates.forEach(state => state.cancel());
 };
 
 // Function to resume all replications
-export const resumeAllReplications = (replicationStates: RxReplicationState<RxDocument<DocType>, Checkpoint>[]) => {
+export const resumeAllReplications = (replicationStates: RxReplicationState<RxDocument<LiveDocsDocType>, ReplicationCheckpoint>[]) => {
   replicationStates.forEach(state => state.reSync());
 };

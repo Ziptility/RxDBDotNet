@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Switch, Typography, Chip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
-import { RxReplicationState, DocType, Checkpoint } from '@/types';
+import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
 import { combineLatest } from 'rxjs';
 
 interface NetworkStatusProps {
-  replicationStates: RxReplicationState<DocType, Checkpoint>[];
+  replicationStates: RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[];
 }
 
 const NetworkStatus: React.FC<NetworkStatusProps> = ({ replicationStates }) => {

@@ -6,10 +6,10 @@ import theme from '../theme';
 import Layout from '@/components/Layout';
 import { getDatabase } from '@/lib/database';
 import { setupReplication } from '@/lib/replication';
-import { RxReplicationState, DocType, Checkpoint } from '@/types';
+import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [replicationStates, setReplicationStates] = useState<RxReplicationState<DocType, Checkpoint>[]>([]);
+  const [replicationStates, setReplicationStates] = useState<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]>([]);
 
   useEffect(() => {
     const initDb = async () => {

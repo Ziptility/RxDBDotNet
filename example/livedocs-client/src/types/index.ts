@@ -19,9 +19,9 @@ export interface RxReplicationState<T, C> extends RxDBReplicationState<RxDocumen
   active$: Observable<boolean>;
 }
 
-export type Checkpoint = {
+export type ReplicationCheckpoint = {
   id: string;
   updatedAt: string;
 };
 
-export type DocType = WorkspaceDocType | UserDocType | LiveDocDocType;
+export type LiveDocsDocType = WorkspaceDocType | UserDocType | LiveDocDocType;

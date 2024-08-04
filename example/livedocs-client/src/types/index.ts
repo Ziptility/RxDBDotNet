@@ -1,3 +1,4 @@
+
 import { WorkspaceDocType, UserDocType, LiveDocDocType } from '@/lib/schemas';
 import { RxCollection, RxDatabase } from 'rxdb';
 import { RxReplicationState as RxDBReplicationState } from 'rxdb/plugins/replication';
@@ -9,7 +10,7 @@ export interface LiveDoc extends LiveDocDocType {}
 export type LiveDocsCollections = {
   workspaces: RxCollection<WorkspaceDocType>;
   users: RxCollection<UserDocType>;
-  liveDocs: RxCollection<LiveDocDocType>;
+  livedocs: RxCollection<LiveDocDocType>;
 };
 
 export type LiveDocsDatabase = RxDatabase<LiveDocsCollections>;

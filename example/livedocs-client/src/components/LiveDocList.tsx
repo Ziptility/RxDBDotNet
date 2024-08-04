@@ -14,7 +14,7 @@ const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }) => {
   const [liveDocs, setLiveDocs] = useState<LiveDocDocType[]>([]);
 
   useEffect(() => {
-    const subscription = db.liveDocs.find({
+    const subscription = db.livedocs.find({
       selector: {
         isDeleted: false
       },

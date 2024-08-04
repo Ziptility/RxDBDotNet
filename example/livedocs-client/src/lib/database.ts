@@ -1,3 +1,5 @@
+// src/lib/database.ts
+
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
@@ -22,7 +24,7 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
       users: {
         schema: userSchema
       },
-      liveDocs: {
+      livedocs: { // Changed from 'liveDocs' to 'livedocs'
         schema: liveDocSchema
       }
     });

@@ -46,7 +46,7 @@ const LiveDocsPageContent: React.FC = () => {
 
   const handleCreate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db) {
-      await db.liveDocs.insert({
+      await db.livedocs.insert({
         id: Date.now().toString(),
         ...liveDoc,
         updatedAt: new Date().toISOString(),
@@ -57,7 +57,7 @@ const LiveDocsPageContent: React.FC = () => {
 
   const handleUpdate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
     if (db && editingLiveDoc) {
-      await db.liveDocs.upsert({
+      await db.livedocs.upsert({
         ...editingLiveDoc,
         ...liveDoc,
         updatedAt: new Date().toISOString()
@@ -68,7 +68,7 @@ const LiveDocsPageContent: React.FC = () => {
 
   const handleDelete = async (liveDoc: LiveDocDocType) => {
     if (db) {
-      await db.liveDocs.upsert({
+      await db.livedocs.upsert({
         ...liveDoc,
         isDeleted: true,
         updatedAt: new Date().toISOString()

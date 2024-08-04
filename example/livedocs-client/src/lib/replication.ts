@@ -81,13 +81,13 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
       batchSize: 5
     },
     live: true,
-    liveInterval: 1000 * 60 * 10, // 10 minutes
     deletedField: 'isDeleted',
     retryTime: 1000 * 30, // 30 seconds
   }) as RxReplicationState<T, ReplicationCheckpoint>; // Type assertion to match the return type
 }
 
-export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {  const collectionNames = ['Workspace', 'User', 'LiveDoc'];
+export const setupReplication = async (db: LiveDocsDatabase): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
+  const collectionNames = ['Workspace', 'User', 'LiveDoc'];
   const replicationStates = collectionNames.map(name => 
     setupReplicationForCollection(db[name.toLowerCase() + 's' as keyof LiveDocsDatabase] as RxCollection<LiveDocsDocType>, name)
   );

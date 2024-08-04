@@ -59,7 +59,7 @@ public class Startup
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
             {
-                corsPolicyBuilder.WithOrigins("http://localhost:1337")
+                corsPolicyBuilder.WithOrigins("http://localhost:1337", "http://localhost:3000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();

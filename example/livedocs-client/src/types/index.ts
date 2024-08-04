@@ -1,6 +1,7 @@
 import { WorkspaceDocType, UserDocType, LiveDocDocType } from '@/lib/schemas';
 import { RxCollection, RxDatabase, RxDocument } from 'rxdb';
 import { RxReplicationState as RxDBReplicationState } from 'rxdb/plugins/replication';
+import { Observable } from 'rxjs';
 
 export interface Workspace extends WorkspaceDocType {}
 export interface User extends UserDocType {}
@@ -14,7 +15,9 @@ export type LiveDocsCollections = {
 
 export type LiveDocsDatabase = RxDatabase<LiveDocsCollections>;
 
-export type RxReplicationState<T, C> = RxDBReplicationState<RxDocument<T>, C>;
+export interface RxReplicationState<T, C> extends RxDBReplicationState<RxDocument<T>, C> {
+  active$: Observable<boolean>;
+}
 
 export type Checkpoint = {
   id: string;

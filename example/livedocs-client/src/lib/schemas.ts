@@ -4,11 +4,12 @@ import { toTypedRxJsonSchema, RxJsonSchema, ExtractDocumentTypeFromTypedRxJsonSc
 const workspaceSchemaLiteral = {
     version: 0,
     primaryKey: 'id',
-    format: "uuid",
+    format: 'uuid',
     type: 'object',
     properties: {
         id: {
             type: 'string',
+            format: 'uuid',
             maxLength: 36
         },
         name: {
@@ -29,11 +30,12 @@ const workspaceSchemaLiteral = {
 const userSchemaLiteral = {
     version: 0,
     primaryKey: 'id',
+    format: 'uuid',
     type: 'object',
     properties: {
         id: {
             type: 'string',
-            format: "uuid",
+            format: 'uuid',
             maxLength: 36
         },
         firstName: {
@@ -52,6 +54,7 @@ const userSchemaLiteral = {
         },
         workspaceId: {
             type: 'string',
+            format: 'uuid',
             maxLength: 36
         },
         updatedAt: {
@@ -69,11 +72,12 @@ const userSchemaLiteral = {
 const liveDocSchemaLiteral = {
     version: 0,
     primaryKey: 'id',
+    format: 'uuid',
     type: 'object',
     properties: {
         id: {
             type: 'string',
-            format: "uuid",
+            format: 'uuid',
             maxLength: 36
         },
         content: {
@@ -81,10 +85,12 @@ const liveDocSchemaLiteral = {
         },
         ownerId: {
             type: 'string',
+            format: 'uuid',
             maxLength: 36
         },
         workspaceId: {
             type: 'string',
+            format: 'uuid',
             maxLength: 36
         },
         updatedAt: {

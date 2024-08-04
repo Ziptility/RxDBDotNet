@@ -83,6 +83,7 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
     live: true,
     deletedField: 'isDeleted',
     retryTime: 1000 * 30, // 30 seconds
+    replicationIdentifier: `livedocs-${collectionName.toLowerCase()}-replication`,
   }) as RxReplicationState<T, ReplicationCheckpoint>; // Type assertion to match the return type
 }
 

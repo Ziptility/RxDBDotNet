@@ -7,7 +7,7 @@ import { setupReplication } from '@/lib/replication';
 import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
 import { combineLatest } from 'rxjs';
 
-const NetworkStatus: React.FC = () => {
+const NetworkStatus: React.FC = (): JSX.Element => {
   const isOnline = useOnlineStatus();
   const [isSyncing, setIsSyncing] = useState(false);
   const [replicationStates, setReplicationStates] = useState<
@@ -15,7 +15,7 @@ const NetworkStatus: React.FC = () => {
   >([]);
 
   useEffect(() => {
-    const initReplication = async () => {
+    const initReplication = async (): Promise<void> => {
       try {
         const db = await getDatabase();
         const states = await setupReplication(db);
@@ -32,11 +32,9 @@ const NetworkStatus: React.FC = () => {
   useEffect(() => {
     if (replicationStates.length === 0) return;
 
-    const subscription = combineLatest(replicationStates.map((state) => state.active$)).subscribe(
-      (activeStates) => {
-        setIsSyncing(activeStates.some(Boolean));
-      }
-    );
+    const subscription = combineLatest(replicationStates.map((state) => state.active$)).subscribe((activeStates) => {
+      setIsSyncing(activeStates.some(Boolean));
+    });
 
     return () => subscription.unsubscribe();
   }, [replicationStates]);

@@ -8,7 +8,7 @@ interface UserFormProps {
   onSubmit: (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
+const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.Element => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -25,7 +25,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
     }
   }, [user]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     void onSubmit({ firstName, lastName, email, role, workspaceId });
     if (!user) {
@@ -40,25 +40,9 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
   return (
     <form onSubmit={handleSubmit}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField
-          label="First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
-        />
-        <TextField
-          label="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
-        />
-        <TextField
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <TextField label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+        <TextField label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+        <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <FormControl fullWidth>
           <InputLabel>Role</InputLabel>
           <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)} required>

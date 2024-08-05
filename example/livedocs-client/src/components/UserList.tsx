@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-} from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { LiveDocsDatabase } from '@/types';
 import { UserDocType } from '@/lib/schemas';
@@ -19,7 +10,7 @@ interface UserListProps {
   onDelete: (user: UserDocType) => void | Promise<void>;
 }
 
-const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }) => {
+const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
   const [users, setUsers] = useState<UserDocType[]>([]);
 
   useEffect(() => {

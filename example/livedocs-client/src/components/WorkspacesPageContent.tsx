@@ -7,12 +7,12 @@ import { setupReplication } from '../lib/replication';
 import { WorkspaceDocType } from '../lib/schemas';
 import { LiveDocsDatabase } from '@/types';
 
-const WorkspacesPageContent: React.FC = () => {
+const WorkspacesPageContent: React.FC = (): JSX.Element => {
   const [db, setDb] = useState<LiveDocsDatabase | null>(null);
   const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceDocType | null>(null);
 
   useEffect(() => {
-    const initDb = async () => {
+    const initDb = async (): Promise<void> => {
       try {
         const database = await getDatabase();
         await setupReplication(database);
@@ -25,9 +25,7 @@ const WorkspacesPageContent: React.FC = () => {
     void initDb();
   }, []);
 
-  const handleCreate = async (
-    workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>
-  ) => {
+  const handleCreate = async (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db) {
       try {
         await db.workspaces.insert({
@@ -42,9 +40,7 @@ const WorkspacesPageContent: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (
-    workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>
-  ) => {
+  const handleUpdate = async (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db && editingWorkspace) {
       try {
         await db.workspaces.upsert({
@@ -59,7 +55,7 @@ const WorkspacesPageContent: React.FC = () => {
     }
   };
 
-  const handleDelete = async (workspace: WorkspaceDocType) => {
+  const handleDelete = async (workspace: WorkspaceDocType): Promise<void> => {
     if (db) {
       try {
         await db.workspaces.upsert({

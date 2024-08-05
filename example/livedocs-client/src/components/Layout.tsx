@@ -17,7 +17,7 @@ const navItems = [
   { label: 'LiveDocs', path: '/livedocs' },
 ];
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
   const router = useRouter();
 
   return (
@@ -34,7 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 color="inherit"
                 component={Link}
                 href={item.path}
-                sx={{ 
+                sx={{
                   textTransform: 'none',
                   fontWeight: router.pathname === item.path ? 'bold' : 'normal',
                   borderBottom: router.pathname === item.path ? '2px solid white' : 'none',

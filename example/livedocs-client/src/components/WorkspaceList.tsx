@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-} from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { LiveDocsDatabase } from '@/types';
 import { WorkspaceDocType } from '@/lib/schemas';
@@ -19,7 +10,7 @@ interface WorkspaceListProps {
   onDelete: (workspace: WorkspaceDocType) => void | Promise<void>;
 }
 
-const WorkspaceList: React.FC<WorkspaceListProps> = ({ db, onEdit, onDelete }) => {
+const WorkspaceList: React.FC<WorkspaceListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
   const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
 
   useEffect(() => {

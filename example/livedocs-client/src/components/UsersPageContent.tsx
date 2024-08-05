@@ -7,13 +7,13 @@ import { setupReplication } from '../lib/replication';
 import { UserDocType, WorkspaceDocType } from '../lib/schemas';
 import { LiveDocsDatabase } from '@/types';
 
-const UsersPageContent: React.FC = () => {
+const UsersPageContent: React.FC = (): JSX.Element => {
   const [db, setDb] = useState<LiveDocsDatabase | null>(null);
   const [editingUser, setEditingUser] = useState<UserDocType | null>(null);
   const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
 
   useEffect(() => {
-    const initDb = async () => {
+    const initDb = async (): Promise<void> => {
       try {
         const database = await getDatabase();
         await setupReplication(database);
@@ -33,13 +33,12 @@ const UsersPageContent: React.FC = () => {
       } catch (error) {
         console.error('Error initializing database:', error);
       }
-      return;
     };
 
     void initDb();
   }, []);
 
-  const handleCreate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleCreate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db) {
       try {
         await db.users.insert({
@@ -54,7 +53,7 @@ const UsersPageContent: React.FC = () => {
     }
   };
 
-  const handleUpdate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => {
+  const handleUpdate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db && editingUser) {
       try {
         await db.users.upsert({
@@ -69,7 +68,7 @@ const UsersPageContent: React.FC = () => {
     }
   };
 
-  const handleDelete = async (user: UserDocType) => {
+  const handleDelete = async (user: UserDocType): Promise<void> => {
     if (db) {
       try {
         await db.users.upsert({

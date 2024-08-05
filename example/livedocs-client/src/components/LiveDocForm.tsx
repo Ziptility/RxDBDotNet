@@ -9,7 +9,7 @@ interface LiveDocFormProps {
   onSubmit: (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
-const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }) => {
+const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }): JSX.Element => {
   const [content, setContent] = useState<string>('');
   const [ownerId, setOwnerId] = useState<string>('');
   const [workspaceId, setWorkspaceId] = useState<string>('');

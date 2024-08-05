@@ -107,16 +107,15 @@ export const setupReplication = async (
 ): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
   const replicationStates = collectionNames.map((name) => {
     const { baseNameForRxDB } = getOperationNames(name);
-    const collection = db[baseNameForRxDB];
+    const collection = db[baseNameForRxDB] as RxCollection<LiveDocsDocType>;
     if (!collection) {
       throw new Error(`Collection ${baseNameForRxDB} not found in database`);
     }
-    return setupReplicationForCollection(collection as RxCollection<LiveDocsDocType>, name);
+    return setupReplicationForCollection(collection, name);
   });
 
   try {
     await Promise.all(replicationStates.map((state) => retryWithBackoff(() => state.awaitInitialReplication())));
-    console.log('Initial replication completed successfully');
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), 'Initial replication');
     notifyUser('Failed to complete initial data sync. Some data may be outdated.');
@@ -125,23 +124,26 @@ export const setupReplication = async (
   replicationStates.forEach((state, index) => {
     const collectionName = collectionNames[index];
     state.error$.subscribe((error) => {
-      logError(new ReplicationError(`Replication error in ${collectionName}`, error), 'Ongoing replication');
+      logError(new ReplicationError(`Replication error in ${String(collectionName)}`, error), 'Ongoing replication');
 
       if (error.parameters.direction === 'pull') {
-        notifyUser(`Error fetching latest ${collectionName} data. Some information may be outdated.`, 'warning');
+        notifyUser(
+          `Error fetching latest ${String(collectionName)} data. Some information may be outdated.`,
+          'warning'
+        );
       } else if (error.parameters.direction === 'push') {
-        notifyUser(`Error saving ${collectionName} changes. Please try again later.`, 'error');
+        notifyUser(`Error saving ${String(collectionName)} changes. Please try again later.`, 'error');
       }
 
-      void retryWithBackoff(async () => {
-        console.log(`Retrying ${error.parameters.direction} replication for ${collectionName}...`);
-        await state.reSync();
+      void retryWithBackoff(() => {
+        state.reSync();
+        return Promise.resolve();
       }).catch((retryError) => {
         logError(
           retryError instanceof Error ? retryError : new Error(String(retryError)),
-          `Retry failed for ${collectionName}`
+          `Retry failed for ${String(collectionName)}`
         );
-        notifyUser(`Persistent error in ${collectionName} synchronization. Please contact support.`, 'error');
+        notifyUser(`Persistent error in ${String(collectionName)} synchronization. Please contact support.`, 'error');
       });
     });
   });
@@ -152,11 +154,15 @@ export const setupReplication = async (
 export const cancelAllReplications = (
   replicationStates: RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]
 ): void => {
-  replicationStates.forEach((state) => state.cancel());
+  replicationStates.forEach((state) => {
+    void state.cancel();
+  });
 };
 
 export const resumeAllReplications = (
   replicationStates: RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]
 ): void => {
-  replicationStates.forEach((state) => state.reSync());
+  replicationStates.forEach((state) => {
+    state.reSync();
+  });
 };

@@ -8,9 +8,9 @@ interface WorkspaceFormProps {
 }
 
 const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }): JSX.Element => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState<string>('');
 
-  useEffect(() => {
+  useEffect((): void => {
     if (workspace) {
       setName(workspace.name);
     }
@@ -25,7 +25,7 @@ const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }): J
   return (
     <form onSubmit={handleSubmit}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField label="Workspace Name" value={name} onChange={(e) => setName(e.target.value)} required />
+        <TextField label="Workspace Name" value={name} onChange={(e): void => setName(e.target.value)} required />
         <Button type="submit" variant="contained">
           {workspace ? 'Update' : 'Create'} Workspace
         </Button>

@@ -6,8 +6,8 @@ import { UserDocType } from '@/lib/schemas';
 
 interface UserListProps {
   db: LiveDocsDatabase;
-  onEdit: (user: UserDocType) => void | Promise<void>;
-  onDelete: (user: UserDocType) => void | Promise<void>;
+  onEdit: (user: UserDocType) => void;
+  onDelete: (user: UserDocType) => void;
 }
 
 const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
@@ -25,7 +25,7 @@ const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Elemen
         setUsers(docs.map((doc) => doc.toJSON()));
       });
 
-    return () => subscription.unsubscribe();
+    return (): void => subscription.unsubscribe();
   }, [db]);
 
   return (
@@ -50,10 +50,10 @@ const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Elemen
               <TableCell>{user.workspaceId}</TableCell>
               <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
               <TableCell>
-                <IconButton onClick={() => void onEdit(user)}>
+                <IconButton onClick={(): void => onEdit(user)}>
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={() => void onDelete(user)}>
+                <IconButton onClick={(): void => onDelete(user)}>
                   <DeleteIcon />
                 </IconButton>
               </TableCell>

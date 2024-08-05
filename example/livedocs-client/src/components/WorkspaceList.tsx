@@ -6,8 +6,8 @@ import { WorkspaceDocType } from '@/lib/schemas';
 
 interface WorkspaceListProps {
   db: LiveDocsDatabase;
-  onEdit: (workspace: WorkspaceDocType) => void | Promise<void>;
-  onDelete: (workspace: WorkspaceDocType) => void | Promise<void>;
+  onEdit: (workspace: WorkspaceDocType) => void;
+  onDelete: (workspace: WorkspaceDocType) => void;
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
@@ -25,7 +25,7 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({ db, onEdit, onDelete }): 
         setWorkspaces(docs.map((doc) => doc.toJSON()));
       });
 
-    return () => subscription.unsubscribe();
+    return (): void => subscription.unsubscribe();
   }, [db]);
 
   return (
@@ -44,10 +44,10 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({ db, onEdit, onDelete }): 
               <TableCell>{workspace.name}</TableCell>
               <TableCell>{new Date(workspace.updatedAt).toLocaleString()}</TableCell>
               <TableCell>
-                <IconButton onClick={() => void onEdit(workspace)}>
+                <IconButton onClick={(): void => onEdit(workspace)}>
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={() => void onDelete(workspace)}>
+                <IconButton onClick={(): void => onDelete(workspace)}>
                   <DeleteIcon />
                 </IconButton>
               </TableCell>

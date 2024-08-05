@@ -9,13 +9,13 @@ interface UserFormProps {
 }
 
 const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.Element => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [role, setRole] = useState<UserRole>(UserRole.User);
-  const [workspaceId, setWorkspaceId] = useState('');
+  const [workspaceId, setWorkspaceId] = useState<string>('');
 
-  useEffect(() => {
+  useEffect((): void => {
     if (user) {
       setFirstName(user.firstName);
       setLastName(user.lastName);
@@ -40,12 +40,12 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.
   return (
     <form onSubmit={handleSubmit}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-        <TextField label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-        <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <TextField label="First Name" value={firstName} onChange={(e): void => setFirstName(e.target.value)} required />
+        <TextField label="Last Name" value={lastName} onChange={(e): void => setLastName(e.target.value)} required />
+        <TextField label="Email" type="email" value={email} onChange={(e): void => setEmail(e.target.value)} required />
         <FormControl fullWidth>
           <InputLabel>Role</InputLabel>
-          <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)} required>
+          <Select value={role} onChange={(e): void => setRole(e.target.value as UserRole)} required>
             {Object.values(UserRole).map((roleValue) => (
               <MenuItem key={roleValue} value={roleValue}>
                 {roleValue}
@@ -55,7 +55,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.
         </FormControl>
         <FormControl fullWidth>
           <InputLabel>Workspace</InputLabel>
-          <Select value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} required>
+          <Select value={workspaceId} onChange={(e): void => setWorkspaceId(e.target.value)} required>
             {workspaces.map((workspace) => (
               <MenuItem key={workspace.id} value={workspace.id}>
                 {workspace.name}

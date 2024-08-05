@@ -6,8 +6,8 @@ import { LiveDocDocType } from '@/lib/schemas';
 
 interface LiveDocListProps {
   db: LiveDocsDatabase;
-  onEdit: (liveDoc: LiveDocDocType) => void | Promise<void>;
-  onDelete: (liveDoc: LiveDocDocType) => void | Promise<void>;
+  onEdit: (liveDoc: LiveDocDocType) => void;
+  onDelete: (liveDoc: LiveDocDocType) => void;
 }
 
 const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
@@ -25,7 +25,7 @@ const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }): JSX.
         setLiveDocs(docs.map((doc) => doc.toJSON()));
       });
 
-    return () => subscription.unsubscribe();
+    return (): void => subscription.unsubscribe();
   }, [db]);
 
   return (
@@ -48,10 +48,10 @@ const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }): JSX.
               <TableCell>{liveDoc.workspaceId}</TableCell>
               <TableCell>{new Date(liveDoc.updatedAt).toLocaleString()}</TableCell>
               <TableCell>
-                <IconButton onClick={() => void onEdit(liveDoc)}>
+                <IconButton onClick={(): void => onEdit(liveDoc)}>
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={() => void onDelete(liveDoc)}>
+                <IconButton onClick={(): void => onDelete(liveDoc)}>
                   <DeleteIcon />
                 </IconButton>
               </TableCell>

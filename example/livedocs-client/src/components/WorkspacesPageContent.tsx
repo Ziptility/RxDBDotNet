@@ -77,19 +77,19 @@ const WorkspacesPageContent: React.FC = (): JSX.Element => {
     <Box>
       <Box sx={{ mb: 4 }}>
         <WorkspaceForm
-          workspace={editingWorkspace || undefined}
+          workspace={editingWorkspace ?? undefined}
           onSubmit={editingWorkspace ? handleUpdate : handleCreate}
         />
       </Box>
       {editingWorkspace && (
-        <Button onClick={() => setEditingWorkspace(null)} sx={{ mb: 2 }}>
+        <Button onClick={(): void => setEditingWorkspace(null)} sx={{ mb: 2 }}>
           Cancel Editing
         </Button>
       )}
       <WorkspaceList
         db={db}
         onEdit={setEditingWorkspace}
-        onDelete={(workspace) => {
+        onDelete={(workspace): void => {
           void handleDelete(workspace);
         }}
       />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button } from '@mui/material';
+import { Subscription } from 'rxjs';
 import UserList from './UserList';
 import UserForm from './UserForm';
 import { getDatabase } from '../lib/database';
@@ -13,13 +14,15 @@ const UsersPageContent: React.FC = (): JSX.Element => {
   const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
 
   useEffect(() => {
+    let workspacesSubscription: Subscription | undefined;
+
     const initDb = async (): Promise<void> => {
       try {
         const database = await getDatabase();
         await setupReplication(database);
         setDb(database);
 
-        const workspacesSubscription = database.workspaces
+        workspacesSubscription = database.workspaces
           .find({
             selector: {
               isDeleted: false,
@@ -28,14 +31,16 @@ const UsersPageContent: React.FC = (): JSX.Element => {
           .$.subscribe((docs) => {
             setWorkspaces(docs.map((doc) => doc.toJSON()));
           });
-
-        return () => workspacesSubscription.unsubscribe();
       } catch (error) {
         console.error('Error initializing database:', error);
       }
     };
 
     void initDb();
+
+    return () => {
+      workspacesSubscription?.unsubscribe();
+    };
   }, []);
 
   const handleCreate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
@@ -90,20 +95,20 @@ const UsersPageContent: React.FC = (): JSX.Element => {
     <Box>
       <Box sx={{ mb: 4 }}>
         <UserForm
-          user={editingUser || undefined}
+          user={editingUser ?? undefined}
           workspaces={workspaces.map((w) => ({ id: w.id, name: w.name }))}
           onSubmit={editingUser ? handleUpdate : handleCreate}
         />
       </Box>
       {editingUser && (
-        <Button onClick={() => setEditingUser(null)} sx={{ mb: 2 }}>
+        <Button onClick={(): void => setEditingUser(null)} sx={{ mb: 2 }}>
           Cancel Editing
         </Button>
       )}
       <UserList
         db={db}
         onEdit={setEditingUser}
-        onDelete={(user) => {
+        onDelete={(user): void => {
           void handleDelete(user);
         }}
       />

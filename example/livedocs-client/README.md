@@ -6,7 +6,7 @@ This project is an example client for the LiveDocs system, demonstrating real-ti
 
 LiveDocs is a real-time collaborative document management system that allows users to create and manage workspaces, users, and live documents. This client application provides a user interface for interacting with the LiveDocs system, showcasing the following features:
 
-- Real-time synchronization with a GraphQL backend
+- Real-time synchronization with the RxDBDotNet GraphQL backend
 - Offline-first capabilities using RxDB
 - CRUD operations for Workspaces, Users, and LiveDocs
 - Responsive UI built with Material-UI
@@ -68,25 +68,3 @@ npm run dev
 - `src/pages/`: Next.js pages and API routes
 - `src/styles/`: Global styles
 - `src/types/`: TypeScript type definitions
-
-## Features
-
-- Workspace management: Create, read, update, and delete workspaces
-- User management: Create, read, update, and delete users
-- LiveDoc management: Create, read, update, and delete live documents
-- Real-time synchronization with the backend
-- Offline-first capabilities
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- RxDB team for providing an excellent offline-first database solution
-- Next.js and React teams for their fantastic frameworks
-- Material-UI team for their comprehensive UI component library

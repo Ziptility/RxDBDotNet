@@ -1,27 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+} from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { LiveDocsDatabase } from '@/types';
 import { LiveDocDocType } from '@/lib/schemas';
 
 interface LiveDocListProps {
   db: LiveDocsDatabase;
-  onEdit: (liveDoc: LiveDocDocType) => void;
-  onDelete: (liveDoc: LiveDocDocType) => void;
+  onEdit: (liveDoc: LiveDocDocType) => void | Promise<void>;
+  onDelete: (liveDoc: LiveDocDocType) => void | Promise<void>;
 }
 
 const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }) => {
   const [liveDocs, setLiveDocs] = useState<LiveDocDocType[]>([]);
 
   useEffect(() => {
-    const subscription = db.livedocs.find({
-      selector: {
-        isDeleted: false
-      },
-      sort: [{ updatedAt: 'desc' }]
-    }).$
-      .subscribe(docs => {
-        setLiveDocs(docs.map(doc => doc.toJSON()));
+    const subscription = db.livedocs
+      .find({
+        selector: {
+          isDeleted: false,
+        },
+        sort: [{ updatedAt: 'desc' }],
+      })
+      .$.subscribe((docs) => {
+        setLiveDocs(docs.map((doc) => doc.toJSON()));
       });
 
     return () => subscription.unsubscribe();
@@ -47,10 +57,10 @@ const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }) => {
               <TableCell>{liveDoc.workspaceId}</TableCell>
               <TableCell>{new Date(liveDoc.updatedAt).toLocaleString()}</TableCell>
               <TableCell>
-                <IconButton onClick={() => onEdit(liveDoc)}>
+                <IconButton onClick={() => void onEdit(liveDoc)}>
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={() => onDelete(liveDoc)}>
+                <IconButton onClick={() => void onDelete(liveDoc)}>
                   <DeleteIcon />
                 </IconButton>
               </TableCell>

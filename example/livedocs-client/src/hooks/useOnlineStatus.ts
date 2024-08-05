@@ -1,11 +1,10 @@
-// src/hooks/useOnlineStatus.ts
 import { useState, useEffect } from 'react';
 
-export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(true);
+export function useOnlineStatus(): boolean {
+  const [isOnline, setIsOnline] = useState<boolean>(true);
 
   useEffect(() => {
-    const updateOnlineStatus = () => setIsOnline(navigator.onLine);
+    const updateOnlineStatus = (): void => setIsOnline(navigator.onLine);
 
     if (typeof window !== 'undefined') {
       setIsOnline(navigator.onLine);

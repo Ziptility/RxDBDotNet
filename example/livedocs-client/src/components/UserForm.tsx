@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { UserDocType } from '@/lib/schemas';
+import { UserDocType, UserRole } from '@/lib/schemas';
 
 interface UserFormProps {
-  user?: UserDocType;
+  user?: UserDocType | undefined;
   workspaces: { id: string; name: string }[];
-  onSubmit: (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => void;
+  onSubmit: (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserDocType['role']>('User');
+  const [role, setRole] = useState<UserRole>(UserRole.User);
   const [workspaceId, setWorkspaceId] = useState('');
 
   useEffect(() => {
@@ -20,19 +20,21 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
       setFirstName(user.firstName);
       setLastName(user.lastName);
       setEmail(user.email);
-      setRole(user.role);
+      setRole(user.role as UserRole);
       setWorkspaceId(user.workspaceId);
     }
   }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ firstName, lastName, email, role, workspaceId });
-    setFirstName('');
-    setLastName('');
-    setEmail('');
-    setRole('User');
-    setWorkspaceId('');
+    void onSubmit({ firstName, lastName, email, role, workspaceId });
+    if (!user) {
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setRole(UserRole.User);
+      setWorkspaceId('');
+    }
   };
 
   return (
@@ -59,23 +61,17 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
         />
         <FormControl fullWidth>
           <InputLabel>Role</InputLabel>
-          <Select
-            value={role}
-            onChange={(e) => setRole(e.target.value as UserDocType['role'])}
-            required
-          >
-            <MenuItem value="User">User</MenuItem>
-            <MenuItem value="Admin">Admin</MenuItem>
-            <MenuItem value="SuperAdmin">SuperAdmin</MenuItem>
+          <Select value={role} onChange={(e) => setRole(e.target.value as UserRole)} required>
+            {Object.values(UserRole).map((roleValue) => (
+              <MenuItem key={roleValue} value={roleValue}>
+                {roleValue}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <FormControl fullWidth>
           <InputLabel>Workspace</InputLabel>
-          <Select
-            value={workspaceId}
-            onChange={(e) => setWorkspaceId(e.target.value)}
-            required
-          >
+          <Select value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} required>
             {workspaces.map((workspace) => (
               <MenuItem key={workspace.id} value={workspace.id}>
                 {workspace.name}

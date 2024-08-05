@@ -3,16 +3,16 @@ import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } fro
 import { LiveDocDocType } from '@/lib/schemas';
 
 interface LiveDocFormProps {
-  liveDoc?: LiveDocDocType;
+  liveDoc?: LiveDocDocType | undefined;
   users: { id: string; name: string }[];
   workspaces: { id: string; name: string }[];
-  onSubmit: (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => void;
+  onSubmit: (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }) => {
-  const [content, setContent] = useState<string>('');
-  const [ownerId, setOwnerId] = useState<string>('');
-  const [workspaceId, setWorkspaceId] = useState<string>('');
+  const [content, setContent] = useState('');
+  const [ownerId, setOwnerId] = useState('');
+  const [workspaceId, setWorkspaceId] = useState('');
 
   useEffect(() => {
     if (liveDoc) {
@@ -24,10 +24,12 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ content, ownerId, workspaceId });
-    setContent('');
-    setOwnerId('');
-    setWorkspaceId('');
+    void onSubmit({ content, ownerId, workspaceId });
+    if (!liveDoc) {
+      setContent('');
+      setOwnerId('');
+      setWorkspaceId('');
+    }
   };
 
   return (
@@ -43,11 +45,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
         />
         <FormControl fullWidth>
           <InputLabel>Owner</InputLabel>
-          <Select
-            value={ownerId}
-            onChange={(e) => setOwnerId(e.target.value)}
-            required
-          >
+          <Select value={ownerId} onChange={(e) => setOwnerId(e.target.value)} required>
             {users.map((user) => (
               <MenuItem key={user.id} value={user.id}>
                 {user.name}
@@ -57,11 +55,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
         </FormControl>
         <FormControl fullWidth>
           <InputLabel>Workspace</InputLabel>
-          <Select
-            value={workspaceId}
-            onChange={(e) => setWorkspaceId(e.target.value)}
-            required
-          >
+          <Select value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} required>
             {workspaces.map((workspace) => (
               <MenuItem key={workspace.id} value={workspace.id}>
                 {workspace.name}

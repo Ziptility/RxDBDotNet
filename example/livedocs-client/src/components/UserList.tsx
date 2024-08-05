@@ -1,27 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+} from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { LiveDocsDatabase } from '@/types';
 import { UserDocType } from '@/lib/schemas';
 
 interface UserListProps {
   db: LiveDocsDatabase;
-  onEdit: (user: UserDocType) => void;
-  onDelete: (user: UserDocType) => void;
+  onEdit: (user: UserDocType) => void | Promise<void>;
+  onDelete: (user: UserDocType) => void | Promise<void>;
 }
 
 const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }) => {
   const [users, setUsers] = useState<UserDocType[]>([]);
 
   useEffect(() => {
-    const subscription = db.users.find({
-      selector: {
-        isDeleted: false
-      },
-      sort: [{ updatedAt: 'desc' }]
-    }).$
-      .subscribe(docs => {
-        setUsers(docs.map(doc => doc.toJSON()));
+    const subscription = db.users
+      .find({
+        selector: {
+          isDeleted: false,
+        },
+        sort: [{ updatedAt: 'desc' }],
+      })
+      .$.subscribe((docs) => {
+        setUsers(docs.map((doc) => doc.toJSON()));
       });
 
     return () => subscription.unsubscribe();
@@ -49,10 +59,10 @@ const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }) => {
               <TableCell>{user.workspaceId}</TableCell>
               <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
               <TableCell>
-                <IconButton onClick={() => onEdit(user)}>
+                <IconButton onClick={() => void onEdit(user)}>
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={() => onDelete(user)}>
+                <IconButton onClick={() => void onDelete(user)}>
                   <DeleteIcon />
                 </IconButton>
               </TableCell>

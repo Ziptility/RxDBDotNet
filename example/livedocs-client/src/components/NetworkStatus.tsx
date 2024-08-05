@@ -10,34 +10,40 @@ import { combineLatest } from 'rxjs';
 const NetworkStatus: React.FC = () => {
   const isOnline = useOnlineStatus();
   const [isSyncing, setIsSyncing] = useState(false);
-  const [replicationStates, setReplicationStates] = useState<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]>([]);
+  const [replicationStates, setReplicationStates] = useState<
+    RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]
+  >([]);
 
   useEffect(() => {
     const initReplication = async () => {
-      const db = await getDatabase();
-      const states = await setupReplication(db);
-      setReplicationStates(states);
+      try {
+        const db = await getDatabase();
+        const states = await setupReplication(db);
+        setReplicationStates(states);
+      } catch (error) {
+        console.error('Error initializing replication:', error);
+        // Handle the error appropriately, e.g., show an error message to the user
+      }
     };
 
-    initReplication();
+    void initReplication();
   }, []);
 
   useEffect(() => {
     if (replicationStates.length === 0) return;
 
-    const subscription = combineLatest(replicationStates.map(state => state.active$))
-      .subscribe(activeStates => {
+    const subscription = combineLatest(replicationStates.map((state) => state.active$)).subscribe(
+      (activeStates) => {
         setIsSyncing(activeStates.some(Boolean));
-      });
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, [replicationStates]);
 
   return (
     <Box display="flex" alignItems="center" gap={2}>
-      <Typography>
-        {isOnline ? 'Online' : 'Offline'}
-      </Typography>
+      <Typography>{isOnline ? 'Online' : 'Offline'}</Typography>
       {isOnline ? (
         <Chip
           icon={isSyncing ? <SyncIcon /> : <WifiIcon />}
@@ -46,12 +52,7 @@ const NetworkStatus: React.FC = () => {
           size="small"
         />
       ) : (
-        <Chip
-          icon={<WifiOffIcon />}
-          label="Offline"
-          color="error"
-          size="small"
-        />
+        <Chip icon={<WifiOffIcon />} label="Offline" color="error" size="small" />
       )}
     </Box>
   );

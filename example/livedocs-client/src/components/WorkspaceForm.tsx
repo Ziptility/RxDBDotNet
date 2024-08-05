@@ -3,8 +3,8 @@ import { TextField, Button, Box } from '@mui/material';
 import { WorkspaceDocType } from '@/lib/schemas';
 
 interface WorkspaceFormProps {
-  workspace?: WorkspaceDocType;
-  onSubmit: (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>) => void;
+  workspace?: WorkspaceDocType | undefined;
+  onSubmit: (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) => {
@@ -18,7 +18,7 @@ const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name });
+    void onSubmit({ name });
     setName('');
   };
 

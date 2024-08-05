@@ -1,16 +1,22 @@
 import { Subject } from 'rxjs';
 import { RxError } from 'rxdb';
 
-export const errorSubject = new Subject<{ message: string; severity: 'error' | 'warning' | 'info' }>();
+export const errorSubject = new Subject<{
+  message: string;
+  severity: 'error' | 'warning' | 'info';
+}>();
 
-export function logError(error: RxError | Error, context?: string) {
+export function logError(error: RxError | Error, context = ''): void {
   console.error(`Error${context ? ` in ${context}` : ''}:`, error);
   if (error instanceof RxError) {
     console.error('RxDB Error details:', error.parameters);
   }
 }
 
-export function notifyUser(message: string, severity: 'error' | 'warning' | 'info' = 'error') {
+export function notifyUser(
+  message: string,
+  severity: 'error' | 'warning' | 'info' = 'error'
+): void {
   errorSubject.next({ message, severity });
 }
 
@@ -20,7 +26,7 @@ export async function retryWithBackoff<T>(
   baseDelay = 1000,
   maxDelay = 10000
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error | undefined;
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
@@ -29,11 +35,11 @@ export async function retryWithBackoff<T>(
       lastError = error as Error;
       const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
       console.warn(`Attempt ${attempt + 1} failed. Retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
-  throw lastError!;
+  throw lastError ?? new Error('Unknown error occurred during retry');
 }
 
 export class ReplicationError extends Error {

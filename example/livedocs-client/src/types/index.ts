@@ -1,10 +1,8 @@
+// src/types/index.ts
+
 import { WorkspaceDocType, UserDocType, LiveDocDocType } from '@/lib/schemas';
 import { RxCollection, RxDatabase } from 'rxdb';
 import { RxReplicationState as RxDBReplicationState } from 'rxdb/plugins/replication';
-
-export interface Workspace extends WorkspaceDocType {}
-export interface User extends UserDocType {}
-export interface LiveDoc extends LiveDocDocType {}
 
 export type LiveDocsCollections = {
   workspaces: RxCollection<WorkspaceDocType>;
@@ -12,11 +10,7 @@ export type LiveDocsCollections = {
   livedocs: RxCollection<LiveDocDocType>;
 };
 
-export type LiveDocsDatabase = RxDatabase<{
-  workspaces: RxCollection<WorkspaceDocType>;
-  users: RxCollection<UserDocType>;
-  livedocs: RxCollection<LiveDocDocType>;
-}>;
+export type LiveDocsDatabase = RxDatabase<LiveDocsCollections>;
 
 export type RxReplicationState<T, C> = RxDBReplicationState<T, C>;
 
@@ -26,3 +20,5 @@ export type ReplicationCheckpoint = {
 };
 
 export type LiveDocsDocType = WorkspaceDocType | UserDocType | LiveDocDocType;
+
+// Add any additional types or interfaces specific to your application here

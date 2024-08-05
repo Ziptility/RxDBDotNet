@@ -35,19 +35,17 @@
     "extensions": [".js", ".jsx", ".ts", ".tsx"]
   },
   "eslint.run": "onType",
-  // "editor.rulers": [120],
-  // "workbench.colorCustomizations": {
-  //   "editorRuler.foreground": "#ff4081"
-  // },
   "editor.suggest.showTypeParameters": true,
-  // "editor.bracketPairColorization.enabled": true,
-  // "editor.guides.bracketPairs": "active",
   "editor.semanticHighlighting.enabled": true,
   "problems.showCurrentInStatus": true,
   "typescript.check.npmIsInstalled": true,
   "typescript.implementationsCodeLens.enabled": true,
-  "typescript.referencesCodeLens.enabled": true
-  // "typescript.inlayHints.parameterNames.enabled": "all",
-  // "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
-  // "typescript.inlayHints.variableTypes.enabled": true
+  "typescript.referencesCodeLens.enabled": true,
+
+  // These settings are for debugging
+  "js/ts.implicitProjectConfig.checkJs": true,
+  "javascript.validate.enable": false,
+  "typescript.tsserver.log": "verbose",
+  "typescript.tsserver.experimentalDecorators": true,
+  "javascript.suggestionActions.enabled": false
 }

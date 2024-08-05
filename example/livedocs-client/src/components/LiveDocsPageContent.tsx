@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button } from '@mui/material';
+import { Subscription } from 'rxjs';
 import LiveDocList from './LiveDocList';
 import LiveDocForm from './LiveDocForm';
 import { getDatabase } from '../lib/database';
@@ -14,13 +15,16 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
   const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
 
   useEffect(() => {
+    let usersSubscription: Subscription | undefined;
+    let workspacesSubscription: Subscription | undefined;
+
     const initDb = async (): Promise<void> => {
       try {
         const database = await getDatabase();
         await setupReplication(database);
         setDb(database);
 
-        const usersSubscription = database.users
+        usersSubscription = database.users
           .find({
             selector: {
               isDeleted: false,
@@ -30,7 +34,7 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
             setUsers(docs.map((doc) => doc.toJSON()));
           });
 
-        const workspacesSubscription = database.workspaces
+        workspacesSubscription = database.workspaces
           .find({
             selector: {
               isDeleted: false,
@@ -39,17 +43,17 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
           .$.subscribe((docs) => {
             setWorkspaces(docs.map((doc) => doc.toJSON()));
           });
-
-        return () => {
-          usersSubscription.unsubscribe();
-          workspacesSubscription.unsubscribe();
-        };
       } catch (error) {
         console.error('Error initializing database:', error);
       }
     };
 
     void initDb();
+
+    return () => {
+      usersSubscription?.unsubscribe();
+      workspacesSubscription?.unsubscribe();
+    };
   }, []);
 
   const handleCreate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
@@ -104,21 +108,21 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
     <Box>
       <Box sx={{ mb: 4 }}>
         <LiveDocForm
-          liveDoc={editingLiveDoc || undefined}
+          liveDoc={editingLiveDoc ?? undefined}
           users={users.map((u) => ({ id: u.id, name: `${u.firstName} ${u.lastName}` }))}
           workspaces={workspaces.map((w) => ({ id: w.id, name: w.name }))}
           onSubmit={editingLiveDoc ? handleUpdate : handleCreate}
         />
       </Box>
       {editingLiveDoc && (
-        <Button onClick={() => setEditingLiveDoc(null)} sx={{ mb: 2 }}>
+        <Button onClick={(): void => setEditingLiveDoc(null)} sx={{ mb: 2 }}>
           Cancel Editing
         </Button>
       )}
       <LiveDocList
         db={db}
         onEdit={setEditingLiveDoc}
-        onDelete={(liveDoc) => {
+        onDelete={(liveDoc): void => {
           void handleDelete(liveDoc);
         }}
       />

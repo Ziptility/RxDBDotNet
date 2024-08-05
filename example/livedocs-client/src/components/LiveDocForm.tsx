@@ -10,11 +10,11 @@ interface LiveDocFormProps {
 }
 
 const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }) => {
-  const [content, setContent] = useState('');
-  const [ownerId, setOwnerId] = useState('');
-  const [workspaceId, setWorkspaceId] = useState('');
+  const [content, setContent] = useState<string>('');
+  const [ownerId, setOwnerId] = useState<string>('');
+  const [workspaceId, setWorkspaceId] = useState<string>('');
 
-  useEffect(() => {
+  useEffect((): void => {
     if (liveDoc) {
       setContent(liveDoc.content);
       setOwnerId(liveDoc.ownerId);
@@ -22,7 +22,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
     }
   }, [liveDoc]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     void onSubmit({ content, ownerId, workspaceId });
     if (!liveDoc) {
@@ -40,12 +40,12 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
           multiline
           rows={4}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e): void => setContent(e.target.value)}
           required
         />
         <FormControl fullWidth>
           <InputLabel>Owner</InputLabel>
-          <Select value={ownerId} onChange={(e) => setOwnerId(e.target.value)} required>
+          <Select value={ownerId} onChange={(e): void => setOwnerId(e.target.value)} required>
             {users.map((user) => (
               <MenuItem key={user.id} value={user.id}>
                 {user.name}
@@ -55,7 +55,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
         </FormControl>
         <FormControl fullWidth>
           <InputLabel>Workspace</InputLabel>
-          <Select value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} required>
+          <Select value={workspaceId} onChange={(e): void => setWorkspaceId(e.target.value)} required>
             {workspaces.map((workspace) => (
               <MenuItem key={workspace.id} value={workspace.id}>
                 {workspace.name}

@@ -12,22 +12,26 @@ import { logError, notifyUser, retryWithBackoff, ReplicationError } from './erro
 import { workspaceSchema, userSchema, liveDocSchema, WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
 import { LiveDocsDocType, ReplicationCheckpoint, RxReplicationState } from '@/types';
 
-const GRAPHQL_ENDPOINT = process.env['NEXT_PUBLIC_GRAPHQL_ENDPOINT'] ?? 'http://localhost:5414/graphql';
-const WS_ENDPOINT = process.env['NEXT_PUBLIC_WS_ENDPOINT'] ?? 'ws://localhost:5414/graphql';
+const GRAPHQL_ENDPOINT = process.env['NEXT_PUBLIC_GRAPHQL_ENDPOINT'];
+const WS_ENDPOINT = process.env['NEXT_PUBLIC_WS_ENDPOINT'];
+
+if (!GRAPHQL_ENDPOINT || !WS_ENDPOINT) {
+  throw new Error('GRAPHQL_ENDPOINT and WS_ENDPOINT must be defined in environment variables');
+}
 
 const BATCH_SIZE = 50;
 
 type SchemaConfig<T extends LiveDocsDocType> = GraphQLSchemaFromRxSchemaInputSingleCollection & {
   schema: RxJsonSchema<T>;
   deletedField: keyof T & string;
-  headerFields: string[];
+  headerFields: readonly string[];
 };
 
-const collectionNames = ['Workspace', 'User', 'LiveDoc'] as const;
+const collectionNames = ['workspace', 'user', 'liveDoc'] as const;
 type CollectionName = (typeof collectionNames)[number];
 
 type SchemaConfigMap = {
-  [K in CollectionName]: SchemaConfig<
+  [K in Capitalize<CollectionName>]: SchemaConfig<
     K extends 'Workspace' ? WorkspaceDocType : K extends 'User' ? UserDocType : LiveDocDocType
   >;
 };
@@ -35,36 +39,39 @@ type SchemaConfigMap = {
 const schemaConfigs: SchemaConfigMap = {
   Workspace: {
     schema: workspaceSchema,
-    checkpointFields: ['id', 'updatedAt'],
+    checkpointFields: ['id', 'updatedAt'] as const,
     deletedField: 'isDeleted',
-    headerFields: ['Authorization'],
+    headerFields: ['Authorization'] as const,
   },
   User: {
     schema: userSchema,
-    checkpointFields: ['id', 'updatedAt'],
+    checkpointFields: ['id', 'updatedAt'] as const,
     deletedField: 'isDeleted',
-    headerFields: ['Authorization'],
+    headerFields: ['Authorization'] as const,
   },
   LiveDoc: {
     schema: liveDocSchema,
-    checkpointFields: ['id', 'updatedAt'],
+    checkpointFields: ['id', 'updatedAt'] as const,
     deletedField: 'isDeleted',
-    headerFields: ['Authorization'],
+    headerFields: ['Authorization'] as const,
   },
 };
 
-function getOperationNames(collectionName: CollectionName): {
-  pullQueryName: `pull${CollectionName}`;
-  pushMutationName: `push${CollectionName}`;
-  subscriptionName: `stream${CollectionName}`;
+interface OperationNames {
+  pullQueryName: `pull${Capitalize<CollectionName>}`;
+  pushMutationName: `push${Capitalize<CollectionName>}`;
+  subscriptionName: `stream${Capitalize<CollectionName>}`;
   baseNameForRxDB: keyof LiveDocsDatabase;
-} {
-  const baseName = collectionName.charAt(0).toLowerCase() + collectionName.slice(1);
+}
+
+function getOperationNames(collectionName: CollectionName): OperationNames {
+  const capitalizedName = (collectionName.charAt(0).toUpperCase() +
+    collectionName.slice(1)) as Capitalize<CollectionName>;
   return {
-    pullQueryName: `pull${collectionName}`,
-    pushMutationName: `push${collectionName}`,
-    subscriptionName: `stream${collectionName}`,
-    baseNameForRxDB: `${baseName}s` as keyof LiveDocsDatabase,
+    pullQueryName: `pull${capitalizedName}`,
+    pushMutationName: `push${capitalizedName}`,
+    subscriptionName: `stream${capitalizedName}`,
+    baseNameForRxDB: `${collectionName}s` as keyof LiveDocsDatabase,
   };
 }
 
@@ -72,7 +79,13 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
   collection: RxCollection<T>,
   collectionName: CollectionName
 ): RxGraphQLReplicationState<T, ReplicationCheckpoint> {
-  const config = schemaConfigs[collectionName];
+  if (!GRAPHQL_ENDPOINT || !WS_ENDPOINT) {
+    throw new Error('GRAPHQL_ENDPOINT and WS_ENDPOINT must be defined in environment variables');
+  }
+
+  const capitalizedName = (collectionName.charAt(0).toUpperCase() +
+    collectionName.slice(1)) as Capitalize<CollectionName>;
+  const config = schemaConfigs[capitalizedName];
 
   const { pullQueryName, pushMutationName, subscriptionName, baseNameForRxDB } = getOperationNames(collectionName);
 
@@ -105,46 +118,61 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
 export const setupReplication = async (
   db: LiveDocsDatabase
 ): Promise<RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
+  if (!GRAPHQL_ENDPOINT || !WS_ENDPOINT) {
+    throw new Error('GRAPHQL_ENDPOINT and WS_ENDPOINT must be defined in environment variables');
+  }
+
   const replicationStates = collectionNames.map((name) => {
     const { baseNameForRxDB } = getOperationNames(name);
-    const collection = db[baseNameForRxDB] as RxCollection<LiveDocsDocType>;
+    const collection: RxCollection<LiveDocsDocType> | undefined = db[baseNameForRxDB] as
+      | RxCollection<LiveDocsDocType>
+      | undefined;
+
     if (!collection) {
       throw new Error(`Collection ${baseNameForRxDB} not found in database`);
     }
+
     return setupReplicationForCollection(collection, name);
   });
 
   try {
     await Promise.all(replicationStates.map((state) => retryWithBackoff(() => state.awaitInitialReplication())));
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), 'Initial replication');
+    logError(
+      error instanceof Error ? error : new Error('Unknown error during initial replication'),
+      'Initial replication'
+    );
     notifyUser('Failed to complete initial data sync. Some data may be outdated.');
   }
 
   replicationStates.forEach((state, index) => {
     const collectionName = collectionNames[index];
     state.error$.subscribe((error) => {
-      logError(new ReplicationError(`Replication error in ${String(collectionName)}`, error), 'Ongoing replication');
+      logError(new ReplicationError(`Replication error in ${collectionName}`, error), 'Ongoing replication');
 
       if (error.parameters.direction === 'pull') {
-        notifyUser(
-          `Error fetching latest ${String(collectionName)} data. Some information may be outdated.`,
-          'warning'
-        );
+        notifyUser(`Error fetching latest ${collectionName} data. Some information may be outdated.`, 'warning');
       } else if (error.parameters.direction === 'push') {
-        notifyUser(`Error saving ${String(collectionName)} changes. Please try again later.`, 'error');
+        notifyUser(`Error saving ${collectionName} changes. Please try again later.`, 'error');
       }
 
-      void retryWithBackoff(() => {
-        state.reSync();
-        return Promise.resolve();
-      }).catch((retryError) => {
-        logError(
-          retryError instanceof Error ? retryError : new Error(String(retryError)),
-          `Retry failed for ${String(collectionName)}`
-        );
-        notifyUser(`Persistent error in ${String(collectionName)} synchronization. Please contact support.`, 'error');
-      });
+      retryWithBackoff(
+        () =>
+          new Promise<void>((resolve) => {
+            state.reSync();
+            resolve();
+          })
+      )
+        .catch((retryError) => {
+          logError(
+            retryError instanceof Error ? retryError : new Error('Unknown error during replication retry'),
+            `Retry failed for ${collectionName}`
+          );
+          notifyUser(`Persistent error in ${collectionName} synchronization. Please contact support.`, 'error');
+        })
+        .catch((finalError) => {
+          console.error('Failed to handle retry error:', finalError);
+        });
     });
   });
 

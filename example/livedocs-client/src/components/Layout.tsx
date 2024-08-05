@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
       <Box component="footer" sx={{ py: 3, px: 2, mt: 'auto', backgroundColor: 'background.paper' }}>
         <Container maxWidth="sm">
           <Typography variant="body2" color="text.secondary" align="center">
-            © {new Date().getFullYear()} LiveDocs. All rights reserved.
+            © {new Date().getFullYear()} RxDBDotNet Contributors. All rights reserved.
           </Typography>
         </Container>
       </Box>

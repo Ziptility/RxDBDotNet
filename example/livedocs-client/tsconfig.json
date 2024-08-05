@@ -1,26 +1,27 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2020",
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
     "allowJs": true,
-    "skipLibCheck": false, // Ensure all declaration files are checked
-    "strict": true, // Enable all strict type-checking options
-    "noImplicitAny": true, // Raise error on expressions and declarations with an implied 'any' type
-    "strictNullChecks": true, // Ensure strict null checks
-    "strictFunctionTypes": true, // Ensure strict checking of function types
-    "strictBindCallApply": true, // Ensure strict 'bind', 'call', and 'apply' methods on functions
-    "strictPropertyInitialization": true, // Ensure class properties are correctly initialized
-    "noImplicitThis": true, // Raise error on 'this' expressions with an implied 'any' type
-    "alwaysStrict": true, // Ensure 'use strict' is always emitted
-    "noUnusedLocals": true, // Report errors on unused locals
-    "noUnusedParameters": true, // Report errors on unused parameters
-    "noImplicitReturns": true, // Report errors when not all code paths in function return a value
-    "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statements
-    "noUncheckedIndexedAccess": true, // Add 'undefined' to type of indexed access when index signature is used
+    "skipLibCheck": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -34,12 +35,17 @@
         "./src/*"
       ]
     },
-    "noEmit": true
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": true,
+    "useUnknownInCatchVariables": true
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -35,5 +35,4 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
   return dbPromise;
 };
 
-// Export the LiveDocsDatabase type
 export type { LiveDocsDatabase };

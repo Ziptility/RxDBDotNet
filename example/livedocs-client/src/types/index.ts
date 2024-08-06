@@ -20,5 +20,3 @@ export interface ReplicationCheckpoint {
 }
 
 export type LiveDocsDocType = WorkspaceDocType | UserDocType | LiveDocDocType;
-
-// Add any additional types or interfaces specific to your application here

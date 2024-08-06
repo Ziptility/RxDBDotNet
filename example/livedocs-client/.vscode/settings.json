@@ -40,12 +40,11 @@
   "problems.showCurrentInStatus": true,
   "typescript.check.npmIsInstalled": true,
   "typescript.implementationsCodeLens.enabled": true,
-  "typescript.referencesCodeLens.enabled": true,
+  "typescript.referencesCodeLens.enabled": false,
 
   // These settings are for debugging
   "js/ts.implicitProjectConfig.checkJs": true,
   "javascript.validate.enable": false,
   "typescript.tsserver.log": "verbose",
-  "typescript.tsserver.experimentalDecorators": true,
   "javascript.suggestionActions.enabled": false
 }

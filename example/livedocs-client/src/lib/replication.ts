@@ -1,3 +1,5 @@
+// src/lib/replication.ts
+
 import { LiveDocsDatabase } from '@/lib/database';
 import {
   pullQueryBuilderFromRxSchema,
@@ -93,7 +95,7 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
   const pushQueryBuilder = pushQueryBuilderFromRxSchema(pushMutationName, config);
   const pullStreamBuilder = pullStreamBuilderFromRxSchema(subscriptionName, config);
 
-  return replicateGraphQL<T, ReplicationCheckpoint>({
+  const replicationState = replicateGraphQL<T, ReplicationCheckpoint>({
     collection,
     url: {
       http: GRAPHQL_ENDPOINT,
@@ -113,6 +115,44 @@ function setupReplicationForCollection<T extends LiveDocsDocType>(
     retryTime: 1000 * 30, // 30 seconds
     replicationIdentifier: `livedocs-${baseNameForRxDB}-replication`,
   });
+
+  replicationState.error$.subscribe((error) => {
+    logError(new ReplicationError(`Replication error in ${collectionName}`, error), 'Ongoing replication');
+
+    if (error.parameters.direction === 'pull') {
+      notifyUser(`Error fetching latest ${collectionName} data. Some information may be outdated.`, 'warning');
+    } else if (error.parameters.direction === 'push') {
+      notifyUser(`Error saving ${collectionName} changes. Please try again later.`, 'error');
+    }
+
+    retryWithBackoff(
+      () =>
+        new Promise<void>((resolve) => {
+          replicationState.reSync();
+          resolve();
+        })
+    )
+      .catch((retryError) => {
+        logError(
+          retryError instanceof Error ? retryError : new Error('Unknown error during replication retry'),
+          `Retry failed for ${collectionName}`
+        );
+        notifyUser(`Persistent error in ${collectionName} synchronization. Please contact support.`, 'error');
+      })
+      .catch((finalError) => {
+        console.error('Failed to handle retry error:', finalError);
+      });
+  });
+
+  replicationState.received$.subscribe((doc) => {
+    console.log(`Received document for ${collectionName}:`, doc);
+  });
+
+  replicationState.sent$.subscribe((doc) => {
+    console.log(`Sent document for ${collectionName}:`, doc);
+  });
+
+  return replicationState;
 }
 
 export const setupReplication = async (
@@ -144,37 +184,6 @@ export const setupReplication = async (
     );
     notifyUser('Failed to complete initial data sync. Some data may be outdated.');
   }
-
-  replicationStates.forEach((state, index) => {
-    const collectionName = collectionNames[index];
-    state.error$.subscribe((error) => {
-      logError(new ReplicationError(`Replication error in ${collectionName}`, error), 'Ongoing replication');
-
-      if (error.parameters.direction === 'pull') {
-        notifyUser(`Error fetching latest ${collectionName} data. Some information may be outdated.`, 'warning');
-      } else if (error.parameters.direction === 'push') {
-        notifyUser(`Error saving ${collectionName} changes. Please try again later.`, 'error');
-      }
-
-      retryWithBackoff(
-        () =>
-          new Promise<void>((resolve) => {
-            state.reSync();
-            resolve();
-          })
-      )
-        .catch((retryError) => {
-          logError(
-            retryError instanceof Error ? retryError : new Error('Unknown error during replication retry'),
-            `Retry failed for ${collectionName}`
-          );
-          notifyUser(`Persistent error in ${collectionName} synchronization. Please contact support.`, 'error');
-        })
-        .catch((finalError) => {
-          console.error('Failed to handle retry error:', finalError);
-        });
-    });
-  });
 
   return replicationStates;
 };

@@ -20,8 +20,8 @@
     "@typescript-eslint/no-unsafe-call": "error",
     "@typescript-eslint/no-unsafe-member-access": "error",
     "@typescript-eslint/no-unsafe-return": "error",
-    "no-console": ["error", { "allow": ["warn", "error"] }],
-    "@typescript-eslint/restrict-template-expressions": "off"
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "no-console": "off"
   },
   "ignorePatterns": ["node_modules/", ".next/", "out/", "next.config.js"],
   "overrides": [

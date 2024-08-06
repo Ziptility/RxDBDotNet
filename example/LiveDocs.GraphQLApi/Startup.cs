@@ -19,7 +19,7 @@ public class Startup
         bool isAspireEnvironment)
     {
         // Configure the database context
-        ConfigureDatabase(services, environment, builder, isAspireEnvironment);
+        ConfigureDatabase(services, builder, isAspireEnvironment);
 
         // Add service defaults & Aspire components if running with Aspire
         if (isAspireEnvironment)
@@ -59,7 +59,7 @@ public class Startup
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
             {
-                corsPolicyBuilder.WithOrigins("http://localhost:1337")
+                corsPolicyBuilder.WithOrigins("http://localhost:1337", "http://localhost:3000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
@@ -69,7 +69,6 @@ public class Startup
 
     protected void ConfigureDatabase(
         IServiceCollection services,
-        IHostEnvironment environment,
         WebApplicationBuilder builder,
         bool isAspireEnvironment)
     {

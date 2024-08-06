@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: build",
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "This runs the Next.js build script."
+    },
+    {
+      "label": "npm: start",
+      "type": "npm",
+      "script": "start",
+      "group": "none",
+      "problemMatcher": [],
+      "detail": "This runs the Next.js start script."
+    },
+    {
+      "label": "npm: dev",
+      "type": "npm",
+      "script": "dev",
+      "group": "none",
+      "problemMatcher": [],
+      "detail": "This runs the Next.js dev script."
+    },
+    {
+      "label": "npm: lint",
+      "type": "npm",
+      "script": "lint",
+      "group": "test",
+      "problemMatcher": [],
+      "detail": "This runs the Next.js lint script."
+    }
+  ]
+}

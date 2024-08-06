@@ -15,18 +15,18 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
 
   dbPromise = createRxDatabase<LiveDocsCollections>({
     name: 'livedocsdb',
-    storage: getRxStorageDexie()
+    storage: getRxStorageDexie(),
   }).then(async (db) => {
     await db.addCollections({
       workspaces: {
-        schema: workspaceSchema
+        schema: workspaceSchema,
       },
       users: {
-        schema: userSchema
+        schema: userSchema,
       },
-      livedocs: { // Changed from 'liveDocs' to 'livedocs'
-        schema: liveDocSchema
-      }
+      livedocs: {
+        schema: liveDocSchema,
+      },
     });
 
     return db;

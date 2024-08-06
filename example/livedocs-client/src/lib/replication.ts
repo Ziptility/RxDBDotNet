@@ -27,7 +27,7 @@ type SchemaConfig<T extends LiveDocsDocType> = GraphQLSchemaFromRxSchemaInputSin
   headerFields: readonly string[];
 };
 
-const collectionNames = ['workspace', 'user', 'liveDoc'] as const;
+const collectionNames = ['workspace', 'user', 'livedoc'] as const;
 type CollectionName = (typeof collectionNames)[number];
 
 type SchemaConfigMap = {
@@ -49,7 +49,7 @@ const schemaConfigs: SchemaConfigMap = {
     deletedField: 'isDeleted',
     headerFields: ['Authorization'] as const,
   },
-  LiveDoc: {
+  Livedoc: {
     schema: liveDocSchema,
     checkpointFields: ['id', 'updatedAt'] as const,
     deletedField: 'isDeleted',

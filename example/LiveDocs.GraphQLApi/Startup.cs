@@ -75,7 +75,7 @@ public class Startup
         if (isAspireEnvironment)
         {
             // Use Aspire's SQL Server configuration when running with Aspire
-            builder.AddSqlServerDbContext<LiveDocsDbContext>("sqldb");
+            builder.AddSqlServerDbContext<LiveDocsDbContext>("sqldata");
         }
         else
         {

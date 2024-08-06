@@ -6,6 +6,7 @@ import { getDatabase } from '../lib/database';
 import { setupReplication } from '../lib/replication';
 import { WorkspaceDocType } from '../lib/schemas';
 import { LiveDocsDatabase } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const WorkspacesPageContent: React.FC = (): JSX.Element => {
   const [db, setDb] = useState<LiveDocsDatabase | null>(null);
@@ -29,7 +30,7 @@ const WorkspacesPageContent: React.FC = (): JSX.Element => {
     if (db) {
       try {
         await db.workspaces.insert({
-          id: Date.now().toString(),
+          id: uuidv4(),
           ...workspace,
           updatedAt: new Date().toISOString(),
           isDeleted: false,

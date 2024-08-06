@@ -5,12 +5,11 @@ import {
   pullStreamBuilderFromRxSchema,
   replicateGraphQL,
   RxGraphQLReplicationState,
-  GraphQLSchemaFromRxSchemaInputSingleCollection,
 } from 'rxdb/plugins/replication-graphql';
-import { RxCollection, RxJsonSchema, GraphQLServerUrl, SyncOptionsGraphQL } from 'rxdb';
-import { logError, notifyUser, retryWithBackoff, ReplicationError } from './errorHandling';
+import { RxCollection, GraphQLServerUrl } from 'rxdb';
+import { logError, notifyUser } from './errorHandling';
 import { workspaceSchema, userSchema, liveDocSchema, WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
-import { LiveDocsDocType, ReplicationCheckpoint } from '@/types';
+import { ReplicationCheckpoint, LiveDocsCollections } from '@/types';
 
 const GRAPHQL_ENDPOINT = process.env['NEXT_PUBLIC_GRAPHQL_ENDPOINT'];
 const WS_ENDPOINT = process.env['NEXT_PUBLIC_WS_ENDPOINT'];
@@ -36,34 +35,28 @@ const getGraphQLServerUrl = (): GraphQLServerUrl => {
   return url;
 };
 
-interface CollectionConfig {
-  name: keyof LiveDocsDatabase;
-  schema: RxJsonSchema<WorkspaceDocType> | RxJsonSchema<UserDocType> | RxJsonSchema<LiveDocDocType>;
-  graphqlType: string;
-  queryName: string;
-}
-
-const collections: readonly CollectionConfig[] = [
-  { name: 'workspaces', schema: workspaceSchema, graphqlType: 'Workspace', queryName: 'workspace' },
-  { name: 'users', schema: userSchema, graphqlType: 'User', queryName: 'user' },
-  { name: 'livedocs', schema: liveDocSchema, graphqlType: 'LiveDoc', queryName: 'liveDoc' },
-] as const;
-
-function setupReplicationForCollection(
-  collection: RxCollection<LiveDocsDocType>,
-  config: CollectionConfig
-): RxGraphQLReplicationState<LiveDocsDocType, ReplicationCheckpoint> {
-  const schemaConfig: GraphQLSchemaFromRxSchemaInputSingleCollection = {
-    schema: collection.schema.jsonSchema,
-    checkpointFields: ['lastDocumentId', 'updatedAt'] as const,
+const setupReplicationForCollection = <T extends WorkspaceDocType | UserDocType | LiveDocDocType>(
+  collection: RxCollection<T>,
+  schemaName: string,
+  schema: typeof workspaceSchema | typeof userSchema | typeof liveDocSchema
+): RxGraphQLReplicationState<T, ReplicationCheckpoint> => {
+  const pullQueryBuilder = pullQueryBuilderFromRxSchema(schemaName, {
+    schema,
+    checkpointFields: ['lastDocumentId', 'updatedAt'],
     deletedField: 'isDeleted',
-  };
+  });
+  const pushQueryBuilder = pushQueryBuilderFromRxSchema(schemaName, {
+    schema,
+    checkpointFields: ['lastDocumentId', 'updatedAt'],
+    deletedField: 'isDeleted',
+  });
+  const pullStreamBuilder = pullStreamBuilderFromRxSchema(schemaName, {
+    schema,
+    checkpointFields: ['lastDocumentId', 'updatedAt'],
+    deletedField: 'isDeleted',
+  });
 
-  const pullQueryBuilder = pullQueryBuilderFromRxSchema(config.queryName, schemaConfig);
-  const pushQueryBuilder = pushQueryBuilderFromRxSchema(config.queryName, schemaConfig);
-  const pullStreamBuilder = pullStreamBuilderFromRxSchema(config.queryName, schemaConfig);
-
-  const replicationOptions: SyncOptionsGraphQL<LiveDocsDocType, ReplicationCheckpoint> = {
+  const replicationState = replicateGraphQL<T, ReplicationCheckpoint>({
     collection,
     url: getGraphQLServerUrl(),
     pull: {
@@ -82,56 +75,36 @@ function setupReplicationForCollection(
     headers: {
       Authorization: `Bearer ${JWT_TOKEN}`,
     },
-  };
-
-  const replicationState = replicateGraphQL(replicationOptions);
+  });
 
   replicationState.error$.subscribe((error) => {
-    logError(new ReplicationError(`Replication error in ${config.graphqlType}`, error), 'Ongoing replication');
-    notifyUser(`Error in ${config.graphqlType} synchronization. Please try again later.`, 'error');
-
-    retryWithBackoff(
-      () =>
-        new Promise<void>((resolve) => {
-          replicationState.reSync();
-          resolve();
-        })
-    ).catch((retryError) => {
-      logError(
-        retryError instanceof Error ? retryError : new Error('Unknown error during replication retry'),
-        `Retry failed for ${config.graphqlType}`
-      );
-      notifyUser(`Persistent error in ${config.graphqlType} synchronization. Please contact support.`, 'error');
-    });
-  });
-
-  replicationState.received$.subscribe((doc) => {
-    console.log(`Received document for ${config.graphqlType}:`, doc);
-  });
-
-  replicationState.sent$.subscribe((doc) => {
-    console.log(`Sent document for ${config.graphqlType}:`, doc);
+    logError(error, `Replication error in ${collection.name}`);
+    notifyUser(`Error in ${collection.name} synchronization. Please try again later.`, 'error');
   });
 
   return replicationState;
+};
+
+interface ReplicationStates {
+  workspaces: RxGraphQLReplicationState<WorkspaceDocType, ReplicationCheckpoint>;
+  users: RxGraphQLReplicationState<UserDocType, ReplicationCheckpoint>;
+  livedocs: RxGraphQLReplicationState<LiveDocDocType, ReplicationCheckpoint>;
 }
 
-export const setupReplication = async (
-  db: LiveDocsDatabase
-): Promise<RxGraphQLReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]> => {
-  const replicationStates = collections.map((config) => {
-    const collection: RxCollection<LiveDocsDocType> | undefined = db[config.name] as
-      | RxCollection<LiveDocsDocType>
-      | undefined;
-
-    if (!collection) {
-      throw new Error(`Collection ${config.name} not found in database`);
-    }
-    return setupReplicationForCollection(collection, config);
-  });
+export const setupReplication = async (db: LiveDocsDatabase): Promise<ReplicationStates> => {
+  const replicationStates: ReplicationStates = {
+    workspaces: setupReplicationForCollection<WorkspaceDocType>(db.workspaces, 'workspace', workspaceSchema),
+    users: setupReplicationForCollection<UserDocType>(db.users, 'user', userSchema),
+    livedocs: setupReplicationForCollection<LiveDocDocType>(db.livedocs, 'liveDoc', liveDocSchema),
+  };
 
   try {
-    await Promise.all(replicationStates.map((state) => retryWithBackoff(() => state.awaitInitialReplication())));
+    await Promise.all(
+      Object.values(replicationStates).map((state) =>
+        (state as RxGraphQLReplicationState<unknown, unknown>).awaitInitialReplication()
+      )
+    );
+    console.log('Initial replication completed successfully');
   } catch (error) {
     logError(
       error instanceof Error ? error : new Error('Unknown error during initial replication'),
@@ -143,18 +116,11 @@ export const setupReplication = async (
   return replicationStates;
 };
 
-export const cancelAllReplications = (
-  replicationStates: RxGraphQLReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]
+export const subscribeToCollectionChanges = <K extends keyof LiveDocsCollections>(
+  collection: RxCollection<LiveDocsCollections[K]>,
+  onChange: (docs: LiveDocsCollections[K][]) => void
 ): void => {
-  replicationStates.forEach((state) => {
-    void state.cancel();
-  });
-};
-
-export const resumeAllReplications = (
-  replicationStates: RxGraphQLReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]
-): void => {
-  replicationStates.forEach((state) => {
-    state.reSync();
+  collection.find().$.subscribe((docs) => {
+    onChange(docs);
   });
 };

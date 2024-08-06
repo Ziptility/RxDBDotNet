@@ -13,33 +13,8 @@ export function logError(error: RxError | Error, context = ''): void {
   }
 }
 
-export function notifyUser(
-  message: string,
-  severity: 'error' | 'warning' | 'info' = 'error'
-): void {
+export function notifyUser(message: string, severity: 'error' | 'warning' | 'info' = 'error'): void {
   errorSubject.next({ message, severity });
-}
-
-export async function retryWithBackoff<T>(
-  operation: () => Promise<T>,
-  retries = 3,
-  baseDelay = 1000,
-  maxDelay = 10000
-): Promise<T> {
-  let lastError: Error | undefined;
-
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error as Error;
-      const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
-      console.warn(`Attempt ${attempt + 1} failed. Retrying in ${delay}ms...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  throw lastError ?? new Error('Unknown error occurred during retry');
 }
 
 export class ReplicationError extends Error {

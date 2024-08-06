@@ -4,15 +4,14 @@ import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getDatabase } from '@/lib/database';
 import { setupReplication } from '@/lib/replication';
-import { RxReplicationState, LiveDocsDocType, ReplicationCheckpoint } from '@/types';
+import { LiveDocsReplicationState } from '@/types';
 import { combineLatest } from 'rxjs';
+import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
 const NetworkStatus: React.FC = (): JSX.Element => {
   const isOnline = useOnlineStatus();
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [replicationStates, setReplicationStates] = useState<
-    RxReplicationState<LiveDocsDocType, ReplicationCheckpoint>[]
-  >([]);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [replicationStates, setReplicationStates] = useState<LiveDocsReplicationState | null>(null);
 
   useEffect(() => {
     const initReplication = async (): Promise<void> => {
@@ -30,13 +29,17 @@ const NetworkStatus: React.FC = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    if (replicationStates.length === 0) return;
+    if (!replicationStates) return;
 
-    const subscription = combineLatest(replicationStates.map((state) => state.active$)).subscribe((activeStates) => {
+    const subscription = combineLatest(
+      Object.values(replicationStates).map((state: RxGraphQLReplicationState<unknown, unknown>) => state.active$)
+    ).subscribe((activeStates: boolean[]) => {
       setIsSyncing(activeStates.some(Boolean));
     });
 
-    return () => subscription.unsubscribe();
+    return (): void => {
+      subscription.unsubscribe();
+    };
   }, [replicationStates]);
 
   return (

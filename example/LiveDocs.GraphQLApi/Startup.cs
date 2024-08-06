@@ -19,7 +19,7 @@ public class Startup
         bool isAspireEnvironment)
     {
         // Configure the database context
-        ConfigureDatabase(services, environment, builder, isAspireEnvironment);
+        ConfigureDatabase(services, builder, isAspireEnvironment);
 
         // Add service defaults & Aspire components if running with Aspire
         if (isAspireEnvironment)
@@ -69,14 +69,13 @@ public class Startup
 
     protected void ConfigureDatabase(
         IServiceCollection services,
-        IHostEnvironment environment,
         WebApplicationBuilder builder,
         bool isAspireEnvironment)
     {
         if (isAspireEnvironment)
         {
             // Use Aspire's SQL Server configuration when running with Aspire
-            builder.AddSqlServerDbContext<LiveDocsDbContext>("sqldata");
+            builder.AddSqlServerDbContext<LiveDocsDbContext>("sqldb");
         }
         else
         {

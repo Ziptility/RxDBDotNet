@@ -56,6 +56,7 @@ function setupReplicationForCollection(
   const schemaConfig: GraphQLSchemaFromRxSchemaInputSingleCollection = {
     schema: collection.schema.jsonSchema,
     checkpointFields: ['lastDocumentId', 'updatedAt'] as const,
+    deletedField: 'isDeleted',
   };
 
   const pullQueryBuilder = pullQueryBuilderFromRxSchema(config.queryName, schemaConfig);

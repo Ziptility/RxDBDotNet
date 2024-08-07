@@ -69,8 +69,8 @@ public class TestStartup : Startup
                 // Extend the timeouts for debugging
                 Sockets =
                 {
-                    ConnectionInitializationTimeout = TimeSpan.FromMinutes(5),
-                    KeepAliveInterval = TimeSpan.FromMinutes(1),
+                    //ConnectionInitializationTimeout = TimeSpan.FromMinutes(5),
+                    //KeepAliveInterval = TimeSpan.FromMinutes(1),
                 },
             });
     }

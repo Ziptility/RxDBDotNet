@@ -45,7 +45,10 @@ namespace RxDBDotNet.Tests
             await SimulateHeroChange();
 
             // Assert
-            await foreach (var response in subscription)
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)); // 5-minute timeout for the entire test
+
+            await foreach (var response in subscription.WithCancellation(cts.Token))
             {
                 response.Errors.Should().BeNullOrEmpty();
                 response.Data.Should().NotBeNull();

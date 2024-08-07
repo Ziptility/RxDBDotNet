@@ -211,10 +211,8 @@ namespace RxDBDotNet.Tests.Helpers
 
             public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
             {
-#pragma warning disable CA2000
                 var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, cancellationToken);
-#pragma warning restore CA2000
-                return new AsyncSubscriptionEnumerator<T>(_client, _subscriptionQuery, combinedCts.Token);
+                return new AsyncSubscriptionEnumerator<T>(_client, _subscriptionQuery, combinedCts);
             }
         }
 
@@ -226,19 +224,17 @@ namespace RxDBDotNet.Tests.Helpers
         {
             private readonly GraphQLSubscriptionClient _client;
             private readonly string _subscriptionQuery;
-            private readonly CancellationToken _cancellationToken;
+            private readonly CancellationTokenSource _cts;
             private bool _isSubscribed;
+            private bool _isDisposed;
 
-            public AsyncSubscriptionEnumerator(GraphQLSubscriptionClient client, string subscriptionQuery, CancellationToken cancellationToken)
+            public AsyncSubscriptionEnumerator(GraphQLSubscriptionClient client, string subscriptionQuery, CancellationTokenSource cts)
             {
                 _client = client;
                 _subscriptionQuery = subscriptionQuery;
-                _cancellationToken = cancellationToken;
+                _cts = cts;
             }
 
-            /// <summary>
-            /// Gets the current element in the iteration.
-            /// </summary>
             public T Current { get; private set; } = default!;
 
             /// <summary>
@@ -257,7 +253,7 @@ namespace RxDBDotNet.Tests.Helpers
                     _isSubscribed = true;
                 }
 
-                while (!_cancellationToken.IsCancellationRequested)
+                while (!_cts.Token.IsCancellationRequested)
                 {
                     var (messageType, payload) = await _client.ReceiveMessageAsync();
 
@@ -306,6 +302,11 @@ namespace RxDBDotNet.Tests.Helpers
             /// </remarks>
             public ValueTask DisposeAsync()
             {
+                if (!_isDisposed)
+                {
+                    _isDisposed = true;
+                    _cts.Dispose();
+                }
                 return ValueTask.CompletedTask;
             }
         }

@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using RT.Comb;
+using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Model;
-using RxDBDotNet.Tests.Utils;
 using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;

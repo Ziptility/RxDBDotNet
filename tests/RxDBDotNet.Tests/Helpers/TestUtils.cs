@@ -3,7 +3,7 @@ using FluentAssertions;
 using RT.Comb;
 using RxDBDotNet.Tests.Model;
 
-namespace RxDBDotNet.Tests.Utils;
+namespace RxDBDotNet.Tests.Helpers;
 
 internal static class TestUtils
 {

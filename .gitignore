@@ -398,3 +398,5 @@ FodyWeavers.xsd
 *.sln.iml
 /example/Example.RxDBClient/public/bundle.js
 /example/LiveDocs.RxDBClient/public/bundle.js
+/example/livedocs-client/.next
+/example/livedocs-client/.env.local

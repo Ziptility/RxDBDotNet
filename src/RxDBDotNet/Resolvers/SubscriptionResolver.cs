@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Threading.Channels;
+﻿using System.Threading.Channels;
 using HotChocolate.Subscriptions;
 using Microsoft.Extensions.Logging;
 using RxDBDotNet.Documents;
@@ -36,83 +35,116 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
         ArgumentNullException.ThrowIfNull(eventReceiver);
         ArgumentNullException.ThrowIfNull(logger);
 
-        return DocumentIteratorAsync(cancellationToken);
+        return new DocumentChangeAsyncEnumerable(eventReceiver, logger, cancellationToken);
+    }
 
-        async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentIteratorAsync([EnumeratorCancellation] CancellationToken localCancellationToken)
+    private sealed class DocumentChangeAsyncEnumerable : IAsyncEnumerable<DocumentPullBulk<TDocument>>
+    {
+        private readonly ITopicEventReceiver _eventReceiver;
+        private readonly ILogger<SubscriptionResolver<TDocument>> _logger;
+        private readonly CancellationToken _cancellationToken;
+
+        public DocumentChangeAsyncEnumerable(
+            ITopicEventReceiver eventReceiver,
+            ILogger<SubscriptionResolver<TDocument>> logger,
+            CancellationToken cancellationToken)
         {
-            // Create a unique stream name for this document type
-            // This allows multiple document types to have separate streams
-            var streamName = $"Stream_{typeof(TDocument).Name}";
+            _eventReceiver = eventReceiver;
+            _logger = logger;
+            _cancellationToken = cancellationToken;
+        }
 
-            // Use a channel to decouple the event receiving and yielding processes
-            // This is crucial for managing backpressure and ensuring smooth operation
-            // when clients consume events at different rates
-            var channel = Channel.CreateUnbounded<DocumentPullBulk<TDocument>>();
-
-            // Start processing events in a separate task
-            // This allows us to handle events asynchronously without blocking the main thread
-            _ = ProcessEventsAsync(streamName, channel.Writer, eventReceiver, logger, localCancellationToken);
-
-            // Yield items from the channel as they become available
-            // This creates a push-based subscription stream that clients can consume
-            await foreach (var item in channel.Reader.ReadAllAsync(localCancellationToken).ConfigureAwait(false))
-            {
-                yield return item;
-            }
+        public IAsyncEnumerator<DocumentPullBulk<TDocument>> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        {
+            using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, cancellationToken);
+            return new DocumentChangeAsyncEnumerator(_eventReceiver, _logger, cancellationTokenSource.Token);
         }
     }
 
-    /// <summary>
-    /// Processes incoming document change events and writes them to the channel.
-    /// This method implements the core logic of the subscription mechanism.
-    /// </summary>
-    /// <param name="streamName">The name of the event stream to subscribe to.</param>
-    /// <param name="writer">The channel writer to which processed events are written.</param>
-    /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
-    /// <param name="logger">The logger used for logging information and errors.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    private static async Task ProcessEventsAsync(
-        string streamName,
-        ChannelWriter<DocumentPullBulk<TDocument>> writer,
-        ITopicEventReceiver eventReceiver,
-        ILogger<SubscriptionResolver<TDocument>> logger,
-        CancellationToken cancellationToken)
+    private sealed class DocumentChangeAsyncEnumerator : IAsyncEnumerator<DocumentPullBulk<TDocument>>
     {
-        try
-        {
-            // Subscribe to the document change events using Hot Chocolate's event receiver
-            // This creates a connection to the underlying pub/sub system
-            var documentSourceStream = await eventReceiver.SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken).ConfigureAwait(false);
+        private readonly Channel<DocumentPullBulk<TDocument>> _channel;
+        private Task? _processTask;
+        private readonly CancellationTokenSource _cts;
+        private readonly ITopicEventReceiver _eventReceiver;
+        private readonly ILogger<SubscriptionResolver<TDocument>> _logger;
 
-            // Process each incoming event
-            await foreach (var pullDocumentResult in documentSourceStream
-                               .ReadEventsAsync()
-                               .WithCancellation(cancellationToken)
-                               .ConfigureAwait(false))
+        public DocumentChangeAsyncEnumerator(
+            ITopicEventReceiver eventReceiver,
+            ILogger<SubscriptionResolver<TDocument>> logger,
+            CancellationToken cancellationToken)
+        {
+            _channel = Channel.CreateUnbounded<DocumentPullBulk<TDocument>>(new UnboundedChannelOptions
             {
-                // Write the event to the channel
-                // If the channel is full (e.g., slow consumer), this will wait until space is available
-                // This implements backpressure, preventing memory issues with fast producers and slow consumers
-                await writer.WriteAsync(pullDocumentResult, cancellationToken).ConfigureAwait(false);
+                SingleReader = true, // Optimize for single reader
+                SingleWriter = true, // We know we have only one writer
+            });
+            _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            _eventReceiver = eventReceiver;
+            _logger = logger;
+        }
+
+        public DocumentPullBulk<TDocument> Current { get; private set; } = default!;
+
+        public async ValueTask<bool> MoveNextAsync()
+        {
+            _processTask ??= ProcessEventsAsync(_cts.Token);
+
+            try
+            {
+                if (await _channel.Reader.WaitToReadAsync(_cts.Token).ConfigureAwait(false)
+                    && _channel.Reader.TryRead(out var item))
+                {
+                    Current = item;
+                    return true;
+                }
             }
+            catch (OperationCanceledException)
+            {
+                // Subscription was cancelled, which is a normal termination condition
+            }
+
+            return false;
         }
-        catch (OperationCanceledException)
+
+        public async ValueTask DisposeAsync()
         {
-            // Log when the stream is cancelled (e.g., when the subscription is terminated)
-            // This is not an error condition, but it's useful for debugging and monitoring
-            logger.LogInformation("Document change stream for {DocumentType} was cancelled.", typeof(TDocument).Name);
+            await _cts.CancelAsync().ConfigureAwait(false);
+            if (_processTask != null)
+            {
+                await _processTask.ConfigureAwait(false);
+            }
+            _cts.Dispose();
         }
-        catch (Exception ex)
+
+        private async Task ProcessEventsAsync(CancellationToken cancellationToken)
         {
-            // Log any unexpected errors
-            // This could indicate issues with the pub/sub system or serialization problems
-            logger.LogError(ex, "An error occurred while processing the document change stream for {DocumentType}.", typeof(TDocument).Name);
-        }
-        finally
-        {
-            // Ensure the channel is marked as complete when we exit the processing loop
-            // This signals to consumers that no more items will be produced
-            writer.Complete();
+            var streamName = $"Stream_{typeof(TDocument).Name}";
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var documentSourceStream = await _eventReceiver.SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken).ConfigureAwait(false);
+
+                    await foreach (var pullDocumentResult in documentSourceStream.ReadEventsAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
+                    {
+                        await _channel.Writer.WriteAsync(pullDocumentResult, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogInformation("Document change stream for {DocumentType} was cancelled.", typeof(TDocument).Name);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "An error occurred while processing the document change stream for {DocumentType}. Retrying in 5 seconds.", typeof(TDocument).Name);
+                    await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            _channel.Writer.Complete();
         }
     }
 }

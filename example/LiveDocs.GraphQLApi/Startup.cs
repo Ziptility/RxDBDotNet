@@ -1,12 +1,13 @@
-﻿using LiveDocs.GraphQLApi.Models;
+﻿using HotChocolate.AspNetCore;
+using LiveDocs.GraphQLApi.Data;
+using LiveDocs.GraphQLApi.Infrastructure;
+using LiveDocs.GraphQLApi.Models;
 using LiveDocs.GraphQLApi.Repositories;
 using LiveDocs.ServiceDefaults;
-using HotChocolate.AspNetCore;
-using LiveDocs.GraphQLApi.Data;
+using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
-using Microsoft.EntityFrameworkCore;
-using LiveDocs.GraphQLApi.Infrastructure;
+using Query = LiveDocs.GraphQLApi.Models.Query;
 
 namespace LiveDocs.GraphQLApi;
 
@@ -42,7 +43,7 @@ public class Startup
             })
             // Simulate scenario where the library user
             // has already added their own root query type.
-            .AddQueryType<Models.Query>()
+            .AddQueryType<Query>()
             .AddReplicationServer()
             .RegisterService<IDocumentRepository<Workspace>>()
             .AddReplicatedDocument<Hero>()
@@ -80,15 +81,16 @@ public class Startup
         else
         {
             // Use a standard SQL Server configuration when not running with Aspire
-            services.AddDbContext<LiveDocsDbContext>(options => options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
-                                                                                     ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
+            services.AddDbContext<LiveDocsDbContext>(options =>
+                options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
+                                     ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
         }
     }
 
-    public virtual void Configure(WebApplication app, IWebHostEnvironment env)
+    public void Configure(WebApplication app, IWebHostEnvironment env)
     {
         app.UseExceptionHandler();
-        
+
         if (env.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
@@ -104,15 +106,19 @@ public class Startup
         // Enable WebSockets
         app.UseWebSockets();
 
-        // Configure the GraphQL endpoint
-        var graphQLServerOptions = new GraphQLServerOptions
-        {
-            EnforceMultipartRequestsPreflightHeader = false,
-            Tool =
+        ConfigureTheGraphQLEndpoint(app, env);
+    }
+
+    protected virtual void ConfigureTheGraphQLEndpoint(WebApplication app, IWebHostEnvironment env)
+    {
+        app.MapGraphQL()
+            .WithOptions(new GraphQLServerOptions
             {
-                Enable = env.IsDevelopment(),
-            },
-        };
-        app.MapGraphQL().WithOptions(graphQLServerOptions);
+                EnforceMultipartRequestsPreflightHeader = false,
+                Tool =
+                {
+                    Enable = true,
+                },
+            });
     }
 }

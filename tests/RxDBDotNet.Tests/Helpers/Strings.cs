@@ -1,4 +1,4 @@
-﻿namespace RxDBDotNet.Tests.Utils;
+﻿namespace RxDBDotNet.Tests.Helpers;
 
 public static class Strings
 {

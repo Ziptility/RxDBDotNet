@@ -14,6 +14,7 @@ namespace RxDBDotNet.Tests.Helpers
         private readonly WebSocket _webSocket;
         private readonly CancellationTokenSource _cts;
         private readonly TimeSpan _timeout;
+        private bool _isDisposed;
 
         /// <summary>
         /// Initializes a new instance of the GraphQLSubscriptionClient class for use in test scenarios.
@@ -100,6 +101,8 @@ namespace RxDBDotNet.Tests.Helpers
         /// <returns>A task representing the asynchronous operation.</returns>
         private async Task SendMessageAsync(object message)
         {
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
+
             var json = JsonSerializer.Serialize(message, SerializationUtils.GetJsonSerializerOptions());
             var buffer = Encoding.UTF8.GetBytes(json);
             await _webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, _cts.Token);
@@ -111,6 +114,7 @@ namespace RxDBDotNet.Tests.Helpers
         /// <returns>A tuple containing the message type and payload.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the WebSocket connection closes unexpectedly.</exception>
         /// <exception cref="TimeoutException">Thrown when the receive operation times out.</exception>
+        /// <exception cref="IOException">The WebSocket connection was closed prematurely or unexpectedly.</exception>
         private async Task<(string Type, JsonNode? Payload)> ReceiveMessageAsync()
         {
             var buffer = new byte[4096];
@@ -121,11 +125,21 @@ namespace RxDBDotNet.Tests.Helpers
             {
                 while (true)
                 {
-                    var result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), timeoutCts.Token);
+                    ObjectDisposedException.ThrowIf(_isDisposed, this);
+
+                    WebSocketReceiveResult result;
+                    try
+                    {
+                        result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), timeoutCts.Token);
+                    }
+                    catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+                    {
+                        throw new IOException("The WebSocket connection was closed prematurely.", ex);
+                    }
 
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        throw new InvalidOperationException("WebSocket connection closed unexpectedly");
+                        throw new IOException("WebSocket connection closed unexpectedly");
                     }
 
                     var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
@@ -152,12 +166,28 @@ namespace RxDBDotNet.Tests.Helpers
         /// </summary>
         public async ValueTask DisposeAsync()
         {
-            await _cts.CancelAsync();
-            _cts.Dispose();
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            _isDisposed = true;
+
             if (_webSocket.State == WebSocketState.Open)
             {
-                await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                try
+                {
+                    await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                }
+                catch
+                {
+                    // Ignore exceptions during closing, as the connection might already be closed
+                }
             }
+
+            await _cts.CancelAsync();
+
+            _cts.Dispose();
 
             _webSocket.Dispose();
         }

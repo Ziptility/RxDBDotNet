@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Diagnostics;
+using FluentAssertions;
 using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Model;
 using Xunit.Abstractions;
@@ -23,7 +24,7 @@ namespace RxDBDotNet.Tests
             var subscription = subscriptionClient.SubscribeAsync<GqlSubscriptionResponse>(subscriptionQuery);
 
             // Act
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(600));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
             // Start listening for subscription data
             var subscriptionTask = ListenForSubscriptionDataAsync(subscription, cts.Token);
@@ -32,10 +33,10 @@ namespace RxDBDotNet.Tests
             await Task.Delay(1000, cts.Token);
 
             // Simulate hero change
-            await SimulateHeroChangeAsync();
+            var newHero = await SimulateHeroChangeAsync();
 
             // Wait for the subscription data or timeout
-            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(600), cts.Token);
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
             var completedTask = await Task.WhenAny(subscriptionTask, timeoutTask);
 
             // Assert
@@ -51,13 +52,21 @@ namespace RxDBDotNet.Tests
             receivedData.Data?.StreamHero.Should().NotBeNull();
             receivedData.Data?.StreamHero?.Documents.Should().NotBeEmpty();
 
-            var hero = receivedData.Data?.StreamHero?.Documents?.First();
-            hero.Should().NotBeNull();
-            hero?.Name.Should().NotBeNullOrEmpty();
-            hero?.Color.Should().NotBeNullOrEmpty();
-            hero?.Id.Should().NotBe(Guid.Empty);
-            hero?.IsDeleted.Should().BeFalse();
-            hero?.UpdatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+            var streamedHero = receivedData.Data?.StreamHero?.Documents?.First();
+            streamedHero.Should().NotBeNull();
+
+            // Assert that the streamed hero properties match the newHero properties
+            streamedHero?.Id.Should().Be(newHero.Id, "The streamed hero ID should match the created hero ID");
+            streamedHero?.Name.Should().Be(newHero.Name?.Value, "The streamed hero name should match the created hero name");
+            streamedHero?.Color.Should().Be(newHero.Color?.Value, "The streamed hero color should match the created hero color");
+            streamedHero?.IsDeleted.Should().Be(newHero.IsDeleted?.Value, "The streamed hero IsDeleted status should match the created hero");
+            streamedHero?.UpdatedAt.Should().BeCloseTo(newHero.UpdatedAt?.Value ?? DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5), "The streamed hero UpdatedAt should be close to the created hero's timestamp");
+
+            // Assert on the checkpoint
+            receivedData.Data?.StreamHero?.Checkpoint.Should().NotBeNull("The checkpoint should be present");
+            receivedData.Data?.StreamHero?.Checkpoint?.LastDocumentId.Should().Be(newHero.Id?.Value, "The checkpoint's LastDocumentId should match the new hero's ID");
+            Debug.Assert(newHero.UpdatedAt != null, "newHero.UpdatedAt != null");
+            receivedData.Data?.StreamHero?.Checkpoint?.UpdatedAt.Should().BeCloseTo(newHero.UpdatedAt.Value, TimeSpan.FromSeconds(5), "The checkpoint's UpdatedAt should be close to the new hero's timestamp");
         }
 
         private static async Task<GqlSubscriptionResponse> ListenForSubscriptionDataAsync(
@@ -71,7 +80,7 @@ namespace RxDBDotNet.Tests
             throw new OperationCanceledException("Subscription was cancelled before receiving any data.");
         }
 
-        private async Task SimulateHeroChangeAsync()
+        private async Task<HeroInputGql> SimulateHeroChangeAsync()
         {
             var newHero = new HeroInputGql
             {
@@ -86,10 +95,10 @@ namespace RxDBDotNet.Tests
                 .WithPushHero(new HeroQueryBuilderGql().WithAllFields(),
                     new List<HeroInputPushRowGql?>
                     {
-                        new()
-                        {
-                            NewDocumentState = newHero,
-                        },
+                new()
+                {
+                    NewDocumentState = newHero,
+                },
                     });
 
             var response = await HttpClient.PostGqlMutationAsync(mutation);
@@ -98,6 +107,8 @@ namespace RxDBDotNet.Tests
             response.Data.Should().NotBeNull();
             response.Data.PushHero.Should().NotBeNull();
             response.Data.PushHero.Should().BeEmpty();
+
+            return newHero;
         }
     }
 }

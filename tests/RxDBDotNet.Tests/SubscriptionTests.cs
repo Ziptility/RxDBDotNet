@@ -53,11 +53,11 @@ namespace RxDBDotNet.Tests
 
             var hero = receivedData.Data?.StreamHero?.Documents?.First();
             hero.Should().NotBeNull();
-            hero!.Name.Should().NotBeNullOrEmpty();
-            hero.Color.Should().NotBeNullOrEmpty();
-            hero.Id.Should().NotBe(Guid.Empty);
-            hero.IsDeleted.Should().BeFalse();
-            hero.UpdatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+            hero?.Name.Should().NotBeNullOrEmpty();
+            hero?.Color.Should().NotBeNullOrEmpty();
+            hero?.Id.Should().NotBe(Guid.Empty);
+            hero?.IsDeleted.Should().BeFalse();
+            hero?.UpdatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
         }
 
         private static async Task<GqlSubscriptionResponse> ListenForSubscriptionDataAsync(

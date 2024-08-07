@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-      <PackageReference Include="GraphQlClientGenerator" Version="0.9.21" />
+      <PackageReference Include="GraphQlClientGenerator" Version="0.9.22" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.7" />
   </ItemGroup>
 

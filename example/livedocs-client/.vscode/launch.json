@@ -1,0 +1,117 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Next.js: debug server-side",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/next/dist/bin/next",
+      "args": ["dev"],
+      "env": {
+        "NODE_OPTIONS": "--inspect"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Next.js: debug client-side",
+      "type": "firefox",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}",
+      "pathMappings": [
+        {
+          "url": "webpack://_n_e",
+          "path": "${workspaceFolder}"
+        }
+      ]
+    },
+    {
+      "name": "Next.js: debug full stack",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/next/dist/bin/next",
+      "args": ["dev"],
+      "env": {
+        "NODE_OPTIONS": "--inspect"
+      },
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "pattern": "started server on .+, url: (https?://.+)",
+        "action": "debugWithChrome"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Next.js: debug full stack (manual)",
+      "configurations": ["Next.js: debug server-side", "Next.js: debug client-side"]
+    }
+  ],
+  "comments": [
+    "This launch.json file configures debugging for the LiveDocs Next.js client application,",
+    "and is designed to work across Windows, macOS, and Linux.",
+    "",
+    "Debug Configurations:",
+    "",
+    "1. Next.js: debug server-side",
+    "   Use this to debug the Next.js development server, which handles:",
+    "   - API routes (if added in the future)",
+    "   - Server-side rendering (if enabled)",
+    "   - Initial page requests",
+    "   - Hot Module Replacement during development",
+    "   This can be useful for debugging server-side issues or the page load process.",
+    "   To use:",
+    "   - Set breakpoints in your server-side code (e.g., API routes)",
+    "   - Start this configuration",
+    "   - The debugger will pause at your breakpoints when server-side code is executed",
+    "",
+    "2. Next.js: debug client-side",
+    "   This is the primary configuration for debugging the LiveDocs app in Firefox. Use it for:",
+    "   - Debugging React components",
+    "   - RxDB operations",
+    "   - Any client-side JavaScript running in the browser",
+    "   To use:",
+    "   - Ensure your Next.js server is running (use 'Next.js: debug server-side' or `npm run dev`)",
+    "   - Set breakpoints in your client-side code",
+    "   - Start this configuration",
+    "   - Firefox will launch, and the debugger will pause at your breakpoints",
+    "   Note: This configuration requires the 'Firefox Debugger' extension for VS Code.",
+    "",
+    "3. Next.js: debug full stack",
+    "   This configuration allows debugging of server-side code and opens the app in the default browser.",
+    "   To use:",
+    "   - Set breakpoints in your server-side code",
+    "   - Start this configuration",
+    "   - The server will start in debug mode",
+    "   - Manually open http://localhost:3000 in Firefox",
+    "   - To debug client-side code, also start the 'Next.js: debug client-side' configuration",
+    "",
+    "4. Next.js: debug full stack (manual)",
+    "   This compound configuration runs both server-side and client-side debuggers.",
+    "   To use:",
+    "   - Set breakpoints in both server-side and client-side code",
+    "   - Start this configuration",
+    "   - Two debug sessions will start: one for the server and one for the client",
+    "   - Manually open http://localhost:3000 in Firefox",
+    "   - You can switch between the two debug sessions in VS Code's Debug view",
+    "",
+    "Firefox Debugging Setup:",
+    "1. Install the 'Firefox Debugger' extension in VS Code.",
+    "2. Ensure you have Firefox Developer Edition or Firefox Nightly installed.",
+    "3. In Firefox, navigate to about:config and set devtools.debugger.remote-enabled to true.",
+    "4. Restart Firefox after changing this setting.",
+    "",
+    "Troubleshooting:",
+    "- If Firefox doesn't launch automatically, manually open http://localhost:3000 in Firefox.",
+    "- Ensure that the Firefox Debugger extension is properly installed and configured in VS Code.",
+    "- If breakpoints are not hitting, verify that source maps are being generated correctly.",
+    "- For client-side debugging issues, try refreshing the page in Firefox after the debugger attaches.",
+    "- If you encounter persistent issues, try using the 'Next.js: debug full stack (manual)' configuration",
+    "  and follow the steps to start debugging server and client separately.",
+    "",
+    "Note: Due to limitations in automatically launching Firefox in some environments,",
+    "manual steps may be necessary to start debugging. The instructions provided above",
+    "should help you successfully debug your application in most scenarios."
+  ]
+}

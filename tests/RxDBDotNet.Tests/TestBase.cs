@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Setup;
-using RxDBDotNet.Tests.Utils;
 using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
@@ -15,7 +15,7 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
 
     protected IServiceProvider TestServiceProvider => _asyncTestServiceScope.ServiceProvider;
 
-    private WebApplicationFactory<TestProgram> Factory { get; set; } = null!;
+    protected WebApplicationFactory<TestProgram> Factory { get; set; } = null!;
 
     protected TestServer Server => Factory.Server;
 
@@ -40,7 +40,7 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
         return new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
     }
 
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         await Semaphore.WaitAsync();
 
@@ -51,7 +51,7 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
         await UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output);
     }
 
-    public async Task DisposeAsync()
+    public virtual async Task DisposeAsync()
     {
         try
         {

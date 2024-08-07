@@ -5,11 +5,11 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using RxDBDotNet.Tests.Model;
-using static RxDBDotNet.Tests.Utils.SerializationUtils;
+using static RxDBDotNet.Tests.Helpers.SerializationUtils;
 using BadRequest = RxDBDotNet.Tests.Model.BadRequest;
 using GraphQLRequest = RxDBDotNet.Tests.Model.GraphQLRequest;
 
-namespace RxDBDotNet.Tests.Utils;
+namespace RxDBDotNet.Tests.Helpers;
 
 internal static class HttpClientExtensions
 {

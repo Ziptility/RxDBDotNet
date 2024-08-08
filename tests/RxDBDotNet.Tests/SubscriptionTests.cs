@@ -27,11 +27,7 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
-        var subscriptionTask = CollectSubscriptionDataAsync(
-            subscriptionClient,
-            subscriptionQuery,
-            timeoutToken,
-            maxResponses: 3);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, timeoutToken, maxResponses: 3);
 
         // Ensure the subscription is established
         await Task.Delay(1000, timeoutToken);
@@ -81,95 +77,167 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
             .BeCloseTo(newWorkspace.UpdatedAt.Value, TimeSpan.FromSeconds(5),
                 "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
     }
-    //
-    // [Fact]
-    // public async Task TestCase5_2_SubscriptionsSupportFilteringByDocumentProperties()
-    // {
-    //     // Arrange
-    //     var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
-    //     var workspace2 = await HttpClient.CreateNewWorkspaceAsync();
-    //     var workspace3 = await HttpClient.CreateNewWorkspaceAsync();
-    //
-    //     await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync();
-    //
-    //     Debug.Assert(workspace3.Name != null, "workspace3.Name != null");
-    //
-    //     var filterWorkspaceByName = new WorkspaceFilterInputGql
-    //     {
-    //         Name = new StringOperationFilterInputGql
-    //         {
-    //             Eq = workspace3.Name.Value,
-    //         },
-    //     };
-    //
-    //     // Filter the subscription to only receive updates for workspace3
-    //     var subscriptionQuery = new SubscriptionQueryBuilderGql()
-    //         .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
-    //             .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields(), where: filterWorkspaceByName)
-    //             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()),
-    //             new WorkspaceInputHeadersGql { Authorization = "test-auth-token" })
-    //         .Build();
-    //
-    //     var subscription = subscriptionClient.SubscribeAsync<GqlSubscriptionResponse>(subscriptionQuery);
-    //
-    //     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-    //
-    //     // Start listening for subscription data
-    //     var subscriptionTask = ListenForSubscriptionDataAsync(subscription, cts.Token);
-    //
-    //     // Ensure the subscription is established before updating workspace3
-    //     await Task.Delay(1000, cts.Token);
-    //
-    //     await HttpClient.UpdateWorkspaceAsync(workspace1);
-    //     await HttpClient.UpdateWorkspaceAsync(workspace2);
-    //     // Update workspace 3 twice
-    //     var updatedWorkspace3_1 = await HttpClient.UpdateWorkspaceAsync(workspace3);
-    //     var updatedWorkspace3_2 = await HttpClient.UpdateWorkspaceAsync(workspace3);
-    //
-    //     // Wait for the subscription data or timeout
-    //     var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
-    //     var completedTask = await Task.WhenAny(subscriptionTask, timeoutTask);
-    //
-    //     // Assert
-    //     if (completedTask == timeoutTask)
-    //     {
-    //         throw new TimeoutException("Subscription data was not received within the expected timeframe.");
-    //     }
-    //
-    //     var receivedData = await subscriptionTask;
-    //     receivedData.Should().NotBeNull("Subscription data should not be null.");
-    //     receivedData.Errors.Should().BeNullOrEmpty();
-    //     receivedData.Data.Should().NotBeNull();
-    //     receivedData.Data?.StreamWorkspace.Should().NotBeNull();
-    //     receivedData.Data?.StreamWorkspace?.Documents.Should().NotBeEmpty();
-    //
-    //     var streamedWorkspace = receivedData.Data?.StreamWorkspace?.Documents?.First();
-    //     streamedWorkspace.Should().NotBeNull();
-    //
-    //     // Assert that the streamed workspace properties match the newWorkspace properties
-    //     streamedWorkspace?.Id.Should().Be(updatedWorkspace3.Id, "The streamed workspace ID should match the created workspace ID");
-    //     streamedWorkspace?.Name.Should().Be(updatedWorkspace3.Name?.Value, "The streamed workspace name should match the created workspace name");
-    //     streamedWorkspace?.IsDeleted.Should().Be(updatedWorkspace3.IsDeleted?.Value, "The streamed workspace IsDeleted status should match the created workspace");
-    //     streamedWorkspace?.UpdatedAt.Should().BeCloseTo(updatedWorkspace3.UpdatedAt?.Value ?? DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5), "The streamed workspace UpdatedAt should be close to the created workspace's timestamp");
-    //
-    //     // Assert on the checkpoint
-    //     receivedData.Data?.StreamWorkspace?.Checkpoint.Should().NotBeNull("The checkpoint should be present");
-    //     receivedData.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should().Be(updatedWorkspace3.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
-    //     Debug.Assert(updatedWorkspace3.UpdatedAt != null, "newWorkspace.UpdatedAt != null");
-    //     receivedData.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should().BeCloseTo(updatedWorkspace3.UpdatedAt.Value, TimeSpan.FromSeconds(5), "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
-    // }
+
+    [Fact]
+    public async Task TestCase5_1_1_UpdateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscription()
+    {
+        // Arrange
+        using var timeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var timeoutToken = timeoutTokenSource.Token;
+
+        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync();
+
+        await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(timeoutToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
+                {
+                    Authorization = "test-auth-token",
+                })
+            .Build();
+
+        // Start the subscription task before creating the workspace
+        // so that we do not miss subscription data
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, timeoutToken, maxResponses: 3);
+
+        // Ensure the subscription is established
+        await Task.Delay(1000, timeoutToken);
+
+        // Act
+        var updatedWorkspace = await HttpClient.UpdateWorkspaceAsync(newWorkspace);
+
+        // Assert
+        var subscriptionResponses = await subscriptionTask;
+
+        subscriptionResponses.Should()
+            .HaveCount(1);
+        var subscriptionResponse = subscriptionResponses[0];
+        subscriptionResponse.Should()
+            .NotBeNull("Subscription data should not be null.");
+        subscriptionResponse.Errors.Should()
+            .BeNullOrEmpty();
+        subscriptionResponse.Data.Should()
+            .NotBeNull();
+        subscriptionResponse.Data?.StreamWorkspace.Should()
+            .NotBeNull();
+        subscriptionResponse.Data?.StreamWorkspace?.Documents.Should()
+            .NotBeEmpty();
+
+        var streamedWorkspace = subscriptionResponse.Data?.StreamWorkspace?.Documents?.First();
+        streamedWorkspace.Should()
+            .NotBeNull();
+
+        // Assert that the streamed workspace properties match the newWorkspace properties
+        streamedWorkspace?.Id.Should()
+            .Be(updatedWorkspace.Id);
+        streamedWorkspace?.Name.Should()
+            .Be(updatedWorkspace.Name);
+        streamedWorkspace?.UpdatedAt.Should()
+            .BeCloseTo(updatedWorkspace.UpdatedAt, TimeSpan.FromSeconds(5));
+
+        // Assert on the checkpoint
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint.Should()
+            .NotBeNull("The checkpoint should be present");
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
+            .Be(newWorkspace.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
+            .BeCloseTo(updatedWorkspace.UpdatedAt, TimeSpan.FromSeconds(5),
+                "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
+    }
+
+    [Fact]
+    public async Task TestCase5_2_SubscriptionsSupportFilteringByDocumentProperties()
+    {
+        // Arrange
+        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(500));
+        var testTimeoutToken = testTimeoutTokenSource.Token;
+
+        var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
+        var workspace2 = await HttpClient.CreateNewWorkspaceAsync();
+        var workspace3 = await HttpClient.CreateNewWorkspaceAsync();
+
+        await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(testTimeoutToken);
+
+        Debug.Assert(workspace3.Id != null, "workspace3.Id != null");
+
+        // Filter the subscription to only receive updates for workspace3
+        var filterWorkspaceById = new WorkspaceFilterInputGql
+        {
+            Id = new UuidOperationFilterInputGql
+            {
+                Eq = workspace3.Id.Value,
+            },
+        };
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields(), filterWorkspaceById)
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
+            {
+                Authorization = "test-auth-token",
+            })
+            .Build();
+
+        // Start the subscription task before creating the workspace
+        // so that we do not miss subscription data
+        var collectTimespan = TimeSpan.FromSeconds(30);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testTimeoutToken, collectTimespan);
+
+        // Ensure the subscription is established
+        await Task.Delay(1000, testTimeoutToken);
+
+        await HttpClient.UpdateWorkspaceAsync(workspace1);
+        await HttpClient.UpdateWorkspaceAsync(workspace2);
+        // Update workspace 3 twice
+        var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3);
+        await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3);
+
+        var subscriptionResponses = await subscriptionTask;
+        subscriptionResponses.Should()
+            .NotBeNull();
+        subscriptionResponses.Should()
+            .HaveCount(2, "Should have received one response for each update to workspace3");
+
+        foreach (var subscriptionResponse in subscriptionResponses)
+        {
+            subscriptionResponse.Errors.Should()
+                .BeNullOrEmpty();
+            subscriptionResponse.Data.Should()
+                .NotBeNull();
+            subscriptionResponse.Data?.StreamWorkspace.Should()
+                .NotBeNull();
+            subscriptionResponse.Data?.StreamWorkspace?.Documents.Should()
+                .HaveCount(1);
+
+            var streamedWorkspace = subscriptionResponse.Data?.StreamWorkspace?.Documents?.Single();
+
+            Debug.Assert(streamedWorkspace != null, nameof(streamedWorkspace) + " != null");
+
+            streamedWorkspace.Id.Should()
+                .Be(workspace3.Id);
+        }
+    }
 
     private static async Task<List<GqlSubscriptionResponse>> CollectSubscriptionDataAsync(
         GraphQLSubscriptionClient subscriptionClient,
         string subscriptionQuery,
         CancellationToken cancellationToken,
+        TimeSpan? collectTimespan = null,
         int maxResponses = 10)
     {
         var responses = new List<GqlSubscriptionResponse>();
 
+        collectTimespan ??= TimeSpan.FromSeconds(5);
+
+        // Create a CancellationTokenSource with the specified timeout
+        using var timeoutCts = new CancellationTokenSource(collectTimespan.Value);
+
+        // Create a linked token source combining the original token and the timeout token
+        using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
         try
         {
-            await foreach (var response in subscriptionClient.SubscribeAndCollectAsync<GqlSubscriptionResponse>(subscriptionQuery, cancellationToken))
+            await foreach (var response in subscriptionClient.SubscribeAndCollectAsync<GqlSubscriptionResponse>(subscriptionQuery, combinedCts.Token))
             {
                 responses.Add(response);
 
@@ -179,7 +247,7 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
                 }
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (combinedCts.IsCancellationRequested)
         {
             // Timeout occurred, but we'll still return any responses we've collected
         }

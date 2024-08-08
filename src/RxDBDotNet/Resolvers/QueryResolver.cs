@@ -78,9 +78,6 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
                  d.Id.ToString().CompareTo(checkpointLastDocumentId.ToString()) > 0));
         }
 
-        // Apply projections from the GraphQL context
-        //var projectedQuery = query.Project(context);
-
         // Apply any filters defined by the client in the GraphQL query
         var filteredQuery = query.Filter(context);
 

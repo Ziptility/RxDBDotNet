@@ -132,7 +132,7 @@ namespace RxDBDotNet.Tests.Helpers
                             if (!EqualityComparer<TResponse?>.Default.Equals(response, default))
                             {
                                 yield return response
-                                             ?? throw new InvalidOperationException($"The subscription payload cannot be deserialized to the specified {nameof(TResponse)} type");
+                                             ?? throw new InvalidOperationException($"The subscription payload cannot be deserialized to the specified {typeof(TResponse).Name} type");
                             }
                         }
                         break;

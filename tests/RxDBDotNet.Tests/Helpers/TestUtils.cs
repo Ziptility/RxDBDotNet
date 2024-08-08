@@ -80,6 +80,42 @@ internal static class TestUtils
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id);
     }
 
+    public static async Task<WorkspaceGql> UpdateWorkspaceAsync(this HttpClient httpClient, WorkspaceGql workspace)
+    {
+        var assumedMasterState = new WorkspaceInputGql
+        {
+            Id = workspace.Id,
+            Name = workspace.Name,
+            IsDeleted = workspace.IsDeleted,
+            UpdatedAt = workspace.UpdatedAt,
+        };
+
+        var newDocumentState = new WorkspaceInputGql
+        {
+            Id = workspace.Id,
+            Name = CreateString(),
+            IsDeleted = workspace.IsDeleted,
+            UpdatedAt = DateTimeOffset.Now,
+        };
+
+        var pushWorkspace = new List<WorkspaceInputPushRowGql?>
+        {
+            new()
+            {
+                AssumedMasterState = assumedMasterState,
+                NewDocumentState = newDocumentState,
+            },
+        };
+
+        var updateWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(
+            new WorkspaceQueryBuilderGql().WithAllFields(),
+            pushWorkspace);
+
+        await httpClient.PostGqlMutationAsync(updateWorkspace);
+
+        return await httpClient.GetWorkspaceByIdAsync(workspace.Id);
+    }
+
     public static async Task VerifyWorkspaceExists(this HttpClient httpClient, WorkspaceInputGql workspaceInput)
     {
         var query = new QueryQueryBuilderGql().WithPullWorkspace(

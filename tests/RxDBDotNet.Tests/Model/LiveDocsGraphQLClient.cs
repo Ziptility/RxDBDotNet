@@ -1082,13 +1082,7 @@ namespace RxDBDotNet.Tests.Model
         public const string WorkspacePullBulk = "WorkspacePullBulk";
 
         public const string BooleanOperationFilterInput = "BooleanOperationFilterInput";
-        public const string CheckpointFilterInput = "CheckpointFilterInput";
         public const string DateTimeOperationFilterInput = "DateTimeOperationFilterInput";
-        public const string DocumentPullBulkOfGraphQlNamedDocumentFilterInput = "DocumentPullBulkOfGraphQLNamedDocumentFilterInput";
-        public const string DocumentPullBulkOfHeroFilterInput = "DocumentPullBulkOfHeroFilterInput";
-        public const string DocumentPullBulkOfLiveDocFilterInput = "DocumentPullBulkOfLiveDocFilterInput";
-        public const string DocumentPullBulkOfUserFilterInput = "DocumentPullBulkOfUserFilterInput";
-        public const string DocumentPullBulkOfWorkspaceFilterInput = "DocumentPullBulkOfWorkspaceFilterInput";
         public const string GraphQlNamedDocumentFilterInput = "GraphQLNamedDocumentFilterInput";
         public const string GraphQlNamedDocumentInput = "GraphQLNamedDocumentInput";
         public const string GraphQlNamedDocumentInputCheckpoint = "GraphQLNamedDocumentInputCheckpoint";
@@ -1099,11 +1093,6 @@ namespace RxDBDotNet.Tests.Model
         public const string HeroInputCheckpoint = "HeroInputCheckpoint";
         public const string HeroInputHeaders = "HeroInputHeaders";
         public const string HeroInputPushRow = "HeroInputPushRow";
-        public const string ListFilterInputTypeOfGraphQlNamedDocumentFilterInput = "ListFilterInputTypeOfGraphQLNamedDocumentFilterInput";
-        public const string ListFilterInputTypeOfHeroFilterInput = "ListFilterInputTypeOfHeroFilterInput";
-        public const string ListFilterInputTypeOfLiveDocFilterInput = "ListFilterInputTypeOfLiveDocFilterInput";
-        public const string ListFilterInputTypeOfUserFilterInput = "ListFilterInputTypeOfUserFilterInput";
-        public const string ListFilterInputTypeOfWorkspaceFilterInput = "ListFilterInputTypeOfWorkspaceFilterInput";
         public const string LiveDocFilterInput = "LiveDocFilterInput";
         public const string LiveDocInput = "LiveDocInput";
         public const string LiveDocInputCheckpoint = "LiveDocInputCheckpoint";
@@ -1131,13 +1120,7 @@ namespace RxDBDotNet.Tests.Model
                 { typeof(bool), "Boolean" },
                 { typeof(string), "String" },
                 { typeof(BooleanOperationFilterInputGql), "BooleanOperationFilterInput" },
-                { typeof(CheckpointFilterInputGql), "CheckpointFilterInput" },
                 { typeof(DateTimeOperationFilterInputGql), "DateTimeOperationFilterInput" },
-                { typeof(DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql), "DocumentPullBulkOfGraphQLNamedDocumentFilterInput" },
-                { typeof(DocumentPullBulkOfHeroFilterInputGql), "DocumentPullBulkOfHeroFilterInput" },
-                { typeof(DocumentPullBulkOfLiveDocFilterInputGql), "DocumentPullBulkOfLiveDocFilterInput" },
-                { typeof(DocumentPullBulkOfUserFilterInputGql), "DocumentPullBulkOfUserFilterInput" },
-                { typeof(DocumentPullBulkOfWorkspaceFilterInputGql), "DocumentPullBulkOfWorkspaceFilterInput" },
                 { typeof(GraphQlNamedDocumentFilterInputGql), "GraphQLNamedDocumentFilterInput" },
                 { typeof(GraphQlNamedDocumentInputGql), "GraphQLNamedDocumentInput" },
                 { typeof(GraphQlNamedDocumentInputCheckpointGql), "GraphQLNamedDocumentInputCheckpoint" },
@@ -1148,11 +1131,6 @@ namespace RxDBDotNet.Tests.Model
                 { typeof(HeroInputCheckpointGql), "HeroInputCheckpoint" },
                 { typeof(HeroInputHeadersGql), "HeroInputHeaders" },
                 { typeof(HeroInputPushRowGql), "HeroInputPushRow" },
-                { typeof(ListFilterInputTypeOfGraphQlNamedDocumentFilterInputGql), "ListFilterInputTypeOfGraphQLNamedDocumentFilterInput" },
-                { typeof(ListFilterInputTypeOfHeroFilterInputGql), "ListFilterInputTypeOfHeroFilterInput" },
-                { typeof(ListFilterInputTypeOfLiveDocFilterInputGql), "ListFilterInputTypeOfLiveDocFilterInput" },
-                { typeof(ListFilterInputTypeOfUserFilterInputGql), "ListFilterInputTypeOfUserFilterInput" },
-                { typeof(ListFilterInputTypeOfWorkspaceFilterInputGql), "ListFilterInputTypeOfWorkspaceFilterInput" },
                 { typeof(LiveDocFilterInputGql), "LiveDocFilterInput" },
                 { typeof(LiveDocInputGql), "LiveDocInput" },
                 { typeof(LiveDocInputCheckpointGql), "LiveDocInputCheckpoint" },
@@ -1704,76 +1682,61 @@ namespace RxDBDotNet.Tests.Model
 
         public QueryQueryBuilderGql WithParameter<T>(GraphQlQueryParameter<T> parameter) => WithParameterInternal(parameter);
 
-        public QueryQueryBuilderGql WithPullHero(HeroPullBulkQueryBuilderGql heroPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<HeroInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<DocumentPullBulkOfHeroFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public QueryQueryBuilderGql WithPullHero(HeroPullBulkQueryBuilderGql heroPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<HeroInputCheckpointGql?>? checkpoint = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (checkpoint != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
 
             args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
             return WithObjectField("pullHero", alias, heroPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public QueryQueryBuilderGql ExceptPullHero() => ExceptField("pullHero");
 
-        public QueryQueryBuilderGql WithPullUser(UserPullBulkQueryBuilderGql userPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<UserInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<DocumentPullBulkOfUserFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public QueryQueryBuilderGql WithPullUser(UserPullBulkQueryBuilderGql userPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<UserInputCheckpointGql?>? checkpoint = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (checkpoint != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
 
             args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
             return WithObjectField("pullUser", alias, userPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public QueryQueryBuilderGql ExceptPullUser() => ExceptField("pullUser");
 
-        public QueryQueryBuilderGql WithPullWorkspace(WorkspacePullBulkQueryBuilderGql workspacePullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<WorkspaceInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<DocumentPullBulkOfWorkspaceFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public QueryQueryBuilderGql WithPullWorkspace(WorkspacePullBulkQueryBuilderGql workspacePullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<WorkspaceInputCheckpointGql?>? checkpoint = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (checkpoint != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
 
             args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
             return WithObjectField("pullWorkspace", alias, workspacePullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public QueryQueryBuilderGql ExceptPullWorkspace() => ExceptField("pullWorkspace");
 
-        public QueryQueryBuilderGql WithPullLiveDoc(LiveDocPullBulkQueryBuilderGql liveDocPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<LiveDocInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<DocumentPullBulkOfLiveDocFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public QueryQueryBuilderGql WithPullLiveDoc(LiveDocPullBulkQueryBuilderGql liveDocPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<LiveDocInputCheckpointGql?>? checkpoint = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (checkpoint != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
 
             args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
             return WithObjectField("pullLiveDoc", alias, liveDocPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public QueryQueryBuilderGql ExceptPullLiveDoc() => ExceptField("pullLiveDoc");
 
-        public QueryQueryBuilderGql WithPullGraphQlNamedDocument(GraphQlNamedDocumentPullBulkQueryBuilderGql graphQlNamedDocumentPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<GraphQlNamedDocumentInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public QueryQueryBuilderGql WithPullGraphQlNamedDocument(GraphQlNamedDocumentPullBulkQueryBuilderGql graphQlNamedDocumentPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<GraphQlNamedDocumentInputCheckpointGql?>? checkpoint = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (checkpoint != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
 
             args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
             return WithObjectField("pullGraphQLNamedDocument", alias, graphQlNamedDocumentPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
@@ -2346,58 +2309,6 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
-    public partial class DocumentPullBulkOfHeroFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _and;
-        private InputPropertyInfo _or;
-        private InputPropertyInfo _documents;
-        private InputPropertyInfo _checkpoint;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfHeroFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfHeroFilterInputGql>?>? And
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfHeroFilterInputGql>?>?)_and.Value;
-            set => _and = new InputPropertyInfo { Name = "and", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfHeroFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfHeroFilterInputGql>?>? Or
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfHeroFilterInputGql>?>?)_or.Value;
-            set => _or = new InputPropertyInfo { Name = "or", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ListFilterInputTypeOfHeroFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<ListFilterInputTypeOfHeroFilterInputGql?>? Documents
-        {
-            get => (QueryBuilderParameter<ListFilterInputTypeOfHeroFilterInputGql?>?)_documents.Value;
-            set => _documents = new InputPropertyInfo { Name = "documents", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<CheckpointFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<CheckpointFilterInputGql?>? Checkpoint
-        {
-            get => (QueryBuilderParameter<CheckpointFilterInputGql?>?)_checkpoint.Value;
-            set => _checkpoint = new InputPropertyInfo { Name = "checkpoint", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_and.Name != null) yield return _and;
-            if (_or.Name != null) yield return _or;
-            if (_documents.Name != null) yield return _documents;
-            if (_checkpoint.Name != null) yield return _checkpoint;
-        }
-    }
-
     public partial class UserFilterInputGql : IGraphQlInputObject
     {
         private InputPropertyInfo _and;
@@ -2612,58 +2523,6 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
-    public partial class DocumentPullBulkOfUserFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _and;
-        private InputPropertyInfo _or;
-        private InputPropertyInfo _documents;
-        private InputPropertyInfo _checkpoint;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfUserFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfUserFilterInputGql>?>? And
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfUserFilterInputGql>?>?)_and.Value;
-            set => _and = new InputPropertyInfo { Name = "and", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfUserFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfUserFilterInputGql>?>? Or
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfUserFilterInputGql>?>?)_or.Value;
-            set => _or = new InputPropertyInfo { Name = "or", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ListFilterInputTypeOfUserFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<ListFilterInputTypeOfUserFilterInputGql?>? Documents
-        {
-            get => (QueryBuilderParameter<ListFilterInputTypeOfUserFilterInputGql?>?)_documents.Value;
-            set => _documents = new InputPropertyInfo { Name = "documents", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<CheckpointFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<CheckpointFilterInputGql?>? Checkpoint
-        {
-            get => (QueryBuilderParameter<CheckpointFilterInputGql?>?)_checkpoint.Value;
-            set => _checkpoint = new InputPropertyInfo { Name = "checkpoint", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_and.Name != null) yield return _and;
-            if (_or.Name != null) yield return _or;
-            if (_documents.Name != null) yield return _documents;
-            if (_checkpoint.Name != null) yield return _checkpoint;
-        }
-    }
-
     public partial class WorkspaceFilterInputGql : IGraphQlInputObject
     {
         private InputPropertyInfo _and;
@@ -2787,58 +2646,6 @@ namespace RxDBDotNet.Tests.Model
             if (_name.Name != null) yield return _name;
             if (_updatedAt.Name != null) yield return _updatedAt;
             if (_isDeleted.Name != null) yield return _isDeleted;
-        }
-    }
-
-    public partial class DocumentPullBulkOfWorkspaceFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _and;
-        private InputPropertyInfo _or;
-        private InputPropertyInfo _documents;
-        private InputPropertyInfo _checkpoint;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfWorkspaceFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfWorkspaceFilterInputGql>?>? And
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfWorkspaceFilterInputGql>?>?)_and.Value;
-            set => _and = new InputPropertyInfo { Name = "and", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfWorkspaceFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfWorkspaceFilterInputGql>?>? Or
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfWorkspaceFilterInputGql>?>?)_or.Value;
-            set => _or = new InputPropertyInfo { Name = "or", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ListFilterInputTypeOfWorkspaceFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<ListFilterInputTypeOfWorkspaceFilterInputGql?>? Documents
-        {
-            get => (QueryBuilderParameter<ListFilterInputTypeOfWorkspaceFilterInputGql?>?)_documents.Value;
-            set => _documents = new InputPropertyInfo { Name = "documents", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<CheckpointFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<CheckpointFilterInputGql?>? Checkpoint
-        {
-            get => (QueryBuilderParameter<CheckpointFilterInputGql?>?)_checkpoint.Value;
-            set => _checkpoint = new InputPropertyInfo { Name = "checkpoint", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_and.Name != null) yield return _and;
-            if (_or.Name != null) yield return _or;
-            if (_documents.Name != null) yield return _documents;
-            if (_checkpoint.Name != null) yield return _checkpoint;
         }
     }
 
@@ -3012,58 +2819,6 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
-    public partial class DocumentPullBulkOfLiveDocFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _and;
-        private InputPropertyInfo _or;
-        private InputPropertyInfo _documents;
-        private InputPropertyInfo _checkpoint;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfLiveDocFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfLiveDocFilterInputGql>?>? And
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfLiveDocFilterInputGql>?>?)_and.Value;
-            set => _and = new InputPropertyInfo { Name = "and", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfLiveDocFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfLiveDocFilterInputGql>?>? Or
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfLiveDocFilterInputGql>?>?)_or.Value;
-            set => _or = new InputPropertyInfo { Name = "or", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ListFilterInputTypeOfLiveDocFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<ListFilterInputTypeOfLiveDocFilterInputGql?>? Documents
-        {
-            get => (QueryBuilderParameter<ListFilterInputTypeOfLiveDocFilterInputGql?>?)_documents.Value;
-            set => _documents = new InputPropertyInfo { Name = "documents", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<CheckpointFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<CheckpointFilterInputGql?>? Checkpoint
-        {
-            get => (QueryBuilderParameter<CheckpointFilterInputGql?>?)_checkpoint.Value;
-            set => _checkpoint = new InputPropertyInfo { Name = "checkpoint", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_and.Name != null) yield return _and;
-            if (_or.Name != null) yield return _or;
-            if (_documents.Name != null) yield return _documents;
-            if (_checkpoint.Name != null) yield return _checkpoint;
-        }
-    }
-
     public partial class GraphQlNamedDocumentFilterInputGql : IGraphQlInputObject
     {
         private InputPropertyInfo _and;
@@ -3165,58 +2920,6 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
-        }
-    }
-
-    public partial class DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _and;
-        private InputPropertyInfo _or;
-        private InputPropertyInfo _documents;
-        private InputPropertyInfo _checkpoint;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql>?>? And
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql>?>?)_and.Value;
-            set => _and = new InputPropertyInfo { Name = "and", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql>?>? Or
-        {
-            get => (QueryBuilderParameter<ICollection<DocumentPullBulkOfGraphQlNamedDocumentFilterInputGql>?>?)_or.Value;
-            set => _or = new InputPropertyInfo { Name = "or", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ListFilterInputTypeOfGraphQlNamedDocumentFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<ListFilterInputTypeOfGraphQlNamedDocumentFilterInputGql?>? Documents
-        {
-            get => (QueryBuilderParameter<ListFilterInputTypeOfGraphQlNamedDocumentFilterInputGql?>?)_documents.Value;
-            set => _documents = new InputPropertyInfo { Name = "documents", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<CheckpointFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<CheckpointFilterInputGql?>? Checkpoint
-        {
-            get => (QueryBuilderParameter<CheckpointFilterInputGql?>?)_checkpoint.Value;
-            set => _checkpoint = new InputPropertyInfo { Name = "checkpoint", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_and.Name != null) yield return _and;
-            if (_or.Name != null) yield return _or;
-            if (_documents.Name != null) yield return _documents;
-            if (_checkpoint.Name != null) yield return _checkpoint;
         }
     }
 
@@ -3670,110 +3373,6 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
-    public partial class ListFilterInputTypeOfHeroFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _all;
-        private InputPropertyInfo _none;
-        private InputPropertyInfo _some;
-        private InputPropertyInfo _any;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<HeroFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<HeroFilterInputGql?>? All
-        {
-            get => (QueryBuilderParameter<HeroFilterInputGql?>?)_all.Value;
-            set => _all = new InputPropertyInfo { Name = "all", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<HeroFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<HeroFilterInputGql?>? None
-        {
-            get => (QueryBuilderParameter<HeroFilterInputGql?>?)_none.Value;
-            set => _none = new InputPropertyInfo { Name = "none", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<HeroFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<HeroFilterInputGql?>? Some
-        {
-            get => (QueryBuilderParameter<HeroFilterInputGql?>?)_some.Value;
-            set => _some = new InputPropertyInfo { Name = "some", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
-        #endif
-        public QueryBuilderParameter<bool?>? Any
-        {
-            get => (QueryBuilderParameter<bool?>?)_any.Value;
-            set => _any = new InputPropertyInfo { Name = "any", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_all.Name != null) yield return _all;
-            if (_none.Name != null) yield return _none;
-            if (_some.Name != null) yield return _some;
-            if (_any.Name != null) yield return _any;
-        }
-    }
-
-    public partial class CheckpointFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _and;
-        private InputPropertyInfo _or;
-        private InputPropertyInfo _lastDocumentId;
-        private InputPropertyInfo _updatedAt;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<CheckpointFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<CheckpointFilterInputGql>?>? And
-        {
-            get => (QueryBuilderParameter<ICollection<CheckpointFilterInputGql>?>?)_and.Value;
-            set => _and = new InputPropertyInfo { Name = "and", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<CheckpointFilterInputGql>?>))]
-        #endif
-        public QueryBuilderParameter<ICollection<CheckpointFilterInputGql>?>? Or
-        {
-            get => (QueryBuilderParameter<ICollection<CheckpointFilterInputGql>?>?)_or.Value;
-            set => _or = new InputPropertyInfo { Name = "or", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<UuidOperationFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<UuidOperationFilterInputGql?>? LastDocumentId
-        {
-            get => (QueryBuilderParameter<UuidOperationFilterInputGql?>?)_lastDocumentId.Value;
-            set => _lastDocumentId = new InputPropertyInfo { Name = "lastDocumentId", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<DateTimeOperationFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<DateTimeOperationFilterInputGql?>? UpdatedAt
-        {
-            get => (QueryBuilderParameter<DateTimeOperationFilterInputGql?>?)_updatedAt.Value;
-            set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_and.Name != null) yield return _and;
-            if (_or.Name != null) yield return _or;
-            if (_lastDocumentId.Name != null) yield return _lastDocumentId;
-            if (_updatedAt.Name != null) yield return _updatedAt;
-        }
-    }
-
     public partial class UserRoleOperationFilterInputGql : IGraphQlInputObject
     {
         private InputPropertyInfo _eq;
@@ -3823,214 +3422,6 @@ namespace RxDBDotNet.Tests.Model
             if (_neq.Name != null) yield return _neq;
             if (_in.Name != null) yield return _in;
             if (_nin.Name != null) yield return _nin;
-        }
-    }
-
-    public partial class ListFilterInputTypeOfUserFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _all;
-        private InputPropertyInfo _none;
-        private InputPropertyInfo _some;
-        private InputPropertyInfo _any;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<UserFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<UserFilterInputGql?>? All
-        {
-            get => (QueryBuilderParameter<UserFilterInputGql?>?)_all.Value;
-            set => _all = new InputPropertyInfo { Name = "all", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<UserFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<UserFilterInputGql?>? None
-        {
-            get => (QueryBuilderParameter<UserFilterInputGql?>?)_none.Value;
-            set => _none = new InputPropertyInfo { Name = "none", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<UserFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<UserFilterInputGql?>? Some
-        {
-            get => (QueryBuilderParameter<UserFilterInputGql?>?)_some.Value;
-            set => _some = new InputPropertyInfo { Name = "some", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
-        #endif
-        public QueryBuilderParameter<bool?>? Any
-        {
-            get => (QueryBuilderParameter<bool?>?)_any.Value;
-            set => _any = new InputPropertyInfo { Name = "any", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_all.Name != null) yield return _all;
-            if (_none.Name != null) yield return _none;
-            if (_some.Name != null) yield return _some;
-            if (_any.Name != null) yield return _any;
-        }
-    }
-
-    public partial class ListFilterInputTypeOfWorkspaceFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _all;
-        private InputPropertyInfo _none;
-        private InputPropertyInfo _some;
-        private InputPropertyInfo _any;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<WorkspaceFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<WorkspaceFilterInputGql?>? All
-        {
-            get => (QueryBuilderParameter<WorkspaceFilterInputGql?>?)_all.Value;
-            set => _all = new InputPropertyInfo { Name = "all", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<WorkspaceFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<WorkspaceFilterInputGql?>? None
-        {
-            get => (QueryBuilderParameter<WorkspaceFilterInputGql?>?)_none.Value;
-            set => _none = new InputPropertyInfo { Name = "none", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<WorkspaceFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<WorkspaceFilterInputGql?>? Some
-        {
-            get => (QueryBuilderParameter<WorkspaceFilterInputGql?>?)_some.Value;
-            set => _some = new InputPropertyInfo { Name = "some", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
-        #endif
-        public QueryBuilderParameter<bool?>? Any
-        {
-            get => (QueryBuilderParameter<bool?>?)_any.Value;
-            set => _any = new InputPropertyInfo { Name = "any", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_all.Name != null) yield return _all;
-            if (_none.Name != null) yield return _none;
-            if (_some.Name != null) yield return _some;
-            if (_any.Name != null) yield return _any;
-        }
-    }
-
-    public partial class ListFilterInputTypeOfLiveDocFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _all;
-        private InputPropertyInfo _none;
-        private InputPropertyInfo _some;
-        private InputPropertyInfo _any;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<LiveDocFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<LiveDocFilterInputGql?>? All
-        {
-            get => (QueryBuilderParameter<LiveDocFilterInputGql?>?)_all.Value;
-            set => _all = new InputPropertyInfo { Name = "all", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<LiveDocFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<LiveDocFilterInputGql?>? None
-        {
-            get => (QueryBuilderParameter<LiveDocFilterInputGql?>?)_none.Value;
-            set => _none = new InputPropertyInfo { Name = "none", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<LiveDocFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<LiveDocFilterInputGql?>? Some
-        {
-            get => (QueryBuilderParameter<LiveDocFilterInputGql?>?)_some.Value;
-            set => _some = new InputPropertyInfo { Name = "some", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
-        #endif
-        public QueryBuilderParameter<bool?>? Any
-        {
-            get => (QueryBuilderParameter<bool?>?)_any.Value;
-            set => _any = new InputPropertyInfo { Name = "any", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_all.Name != null) yield return _all;
-            if (_none.Name != null) yield return _none;
-            if (_some.Name != null) yield return _some;
-            if (_any.Name != null) yield return _any;
-        }
-    }
-
-    public partial class ListFilterInputTypeOfGraphQlNamedDocumentFilterInputGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _all;
-        private InputPropertyInfo _none;
-        private InputPropertyInfo _some;
-        private InputPropertyInfo _any;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<GraphQlNamedDocumentFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<GraphQlNamedDocumentFilterInputGql?>? All
-        {
-            get => (QueryBuilderParameter<GraphQlNamedDocumentFilterInputGql?>?)_all.Value;
-            set => _all = new InputPropertyInfo { Name = "all", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<GraphQlNamedDocumentFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<GraphQlNamedDocumentFilterInputGql?>? None
-        {
-            get => (QueryBuilderParameter<GraphQlNamedDocumentFilterInputGql?>?)_none.Value;
-            set => _none = new InputPropertyInfo { Name = "none", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<GraphQlNamedDocumentFilterInputGql?>))]
-        #endif
-        public QueryBuilderParameter<GraphQlNamedDocumentFilterInputGql?>? Some
-        {
-            get => (QueryBuilderParameter<GraphQlNamedDocumentFilterInputGql?>?)_some.Value;
-            set => _some = new InputPropertyInfo { Name = "some", Value = value };
-        }
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
-        #endif
-        public QueryBuilderParameter<bool?>? Any
-        {
-            get => (QueryBuilderParameter<bool?>?)_any.Value;
-            set => _any = new InputPropertyInfo { Name = "any", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_all.Name != null) yield return _all;
-            if (_none.Name != null) yield return _none;
-            if (_some.Name != null) yield return _some;
-            if (_any.Name != null) yield return _any;
         }
     }
     #endregion

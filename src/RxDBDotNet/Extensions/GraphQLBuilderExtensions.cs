@@ -285,6 +285,7 @@ public static class GraphQLBuilderExtensions
 
             descriptor.Name("Subscription")
                 .Field(streamDocumentName)
+                .UseFiltering()
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("headers", a => a.Type(headersInputTypeName)
                     .Description($"Headers for {graphQLTypeName} subscription authentication."))

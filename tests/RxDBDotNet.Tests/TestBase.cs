@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Setup;
 using Xunit.Abstractions;
@@ -48,7 +49,12 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
 
         _asyncTestServiceScope = Factory.Services.CreateAsyncScope();
 
-        await UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output);
+        var applicationLifetime = _asyncTestServiceScope.ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
+
+        // Register the application stopping token
+        var cancellationToken = applicationLifetime.ApplicationStopping;
+
+        await UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output, cancellationToken);
     }
 
     public virtual async Task DisposeAsync()

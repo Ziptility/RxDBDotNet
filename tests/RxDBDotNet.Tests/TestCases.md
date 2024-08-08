@@ -611,15 +611,15 @@ query {
 **Objective:** Ensure that subscriptions can be filtered to receive only relevant updates.
 
 **Preconditions:**
-- Multiple types of documents (e.g., users, workspaces) exist in the system
+- Multiple workspaces exist in the system with different names
 
 **Execution Flow:**
-1. Start a filtered subscription (e.g., only for workspace updates)
-2. Perform mutations on various document types
+1. Start a filtered subscription (e.g., only for updates for a workspace with a given name)
+2. Perform mutations on various workspace instances
 
 **Expected Results:**
-- The subscription should only receive updates for the specified document type
-- Updates for other document types should not be received
+- The subscription should only receive updates for the specified workspace
+- Updates for other workspaces should not be received
 
 ### 6. Performance and Scalability
 

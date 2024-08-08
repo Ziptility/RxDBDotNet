@@ -23,7 +23,12 @@ public sealed class Program
             var serviceProvider = builder.Services.BuildServiceProvider();
 #pragma warning restore ASP0000
 
-            await LiveDocsDbInitializer.InitializeAsync(serviceProvider);
+            var applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
+
+            // Register the application stopping token
+            var cancellationToken = applicationLifetime.ApplicationStopping;
+
+            await LiveDocsDbInitializer.InitializeAsync(serviceProvider, cancellationToken);
         }
 
         await app.RunAsync();

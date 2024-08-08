@@ -6,19 +6,19 @@ namespace LiveDocs.GraphQLApi.Infrastructure
 {
     public static class LiveDocsDbInitializer
     {
-        public static async Task InitializeAsync(IServiceProvider serviceProvider)
+        public static async Task InitializeAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
             using var scope = serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<LiveDocsDbContext>();
 
-            await dbContext.Database.EnsureCreatedAsync();
+            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
 
-            await SeedDataAsync(dbContext);
+            await SeedDataAsync(dbContext, cancellationToken);
         }
 
-        private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
+        private static async Task SeedDataAsync(LiveDocsDbContext dbContext, CancellationToken cancellationToken)
         {
-            if (await dbContext.Workspaces.AnyAsync())
+            if (await dbContext.Workspaces.AnyAsync(cancellationToken))
             {
                 return; // Data has already been seeded
             }
@@ -31,7 +31,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 IsDeleted = false,
             };
 
-            await dbContext.Workspaces.AddAsync(liveDocsWorkspace);
+            await dbContext.Workspaces.AddAsync(liveDocsWorkspace, cancellationToken);
 
             var superAdminUser = new User
             {
@@ -45,9 +45,9 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 IsDeleted = false,
             };
 
-            await dbContext.Users.AddAsync(superAdminUser);
+            await dbContext.Users.AddAsync(superAdminUser, cancellationToken);
 
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

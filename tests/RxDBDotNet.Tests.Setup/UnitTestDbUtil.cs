@@ -12,11 +12,14 @@ public static class UnitTestDbUtil
 
     private static volatile bool _isInitialized;
 
-    public static async Task InitializeAsync(IServiceProvider serviceProvider, ITestOutputHelper output)
+    public static async Task InitializeAsync(
+        IServiceProvider serviceProvider,
+        ITestOutputHelper output,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(output);
 
-        await Semaphore.WaitAsync();
+        await Semaphore.WaitAsync(cancellationToken);
 
         try
         {
@@ -29,7 +32,7 @@ public static class UnitTestDbUtil
                     .WithPassword("Password123!")
                     .Build();
 
-                await sqlServerDockerContainer.StartAsync();
+                await sqlServerDockerContainer.StartAsync(cancellationToken);
 
                 var connectionStringToMaster = sqlServerDockerContainer.GetConnectionString();
 
@@ -39,7 +42,7 @@ public static class UnitTestDbUtil
                     ConfigKeys.DbConnectionString,
                     connectionStringToTestDb);
 
-                await LiveDocsDbInitializer.InitializeAsync(serviceProvider);
+                await LiveDocsDbInitializer.InitializeAsync(serviceProvider, cancellationToken);
 
                 _isInitialized = true;
             }

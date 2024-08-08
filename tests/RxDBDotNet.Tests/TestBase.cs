@@ -41,7 +41,7 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
         return new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
     }
 
-    public virtual async Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         await Semaphore.WaitAsync();
 
@@ -57,7 +57,7 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
         await UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output, cancellationToken);
     }
 
-    public virtual async Task DisposeAsync()
+    public async Task DisposeAsync()
     {
         try
         {

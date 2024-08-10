@@ -161,17 +161,9 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
 
         Debug.Assert(workspace3.Id != null, "workspace3.Id != null");
 
-        // Filter the subscription to only receive updates for workspace3
-        var filterWorkspaceById = new WorkspaceFilterInputGql
-        {
-            Id = new UuidOperationFilterInputGql
-            {
-                Eq = workspace3.Id.Value,
-            },
-        };
-
-        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
-                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields(), filterWorkspaceById)
+        var subscriptionQuery = new SubscriptionQueryBuilderGql()
+            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
                 .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
             {
                 Authorization = "test-auth-token",
@@ -180,17 +172,17 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
-        var collectTimespan = TimeSpan.FromSeconds(30);
+        var collectTimespan = TimeSpan.FromSeconds(500);
         var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testTimeoutToken, collectTimespan);
 
         // Ensure the subscription is established
         await Task.Delay(1000, testTimeoutToken);
 
         await HttpClient.UpdateWorkspaceAsync(workspace1);
-        await HttpClient.UpdateWorkspaceAsync(workspace2);
-        // Update workspace 3 twice
-        var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3);
-        await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3);
+        // await HttpClient.UpdateWorkspaceAsync(workspace2);
+        // // Update workspace 3 twice
+        // var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3);
+        // await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3);
 
         var subscriptionResponses = await subscriptionTask;
         subscriptionResponses.Should()

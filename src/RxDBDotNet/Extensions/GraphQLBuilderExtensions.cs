@@ -123,7 +123,7 @@ public static class GraphQLBuilderExtensions
             objectTypeDescriptor.Name(pullBulkTypeName)
                 .Description($"Represents the result of a pull operation for {graphQLTypeName} documents.");
             objectTypeDescriptor.Field(f => f.Documents)
-                .UseFiltering<TDocument>()
+                //.UseFiltering<TDocument>()
                 .Description($"The list of {graphQLTypeName} documents pulled from the server.");
             objectTypeDescriptor.Field(f => f.Checkpoint)
                 .Description("The new checkpoint after this pull operation.");
@@ -215,7 +215,7 @@ public static class GraphQLBuilderExtensions
 
             descriptor.Name("Query")
                 .Field(pullDocumentsName)
-                .UseFiltering()
+                .UseFiltering<TDocument>()
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("checkpoint", a => a.Type(checkpointInputTypeName)
                     .Description($"The last known checkpoint for {graphQLTypeName} replication."))
@@ -285,7 +285,6 @@ public static class GraphQLBuilderExtensions
 
             descriptor.Name("Subscription")
                 .Field(streamDocumentName)
-                .UseFiltering()
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("headers", a => a.Type(headersInputTypeName)
                     .Description($"Headers for {graphQLTypeName} subscription authentication."))

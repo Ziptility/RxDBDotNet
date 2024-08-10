@@ -51,16 +51,18 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
     public async Task TestCase1_2_PullBulkByDocumentIdShouldReturnSingleDocument()
     {
         // Arrange
-        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync();
+        var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
+        await HttpClient.CreateNewWorkspaceAsync();
 
-        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
-            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields(), new WorkspaceFilterInputGql
+        var workspaceById = new WorkspaceFilterInputGql
+        {
+            Id = new UuidOperationFilterInputGql
             {
-                Id = new UuidOperationFilterInputGql
-                {
-                    Eq = newWorkspace.Id?.Value,
-                },
-            }), 10);
+                Eq = workspace1.Id?.Value,
+            },
+        };
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 10, where: workspaceById);
 
         // Act
         var response = await HttpClient.PostGqlQueryAsync(query);
@@ -71,6 +73,33 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
 
         response.Data.PullWorkspace?.Documents.Should()
             .HaveCount(1);
+        response.Data.PullWorkspace?.Documents.Should()
+            .ContainSingle(workspace => workspace.Id == workspace1.Id);
+    }
+
+    [Fact]
+    public async Task PullBulkShouldReturnAllDocuments()
+    {
+        // Arrange
+        var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
+        var workspace2 = await HttpClient.CreateNewWorkspaceAsync();
+
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 10);
+
+        // Act
+        var response = await HttpClient.PostGqlQueryAsync(query);
+
+        // Assert
+        response.Errors.Should()
+            .BeNullOrEmpty();
+
+        response.Data.PullWorkspace?.Documents.Should()
+            .HaveCount(3, "Two were created in the test, and one is created via seed data");
+        response.Data.PullWorkspace?.Documents.Should()
+            .ContainSingle(workspace => workspace.Id == workspace1.Id);
+        response.Data.PullWorkspace?.Documents.Should()
+            .ContainSingle(workspace => workspace.Id == workspace2.Id);
     }
 
     [Fact]
@@ -96,14 +125,15 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
         var newWorkspace = await HttpClient.CreateNewWorkspaceAsync();
 
         // Pull a document
-        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
-            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields(), new WorkspaceFilterInputGql
+        var workspaceById = new WorkspaceFilterInputGql
+        {
+            Id = new UuidOperationFilterInputGql
             {
-                Id = new UuidOperationFilterInputGql
-                {
-                    Eq = newWorkspace.Id?.Value,
-                },
-            }), 10);
+                Eq = newWorkspace.Id?.Value,
+            },
+        };
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 10, where: workspaceById);
 
         return await HttpClient.PostGqlQueryAsync(query);
     }

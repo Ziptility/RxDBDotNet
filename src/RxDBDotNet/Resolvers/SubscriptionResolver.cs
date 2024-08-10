@@ -78,11 +78,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
                                .WithCancellation(cancellationToken)
                                .ConfigureAwait(false))
             {
-                // If all the documents have not been filtered out
-                if (pullDocumentResult.Documents.Count > 0)
-                {
-                    yield return pullDocumentResult;
-                }
+                yield return pullDocumentResult;
             }
 
             // If we reach here, it means the stream has completed normally.

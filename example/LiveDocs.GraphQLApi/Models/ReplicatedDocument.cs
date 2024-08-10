@@ -19,4 +19,7 @@ public abstract class ReplicatedDocument : IReplicatedDocument
     /// <inheritdoc />
     [Required]
     public required DateTimeOffset UpdatedAt { get; set; }
+
+    /// <inheritdoc />
+    public List<string>? Topics { get; set; }
 }

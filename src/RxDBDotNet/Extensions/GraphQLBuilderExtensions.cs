@@ -288,6 +288,8 @@ public static class GraphQLBuilderExtensions
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("headers", a => a.Type(headersInputTypeName)
                     .Description($"Headers for {graphQLTypeName} subscription authentication."))
+                .Argument("topics", a => a.Type<ListType<StringType>>())
+                    .Description($"The set topics to recieve events for when {graphQLTypeName} is upserted.")
                 .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
                 .Subscribe(context =>
                 {
@@ -302,8 +304,9 @@ public static class GraphQLBuilderExtensions
                     var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
                     var topicEventReceiver = context.Service<ITopicEventReceiver>();
                     var logger = context.Service<ILogger<SubscriptionResolver<TDocument>>>();
+                    var topics = context.ArgumentValue<List<string>>("topics");
 
-                    return subscription.DocumentChangedStream(topicEventReceiver, logger, context.RequestAborted);
+                    return subscription.DocumentChangedStream(topicEventReceiver, topics, logger, context.RequestAborted);
                 });
         }
 

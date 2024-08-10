@@ -1093,6 +1093,7 @@ namespace RxDBDotNet.Tests.Model
         public const string HeroInputCheckpoint = "HeroInputCheckpoint";
         public const string HeroInputHeaders = "HeroInputHeaders";
         public const string HeroInputPushRow = "HeroInputPushRow";
+        public const string ListStringOperationFilterInput = "ListStringOperationFilterInput";
         public const string LiveDocFilterInput = "LiveDocFilterInput";
         public const string LiveDocInput = "LiveDocInput";
         public const string LiveDocInputCheckpoint = "LiveDocInputCheckpoint";
@@ -1131,6 +1132,7 @@ namespace RxDBDotNet.Tests.Model
                 { typeof(HeroInputCheckpointGql), "HeroInputCheckpoint" },
                 { typeof(HeroInputHeadersGql), "HeroInputHeaders" },
                 { typeof(HeroInputPushRowGql), "HeroInputPushRow" },
+                { typeof(ListStringOperationFilterInputGql), "ListStringOperationFilterInput" },
                 { typeof(LiveDocFilterInputGql), "LiveDocFilterInput" },
                 { typeof(LiveDocInputGql), "LiveDocInput" },
                 { typeof(LiveDocInputCheckpointGql), "LiveDocInputCheckpoint" },
@@ -1280,55 +1282,70 @@ namespace RxDBDotNet.Tests.Model
 
         public SubscriptionQueryBuilderGql WithParameter<T>(GraphQlQueryParameter<T> parameter) => WithParameterInternal(parameter);
 
-        public SubscriptionQueryBuilderGql WithStreamHero(HeroPullBulkQueryBuilderGql heroPullBulkQueryBuilder, QueryBuilderParameter<HeroInputHeadersGql?>? headers = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public SubscriptionQueryBuilderGql WithStreamHero(HeroPullBulkQueryBuilderGql heroPullBulkQueryBuilder, QueryBuilderParameter<HeroInputHeadersGql?>? headers = null, QueryBuilderParameter<IEnumerable<string?>>? topics = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (headers != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "headers", ArgumentValue = headers} );
+
+            if (topics != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "topics", ArgumentValue = topics} );
 
             return WithObjectField("streamHero", alias, heroPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public SubscriptionQueryBuilderGql ExceptStreamHero() => ExceptField("streamHero");
 
-        public SubscriptionQueryBuilderGql WithStreamUser(UserPullBulkQueryBuilderGql userPullBulkQueryBuilder, QueryBuilderParameter<UserInputHeadersGql?>? headers = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public SubscriptionQueryBuilderGql WithStreamUser(UserPullBulkQueryBuilderGql userPullBulkQueryBuilder, QueryBuilderParameter<UserInputHeadersGql?>? headers = null, QueryBuilderParameter<IEnumerable<string?>>? topics = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (headers != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "headers", ArgumentValue = headers} );
+
+            if (topics != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "topics", ArgumentValue = topics} );
 
             return WithObjectField("streamUser", alias, userPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public SubscriptionQueryBuilderGql ExceptStreamUser() => ExceptField("streamUser");
 
-        public SubscriptionQueryBuilderGql WithStreamWorkspace(WorkspacePullBulkQueryBuilderGql workspacePullBulkQueryBuilder, QueryBuilderParameter<WorkspaceInputHeadersGql?>? headers = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public SubscriptionQueryBuilderGql WithStreamWorkspace(WorkspacePullBulkQueryBuilderGql workspacePullBulkQueryBuilder, QueryBuilderParameter<WorkspaceInputHeadersGql?>? headers = null, QueryBuilderParameter<IEnumerable<string?>>? topics = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (headers != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "headers", ArgumentValue = headers} );
+
+            if (topics != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "topics", ArgumentValue = topics} );
 
             return WithObjectField("streamWorkspace", alias, workspacePullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public SubscriptionQueryBuilderGql ExceptStreamWorkspace() => ExceptField("streamWorkspace");
 
-        public SubscriptionQueryBuilderGql WithStreamLiveDoc(LiveDocPullBulkQueryBuilderGql liveDocPullBulkQueryBuilder, QueryBuilderParameter<LiveDocInputHeadersGql?>? headers = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public SubscriptionQueryBuilderGql WithStreamLiveDoc(LiveDocPullBulkQueryBuilderGql liveDocPullBulkQueryBuilder, QueryBuilderParameter<LiveDocInputHeadersGql?>? headers = null, QueryBuilderParameter<IEnumerable<string?>>? topics = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (headers != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "headers", ArgumentValue = headers} );
+
+            if (topics != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "topics", ArgumentValue = topics} );
 
             return WithObjectField("streamLiveDoc", alias, liveDocPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public SubscriptionQueryBuilderGql ExceptStreamLiveDoc() => ExceptField("streamLiveDoc");
 
-        public SubscriptionQueryBuilderGql WithStreamGraphQlNamedDocument(GraphQlNamedDocumentPullBulkQueryBuilderGql graphQlNamedDocumentPullBulkQueryBuilder, QueryBuilderParameter<GraphQlNamedDocumentInputHeadersGql?>? headers = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public SubscriptionQueryBuilderGql WithStreamGraphQlNamedDocument(GraphQlNamedDocumentPullBulkQueryBuilderGql graphQlNamedDocumentPullBulkQueryBuilder, QueryBuilderParameter<GraphQlNamedDocumentInputHeadersGql?>? headers = null, QueryBuilderParameter<IEnumerable<string?>>? topics = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
             if (headers != null)
                 args.Add(new QueryBuilderArgumentInfo { ArgumentName = "headers", ArgumentValue = headers} );
+
+            if (topics != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "topics", ArgumentValue = topics} );
 
             return WithObjectField("streamGraphQLNamedDocument", alias, graphQlNamedDocumentPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
@@ -1449,7 +1466,8 @@ namespace RxDBDotNet.Tests.Model
             new GraphQlFieldMetadata { Name = "color" },
             new GraphQlFieldMetadata { Name = "id" },
             new GraphQlFieldMetadata { Name = "isDeleted" },
-            new GraphQlFieldMetadata { Name = "updatedAt" }
+            new GraphQlFieldMetadata { Name = "updatedAt" },
+            new GraphQlFieldMetadata { Name = "topics", IsComplex = true }
         };
 
         protected override string TypeName { get; } = "Hero";
@@ -1475,6 +1493,10 @@ namespace RxDBDotNet.Tests.Model
         public HeroQueryBuilderGql WithUpdatedAt(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("updatedAt", alias, new GraphQlDirective?[] { skip, include });
 
         public HeroQueryBuilderGql ExceptUpdatedAt() => ExceptField("updatedAt");
+
+        public HeroQueryBuilderGql WithTopics(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("topics", alias, new GraphQlDirective?[] { skip, include });
+
+        public HeroQueryBuilderGql ExceptTopics() => ExceptField("topics");
     }
 
     public partial class UserQueryBuilderGql : GraphQlQueryBuilder<UserQueryBuilderGql>
@@ -1488,7 +1510,8 @@ namespace RxDBDotNet.Tests.Model
             new GraphQlFieldMetadata { Name = "workspaceId" },
             new GraphQlFieldMetadata { Name = "id" },
             new GraphQlFieldMetadata { Name = "isDeleted" },
-            new GraphQlFieldMetadata { Name = "updatedAt" }
+            new GraphQlFieldMetadata { Name = "updatedAt" },
+            new GraphQlFieldMetadata { Name = "topics", IsComplex = true }
         };
 
         protected override string TypeName { get; } = "User";
@@ -1526,37 +1549,46 @@ namespace RxDBDotNet.Tests.Model
         public UserQueryBuilderGql WithUpdatedAt(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("updatedAt", alias, new GraphQlDirective?[] { skip, include });
 
         public UserQueryBuilderGql ExceptUpdatedAt() => ExceptField("updatedAt");
+
+        public UserQueryBuilderGql WithTopics(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("topics", alias, new GraphQlDirective?[] { skip, include });
+
+        public UserQueryBuilderGql ExceptTopics() => ExceptField("topics");
     }
 
     public partial class WorkspaceQueryBuilderGql : GraphQlQueryBuilder<WorkspaceQueryBuilderGql>
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
         {
-            new GraphQlFieldMetadata { Name = "id" },
             new GraphQlFieldMetadata { Name = "name" },
+            new GraphQlFieldMetadata { Name = "id" },
+            new GraphQlFieldMetadata { Name = "isDeleted" },
             new GraphQlFieldMetadata { Name = "updatedAt" },
-            new GraphQlFieldMetadata { Name = "isDeleted" }
+            new GraphQlFieldMetadata { Name = "topics", IsComplex = true }
         };
 
         protected override string TypeName { get; } = "Workspace";
 
         public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
 
+        public WorkspaceQueryBuilderGql WithName(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("name", alias, new GraphQlDirective?[] { skip, include });
+
+        public WorkspaceQueryBuilderGql ExceptName() => ExceptField("name");
+
         public WorkspaceQueryBuilderGql WithId(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("id", alias, new GraphQlDirective?[] { skip, include });
 
         public WorkspaceQueryBuilderGql ExceptId() => ExceptField("id");
 
-        public WorkspaceQueryBuilderGql WithName(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("name", alias, new GraphQlDirective?[] { skip, include });
+        public WorkspaceQueryBuilderGql WithIsDeleted(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("isDeleted", alias, new GraphQlDirective?[] { skip, include });
 
-        public WorkspaceQueryBuilderGql ExceptName() => ExceptField("name");
+        public WorkspaceQueryBuilderGql ExceptIsDeleted() => ExceptField("isDeleted");
 
         public WorkspaceQueryBuilderGql WithUpdatedAt(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("updatedAt", alias, new GraphQlDirective?[] { skip, include });
 
         public WorkspaceQueryBuilderGql ExceptUpdatedAt() => ExceptField("updatedAt");
 
-        public WorkspaceQueryBuilderGql WithIsDeleted(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("isDeleted", alias, new GraphQlDirective?[] { skip, include });
+        public WorkspaceQueryBuilderGql WithTopics(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("topics", alias, new GraphQlDirective?[] { skip, include });
 
-        public WorkspaceQueryBuilderGql ExceptIsDeleted() => ExceptField("isDeleted");
+        public WorkspaceQueryBuilderGql ExceptTopics() => ExceptField("topics");
     }
 
     public partial class LiveDocQueryBuilderGql : GraphQlQueryBuilder<LiveDocQueryBuilderGql>
@@ -1568,7 +1600,8 @@ namespace RxDBDotNet.Tests.Model
             new GraphQlFieldMetadata { Name = "workspaceId" },
             new GraphQlFieldMetadata { Name = "id" },
             new GraphQlFieldMetadata { Name = "isDeleted" },
-            new GraphQlFieldMetadata { Name = "updatedAt" }
+            new GraphQlFieldMetadata { Name = "updatedAt" },
+            new GraphQlFieldMetadata { Name = "topics", IsComplex = true }
         };
 
         protected override string TypeName { get; } = "LiveDoc";
@@ -1598,6 +1631,10 @@ namespace RxDBDotNet.Tests.Model
         public LiveDocQueryBuilderGql WithUpdatedAt(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("updatedAt", alias, new GraphQlDirective?[] { skip, include });
 
         public LiveDocQueryBuilderGql ExceptUpdatedAt() => ExceptField("updatedAt");
+
+        public LiveDocQueryBuilderGql WithTopics(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("topics", alias, new GraphQlDirective?[] { skip, include });
+
+        public LiveDocQueryBuilderGql ExceptTopics() => ExceptField("topics");
     }
 
     public partial class GraphQlNamedDocumentQueryBuilderGql : GraphQlQueryBuilder<GraphQlNamedDocumentQueryBuilderGql>
@@ -1606,7 +1643,8 @@ namespace RxDBDotNet.Tests.Model
         {
             new GraphQlFieldMetadata { Name = "id" },
             new GraphQlFieldMetadata { Name = "isDeleted" },
-            new GraphQlFieldMetadata { Name = "updatedAt" }
+            new GraphQlFieldMetadata { Name = "updatedAt" },
+            new GraphQlFieldMetadata { Name = "topics", IsComplex = true }
         };
 
         protected override string TypeName { get; } = "GraphQLNamedDocument";
@@ -1624,6 +1662,10 @@ namespace RxDBDotNet.Tests.Model
         public GraphQlNamedDocumentQueryBuilderGql WithUpdatedAt(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("updatedAt", alias, new GraphQlDirective?[] { skip, include });
 
         public GraphQlNamedDocumentQueryBuilderGql ExceptUpdatedAt() => ExceptField("updatedAt");
+
+        public GraphQlNamedDocumentQueryBuilderGql WithTopics(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("topics", alias, new GraphQlDirective?[] { skip, include });
+
+        public GraphQlNamedDocumentQueryBuilderGql ExceptTopics() => ExceptField("topics");
     }
 
     public partial class QueryQueryBuilderGql : GraphQlQueryBuilder<QueryQueryBuilderGql>
@@ -2148,6 +2190,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<string?>))]
@@ -2194,6 +2237,15 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<string>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<string>?>? Topics
+        {
+            get => (QueryBuilderParameter<ICollection<string>?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_name.Name != null) yield return _name;
@@ -2201,6 +2253,7 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2213,6 +2266,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<HeroFilterInputGql>?>))]
@@ -2277,6 +2331,15 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ListStringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<ListStringOperationFilterInputGql?>? Topics
+        {
+            get => (QueryBuilderParameter<ListStringOperationFilterInputGql?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_and.Name != null) yield return _and;
@@ -2286,6 +2349,7 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2299,6 +2363,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
@@ -2372,6 +2437,15 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<string>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<string>?>? Topics
+        {
+            get => (QueryBuilderParameter<ICollection<string>?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_firstName.Name != null) yield return _firstName;
@@ -2382,6 +2456,7 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2397,6 +2472,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<UserFilterInputGql>?>))]
@@ -2488,6 +2564,15 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ListStringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<ListStringOperationFilterInputGql?>? Topics
+        {
+            get => (QueryBuilderParameter<ListStringOperationFilterInputGql?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_and.Name != null) yield return _and;
@@ -2500,15 +2585,26 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
     public partial class WorkspaceInputGql : IGraphQlInputObject
     {
-        private InputPropertyInfo _id;
         private InputPropertyInfo _name;
-        private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
+        private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
+        #endif
+        public QueryBuilderParameter<string>? Name
+        {
+            get => (QueryBuilderParameter<string>?)_name.Value;
+            set => _name = new InputPropertyInfo { Name = "name", Value = value };
+        }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<Guid>))]
@@ -2520,12 +2616,12 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
         #endif
-        public QueryBuilderParameter<string>? Name
+        public QueryBuilderParameter<bool?>? IsDeleted
         {
-            get => (QueryBuilderParameter<string>?)_name.Value;
-            set => _name = new InputPropertyInfo { Name = "name", Value = value };
+            get => (QueryBuilderParameter<bool?>?)_isDeleted.Value;
+            set => _isDeleted = new InputPropertyInfo { Name = "isDeleted", Value = value };
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
@@ -2538,20 +2634,21 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<string>?>))]
         #endif
-        public QueryBuilderParameter<bool?>? IsDeleted
+        public QueryBuilderParameter<ICollection<string>?>? Topics
         {
-            get => (QueryBuilderParameter<bool?>?)_isDeleted.Value;
-            set => _isDeleted = new InputPropertyInfo { Name = "isDeleted", Value = value };
+            get => (QueryBuilderParameter<ICollection<string>?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
         }
 
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
-            if (_id.Name != null) yield return _id;
             if (_name.Name != null) yield return _name;
-            if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
+            if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2559,10 +2656,11 @@ namespace RxDBDotNet.Tests.Model
     {
         private InputPropertyInfo _and;
         private InputPropertyInfo _or;
-        private InputPropertyInfo _id;
         private InputPropertyInfo _name;
-        private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
+        private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<WorkspaceFilterInputGql>?>))]
@@ -2583,6 +2681,15 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<StringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<StringOperationFilterInputGql?>? Name
+        {
+            get => (QueryBuilderParameter<StringOperationFilterInputGql?>?)_name.Value;
+            set => _name = new InputPropertyInfo { Name = "name", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<UuidOperationFilterInputGql?>))]
         #endif
         public QueryBuilderParameter<UuidOperationFilterInputGql?>? Id
@@ -2592,12 +2699,12 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<StringOperationFilterInputGql?>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<BooleanOperationFilterInputGql?>))]
         #endif
-        public QueryBuilderParameter<StringOperationFilterInputGql?>? Name
+        public QueryBuilderParameter<BooleanOperationFilterInputGql?>? IsDeleted
         {
-            get => (QueryBuilderParameter<StringOperationFilterInputGql?>?)_name.Value;
-            set => _name = new InputPropertyInfo { Name = "name", Value = value };
+            get => (QueryBuilderParameter<BooleanOperationFilterInputGql?>?)_isDeleted.Value;
+            set => _isDeleted = new InputPropertyInfo { Name = "isDeleted", Value = value };
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
@@ -2610,22 +2717,23 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<BooleanOperationFilterInputGql?>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ListStringOperationFilterInputGql?>))]
         #endif
-        public QueryBuilderParameter<BooleanOperationFilterInputGql?>? IsDeleted
+        public QueryBuilderParameter<ListStringOperationFilterInputGql?>? Topics
         {
-            get => (QueryBuilderParameter<BooleanOperationFilterInputGql?>?)_isDeleted.Value;
-            set => _isDeleted = new InputPropertyInfo { Name = "isDeleted", Value = value };
+            get => (QueryBuilderParameter<ListStringOperationFilterInputGql?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
         }
 
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_and.Name != null) yield return _and;
             if (_or.Name != null) yield return _or;
-            if (_id.Name != null) yield return _id;
             if (_name.Name != null) yield return _name;
-            if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
+            if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2637,6 +2745,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
@@ -2692,6 +2801,15 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<string>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<string>?>? Topics
+        {
+            get => (QueryBuilderParameter<ICollection<string>?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_content.Name != null) yield return _content;
@@ -2700,6 +2818,7 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2713,6 +2832,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<LiveDocFilterInputGql>?>))]
@@ -2786,6 +2906,15 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ListStringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<ListStringOperationFilterInputGql?>? Topics
+        {
+            get => (QueryBuilderParameter<ListStringOperationFilterInputGql?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_and.Name != null) yield return _and;
@@ -2796,6 +2925,7 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2804,6 +2934,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<Guid>))]
@@ -2832,11 +2963,21 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<string>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<string>?>? Topics
+        {
+            get => (QueryBuilderParameter<ICollection<string>?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -2847,6 +2988,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _id;
         private InputPropertyInfo _isDeleted;
         private InputPropertyInfo _updatedAt;
+        private InputPropertyInfo _topics;
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
         [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<GraphQlNamedDocumentFilterInputGql>?>))]
@@ -2893,6 +3035,15 @@ namespace RxDBDotNet.Tests.Model
             set => _updatedAt = new InputPropertyInfo { Name = "updatedAt", Value = value };
         }
 
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ListStringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<ListStringOperationFilterInputGql?>? Topics
+        {
+            get => (QueryBuilderParameter<ListStringOperationFilterInputGql?>?)_topics.Value;
+            set => _topics = new InputPropertyInfo { Name = "topics", Value = value };
+        }
+
         IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
         {
             if (_and.Name != null) yield return _and;
@@ -2900,6 +3051,7 @@ namespace RxDBDotNet.Tests.Model
             if (_id.Name != null) yield return _id;
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
+            if (_topics.Name != null) yield return _topics;
         }
     }
 
@@ -3353,6 +3505,58 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
+    public partial class ListStringOperationFilterInputGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _all;
+        private InputPropertyInfo _none;
+        private InputPropertyInfo _some;
+        private InputPropertyInfo _any;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<StringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<StringOperationFilterInputGql?>? All
+        {
+            get => (QueryBuilderParameter<StringOperationFilterInputGql?>?)_all.Value;
+            set => _all = new InputPropertyInfo { Name = "all", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<StringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<StringOperationFilterInputGql?>? None
+        {
+            get => (QueryBuilderParameter<StringOperationFilterInputGql?>?)_none.Value;
+            set => _none = new InputPropertyInfo { Name = "none", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<StringOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<StringOperationFilterInputGql?>? Some
+        {
+            get => (QueryBuilderParameter<StringOperationFilterInputGql?>?)_some.Value;
+            set => _some = new InputPropertyInfo { Name = "some", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
+        #endif
+        public QueryBuilderParameter<bool?>? Any
+        {
+            get => (QueryBuilderParameter<bool?>?)_any.Value;
+            set => _any = new InputPropertyInfo { Name = "any", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_all.Name != null) yield return _all;
+            if (_none.Name != null) yield return _none;
+            if (_some.Name != null) yield return _some;
+            if (_any.Name != null) yield return _any;
+        }
+    }
+
     public partial class UserRoleOperationFilterInputGql : IGraphQlInputObject
     {
         private InputPropertyInfo _eq;
@@ -3462,6 +3666,7 @@ namespace RxDBDotNet.Tests.Model
         public Guid Id { get; set; }
         public bool? IsDeleted { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
+        public ICollection<string>? Topics { get; set; }
     }
 
     public partial class UserGql
@@ -3474,14 +3679,16 @@ namespace RxDBDotNet.Tests.Model
         public Guid Id { get; set; }
         public bool? IsDeleted { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
+        public ICollection<string>? Topics { get; set; }
     }
 
     public partial class WorkspaceGql
     {
-        public Guid Id { get; set; }
         public string Name { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
+        public Guid Id { get; set; }
         public bool? IsDeleted { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
+        public ICollection<string>? Topics { get; set; }
     }
 
     public partial class LiveDocGql
@@ -3492,6 +3699,7 @@ namespace RxDBDotNet.Tests.Model
         public Guid Id { get; set; }
         public bool? IsDeleted { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
+        public ICollection<string>? Topics { get; set; }
     }
 
     public partial class GraphQlNamedDocumentGql
@@ -3499,6 +3707,7 @@ namespace RxDBDotNet.Tests.Model
         public Guid Id { get; set; }
         public bool? IsDeleted { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
+        public ICollection<string>? Topics { get; set; }
     }
 
     public partial class QueryGql

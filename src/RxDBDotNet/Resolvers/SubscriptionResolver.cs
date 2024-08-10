@@ -26,6 +26,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
     ///     the server-side push mechanism of the RxDB replication protocol.
     /// </summary>
     /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
+    /// <param name="topics">The set topics to recieve events for when a document is changed.</param>
     /// <param name="logger">The logger used for logging information and errors.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <returns>
@@ -35,17 +36,19 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
 #pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
     internal IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStream(
         ITopicEventReceiver eventReceiver,
+        List<string> topics,
         ILogger<SubscriptionResolver<TDocument>> logger,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(eventReceiver);
         ArgumentNullException.ThrowIfNull(logger);
 
-        return DocumentChangedStreamInternal(eventReceiver, logger, cancellationToken);
+        return DocumentChangedStreamInternal(eventReceiver, topics, logger, cancellationToken);
     }
 
     private static async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStreamInternal(
         ITopicEventReceiver eventReceiver,
+        List<string> topics,
         ILogger<SubscriptionResolver<TDocument>> logger,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -78,12 +81,20 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
                                .WithCancellation(cancellationToken)
                                .ConfigureAwait(false))
             {
-                yield return pullDocumentResult;
+                if (ShouldYieldDocuments(pullDocumentResult, topics))
+                {
+                    yield return pullDocumentResult;
+                }
             }
 
             // If we reach here, it means the stream has completed normally.
             // We'll log this and continue the outer loop to resubscribe.
             logger.LogInformation("Document change stream for {DocumentType} completed. Resubscribing.", typeof(TDocument).Name);
         }
+    }
+
+    private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string> topics)
+    {
+        return pullDocumentResult.Documents.Exists(doc => doc.Topics?.Intersect(topics, StringComparer.OrdinalIgnoreCase).Any() == true);
     }
 }

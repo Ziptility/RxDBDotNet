@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using AppAny.HotChocolate.FluentValidation;
 using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
 using HotChocolate.Subscriptions;
@@ -35,9 +36,11 @@ public static class GraphQLBuilderExtensions
 
         builder.Services.AddSingleton<IEventPublisher, DefaultEventPublisher>();
 
-        // Add projections and filtering support in the correct order
-        builder.AddProjections()
-            .AddFiltering();
+        // Add support for FluentValidation
+        builder.AddFluentValidation();
+
+        // Add support for filtering
+        builder.AddFiltering();
 
         // Ensure Query, Mutation, and Subscription types exist
         EnsureRootTypesExist(builder);
@@ -304,7 +307,7 @@ public static class GraphQLBuilderExtensions
                     var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
                     var topicEventReceiver = context.Service<ITopicEventReceiver>();
                     var logger = context.Service<ILogger<SubscriptionResolver<TDocument>>>();
-                    var topics = context.ArgumentValue<List<string>>("topics");
+                    var topics = context.ArgumentValue<List<string>?>("topics");
 
                     return subscription.DocumentChangedStream(topicEventReceiver, topics, logger, context.RequestAborted);
                 });

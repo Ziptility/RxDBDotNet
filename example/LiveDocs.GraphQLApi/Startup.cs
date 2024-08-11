@@ -53,7 +53,8 @@ public class Startup
             // A class to validate that the [GraphQLName] attribute is respected
             // when building the schema
             .AddReplicatedDocument<DocumentWithGraphQLName>()
-            .AddInMemorySubscriptions();
+            .AddInMemorySubscriptions()
+            .AddSubscriptionDiagnostics();
 
         // Configure CORS
         services.AddCors(options =>

@@ -26,7 +26,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
     ///     the server-side push mechanism of the RxDB replication protocol.
     /// </summary>
     /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
-    /// <param name="topics">The set topics to recieve events for when a document is changed.</param>
+    /// <param name="topics">An optional set topics to recieve events for when a document is changed.</param>
     /// <param name="logger">The logger used for logging information and errors.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <returns>
@@ -36,7 +36,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
 #pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
     internal IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStream(
         ITopicEventReceiver eventReceiver,
-        List<string> topics,
+        List<string>? topics,
         ILogger<SubscriptionResolver<TDocument>> logger,
         CancellationToken cancellationToken)
     {
@@ -48,7 +48,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
 
     private static async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStreamInternal(
         ITopicEventReceiver eventReceiver,
-        List<string> topics,
+        List<string>? topics,
         ILogger<SubscriptionResolver<TDocument>> logger,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -93,8 +93,10 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
         }
     }
 
-    private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string> topics)
+    private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string>? topics)
     {
-        return pullDocumentResult.Documents.Exists(doc => doc.Topics?.Intersect(topics, StringComparer.OrdinalIgnoreCase).Any() == true);
+        return pullDocumentResult.Documents
+            .Exists(doc => topics == null
+                           || doc.Topics?.Intersect(topics, StringComparer.OrdinalIgnoreCase).Any() == true);
     }
 }

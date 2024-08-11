@@ -95,14 +95,12 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
    // Add services to the container
    builder.Services
        .AddSingleton<IDocumentRepository<Hero>, HeroRepository>();
+   
+   // Add fluent validiation. This is required by RxDBDotNet.
+   services.AddFluentValidation();
 
    // Configure the GraphQL server
    builder.Services.AddGraphQLServer()
-       .ModifyRequestOptions(o =>
-       {
-           // Enable debugging features in development
-           o.IncludeExceptionDetails = builder.Environment.IsDevelopment();
-       })
        // Add RxDBDotNet replication support
        .AddReplicationServer()
        // Configure replication for your document type
@@ -117,7 +115,7 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
        {
            corsPolicyBuilder
                // Replace with your RxDB client's origin
-               .WithOrigins("http://localhost:1337")
+               .WithOrigins("http://localhost:5000")
                .AllowAnyHeader()
                .AllowAnyMethod()
                // Required for WebSocket connections
@@ -133,15 +131,8 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
    // Enable WebSockets (required for subscriptions)
    app.UseWebSockets();
 
-   // Configure the GraphQL endpoint
-   app.MapGraphQL()
-       .WithOptions(new GraphQLServerOptions
-       {
-           Tool =
-           {
-               Enable = app.Environment.IsDevelopment(),
-           },
-       });
+   // Map the GraphQL endpoint
+   app.MapGraphQL();
 
    app.Run();
    ```

@@ -1,4 +1,6 @@
-﻿namespace LiveDocs.GraphQLApi.Models;
+﻿using HotChocolate;
+
+namespace LiveDocs.GraphQLApi.Models;
 
 /// <summary>
 /// Represents the possible roles a user can have in the LiveDocs system.

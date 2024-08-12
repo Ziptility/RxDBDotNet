@@ -1,7 +1,6 @@
 ﻿using LiveDocs.GraphQLApi.Models.Shared;
 using LiveDocs.GraphQLApi.Validations;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LiveDocs.GraphQLApi.Models.Entities;
 
@@ -23,12 +22,6 @@ public class User : ReplicatedEntity
     [Required]
     [MaxLength(256)]
     public required string LastName { get; set; }
-
-    /// <summary>
-    /// The full name of the user.
-    /// </summary>
-    [NotMapped]
-    public string FullName => $"{FirstName} {LastName}".Trim();
 
     /// <summary>
     /// The email of the user.

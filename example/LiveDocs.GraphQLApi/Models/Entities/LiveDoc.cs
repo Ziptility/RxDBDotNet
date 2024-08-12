@@ -17,10 +17,12 @@ public class LiveDoc : ReplicatedEntity
     /// <summary>
     /// The unique identifier of the live doc's owner.
     /// </summary>
+    [Required]
     public required Guid OwnerId { get; init; }
 
     /// <summary>
     /// The unique identifier of the workspace to which the live doc belongs.
     /// </summary>
+    [Required]
     public required Guid WorkspaceId { get; init; }
 }

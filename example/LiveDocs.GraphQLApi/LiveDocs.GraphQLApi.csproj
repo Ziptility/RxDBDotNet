@@ -17,7 +17,7 @@
       <ImplicitUsings>enable</ImplicitUsings>
       <WarningLevel>9999</WarningLevel>
       <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-      <NoWarn>$(NoWarn);CA1848;CA2007</NoWarn>
+      <NoWarn>$(NoWarn);CA1848;CA2007;CA1716</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +28,7 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="8.1.0" />
     <PackageReference Include="Azure.Identity" Version="1.12.0" />
+    <PackageReference Include="HotChocolate.Types.Scalars" Version="13.9.11" />
     <PackageReference Include="RT.Comb" Version="4.0.1" />
     <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
   </ItemGroup>

@@ -1,10 +1,12 @@
-﻿using HotChocolate;
+﻿using System.Text.Json.Serialization;
+using HotChocolate;
 
 namespace LiveDocs.GraphQLApi.Models.Shared;
 
 /// <summary>
 /// Represents the possible roles a user can have in the LiveDocs system.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum UserRole
 {
     /// <summary>

@@ -15,25 +15,62 @@ namespace LiveDocs.GraphQLApi.Data
             
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .IsUnique();
+            modelBuilder.Entity<User>(e =>
+            {
+                e.HasIndex(u => u.Email)
+                    .IsUnique();
 
-            modelBuilder.Entity<Workspace>()
-                .HasIndex(w => w.Name)
-                .IsUnique();
+                e.HasOne<Workspace>()
+                    .WithMany()
+                    .HasForeignKey(d => d.WorkspaceId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<LiveDoc>()
-                .HasOne<User>()
-                .WithMany()
-                .HasForeignKey(d => d.OwnerId)
-                .OnDelete(DeleteBehavior.Restrict);
+                e.Property(w => w.Topics).HasColumnType("nvarchar(max)");
 
-            modelBuilder.Entity<LiveDoc>()
-                .HasOne<Workspace>()
-                .WithMany()
-                .HasForeignKey(d => d.WorkspaceId)
-                .OnDelete(DeleteBehavior.Restrict);
+                e.OwnsOne(
+                    user => user.Topics,
+                    ownedNavigationBuilder =>
+                    {
+                        ownedNavigationBuilder.ToJson();
+                    });
+            });
+
+            modelBuilder.Entity<Workspace>(e =>
+            {
+                e.HasIndex(w => w.Name)
+                    .IsUnique();
+
+                e.Property(w => w.Topics).HasColumnType("nvarchar(max)");
+
+                e.OwnsOne(
+                    workspace => workspace.Topics,
+                    ownedNavigationBuilder =>
+                    {
+                        ownedNavigationBuilder.ToJson();
+                    });
+            });
+
+            modelBuilder.Entity<LiveDoc>(e =>
+            {
+                e.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(d => d.OwnerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne<Workspace>()
+                    .WithMany()
+                    .HasForeignKey(d => d.WorkspaceId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.Property(w => w.Topics).HasColumnType("nvarchar(max)");
+
+                e.OwnsOne(
+                    workspace => workspace.Topics,
+                    ownedNavigationBuilder =>
+                    {
+                        ownedNavigationBuilder.ToJson();
+                    });
+            });
         }
     }
 }

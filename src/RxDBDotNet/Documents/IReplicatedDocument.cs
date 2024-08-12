@@ -61,5 +61,5 @@ public interface IReplicatedDocument
     /// </code>
     /// </para>
     /// </remarks>
-    List<string>? Topics { get; set; }
+    List<string>? Topics { get; init; }
 }

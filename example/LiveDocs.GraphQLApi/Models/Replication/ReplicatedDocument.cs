@@ -5,9 +5,9 @@ using LiveDocs.GraphQLApi.Validations;
 namespace LiveDocs.GraphQLApi.Models.Replication;
 
 /// <summary>
-///     Base class for a document that is replicated via RxDBDotNet.
+///     Base record for a document that is replicated via RxDBDotNet.
 /// </summary>
-public abstract class ReplicatedDocument : IReplicatedDocument
+public abstract record ReplicatedDocument : IReplicatedDocument
 {
     /// <inheritdoc />
     [Required]
@@ -25,5 +25,5 @@ public abstract class ReplicatedDocument : IReplicatedDocument
 
     /// <inheritdoc />
     [MaxLength(10)]
-    public List<string>? Topics { get; set; }
+    public List<string>? Topics { get; init; }
 }

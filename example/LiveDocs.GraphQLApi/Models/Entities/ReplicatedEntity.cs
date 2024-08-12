@@ -19,7 +19,7 @@ public abstract class ReplicatedEntity : IReplicatedDocument
     /// <inheritdoc />
     [Required]
     public required DateTimeOffset UpdatedAt { get; set; }
-
+    
     /// <inheritdoc />
-    public List<string>? Topics { get; set; }
+    public List<string>? Topics { get; init; }
 }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using HotChocolate;
+using HotChocolate.Types;
 using LiveDocs.GraphQLApi.Models.Shared;
 using LiveDocs.GraphQLApi.Validations;
 
@@ -9,7 +10,7 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 /// Represents a user of the LiveDocs system.
 /// </summary>
 [GraphQLName("User")]
-public class ReplicatedUser : ReplicatedDocument
+public sealed record ReplicatedUser : ReplicatedDocument
 {
     /// <summary>
     /// The first name of the user.
@@ -26,10 +27,23 @@ public class ReplicatedUser : ReplicatedDocument
     public required string LastName { get; set; }
 
     /// <summary>
+    /// The full name of the user.
+    /// </summary>
+    public string FullName
+    {
+        get => $"{FirstName} {LastName}".Trim();
+        init
+        {
+            
+        }
+    }
+
+    /// <summary>
     /// The email of the user.
     /// </summary>
     [Required]
     [EmailAddress]
+    [GraphQLType(typeof(EmailAddressType))]
     [MaxLength(256)]
     public required string Email { get; set; }
 

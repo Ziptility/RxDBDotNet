@@ -9,7 +9,7 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 /// by multiple users within the same workspace.
 /// </summary>
 [GraphQLName("LiveDoc")]
-public class ReplicatedLiveDoc : ReplicatedDocument
+public sealed record ReplicatedLiveDoc : ReplicatedDocument
 {
     /// <summary>
     /// The content of the live doc.

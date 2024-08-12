@@ -1,7 +1,7 @@
 ﻿using HotChocolate.AspNetCore;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
-using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Models.Replication;
 using LiveDocs.GraphQLApi.Repositories;
 using LiveDocs.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
@@ -30,9 +30,9 @@ public class Startup
 
         // Add services to the container
         services.AddProblemDetails()
-            .AddScoped<IDocumentService<User>, EfDocumentService<User, LiveDocsDbContext>>()
-            .AddScoped<IDocumentService<Workspace>, EfDocumentService<Workspace, LiveDocsDbContext>>()
-            .AddScoped<IDocumentService<LiveDoc>, EfDocumentService<LiveDoc, LiveDocsDbContext>>();
+            .AddScoped<IDocumentService<ReplicatedUser>, DocumentService<ReplicatedUser, LiveDocsDbContext>>()
+            .AddScoped<IDocumentService<ReplicatedWorkspace>, DocumentService<ReplicatedWorkspace, LiveDocsDbContext>>()
+            .AddScoped<IDocumentService<ReplicatedLiveDoc>, DocumentService<ReplicatedLiveDoc, LiveDocsDbContext>>();
 
         // Configure the GraphQL server
         services.AddGraphQLServer()
@@ -44,10 +44,10 @@ public class Startup
             // has already added their own root query type.
             .AddQueryType<Query>()
             .AddReplicationServer()
-            .RegisterService<IDocumentService<Workspace>>()
-            .AddReplicatedDocument<User>()
-            .AddReplicatedDocument<Workspace>()
-            .AddReplicatedDocument<LiveDoc>()
+            .RegisterService<IDocumentService<ReplicatedWorkspace>>()
+            .AddReplicatedDocument<ReplicatedUser>()
+            .AddReplicatedDocument<ReplicatedWorkspace>()
+            .AddReplicatedDocument<ReplicatedLiveDoc>()
             .AddInMemorySubscriptions()
             .AddSubscriptionDiagnostics();
 

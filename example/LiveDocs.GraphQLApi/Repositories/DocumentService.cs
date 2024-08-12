@@ -1,4 +1,4 @@
-﻿using LiveDocs.GraphQLApi.Models;
+﻿using LiveDocs.GraphQLApi.Data;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Repositories;
@@ -7,104 +7,108 @@ using RxDBDotNet.Services;
 namespace LiveDocs.GraphQLApi.Repositories;
 
 /// <summary>
-/// An implementation of IDocumentService using Entity Framework Core.
-/// This class provides optimized database access for document operations required by the RxDB replication protocol.
+///     An implementation of IDocumentService using Entity Framework Core.
+///     This class provides optimized database access for document operations required by the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being managed, which must implement IReplicatedDocument.</typeparam>
-/// <typeparam name="TContext">The type of DbContext to use for data access.</typeparam>
-/// <remarks>
-/// Initializes a new instance of the EfDocumentService class.
-/// </remarks>
-/// <param name="context">The DbContext to use for data access.</param>
-/// <param name="eventPublisher">The event publisher used to publish document change events.</param>
-/// <param name="logger">The logger to use for logging operations and errors.</param>
-public class DocumentService<TDocument, TContext>(
-    TContext context,
-    IEventPublisher eventPublisher,
-    ILogger<DocumentService<TDocument, TContext>> logger) : BaseDocumentService<TDocument>(eventPublisher, logger)
-    where TDocument : class, IReplicatedDocument
-    where TContext : DbContext
+public class DocumentService<TDocument> : IDocumentService<TDocument> where TDocument : class, IReplicatedDocument
 {
-    private readonly TContext _context = context ?? throw new ArgumentNullException(nameof(context));
+    private readonly LiveDocsDbContext _dbContext;
+    private readonly IEventPublisher _eventPublisher;
+    private readonly List<TDocument> _pendingEvents = [];
 
-    /// <inheritdoc/>
-    public override IQueryable<TDocument> GetQueryableDocuments()
+    public DocumentService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
     {
-        return _context.Set<TDocument>().AsNoTracking();
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
 
-    /// <inheritdoc/>
-    public override Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public IQueryable<TDocument> GetQueryableDocuments()
     {
-        return query.ToListAsync(cancellationToken);
+        return _dbContext.Set<TDocument>();
     }
 
-    /// <inheritdoc/>
-    public override Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)
     {
-        return _context.Set<TDocument>().FindAsync([id], cancellationToken).AsTask();
+        return await query.ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc/>
-    protected override async Task<TDocument> CreateDocumentInternalAsync(TDocument document, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        await _context.Set<TDocument>().AddAsync(document, cancellationToken).ConfigureAwait(false);
+        return await _dbContext.Set<TDocument>()
+            .FindAsync([id], cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<TDocument> CreateDocumentAsync(TDocument document, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        await _dbContext.Set<TDocument>()
+            .AddAsync(document, cancellationToken);
+
+        _pendingEvents.Add(document);
+
         return document;
     }
 
-    /// <inheritdoc/>
-    protected override async Task<TDocument> UpdateDocumentInternalAsync(TDocument document, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<TDocument> UpdateDocumentAsync(TDocument document, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
-        
-        var existingDocument = await _context.Set<TDocument>().FindAsync([document.Id], cancellationToken).ConfigureAwait(false)
+
+        var existingDocument = await _dbContext.Set<TDocument>()
+                                   .FindAsync([document.Id], cancellationToken)
                                ?? throw new InvalidOperationException($"Document with ID {document.Id} not found for update.");
 
-        if (!AreDocumentsEqual(existingDocument, document))
-        {
-            _context.Entry(existingDocument).CurrentValues.SetValues(document);
-            existingDocument.UpdatedAt = DateTimeOffset.UtcNow;
-        }
+        _dbContext.Entry(existingDocument)
+            .CurrentValues.SetValues(document);
+        existingDocument.UpdatedAt = DateTimeOffset.UtcNow;
+
+        _pendingEvents.Add(existingDocument);
 
         return existingDocument;
     }
 
-    /// <inheritdoc/>
-    protected override async Task<TDocument?> MarkAsDeletedInternalAsync(Guid id, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<TDocument> MarkAsDeletedAsync(TDocument document, CancellationToken cancellationToken)
     {
-        var document = await _context.Set<TDocument>().FindAsync([id], cancellationToken).ConfigureAwait(false);
-        if (document != null)
-        {
-            document.IsDeleted = true;
-            document.UpdatedAt = DateTimeOffset.UtcNow;
-            _context.Update(document);
-        }
+        ArgumentNullException.ThrowIfNull(document);
 
-        return document;
+        var existingDocument = await _dbContext.Set<TDocument>()
+                                   .FindAsync([document.Id], cancellationToken)
+                               ?? throw new InvalidOperationException($"Document with ID {document.Id} not found for delete.");
+
+        existingDocument.IsDeleted = true;
+
+        existingDocument.UpdatedAt = DateTimeOffset.UtcNow;
+
+        _pendingEvents.Add(existingDocument);
+
+        return existingDocument;
     }
 
-    /// <inheritdoc/>
-    protected override async Task SaveChangesInternalAsync(CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {
-        try
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        foreach (var doc in _pendingEvents)
         {
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await _eventPublisher.PublishDocumentChangedEventAsync(doc, cancellationToken);
         }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            throw new ConcurrencyException("Concurrency conflict occurred while saving changes", ex);
-        }
-        catch (DbUpdateException ex)
-        {
-            throw new ConcurrencyException("Error occurred while saving changes", ex);
-        }
+
+        _pendingEvents.Clear();
     }
 
-    /// <inheritdoc/>
-    public override bool AreDocumentsEqual(TDocument doc1, TDocument doc2)
+    /// <inheritdoc />
+    public bool AreDocumentsEqual(TDocument document1, TDocument document2)
     {
-        var entry1 = _context.Entry(doc1);
-        var entry2 = _context.Entry(doc2);
+        var entry1 = _dbContext.Entry(document1);
+        var entry2 = _dbContext.Entry(document2);
 
         foreach (var property in entry1.Properties)
         {
@@ -112,7 +116,8 @@ public class DocumentService<TDocument, TContext>(
             if (name != nameof(IReplicatedDocument.UpdatedAt)) // Ignore UpdatedAt for comparison
             {
                 var value1 = property.CurrentValue;
-                var value2 = entry2.Property(name).CurrentValue;
+                var value2 = entry2.Property(name)
+                    .CurrentValue;
 
                 if (!Equals(value1, value2))
                 {

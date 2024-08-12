@@ -24,19 +24,22 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 return; // Data has already been seeded
             }
 
+            var workspacePk = RT.Comb.Provider.Sql.Create();
             var liveDocsWorkspace = new Workspace
             {
-                Id = RT.Comb.Provider.Sql.Create(),
+                Id = workspacePk,
                 Name = "LiveDocs",
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
+                ReplicatedDocumentId = workspacePk,
             };
 
             await dbContext.Workspaces.AddAsync(liveDocsWorkspace, cancellationToken);
 
+            var userPk = RT.Comb.Provider.Sql.Create();
             var superAdminUser = new User
             {
-                Id = RT.Comb.Provider.Sql.Create(),
+                Id = userPk,
                 FirstName = "Super",
                 LastName = "Admin",
                 Email = "superadmin@livedocs.org",
@@ -44,6 +47,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 WorkspaceId = liveDocsWorkspace.Id,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
+                ReplicatedDocumentId = userPk,
             };
 
             await dbContext.Users.AddAsync(superAdminUser, cancellationToken);

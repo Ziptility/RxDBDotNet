@@ -30,9 +30,9 @@ public class Startup
 
         // Add services to the container
         services.AddProblemDetails()
-            .AddScoped<IDocumentService<ReplicatedUser>, DocumentService<ReplicatedUser, LiveDocsDbContext>>()
-            .AddScoped<IDocumentService<ReplicatedWorkspace>, DocumentService<ReplicatedWorkspace, LiveDocsDbContext>>()
-            .AddScoped<IDocumentService<ReplicatedLiveDoc>, DocumentService<ReplicatedLiveDoc, LiveDocsDbContext>>();
+            .AddScoped<IDocumentService<ReplicatedUser>, DocumentService<ReplicatedUser>>()
+            .AddScoped<IDocumentService<ReplicatedWorkspace>, DocumentService<ReplicatedWorkspace>>()
+            .AddScoped<IDocumentService<ReplicatedLiveDoc>, DocumentService<ReplicatedLiveDoc>>();
 
         // Configure the GraphQL server
         services.AddGraphQLServer()

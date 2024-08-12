@@ -106,10 +106,10 @@ public interface IDocumentService<TDocument> where TDocument : class, IReplicate
     /// <item><description>Handle scenarios where the document might not exist.</description></item>
     /// </list>
     /// </remarks>
-    /// <param name="id">The unique identifier of the document to mark as deleted.</param>
+    /// <param name="document">The document to mark as deleted.</param>
     /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task MarkAsDeletedAsync(Guid id, CancellationToken cancellationToken);
+    Task<TDocument> MarkAsDeletedAsync(TDocument document, CancellationToken cancellationToken);
 
     /// <summary>
     /// Compares two documents to determine if they are equal in terms of their content.
@@ -124,10 +124,10 @@ public interface IDocumentService<TDocument> where TDocument : class, IReplicate
     /// <item><description>Ensure the comparison is performant, especially for large documents or high-frequency operations.</description></item>
     /// </list>
     /// </remarks>
-    /// <param name="doc1">The first document to compare.</param>
-    /// <param name="doc2">The second document to compare.</param>
+    /// <param name="document1">The first document to compare.</param>
+    /// <param name="document2">The second document to compare.</param>
     /// <returns>True if the documents are considered equal, false otherwise.</returns>
-    bool AreDocumentsEqual(TDocument doc1, TDocument doc2);
+    bool AreDocumentsEqual(TDocument document1, TDocument document2);
 
     /// <summary>
     /// Saves all changes made in the service as an atomic operation.

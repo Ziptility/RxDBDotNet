@@ -97,6 +97,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
     {
         return pullDocumentResult.Documents
             .Exists(doc => topics == null
+                           || topics.Count == 0
                            || doc.Topics?.Intersect(topics, StringComparer.OrdinalIgnoreCase).Any() == true);
     }
 }

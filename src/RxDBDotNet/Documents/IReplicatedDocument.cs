@@ -8,7 +8,7 @@
 public interface IReplicatedDocument
 {
     /// <summary>
-    /// Gets the client-assigned identifier for this document.
+    /// The client-assigned identifier for this document.
     /// This property is used for client-side identification and replication purposes.
     /// </summary>
     /// <remarks>
@@ -18,7 +18,7 @@ public interface IReplicatedDocument
     Guid Id { get; }
 
     /// <summary>
-    /// Gets or sets the timestamp of the last update to the document.
+    /// The timestamp of the last update to the document.
     /// </summary>
     /// <remarks>
     /// This property is crucial for conflict resolution and determining the most recent version of a document.
@@ -27,7 +27,7 @@ public interface IReplicatedDocument
     DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the document has been marked as deleted.
+    /// A value indicating whether the document has been marked as deleted.
     /// </summary>
     /// <remarks>
     /// When set to true, this property indicates a soft delete.
@@ -36,7 +36,7 @@ public interface IReplicatedDocument
     bool IsDeleted { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional list of topics to publish events to when an instance is upserted.
+    /// An optional list of topics to publish events to when an instance is upserted.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -44,13 +44,9 @@ public interface IReplicatedDocument
     /// When specified, events related to this document will only be published to the listed topics.
     /// </para>
     /// <para>
-    /// Clients subscribing to document streams must specify one of these topic ids to receive events,
-    /// providing a form of 'subscription filtering'. This mechanism ensures that subscribers only
+    /// Clients subscribing to document streams can specify one of these topic ids to receive events,
+    /// providing a form of 'subscription filtering'. This mechanism ensures that subscribers can
     /// receive updates for the specific documents or document types they are interested in.
-    /// </para>
-    /// <para>
-    /// If this property is null or an empty list, no subscription events will be published for this document.
-    /// This can be used to optimize performance by limiting unnecessary event publishing and processing.
     /// </para>
     /// <para>
     /// Example usage:
@@ -65,5 +61,5 @@ public interface IReplicatedDocument
     /// </code>
     /// </para>
     /// </remarks>
-    List<string>? Topics { get; }
+    List<string>? Topics { get; set; }
 }

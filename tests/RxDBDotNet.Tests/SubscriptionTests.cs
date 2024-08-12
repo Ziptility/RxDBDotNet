@@ -147,7 +147,7 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
     }
 
     [Fact]
-    public async Task TestCase5_2_SubscriptionsSupportFilteringByDocumentProperties()
+    public async Task TestCase5_2_SubscriptionsSupportSpecifyingTopics()
     {
         // Arrange
         using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(500));

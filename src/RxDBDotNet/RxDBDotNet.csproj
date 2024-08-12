@@ -30,7 +30,6 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="AppAny.HotChocolate.FluentValidation" Version="0.11.1" />
         <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.11" />
         <PackageReference Include="HotChocolate.AspNetCore.Subscriptions" Version="10.5.5" />
         <PackageReference Include="HotChocolate.Data" Version="13.9.11" />

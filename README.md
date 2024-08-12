@@ -63,21 +63,22 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 1. Define your document type:
 
    ```csharp
-   public class Hero : IReplicatedDocument
+   public class Workspace : IReplicatedDocument
    {
        public required Guid Id { get; init; }
-       public string? Name { get; set; }
+       public required string Name { get; set; }
        public required DateTimeOffset UpdatedAt { get; set; }
        public required bool IsDeleted { get; set; }
+       public List<string>? Topics { get; set; }
    }
    ```
 
 2. Implement the `IDocumentRepository<T>` interface for your document type:
 
    ```csharp
-   public class HeroRepository : BaseDocumentRepository<Hero>
+   public class WorkspaceRepository : BaseDocumentRepository<Workspace>
    {
-       public HeroRepository(IEventPublisher eventPublisher, ILogger<HeroRepository> logger)
+       public WorkspaceRepository(IEventPublisher eventPublisher, ILogger<WorkspaceRepository> logger)
            : base(eventPublisher, logger)
        {
        }
@@ -94,17 +95,14 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 
    // Add services to the container
    builder.Services
-       .AddSingleton<IDocumentRepository<Hero>, HeroRepository>();
+       .AddSingleton<IDocumentRepository<Workspace>, WorkspaceRepository>();
    
-   // Add fluent validiation. This is required by RxDBDotNet.
-   services.AddFluentValidation();
-
    // Configure the GraphQL server
    builder.Services.AddGraphQLServer()
        // Add RxDBDotNet replication support
        .AddReplicationServer()
        // Configure replication for your document type
-       .AddReplicatedDocument<Hero>()
+       .AddReplicatedDocument<Workspace>()
        // Enable pub/sub for GraphQL subscriptions
        .AddInMemorySubscriptions();
 
@@ -140,12 +138,12 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 4. Use the GraphQL API to interact with your documents:
 
    ```graphql
-   # Push a new hero
-   mutation PushHero {
-     pushHero(heroPushRow: [{
+   # Push a new workspace
+   mutation PushWorkspace {
+     pushWorkspace(workspacePushRow: [{
        newDocumentState: {
          id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-         name: "New Hero",
+         name: "New Workspace",
          updatedAt: "2023-07-18T12:00:00Z",
          isDeleted: false
        }
@@ -157,12 +155,12 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
      }
    }
 
-   # Pull heroes with filtering
-   query PullHeroes {
-     pullHero(
+   # Pull workspaces with filtering
+   query PullWorkspaces {
+     pullWorkspace(
        limit: 10
      ) {
-       documents(where: { name: { eq: "New Hero" } }) {
+       documents(where: { name: { eq: "New Workspace" } }) {
          id
          name
          updatedAt
@@ -175,9 +173,9 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
      }
    }
 
-   # Subscribe to hero updates
-   subscription StreamHeroes {
-     streamHero(headers: { Authorization: "Bearer your-auth-token" }) {
+   # Subscribe to workspace updates
+   subscription StreamWorkspaces {
+     streamWorkspace(headers: { Authorization: "Bearer your-auth-token" }) {
        documents {
          id
          name

@@ -10,7 +10,7 @@ public sealed class Checkpoint
 {
     /// <summary>
     ///     <para>
-    ///         Gets or sets the ID of the last document included in the synchronization batch.
+    ///         The ID of the last document included in the synchronization batch.
     ///         This ID is used to ensure that synchronization can accurately resume
     ///         if it is interrupted, by providing a unique identifier for the last processed document.
     ///     </para>
@@ -23,7 +23,7 @@ public sealed class Checkpoint
 
     /// <summary>
     ///     <para>
-    ///         Gets or sets the timestamp of the last update included in the synchronization batch.
+    ///         The timestamp of the last update included in the synchronization batch.
     ///         This timestamp helps in filtering out documents that have already been synchronized,
     ///         ensuring that only new or updated documents are processed during synchronization.
     ///     </para>

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using GraphQlClientGenerator;
-using LiveDocs.GraphQLApi.Models;
+using LiveDocs.GraphQLApi.Models.Shared;
 
 namespace RxDBDotNet.LiveDocsTestModelGenerator;
 

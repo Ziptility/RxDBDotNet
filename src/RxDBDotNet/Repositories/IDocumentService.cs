@@ -3,21 +3,21 @@
 namespace RxDBDotNet.Repositories;
 
 /// <summary>
-/// Defines the contract for a repository that handles document operations for replication in RxDBDotNet.
+/// Defines the contract for a service that handles document operations for replication in RxDBDotNet.
 /// This interface supports asynchronous operations required by the RxDB replication protocol.
 /// Implementors should ensure thread-safety and proper handling of concurrent operations.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being managed. Must implement IReplicatedDocument.</typeparam>
-public interface IDocumentRepository<TDocument> where TDocument : class, IReplicatedDocument
+public interface IDocumentService<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
-    /// Provides a queryable representation of all documents in the repository.
+    /// Provides a queryable representation of all documents in the service.
     /// </summary>
     /// <remarks>
     /// This method is crucial for the RxDB replication protocol as it serves as the foundation for all document queries.
     /// Implementors should:
     /// <list type="bullet">
-    /// <item><description>Return an IQueryable that represents all documents in the repository.</description></item>
+    /// <item><description>Return an IQueryable that represents all documents in the service.</description></item>
     /// <item><description>Ensure the returned IQueryable does not track entity changes for better performance in read scenarios.</description></item>
     /// <item><description>Not apply any limiting or sorting in this method. RxDBDotNet will handle that based on replication needs.</description></item>
     /// </list>
@@ -60,7 +60,7 @@ public interface IDocumentRepository<TDocument> where TDocument : class, IReplic
     Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Creates a new document in the repository.
+    /// Creates a new document in the service.
     /// </summary>
     /// <remarks>
     /// This method is called during the replication process to add new documents.
@@ -77,7 +77,7 @@ public interface IDocumentRepository<TDocument> where TDocument : class, IReplic
     Task<TDocument> CreateDocumentAsync(TDocument document, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Updates an existing document in the repository.
+    /// Updates an existing document in the service.
     /// </summary>
     /// <remarks>
     /// This method is used to apply changes to existing documents during replication.
@@ -94,7 +94,7 @@ public interface IDocumentRepository<TDocument> where TDocument : class, IReplic
     Task<TDocument> UpdateDocumentAsync(TDocument document, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Marks a document as deleted without physically removing it from the repository.
+    /// Marks a document as deleted without physically removing it from the service.
     /// </summary>
     /// <remarks>
     /// This method implements soft delete functionality required by the RxDB replication protocol.
@@ -130,7 +130,7 @@ public interface IDocumentRepository<TDocument> where TDocument : class, IReplic
     bool AreDocumentsEqual(TDocument doc1, TDocument doc2);
 
     /// <summary>
-    /// Saves all changes made in the repository as an atomic operation.
+    /// Saves all changes made in the service as an atomic operation.
     /// </summary>
     /// <remarks>
     /// This method is crucial for maintaining data consistency during the replication process.

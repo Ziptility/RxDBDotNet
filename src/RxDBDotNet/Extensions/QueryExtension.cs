@@ -32,10 +32,10 @@ internal sealed class QueryExtension<TDocument> : ObjectTypeExtension
                 var queryResolver = context.Resolver<QueryResolver<TDocument>>();
                 var checkpoint = context.ArgumentValue<Checkpoint?>("checkpoint");
                 var limit = context.ArgumentValue<int>("limit");
-                var repository = context.Service<IDocumentRepository<TDocument>>();
+                var service = context.Service<IDocumentService<TDocument>>();
                 var cancellationToken = context.RequestAborted;
 
-                return queryResolver.PullDocumentsAsync(checkpoint, limit, repository, context,
+                return queryResolver.PullDocumentsAsync(checkpoint, limit, service, context,
                     cancellationToken);
             });
     }

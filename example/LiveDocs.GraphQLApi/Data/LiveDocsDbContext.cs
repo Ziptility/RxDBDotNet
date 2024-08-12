@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using LiveDocs.GraphQLApi.Models;
+﻿using LiveDocs.GraphQLApi.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace LiveDocs.GraphQLApi.Data
 {

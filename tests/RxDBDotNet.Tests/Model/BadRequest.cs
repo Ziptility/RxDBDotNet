@@ -20,7 +20,7 @@ public class BadRequest
     public string? Title { get; set; }
 
     /// <summary>
-    /// Gets or sets the HTTP status code for the response.
+    /// The HTTP status code for the response.
     /// </summary>
     /// <example>400</example>
     public int Status { get; set; }

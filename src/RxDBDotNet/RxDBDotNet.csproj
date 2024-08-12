@@ -25,8 +25,8 @@
         <Description>RxDBDotNet facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate.</Description>
         <PackageTags>rxdb;graphql;replication;offline-first;realtime;dotnet</PackageTags>
         <PackageProjectUrl>https://github.com/Ziptility/RxDBDotNet</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/Ziptility/RxDBDotNet.git</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
+        <ServiceUrl>https://github.com/Ziptility/RxDBDotNet.git</ServiceUrl>
+        <ServiceType>git</ServiceType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
     <ItemGroup>

@@ -30,11 +30,11 @@ internal sealed class MutationExtension<TDocument> : ObjectTypeExtension
             .Resolve(context =>
             {
                 var mutation = context.Resolver<MutationResolver<TDocument>>();
-                var repository = context.Service<IDocumentRepository<TDocument>>();
+                var service = context.Service<IDocumentService<TDocument>>();
                 var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
                 var cancellationToken = context.RequestAborted;
 
-                return mutation.PushDocumentsAsync(documents, repository, cancellationToken);
+                return mutation.PushDocumentsAsync(documents, service, cancellationToken);
             });
     }
 }

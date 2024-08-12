@@ -1,13 +1,13 @@
 ﻿using HotChocolate.AspNetCore;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
-using LiveDocs.GraphQLApi.Models;
+using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Repositories;
 using LiveDocs.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
-using Query = LiveDocs.GraphQLApi.Models.Query;
+using Query = LiveDocs.GraphQLApi.Models.GraphQL.Query;
 
 namespace LiveDocs.GraphQLApi;
 
@@ -30,10 +30,9 @@ public class Startup
 
         // Add services to the container
         services.AddProblemDetails()
-            .AddSingleton<IDocumentRepository<Hero>, InMemoryDocumentRepository<Hero>>()
-            .AddScoped<IDocumentRepository<User>, EfDocumentRepository<User, LiveDocsDbContext>>()
-            .AddScoped<IDocumentRepository<Workspace>, EfDocumentRepository<Workspace, LiveDocsDbContext>>()
-            .AddScoped<IDocumentRepository<LiveDoc>, EfDocumentRepository<LiveDoc, LiveDocsDbContext>>();
+            .AddScoped<IDocumentService<User>, EfDocumentService<User, LiveDocsDbContext>>()
+            .AddScoped<IDocumentService<Workspace>, EfDocumentService<Workspace, LiveDocsDbContext>>()
+            .AddScoped<IDocumentService<LiveDoc>, EfDocumentService<LiveDoc, LiveDocsDbContext>>();
 
         // Configure the GraphQL server
         services.AddGraphQLServer()
@@ -45,14 +44,10 @@ public class Startup
             // has already added their own root query type.
             .AddQueryType<Query>()
             .AddReplicationServer()
-            .RegisterService<IDocumentRepository<Workspace>>()
-            .AddReplicatedDocument<Hero>()
+            .RegisterService<IDocumentService<Workspace>>()
             .AddReplicatedDocument<User>()
             .AddReplicatedDocument<Workspace>()
             .AddReplicatedDocument<LiveDoc>()
-            // A class to validate that the [GraphQLName] attribute is respected
-            // when building the schema
-            .AddReplicatedDocument<DocumentWithGraphQLName>()
             .AddInMemorySubscriptions()
             .AddSubscriptionDiagnostics();
 
@@ -61,7 +56,7 @@ public class Startup
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
             {
-                corsPolicyBuilder.WithOrigins("http://localhost:1337", "http://localhost:3000")
+                corsPolicyBuilder.WithOrigins("http://localhost:3000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();

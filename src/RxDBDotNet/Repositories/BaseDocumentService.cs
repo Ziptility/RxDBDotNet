@@ -9,11 +9,11 @@ namespace RxDBDotNet.Repositories;
 /// </summary>
 /// <typeparam name="TDocument">The type of document being managed, which must implement IReplicatedDocument.</typeparam>
 /// <remarks>
-/// Initializes a new instance of the BaseDocumentRepository class.
+/// Initializes a new instance of the BaseDocumentService class.
 /// </remarks>
 /// <param name="eventPublisher">The event publisher used to publish document change events.</param>
 /// <param name="logger">The logger used for logging operations and errors.</param>
-public abstract class BaseDocumentRepository<TDocument>(IEventPublisher eventPublisher, ILogger<BaseDocumentRepository<TDocument>> logger) : IDocumentRepository<TDocument>
+public abstract class BaseDocumentService<TDocument>(IEventPublisher eventPublisher, ILogger<BaseDocumentService<TDocument>> logger) : IDocumentService<TDocument>
     where TDocument : class, IReplicatedDocument
 {
     private readonly List<TDocument> _pendingEvents = [];
@@ -77,7 +77,7 @@ public abstract class BaseDocumentRepository<TDocument>(IEventPublisher eventPub
     public abstract bool AreDocumentsEqual(TDocument doc1, TDocument doc2);
 
     /// <summary>
-    /// Internal method to create a document in the repository.
+    /// Internal method to create a document in the service.
     /// </summary>
     /// <param name="document">The document to create.</param>
     /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
@@ -85,7 +85,7 @@ public abstract class BaseDocumentRepository<TDocument>(IEventPublisher eventPub
     protected abstract Task<TDocument> CreateDocumentInternalAsync(TDocument document, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Internal method to update a document in the repository.
+    /// Internal method to update a document in the service.
     /// </summary>
     /// <param name="document">The document to update.</param>
     /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
@@ -93,7 +93,7 @@ public abstract class BaseDocumentRepository<TDocument>(IEventPublisher eventPub
     protected abstract Task<TDocument> UpdateDocumentInternalAsync(TDocument document, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Internal method to mark a document as deleted in the repository.
+    /// Internal method to mark a document as deleted in the service.
     /// </summary>
     /// <param name="id">The ID of the document to mark as deleted.</param>
     /// <param name="cancellationToken">A token to cancel the operation if needed.</param>

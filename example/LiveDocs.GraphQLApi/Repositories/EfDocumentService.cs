@@ -7,18 +7,18 @@ using RxDBDotNet.Services;
 namespace LiveDocs.GraphQLApi.Repositories;
 
 /// <summary>
-/// An implementation of IDocumentRepository using Entity Framework Core.
+/// An implementation of IDocumentService using Entity Framework Core.
 /// This class provides optimized database access for document operations required by the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being managed, which must implement IReplicatedDocument.</typeparam>
 /// <typeparam name="TContext">The type of DbContext to use for data access.</typeparam>
 /// <remarks>
-/// Initializes a new instance of the EfDocumentRepository class.
+/// Initializes a new instance of the EfDocumentService class.
 /// </remarks>
 /// <param name="context">The DbContext to use for data access.</param>
 /// <param name="eventPublisher">The event publisher used to publish document change events.</param>
 /// <param name="logger">The logger to use for logging operations and errors.</param>
-public class EfDocumentRepository<TDocument, TContext>(TContext context, IEventPublisher eventPublisher, ILogger<EfDocumentRepository<TDocument, TContext>> logger) : BaseDocumentRepository<TDocument>(eventPublisher, logger)
+public class EfDocumentService<TDocument, TContext>(TContext context, IEventPublisher eventPublisher, ILogger<EfDocumentService<TDocument, TContext>> logger) : BaseDocumentService<TDocument>(eventPublisher, logger)
     where TDocument : class, IReplicatedDocument
     where TContext : DbContext
 {

@@ -46,7 +46,7 @@ public interface IReplicatedDocument
     /// <para>
     /// Clients subscribing to document streams can specify one of these topic ids to receive events,
     /// providing a form of 'subscription filtering'. This mechanism ensures that subscribers can
-    /// receive updates for the specific documents or document types they are interested in.
+    /// receive updates for the specific documents they are interested in.
     /// </para>
     /// <para>
     /// Example usage:

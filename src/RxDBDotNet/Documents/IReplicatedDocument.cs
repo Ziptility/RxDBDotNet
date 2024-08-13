@@ -12,7 +12,7 @@ public interface IReplicatedDocument
     /// This property is used for client-side identification and replication purposes.
     /// </summary>
     /// <remarks>
-    /// The Id should be unique within the collection of documents of the same type.
+    /// The Id must be unique within the collection of documents of the same type.
     /// It is typically generated on the client side to support offline-first scenarios.
     /// </remarks>
     Guid Id { get; }

@@ -54,7 +54,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
     public required UserRole Role { get; set; }
 
     /// <summary>
-    /// The unique identifier of the workspace to which the user belongs.
+    /// The db-assigned primary key of the workspace to which the user belongs.
     /// </summary>
     [Required]
     [NotDefault]

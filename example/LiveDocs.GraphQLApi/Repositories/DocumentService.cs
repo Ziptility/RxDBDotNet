@@ -1,4 +1,7 @@
-﻿using LiveDocs.GraphQLApi.Data;
+﻿using System.Linq.Expressions;
+using LiveDocs.GraphQLApi.Data;
+using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Repositories;
@@ -10,8 +13,11 @@ namespace LiveDocs.GraphQLApi.Repositories;
 ///     An implementation of IDocumentService using Entity Framework Core.
 ///     This class provides optimized database access for document operations required by the RxDB replication protocol.
 /// </summary>
-/// <typeparam name="TDocument">The type of document being managed, which must implement IReplicatedDocument.</typeparam>
-public class DocumentService<TDocument> : IDocumentService<TDocument> where TDocument : class, IReplicatedDocument
+/// <typeparam name="TDocument">The type of replicated document being managed, which must implement IReplicatedDocument.</typeparam>
+/// <typeparam name="TEntity">The type of entity in which the replicated document data is stored.</typeparam>
+public class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
+    where TDocument : ReplicatedDocument
+    where TEntity : ReplicatedEntity<TEntity, TDocument>
 {
     private readonly LiveDocsDbContext _dbContext;
     private readonly IEventPublisher _eventPublisher;
@@ -26,7 +32,7 @@ public class DocumentService<TDocument> : IDocumentService<TDocument> where TDoc
     /// <inheritdoc />
     public IQueryable<TDocument> GetQueryableDocuments()
     {
-        return _dbContext.Set<TDocument>();
+        return _dbContext.Set<TEntity>().AsNoTracking().Select(MapEntityToDocument());
     }
 
     /// <inheritdoc />
@@ -38,8 +44,7 @@ public class DocumentService<TDocument> : IDocumentService<TDocument> where TDoc
     /// <inheritdoc />
     public async Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return await _dbContext.Set<TDocument>()
-            .FindAsync([id], cancellationToken);
+        return await GetQueryableDocuments().Where(d => d.Id == id).SingleOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -47,7 +52,7 @@ public class DocumentService<TDocument> : IDocumentService<TDocument> where TDoc
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        await _dbContext.Set<TDocument>()
+        await _dbContext.Set<TEntity>()
             .AddAsync(document, cancellationToken);
 
         _pendingEvents.Add(document);
@@ -60,8 +65,8 @@ public class DocumentService<TDocument> : IDocumentService<TDocument> where TDoc
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        var existingDocument = await _dbContext.Set<TDocument>()
-                                   .FindAsync([document.Id], cancellationToken)
+        var existingDocument = await _dbContext.Set<TEntity>()
+                                   .FindAsync([document.PrimaryKeyId], cancellationToken)
                                ?? throw new InvalidOperationException($"Document with ID {document.Id} not found for update.");
 
         _dbContext.Entry(existingDocument)
@@ -78,8 +83,8 @@ public class DocumentService<TDocument> : IDocumentService<TDocument> where TDoc
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        var existingDocument = await _dbContext.Set<TDocument>()
-                                   .FindAsync([document.Id], cancellationToken)
+        var existingDocument = await _dbContext.Set<TEntity>()
+                                   .FindAsync([document.PrimaryKeyId], cancellationToken)
                                ?? throw new InvalidOperationException($"Document with ID {document.Id} not found for delete.");
 
         existingDocument.IsDeleted = true;
@@ -127,5 +132,10 @@ public class DocumentService<TDocument> : IDocumentService<TDocument> where TDoc
         }
 
         return true;
+    }
+
+    private static Expression<Func<TEntity, TDocument>> MapEntityToDocument()
+    {
+        return e => e.MapToReplicatedDocument().Compile().Invoke(e);
     }
 }

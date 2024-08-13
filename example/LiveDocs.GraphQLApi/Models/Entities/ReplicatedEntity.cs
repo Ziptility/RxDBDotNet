@@ -1,11 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
+using RxDBDotNet.Documents;
 
 namespace LiveDocs.GraphQLApi.Models.Entities;
 
 /// <summary>
 ///     Base class for an entity that is replicated via RxDBDotNet.
 /// </summary>
-public abstract class ReplicatedEntity
+public abstract class ReplicatedEntity<TEntity, TDocument>
+    where TDocument : class, IReplicatedDocument
+    where TEntity : ReplicatedEntity<TEntity, TDocument>
 {
     /// <summary>
     /// The primary key for this entity.
@@ -36,4 +40,6 @@ public abstract class ReplicatedEntity
     /// An optional list of topics to publish events to when an instance is upserted.
     /// </summary>
     public List<string>? Topics { get; init; }
+
+    public abstract Expression<Func<TEntity, TDocument>> MapToReplicatedDocument();
 }

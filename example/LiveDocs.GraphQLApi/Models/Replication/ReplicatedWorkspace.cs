@@ -18,5 +18,5 @@ public sealed record ReplicatedWorkspace : ReplicatedDocument
     /// </summary>
     [Required]
     [MaxLength(30)]
-    public required string Name { get; set; }
+    public required string Name { get; init; }
 }

@@ -24,6 +24,6 @@ public abstract record ReplicatedDocument : IReplicatedDocument
     public required DateTimeOffset UpdatedAt { get; set; }
 
     /// <inheritdoc />
-    [MaxLength(10)]
+    [Length(1, 10)]
     public List<string>? Topics { get; init; }
 }

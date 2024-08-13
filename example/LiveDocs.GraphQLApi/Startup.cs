@@ -1,7 +1,6 @@
 ﻿using HotChocolate.AspNetCore;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
-using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
 using LiveDocs.GraphQLApi.Repositories;
 using LiveDocs.ServiceDefaults;
@@ -31,9 +30,9 @@ public class Startup
 
         // Add services to the container
         services.AddProblemDetails()
-            .AddScoped<IDocumentService<ReplicatedUser>, DocumentService<User, ReplicatedUser>>()
-            .AddScoped<IDocumentService<ReplicatedWorkspace>, DocumentService<Workspace,ReplicatedWorkspace>>()
-            .AddScoped<IDocumentService<ReplicatedLiveDoc>, DocumentService<LiveDoc, ReplicatedLiveDoc>>();
+            .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
+            .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
+            .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
 
         // Configure the GraphQL server
         services.AddGraphQLServer()

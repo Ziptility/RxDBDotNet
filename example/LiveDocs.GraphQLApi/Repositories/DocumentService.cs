@@ -15,15 +15,15 @@ namespace LiveDocs.GraphQLApi.Repositories;
 /// </summary>
 /// <typeparam name="TDocument">The type of replicated document being managed, which must implement IReplicatedDocument.</typeparam>
 /// <typeparam name="TEntity">The type of entity in which the replicated document data is stored.</typeparam>
-public class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
+public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
     where TDocument : ReplicatedDocument
-    where TEntity : ReplicatedEntity<TEntity, TDocument>
+    where TEntity : ReplicatedEntity
 {
     private readonly LiveDocsDbContext _dbContext;
     private readonly IEventPublisher _eventPublisher;
     private readonly List<TDocument> _pendingEvents = [];
 
-    public DocumentService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
+    protected DocumentService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
@@ -32,7 +32,7 @@ public class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
     /// <inheritdoc />
     public IQueryable<TDocument> GetQueryableDocuments()
     {
-        return _dbContext.Set<TEntity>().AsNoTracking().Select(MapEntityToDocument());
+        return _dbContext.Set<TEntity>().AsNoTracking().Select(ProjectToDocument());
     }
 
     /// <inheritdoc />
@@ -53,7 +53,7 @@ public class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
         ArgumentNullException.ThrowIfNull(document);
 
         await _dbContext.Set<TEntity>()
-            .AddAsync(document, cancellationToken);
+            .AddAsync(Create(document), cancellationToken);
 
         _pendingEvents.Add(document);
 
@@ -65,17 +65,17 @@ public class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        var existingDocument = await _dbContext.Set<TEntity>()
-                                   .FindAsync([document.PrimaryKeyId], cancellationToken)
-                               ?? throw new InvalidOperationException($"Document with ID {document.Id} not found for update.");
+        var existingEntity = await _dbContext
+                                 .Set<TEntity>()
+                                 .Where(e => e.ReplicatedDocumentId == document.Id)
+                                 .SingleOrDefaultAsync(cancellationToken)
+                               ?? throw new InvalidOperationException($"Entity with a ReplicateDocumentId of {document.Id} not found for update.");
 
-        _dbContext.Entry(existingDocument)
-            .CurrentValues.SetValues(document);
-        existingDocument.UpdatedAt = DateTimeOffset.UtcNow;
+        Update(document, existingEntity);
 
-        _pendingEvents.Add(existingDocument);
+        _pendingEvents.Add(document);
 
-        return existingDocument;
+        return document;
     }
 
     /// <inheritdoc />
@@ -83,17 +83,18 @@ public class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        var existingDocument = await _dbContext.Set<TEntity>()
-                                   .FindAsync([document.PrimaryKeyId], cancellationToken)
-                               ?? throw new InvalidOperationException($"Document with ID {document.Id} not found for delete.");
+        var existingEntity = await _dbContext
+                                 .Set<TEntity>()
+                                 .Where(e => e.ReplicatedDocumentId == document.Id)
+                                 .SingleOrDefaultAsync(cancellationToken)
+                             ?? throw new InvalidOperationException($"Entity with a ReplicateDocumentId of {document.Id} not found for delete.");
 
-        existingDocument.IsDeleted = true;
+        existingEntity.IsDeleted = true;
+        existingEntity.UpdatedAt = document.UpdatedAt;
 
-        existingDocument.UpdatedAt = DateTimeOffset.UtcNow;
+        _pendingEvents.Add(document);
 
-        _pendingEvents.Add(existingDocument);
-
-        return existingDocument;
+        return document;
     }
 
     /// <inheritdoc />
@@ -134,8 +135,23 @@ public class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
         return true;
     }
 
-    private static Expression<Func<TEntity, TDocument>> MapEntityToDocument()
-    {
-        return e => e.MapToReplicatedDocument().Compile().Invoke(e);
-    }
+    /// <summary>
+    /// Projects the storage entity to its corresponding document.
+    /// </summary>
+    protected abstract Expression<Func<TEntity, TDocument>> ProjectToDocument();
+
+    /// <summary>
+    /// Updates an entity from the provided document.
+    /// </summary>
+    /// <param name="updatedDocument">The document from which to update the existing entity.</param>
+    /// <param name="entityToUpdate">The existing entity to update from the document.</param>
+    /// <returns>The updated entity.</returns>
+    protected abstract TEntity Update(TDocument updatedDocument, TEntity entityToUpdate);
+
+    /// <summary>
+    /// Creates a new entity from the provided document.
+    /// </summary>
+    /// <param name="newDocument">The new document from which to crete the entity.</param>
+    /// <returns>The newly created entity.</returns>
+    protected abstract TEntity Create(TDocument newDocument);
 }

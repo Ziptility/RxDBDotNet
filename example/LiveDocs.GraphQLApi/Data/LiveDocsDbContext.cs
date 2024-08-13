@@ -17,6 +17,11 @@ namespace LiveDocs.GraphQLApi.Data
 
             modelBuilder.Entity<User>(e =>
             {
+                e.Property(u => u.Id)
+                    .ValueGeneratedNever();
+                
+                e.HasAlternateKey(u => u.ReplicatedDocumentId);
+                
                 e.HasIndex(u => u.Email)
                     .IsUnique();
 
@@ -37,6 +42,11 @@ namespace LiveDocs.GraphQLApi.Data
 
             modelBuilder.Entity<Workspace>(e =>
             {
+                e.Property(w => w.Id)
+                    .ValueGeneratedNever();
+
+                e.HasAlternateKey(u => u.ReplicatedDocumentId);
+
                 e.HasIndex(w => w.Name)
                     .IsUnique();
 
@@ -52,7 +62,12 @@ namespace LiveDocs.GraphQLApi.Data
 
             modelBuilder.Entity<LiveDoc>(e =>
             {
-                e.HasOne<User>()
+                e.Property(d => d.Id)
+                    .ValueGeneratedNever();
+
+                e.HasAlternateKey(u => u.ReplicatedDocumentId);
+
+                e.HasOne(e => e.Owner)
                     .WithMany()
                     .HasForeignKey(d => d.OwnerId)
                     .OnDelete(DeleteBehavior.Restrict);

@@ -1,15 +1,12 @@
 ﻿using LiveDocs.GraphQLApi.Models.Shared;
-using LiveDocs.GraphQLApi.Validations;
 using System.ComponentModel.DataAnnotations;
-using System.Linq.Expressions;
-using LiveDocs.GraphQLApi.Models.Replication;
 
 namespace LiveDocs.GraphQLApi.Models.Entities;
 
 /// <summary>
 /// Represents a user of the LiveDocs system.
 /// </summary>
-public class User : ReplicatedEntity<User, ReplicatedUser>
+public sealed class User : ReplicatedEntity
 {
     /// <summary>
     /// The first name of the user.
@@ -42,23 +39,10 @@ public class User : ReplicatedEntity<User, ReplicatedUser>
     /// The server-generated primary key of the workspace to which the user belongs.
     /// </summary>
     [Required]
-    [NotDefault]
     public required Guid WorkspaceId { get; init; }
 
-    public override Expression<Func<User, ReplicatedUser>> MapToReplicatedDocument()
-    {
-        return user => new ReplicatedUser
-        {
-            Id = user.ReplicatedDocumentId,
-            PrimaryKeyId = user.Id,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Role = user.Role,
-            WorkspaceId = user.WorkspaceId,
-            Email = user.Email,
-            IsDeleted = user.IsDeleted,
-            UpdatedAt = user.UpdatedAt,
-            Topics = user.Topics,
-        };
-    }
+    /// <summary>
+    /// The workspace to which the user belongs.
+    /// </summary>
+    public Workspace? Workspace { get; init; }
 }

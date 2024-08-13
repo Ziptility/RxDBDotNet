@@ -17,14 +17,14 @@ public sealed record ReplicatedUser : ReplicatedDocument
     /// </summary>
     [Required]
     [MaxLength(256)]
-    public required string FirstName { get; set; }
+    public required string FirstName { get; init; }
 
     /// <summary>
     /// The last name of the user.
     /// </summary>
     [Required]
     [MaxLength(256)]
-    public required string LastName { get; set; }
+    public required string LastName { get; init; }
 
     /// <summary>
     /// The full name of the user.
@@ -45,16 +45,16 @@ public sealed record ReplicatedUser : ReplicatedDocument
     [EmailAddress]
     [GraphQLType(typeof(EmailAddressType))]
     [MaxLength(256)]
-    public required string Email { get; set; }
+    public required string Email { get; init; }
 
     /// <summary>
     /// The role of the user.
     /// </summary>
     [Required]
-    public required UserRole Role { get; set; }
+    public required UserRole Role { get; init; }
 
     /// <summary>
-    /// The db-assigned primary key of the workspace to which the user belongs.
+    /// The client-assigned identifier of the workspace to which the user belongs.
     /// </summary>
     [Required]
     [NotDefault]

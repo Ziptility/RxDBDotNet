@@ -16,17 +16,17 @@ public sealed record ReplicatedLiveDoc : ReplicatedDocument
     /// </summary>
     [Required]
     [MaxLength(10_485_760)] // 10 MB in characters
-    public required string Content { get; set; }
+    public required string Content { get; init; }
 
     /// <summary>
-    /// The unique identifier of the live doc's owner within the workspace.
+    /// The client-assigned identifier of the live doc's owner within the workspace.
     /// </summary>
     [Required]
     [NotDefault]
     public required Guid OwnerId { get; init; }
 
     /// <summary>
-    /// The unique identifier of the workspace to which the live doc belongs.
+    /// The client-assigned identifier of the workspace to which the live doc belongs.
     /// </summary>
     [Required]
     [NotDefault]

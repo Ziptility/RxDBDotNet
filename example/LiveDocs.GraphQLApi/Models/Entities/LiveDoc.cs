@@ -1,6 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Linq.Expressions;
-using LiveDocs.GraphQLApi.Models.Replication;
 
 namespace LiveDocs.GraphQLApi.Models.Entities;
 
@@ -8,7 +6,7 @@ namespace LiveDocs.GraphQLApi.Models.Entities;
 /// Represents an entity that can be collaboratively edited in real-time
 /// by multiple users within the same workspace.
 /// </summary>
-public class LiveDoc : ReplicatedEntity<LiveDoc, ReplicatedLiveDoc>
+public sealed class LiveDoc : ReplicatedEntity
 {
     /// <summary>
     /// The content of the live doc.
@@ -23,23 +21,18 @@ public class LiveDoc : ReplicatedEntity<LiveDoc, ReplicatedLiveDoc>
     public required Guid OwnerId { get; init; }
 
     /// <summary>
+    /// The live doc's owner.
+    /// </summary>
+    public User? Owner { get; init; }
+
+    /// <summary>
     /// The unique identifier of the workspace to which the live doc belongs.
     /// </summary>
     [Required]
     public required Guid WorkspaceId { get; init; }
 
-    public override Expression<Func<LiveDoc, ReplicatedLiveDoc>> MapToReplicatedDocument()
-    {
-        return liveDoc => new ReplicatedLiveDoc
-        {
-            Id = liveDoc.ReplicatedDocumentId,
-            PrimaryKeyId = liveDoc.Id,
-            Content = liveDoc.Content,
-            OwnerId = liveDoc.OwnerId,
-            WorkspaceId = liveDoc.WorkspaceId,
-            IsDeleted = liveDoc.IsDeleted,
-            UpdatedAt = liveDoc.UpdatedAt,
-            Topics = liveDoc.Topics,
-        };
-    }
+    /// <summary>
+    /// The workspace to which the live doc belongs.
+    /// </summary>
+    public Workspace? Workspace { get; init; }
 }

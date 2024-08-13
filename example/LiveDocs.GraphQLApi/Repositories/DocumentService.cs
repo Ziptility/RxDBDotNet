@@ -113,26 +113,10 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
     /// <inheritdoc />
     public bool AreDocumentsEqual(TDocument document1, TDocument document2)
     {
-        var entry1 = _dbContext.Entry(document1);
-        var entry2 = _dbContext.Entry(document2);
-
-        foreach (var property in entry1.Properties)
-        {
-            var name = property.Metadata.Name;
-            if (name != nameof(IReplicatedDocument.UpdatedAt)) // Ignore UpdatedAt for comparison
-            {
-                var value1 = property.CurrentValue;
-                var value2 = entry2.Property(name)
-                    .CurrentValue;
-
-                if (!Equals(value1, value2))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        ArgumentNullException.ThrowIfNull(document1);
+        ArgumentNullException.ThrowIfNull(document2);
+        
+        return document1.Equals(document2);
     }
 
     /// <summary>

@@ -15,24 +15,22 @@ namespace LiveDocs.GraphQLApi.Data
             
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<User>(e =>
+            modelBuilder.Entity<User>(entity =>
             {
-                e.Property(u => u.Id)
+                entity.Property(u => u.Id)
                     .ValueGeneratedNever();
                 
-                e.HasAlternateKey(u => u.ReplicatedDocumentId);
+                entity.HasAlternateKey(u => u.ReplicatedDocumentId);
                 
-                e.HasIndex(u => u.Email)
+                entity.HasIndex(u => u.Email)
                     .IsUnique();
 
-                e.HasOne<Workspace>()
+                entity.HasOne(e => e.Workspace)
                     .WithMany()
                     .HasForeignKey(d => d.WorkspaceId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                e.Property(w => w.Topics).HasColumnType("nvarchar(max)");
-
-                e.OwnsOne(
+                entity.OwnsOne(
                     user => user.Topics,
                     ownedNavigationBuilder =>
                     {
@@ -40,19 +38,17 @@ namespace LiveDocs.GraphQLApi.Data
                     });
             });
 
-            modelBuilder.Entity<Workspace>(e =>
+            modelBuilder.Entity<Workspace>(entity =>
             {
-                e.Property(w => w.Id)
+                entity.Property(w => w.Id)
                     .ValueGeneratedNever();
 
-                e.HasAlternateKey(u => u.ReplicatedDocumentId);
+                entity.HasAlternateKey(u => u.ReplicatedDocumentId);
 
-                e.HasIndex(w => w.Name)
+                entity.HasIndex(w => w.Name)
                     .IsUnique();
 
-                e.Property(w => w.Topics).HasColumnType("nvarchar(max)");
-
-                e.OwnsOne(
+                entity.OwnsOne(
                     workspace => workspace.Topics,
                     ownedNavigationBuilder =>
                     {
@@ -60,26 +56,24 @@ namespace LiveDocs.GraphQLApi.Data
                     });
             });
 
-            modelBuilder.Entity<LiveDoc>(e =>
+            modelBuilder.Entity<LiveDoc>(entity =>
             {
-                e.Property(d => d.Id)
+                entity.Property(d => d.Id)
                     .ValueGeneratedNever();
 
-                e.HasAlternateKey(u => u.ReplicatedDocumentId);
+                entity.HasAlternateKey(u => u.ReplicatedDocumentId);
 
-                e.HasOne(e => e.Owner)
+                entity.HasOne(e => e.Owner)
                     .WithMany()
                     .HasForeignKey(d => d.OwnerId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                e.HasOne<Workspace>()
+                entity.HasOne(e => e.Workspace)
                     .WithMany()
                     .HasForeignKey(d => d.WorkspaceId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                e.Property(w => w.Topics).HasColumnType("nvarchar(max)");
-
-                e.OwnsOne(
+                entity.OwnsOne(
                     workspace => workspace.Topics,
                     ownedNavigationBuilder =>
                     {

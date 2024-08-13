@@ -31,4 +31,27 @@ public sealed record ReplicatedLiveDoc : ReplicatedDocument
     [Required]
     [NotDefault]
     public required Guid WorkspaceId { get; init; }
+
+    public bool Equals(ReplicatedLiveDoc? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        return base.Equals(other)
+               && Content == other.Content
+               && OwnerId.Equals(other.OwnerId)
+               && WorkspaceId.Equals(other.WorkspaceId);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(base.GetHashCode(), Content, OwnerId, WorkspaceId);
+    }
 }

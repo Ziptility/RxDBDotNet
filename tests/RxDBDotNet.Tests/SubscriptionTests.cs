@@ -160,6 +160,9 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(testTimeoutToken);
 
         Debug.Assert(workspace3.Id != null, "workspace3.Id != null");
+        
+        // Only subscribe to update events for workspace3
+        List<string> topics = [workspace3.Id.Value.ToString()];
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql()
             .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
@@ -167,22 +170,22 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
                 .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
             {
                 Authorization = "test-auth-token",
-            })
+            }, topics: topics)
             .Build();
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
-        var collectTimespan = TimeSpan.FromSeconds(500);
+        var collectTimespan = TimeSpan.FromSeconds(5);
         var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testTimeoutToken, collectTimespan);
 
         // Ensure the subscription is established
         await Task.Delay(1000, testTimeoutToken);
 
         await HttpClient.UpdateWorkspaceAsync(workspace1);
-        // await HttpClient.UpdateWorkspaceAsync(workspace2);
-        // // Update workspace 3 twice
-        // var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3);
-        // await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3);
+        await HttpClient.UpdateWorkspaceAsync(workspace2);
+        // Update workspace 3 twice
+        var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3);
+        await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3);
 
         var subscriptionResponses = await subscriptionTask;
         subscriptionResponses.Should()

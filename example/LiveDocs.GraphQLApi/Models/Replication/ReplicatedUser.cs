@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using HotChocolate;
 using HotChocolate.Types;
 using LiveDocs.GraphQLApi.Models.Shared;
@@ -12,19 +13,41 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 [GraphQLName("User")]
 public sealed record ReplicatedUser : ReplicatedDocument
 {
+    private readonly string _firstName;
+    private readonly string _lastName;
+    private readonly string _email;
+
     /// <summary>
     /// The first name of the user.
     /// </summary>
     [Required]
-    [MaxLength(256)]
-    public required string FirstName { get; init; }
+    [Length(1, 256)]
+    public required string FirstName
+    {
+        get => _firstName;
+        [MemberNotNull(nameof(_firstName))]
+        init
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _firstName = value.Trim();
+        }
+    }
 
     /// <summary>
     /// The last name of the user.
     /// </summary>
     [Required]
-    [MaxLength(256)]
-    public required string LastName { get; init; }
+    [Length(1, 256)]
+    public required string LastName
+    {
+        get => _lastName;
+        [MemberNotNull(nameof(_lastName))]
+        init
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _lastName = value.Trim();
+        }
+    }
 
     /// <summary>
     /// The full name of the user.
@@ -45,7 +68,16 @@ public sealed record ReplicatedUser : ReplicatedDocument
     [EmailAddress]
     [GraphQLType(typeof(EmailAddressType))]
     [MaxLength(256)]
-    public required string Email { get; init; }
+    public required string Email
+    {
+        get => _email;
+        [MemberNotNull(nameof(_email))]
+        init
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _email = value.Trim();
+        }
+    }
 
     /// <summary>
     /// The role of the user.
@@ -59,4 +91,29 @@ public sealed record ReplicatedUser : ReplicatedDocument
     [Required]
     [NotDefault]
     public required Guid WorkspaceId { get; init; }
+
+    public bool Equals(ReplicatedUser? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        return base.Equals(other)
+               && _firstName == other._firstName
+               && _lastName == other._lastName
+               && _email == other._email
+               && Role == other.Role
+               && WorkspaceId.Equals(other.WorkspaceId);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(base.GetHashCode(), _firstName, _lastName, _email, (int)Role, WorkspaceId);
+    }
 }

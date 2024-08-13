@@ -10,12 +10,15 @@ internal static class TestUtils
 {
     public static async Task<WorkspaceInputGql> CreateNewWorkspaceAsync(this HttpClient httpClient)
     {
+        var workspaceId = Provider.Sql.Create();
+        
         var newWorkspace = new WorkspaceInputGql
         {
-            Id = Provider.Sql.Create(),
-            Name = Strings.CreateString(),
+            Id = workspaceId,
+            Name = CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
+            Topics = new List<string>{ workspaceId.ToString() },
         };
 
         var workspaceInput = new WorkspaceInputPushRowGql

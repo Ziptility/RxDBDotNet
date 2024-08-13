@@ -92,7 +92,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
             if (existing != null)
             {
                 // Document exists in the service, handle potential conflicts
-                MutationResolver<TDocument>.HandleExistingDocument(document, existing, conflicts, updates, service);
+                HandleExistingDocument(document, existing, conflicts, updates, service);
             }
             else
             {

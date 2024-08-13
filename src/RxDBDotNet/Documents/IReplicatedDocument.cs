@@ -24,7 +24,7 @@ public interface IReplicatedDocument
     /// This property is crucial for conflict resolution and determining the most recent version of a document.
     /// It should be updated every time the document is modified.
     /// </remarks>
-    DateTimeOffset UpdatedAt { get; set; }
+    DateTimeOffset UpdatedAt { get; }
 
     /// <summary>
     /// A value indicating whether the document has been marked as deleted.
@@ -33,7 +33,7 @@ public interface IReplicatedDocument
     /// When set to true, this property indicates a soft delete.
     /// Soft deletes allow for data recovery and maintain a history of deletions in the system.
     /// </remarks>
-    bool IsDeleted { get; set; }
+    bool IsDeleted { get; }
 
     /// <summary>
     /// An optional list of topics to publish events to when an instance is upserted.
@@ -61,5 +61,5 @@ public interface IReplicatedDocument
     /// </code>
     /// </para>
     /// </remarks>
-    List<string>? Topics { get; init; }
+    List<string>? Topics { get; }
 }

@@ -26,7 +26,6 @@ RxDBDotNet is an open-source library that facilitates real-time data replication
   - Provides efficient data pull and push operations
   - Supports GraphQL filtering for pull operations
 - **Conflict Handling**: Detects conflicts during push operations and returns them to the client for resolution
-- **Flexibility**: Can be integrated with various backend storage solutions through a service pattern
 
 This library bridges the gap between RxDB-powered frontend applications and .NET backend services, allowing developers to build robust, real-time, offline-first applications with a .NET backend infrastructure.
 
@@ -198,14 +197,13 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 - **Real-Time Updates**: Provides real-time updates through GraphQL subscriptions.
 - **Conflict Detection**: Implements server-side conflict detection and reports conflicts to the client for resolution.
 - **GraphQL Filtering**: Supports filtering of documents during pull operations using GraphQL filters.
-- **Extensible**: Easily extendable to support different storage backends through the service pattern.
 - **Type-Safe**: Fully supports C# nullable reference types for improved type safety.
 
 ## Contributing
 
 We welcome contributions to RxDBDotNet! Here's how you can contribute:
 
-1. Fork the service.
+1. Fork the repository.
 2. Create a new branch (`git checkout -b feature/amazing-feature`).
 3. Make your changes.
 4. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/) syntax.
@@ -233,4 +231,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact Information
 
-If you have any questions, concerns, or support requests, please open an issue on our [GitHub service](https://github.com/Ziptility/RxDBDotNet/issues).
+If you have any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).

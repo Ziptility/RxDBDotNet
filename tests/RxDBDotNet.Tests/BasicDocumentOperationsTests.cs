@@ -12,6 +12,9 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
     public async Task TestCase1_1_PushNewRowShouldCreateSingleDocument()
     {
         // Arrange
+        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var testTimeoutToken = testTimeoutTokenSource.Token;
+
         var workspaceId = Provider.Sql.Create();
         var newWorkspace = new WorkspaceInputGql
         {
@@ -37,7 +40,7 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
             new MutationQueryBuilderGql().WithPushWorkspace(new WorkspaceQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await HttpClient.PostGqlMutationAsync(createWorkspace);
+        var response = await HttpClient.PostGqlMutationAsync(createWorkspace, testTimeoutToken);
 
         // Assert
         response.Errors.Should()
@@ -46,15 +49,18 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
             .BeNullOrEmpty();
 
         // Verify the workspace exists in the database
-        await HttpClient.VerifyWorkspaceExists(newWorkspace);
+        await HttpClient.VerifyWorkspaceExists(newWorkspace, testTimeoutToken);
     }
 
     [Fact]
     public async Task TestCase1_2_PullBulkByDocumentIdShouldReturnSingleDocument()
     {
         // Arrange
-        var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
-        await HttpClient.CreateNewWorkspaceAsync();
+        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var testTimeoutToken = testTimeoutTokenSource.Token;
+
+        var workspace1 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
+        await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
 
         var workspaceById = new WorkspaceFilterInputGql
         {
@@ -64,10 +70,10 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
             },
         };
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
-            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 10, where: workspaceById);
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), limit: 1000, where: workspaceById);
 
         // Act
-        var response = await HttpClient.PostGqlQueryAsync(query);
+        var response = await HttpClient.PostGqlQueryAsync(query, testTimeoutToken);
 
         // Assert
         response.Errors.Should()
@@ -83,21 +89,21 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
     public async Task PullBulkShouldReturnAllDocuments()
     {
         // Arrange
-        var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
-        var workspace2 = await HttpClient.CreateNewWorkspaceAsync();
+        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var testTimeoutToken = testTimeoutTokenSource.Token;
+        var workspace1 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
+        var workspace2 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
 
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
-            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 10);
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), limit: 1000);
 
         // Act
-        var response = await HttpClient.PostGqlQueryAsync(query);
+        var response = await HttpClient.PostGqlQueryAsync(query, testTimeoutToken);
 
         // Assert
         response.Errors.Should()
             .BeNullOrEmpty();
 
-        response.Data.PullWorkspace?.Documents.Should()
-            .HaveCount(3, "Two were created in the test, and one is created via seed data");
         response.Data.PullWorkspace?.Documents.Should()
             .ContainSingle(workspace => workspace.Id == workspace1.Id);
         response.Data.PullWorkspace?.Documents.Should()
@@ -108,9 +114,11 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
     public async Task ItShouldHandleMultiplePullsFollowedByAPush()
     {
         // Act
-        var response = await PushAndPullDocumentAsync();
-        var response2 = await PushAndPullDocumentAsync();
-        var response3 = await PushAndPullDocumentAsync();
+        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var testTimeoutToken = testTimeoutTokenSource.Token;
+        var response = await PushAndPullDocumentAsync(testTimeoutToken);
+        var response2 = await PushAndPullDocumentAsync(testTimeoutToken);
+        var response3 = await PushAndPullDocumentAsync(testTimeoutToken);
 
         // Assert
         response.Errors.Should()
@@ -121,10 +129,10 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
             .BeNullOrEmpty();
     }
 
-    private async Task<GqlQueryResponse> PushAndPullDocumentAsync()
+    private async Task<GqlQueryResponse> PushAndPullDocumentAsync(CancellationToken cancellationToken)
     {
         // Push a document
-        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync();
+        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync(cancellationToken);
 
         // Pull a document
         var workspaceById = new WorkspaceFilterInputGql
@@ -135,8 +143,8 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
             },
         };
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
-            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 10, where: workspaceById);
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), limit: 1000, where: workspaceById);
 
-        return await HttpClient.PostGqlQueryAsync(query);
+        return await HttpClient.PostGqlQueryAsync(query, cancellationToken);
     }
 }

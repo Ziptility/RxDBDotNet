@@ -33,7 +33,7 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         await Task.Delay(1000, timeoutToken);
 
         // Act
-        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync();
+        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync(timeoutToken);
 
         // Assert
         var subscriptionResponses = await subscriptionTask;
@@ -85,7 +85,7 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         using var timeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var timeoutToken = timeoutTokenSource.Token;
 
-        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync();
+        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync(timeoutToken);
 
         await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(timeoutToken);
 
@@ -105,7 +105,7 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         await Task.Delay(1000, timeoutToken);
 
         // Act
-        var updatedWorkspace = await HttpClient.UpdateWorkspaceAsync(newWorkspace);
+        var updatedWorkspace = await HttpClient.UpdateWorkspaceAsync(newWorkspace, timeoutToken);
 
         // Assert
         var subscriptionResponses = await subscriptionTask;
@@ -153,9 +153,9 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var testTimeoutToken = testTimeoutTokenSource.Token;
 
-        var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
-        var workspace2 = await HttpClient.CreateNewWorkspaceAsync();
-        var workspace3 = await HttpClient.CreateNewWorkspaceAsync();
+        var workspace1 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
+        var workspace2 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
+        var workspace3 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
 
         await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(testTimeoutToken);
 
@@ -179,11 +179,11 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         // Ensure the subscription is established
         await Task.Delay(1000, testTimeoutToken);
 
-        await HttpClient.UpdateWorkspaceAsync(workspace1);
-        await HttpClient.UpdateWorkspaceAsync(workspace2);
+        await HttpClient.UpdateWorkspaceAsync(workspace1, testTimeoutToken);
+        await HttpClient.UpdateWorkspaceAsync(workspace2, testTimeoutToken);
         // Update workspace 3 twice
-        var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3);
-        await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3);
+        var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3, testTimeoutToken);
+        await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3, testTimeoutToken);
 
         var subscriptionResponses = await subscriptionTask;
         subscriptionResponses.Should()

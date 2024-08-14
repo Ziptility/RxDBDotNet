@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using HotChocolate;
-using RxDBDotNet.Documents;
-using RxDBDotNet.Validations;
+using LiveDocs.GraphQLApi.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
 

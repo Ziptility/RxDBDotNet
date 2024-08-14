@@ -3,8 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using HotChocolate;
 using HotChocolate.Types;
 using LiveDocs.GraphQLApi.Models.Shared;
-using RxDBDotNet.Documents;
-using RxDBDotNet.Validations;
+using LiveDocs.GraphQLApi.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
 

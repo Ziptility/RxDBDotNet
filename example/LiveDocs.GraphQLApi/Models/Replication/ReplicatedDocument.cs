@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using RxDBDotNet.Validations;
+using LiveDocs.GraphQLApi.Validations;
+using RxDBDotNet.Documents;
 
-namespace RxDBDotNet.Documents;
+namespace LiveDocs.GraphQLApi.Models.Replication;
 
 /// <summary>
 ///     Base record for a document that is replicated via RxDBDotNet.

@@ -22,7 +22,9 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             WorkspaceId = user.Workspace!.ReplicatedDocumentId,
             IsDeleted = user.IsDeleted,
             UpdatedAt = user.UpdatedAt,
-            Topics = user.Topics == null ? null : user.Topics.ConvertAll(t => t.Name),
+#pragma warning disable RCS1077 // Optimize LINQ method call // EF Core cannot translate the optimized LINQ method call
+            Topics = user.Topics == null ? null : user.Topics.Select(t => t.Name).ToList(),
+#pragma warning restore RCS1077 // Optimize LINQ method call
         };
     }
 
@@ -36,11 +38,10 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
         entityToUpdate.Email = updatedDocument.Email;
         entityToUpdate.Role = updatedDocument.Role;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
-        entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
+        entityToUpdate.Topics = updatedDocument.Topics?.ConvertAll(t => new Topic
         {
             Name = t,
-        })
-            .ToList();
+        });
 
         return entityToUpdate;
     }
@@ -60,7 +61,7 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             UpdatedAt = newDocument.UpdatedAt,
             IsDeleted = false,
             WorkspaceId = newDocument.WorkspaceId,
-            Topics = newDocument.Topics?.Select(t => new Topic { Name = t, }).ToList(),
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t, }),
         };
     }
 }

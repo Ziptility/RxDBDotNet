@@ -20,7 +20,9 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
             WorkspaceId = liveDoc.Workspace!.ReplicatedDocumentId,
             IsDeleted = liveDoc.IsDeleted,
             UpdatedAt = liveDoc.UpdatedAt,
-            Topics = liveDoc.Topics == null ? null : liveDoc.Topics.ConvertAll(t => t.Name),
+#pragma warning disable RCS1077 // Optimize LINQ method call // EF Core cannot translate the optimized LINQ method call
+            Topics = liveDoc.Topics == null ? null : liveDoc.Topics.Select(t => t.Name).ToList(),
+#pragma warning restore RCS1077 // Optimize LINQ method call
         };
     }
 
@@ -31,11 +33,10 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
 
         entityToUpdate.Content = updatedDocument.Content;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
-        entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
+        entityToUpdate.Topics = updatedDocument.Topics?.ConvertAll(t => new Topic
         {
             Name = t,
-        })
-            .ToList();
+        });
 
         return entityToUpdate;
     }
@@ -53,7 +54,7 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
             WorkspaceId = newDocument.WorkspaceId,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
-            Topics = newDocument.Topics?.Select(t => new Topic { Name = t, }).ToList(),
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t, }),
         };
     }
 }

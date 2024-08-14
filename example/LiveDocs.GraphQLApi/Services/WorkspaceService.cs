@@ -18,7 +18,9 @@ public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher event
             Name = workspace.Name,
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = workspace.UpdatedAt,
-            Topics = workspace.Topics == null ? null : workspace.Topics.ConvertAll(t => t.Name),
+#pragma warning disable RCS1077 // Optimize LINQ method call // EF Core cannot translate the optimized LINQ method call
+            Topics = workspace.Topics == null ? null : workspace.Topics.Select(t => t.Name).ToList(),
+#pragma warning restore RCS1077 // Optimize LINQ method call
         };
     }
 
@@ -29,11 +31,10 @@ public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher event
 
         entityToUpdate.Name = updatedDocument.Name;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
-        entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
+        entityToUpdate.Topics = updatedDocument.Topics?.ConvertAll(t => new Topic
         {
             Name = t,
-        })
-            .ToList();
+        });
 
         return entityToUpdate;
     }
@@ -49,7 +50,7 @@ public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher event
             Name = newDocument.Name,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
-            Topics = newDocument.Topics?.Select(t => new Topic { Name = t, }).ToList(),
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t, }),
         };
     }
 }

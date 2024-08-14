@@ -5,7 +5,7 @@ using LiveDocs.GraphQLApi.Models.Replication;
 using RT.Comb;
 using RxDBDotNet.Services;
 
-namespace LiveDocs.GraphQLApi.Repositories;
+namespace LiveDocs.GraphQLApi.Services;
 
 public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
     : DocumentService<User, ReplicatedUser>(dbContext, eventPublisher)
@@ -22,7 +22,7 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             WorkspaceId = user.Workspace!.ReplicatedDocumentId,
             IsDeleted = user.IsDeleted,
             UpdatedAt = user.UpdatedAt,
-            Topics = user.Topics,
+            Topics = user.Topics == null ? null : user.Topics.Select(t => t.Name).ToList(),
         };
     }
 
@@ -35,8 +35,12 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
         entityToUpdate.LastName = updatedDocument.LastName;
         entityToUpdate.Email = updatedDocument.Email;
         entityToUpdate.Role = updatedDocument.Role;
-        entityToUpdate.Topics = updatedDocument.Topics;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
+        entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
+            {
+                Name = t,
+            })
+            .ToList();
 
         return entityToUpdate;
     }
@@ -53,10 +57,10 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             LastName = newDocument.LastName,
             Email = newDocument.Email,
             Role = newDocument.Role,
-            Topics = newDocument.Topics,
             UpdatedAt = newDocument.UpdatedAt,
             IsDeleted = false,
             WorkspaceId = newDocument.WorkspaceId,
+            Topics = newDocument.Topics?.Select(t => new Topic { Name = t, }).ToList(),
         };
     }
 }

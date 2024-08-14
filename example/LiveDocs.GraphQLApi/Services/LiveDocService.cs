@@ -5,7 +5,7 @@ using LiveDocs.GraphQLApi.Models.Replication;
 using RT.Comb;
 using RxDBDotNet.Services;
 
-namespace LiveDocs.GraphQLApi.Repositories;
+namespace LiveDocs.GraphQLApi.Services;
 
 public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
     : DocumentService<LiveDoc, ReplicatedLiveDoc>(dbContext, eventPublisher)
@@ -20,7 +20,7 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
             WorkspaceId = liveDoc.Workspace!.ReplicatedDocumentId,
             IsDeleted = liveDoc.IsDeleted,
             UpdatedAt = liveDoc.UpdatedAt,
-            Topics = liveDoc.Topics,
+            Topics = liveDoc.Topics == null ? null : liveDoc.Topics.Select(t => t.Name).ToList(),
         };
     }
 
@@ -31,7 +31,11 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
 
         entityToUpdate.Content = updatedDocument.Content;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
-        entityToUpdate.Topics = updatedDocument.Topics;
+        entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
+            {
+                Name = t,
+            })
+            .ToList();
 
         return entityToUpdate;
     }
@@ -49,7 +53,7 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
             WorkspaceId = newDocument.WorkspaceId,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
-            Topics = newDocument.Topics,
+            Topics = newDocument.Topics?.Select(t => new Topic{ Name = t, }).ToList(),
         };
     }
 }

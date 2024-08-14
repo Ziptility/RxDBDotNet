@@ -92,9 +92,9 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
                 .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
-                {
-                    Authorization = "test-auth-token",
-                })
+            {
+                Authorization = "test-auth-token",
+            })
             .Build();
 
         // Start the subscription task before creating the workspace
@@ -147,10 +147,10 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
     }
 
     [Fact]
-    public async Task TestCase5_2_SubscriptionsSupportSpecifyingTopics()
+    public async Task TestCase5_2_ASubscriptionCanBeFilteredByTopic()
     {
         // Arrange
-        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(500));
+        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var testTimeoutToken = testTimeoutTokenSource.Token;
 
         var workspace1 = await HttpClient.CreateNewWorkspaceAsync();
@@ -160,23 +160,21 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(testTimeoutToken);
 
         Debug.Assert(workspace3.Id != null, "workspace3.Id != null");
-        
+
         // Only subscribe to update events for workspace3
         List<string> topics = [workspace3.Id.Value.ToString()];
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql()
-            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
-                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
-                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
-            {
-                Authorization = "test-auth-token",
-            }, topics: topics)
+            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
+                new WorkspaceInputHeadersGql
+                {
+                    Authorization = "test-auth-token",
+                }, topics)
             .Build();
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
-        var collectTimespan = TimeSpan.FromSeconds(5);
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testTimeoutToken, collectTimespan);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testTimeoutToken);
 
         // Ensure the subscription is established
         await Task.Delay(1000, testTimeoutToken);

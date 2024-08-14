@@ -36,6 +36,6 @@ public abstract class ReplicatedEntity
     /// An optional list of topics to publish events to when an instance is upserted.
     /// </summary>
 #pragma warning disable CA2227 // Collection properties should be read only
-    public List<string>? Topics { get; set; }
+    public List<Topic>? Topics { get; set; }
 #pragma warning restore CA2227 // Collection properties should be read only
 }

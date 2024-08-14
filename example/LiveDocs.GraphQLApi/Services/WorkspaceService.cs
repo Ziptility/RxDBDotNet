@@ -5,14 +5,11 @@ using LiveDocs.GraphQLApi.Models.Replication;
 using RT.Comb;
 using RxDBDotNet.Services;
 
-namespace LiveDocs.GraphQLApi.Repositories;
+namespace LiveDocs.GraphQLApi.Services;
 
-public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
+public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
+    : DocumentService<Workspace, ReplicatedWorkspace>(dbContext, eventPublisher)
 {
-    public WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher) : base(dbContext, eventPublisher)
-    {
-    }
-
     protected override Expression<Func<Workspace, ReplicatedWorkspace>> ProjectToDocument()
     {
         return workspace => new ReplicatedWorkspace
@@ -21,7 +18,7 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
             Name = workspace.Name,
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = workspace.UpdatedAt,
-            Topics = workspace.Topics,
+            Topics = workspace.Topics == null ? null : workspace.Topics.Select(t => t.Name).ToList(),
         };
     }
 
@@ -31,9 +28,13 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
         ArgumentNullException.ThrowIfNull(entityToUpdate);
         
         entityToUpdate.Name = updatedDocument.Name;
-        entityToUpdate.Topics = updatedDocument.Topics;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
-
+        entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
+            {
+                Name = t,
+            })
+            .ToList();
+        
         return entityToUpdate;
     }
 
@@ -46,9 +47,9 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
             Id = Provider.Sql.Create(),
             ReplicatedDocumentId = newDocument.Id,
             Name = newDocument.Name,
-            Topics = newDocument.Topics,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
+            Topics = newDocument.Topics?.Select(t => new Topic { Name = t, }).ToList(),
         };
     }
 }

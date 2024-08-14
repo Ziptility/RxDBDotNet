@@ -12,12 +12,14 @@ public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(o
     public async Task TestCase1_1_PushNewRowShouldCreateSingleDocument()
     {
         // Arrange
+        var workspaceId = Provider.Sql.Create();
         var newWorkspace = new WorkspaceInputGql
         {
-            Id = Provider.Sql.Create(),
+            Id = workspaceId,
             Name = Strings.CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
+            Topics = new List<string>{ workspaceId.ToString() },
         };
 
         var workspaceInput = new WorkspaceInputPushRowGql

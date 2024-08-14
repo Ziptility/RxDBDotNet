@@ -27,16 +27,22 @@ public static class UnitTestDbUtil
             {
                 output.WriteLine("Initializing the unit test db");
 
+                // Specify a host port that will be consistent across runs
+                const int hostPort = 58000;
                 var sqlServerDockerContainer = new MsSqlBuilder()
                     .WithName("livedocs_test_db")
                     .WithPassword("Password123!")
+                    // Bind the container's SQL Server port to the host port
+                    .WithPortBinding(hostPort, containerPort: 1433)
                     .Build();
 
                 await sqlServerDockerContainer.StartAsync(cancellationToken);
 
                 var connectionStringToMaster = sqlServerDockerContainer.GetConnectionString();
 
-                var connectionStringToTestDb = connectionStringToMaster.Replace("master", "LiveDocsTestDb", StringComparison.OrdinalIgnoreCase);
+                // Modify the connection string to use the consistent port
+                var connectionStringToTestDb = connectionStringToMaster
+                    .Replace("master", "LiveDocsTestDb", StringComparison.OrdinalIgnoreCase);
 
                 Environment.SetEnvironmentVariable(
                     ConfigKeys.DbConnectionString,

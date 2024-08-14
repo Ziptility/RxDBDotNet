@@ -11,7 +11,7 @@ internal static class TestUtils
     public static async Task<WorkspaceInputGql> CreateNewWorkspaceAsync(this HttpClient httpClient)
     {
         var workspaceId = Provider.Sql.Create();
-        
+
         var newWorkspace = new WorkspaceInputGql
         {
             Id = workspaceId,
@@ -55,6 +55,7 @@ internal static class TestUtils
             Name = workspace.Name,
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = workspace.UpdatedAt,
+            Topics = workspace.Topics,
         };
 
         var newDocumentState = new WorkspaceInputGql
@@ -63,6 +64,7 @@ internal static class TestUtils
             Name = CreateString(),
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = DateTimeOffset.Now,
+            Topics = workspace.Topics,
         };
 
         var pushWorkspace = new List<WorkspaceInputPushRowGql?>
@@ -78,7 +80,13 @@ internal static class TestUtils
             new WorkspaceQueryBuilderGql().WithAllFields(),
             pushWorkspace);
 
-        await httpClient.PostGqlMutationAsync(updateWorkspace);
+        var response = await httpClient.PostGqlMutationAsync(updateWorkspace);
+
+        response.Errors.Should()
+            .BeNullOrEmpty();
+
+        response.Data.PushWorkspace.Should()
+            .BeEmpty();
 
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id);
     }
@@ -91,6 +99,7 @@ internal static class TestUtils
             Name = workspace.Name,
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = workspace.UpdatedAt,
+            Topics = workspace.Topics == null ? null : (List<string>)workspace.Topics,
         };
 
         var newDocumentState = new WorkspaceInputGql
@@ -99,6 +108,7 @@ internal static class TestUtils
             Name = CreateString(),
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = DateTimeOffset.Now,
+            Topics = workspace.Topics == null ? null : (List<string>)workspace.Topics,
         };
 
         var pushWorkspace = new List<WorkspaceInputPushRowGql?>
@@ -114,7 +124,13 @@ internal static class TestUtils
             new WorkspaceQueryBuilderGql().WithAllFields(),
             pushWorkspace);
 
-        await httpClient.PostGqlMutationAsync(updateWorkspace);
+        var response = await httpClient.PostGqlMutationAsync(updateWorkspace);
+
+        response.Errors.Should()
+            .BeNullOrEmpty();
+
+        response.Data.PushWorkspace.Should()
+            .BeNullOrEmpty();
 
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id);
     }
@@ -130,16 +146,19 @@ internal static class TestUtils
         response.Errors.Should()
             .BeNullOrEmpty();
 
-        response.Data.PullWorkspace?.Documents?.Should()
-            .ContainSingle(workspace => workspace.Id == workspaceInput.Id
-                                        && workspace.Name == workspaceInput.Name
-                                        && workspace.IsDeleted == workspaceInput.IsDeleted);
+        var existingWorkspace = response.Data.PullWorkspace?.Documents?.SingleOrDefault(workspace => workspace.Id == workspaceInput.Id);
 
-        var existingWorkspace = response.Data.PullWorkspace?.Documents?.Single(workspace => workspace.Id == workspaceInput.Id);
+        if (existingWorkspace == null)
+        {
+            Assert.Fail("The existing workspace must not be null");
+        }
 
-        Debug.Assert(existingWorkspace != null, nameof(existingWorkspace) + " != null");
-        workspaceInput.UpdatedAt?.Value.Should()
-            .BeCloseTo(existingWorkspace.UpdatedAt, TimeSpan.FromMilliseconds(2));
+        Debug.Assert(workspaceInput.Id != null, "workspaceInput.Id != null");
+        existingWorkspace.Id.Should().Be(workspaceInput.Id.Value);
+        existingWorkspace.Name.Should().Be(workspaceInput.Name?.Value);
+        existingWorkspace.IsDeleted.Should().Be(workspaceInput.IsDeleted?.Value);
+        existingWorkspace.UpdatedAt.Should().Be(workspaceInput.UpdatedAt?.Value.StripMicroseconds());
+        existingWorkspace.Topics.Should().Equal(workspaceInput.Topics?.Value);
     }
 
     public static async Task<WorkspaceGql> GetWorkspaceByIdAsync(this HttpClient httpClient, Guid workspaceId)

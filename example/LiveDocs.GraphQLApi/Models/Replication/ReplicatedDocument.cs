@@ -10,6 +10,7 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 public abstract record ReplicatedDocument : IReplicatedDocument
 {
     private readonly List<string>? _topics;
+    private readonly DateTimeOffset _updatedAt;
 
     /// <inheritdoc />
     [Required]
@@ -23,7 +24,15 @@ public abstract record ReplicatedDocument : IReplicatedDocument
     /// <inheritdoc />
     [Required]
     [NotDefault]
-    public required DateTimeOffset UpdatedAt { get; init; }
+    public required DateTimeOffset UpdatedAt
+    {
+        get => _updatedAt;
+        init =>
+            // Strip microseconds by setting the ticks to zero, keeping only up to milliseconds.
+            // Doing this because microseconds are not supported by Hot Chocolate's DateTime serializer.
+            // Now Equals() and GetHashCode() will work correctly.
+            _updatedAt = value.AddTicks(-(value.Ticks % TimeSpan.TicksPerMillisecond));
+    }
 
     /// <inheritdoc />
     [Length(1, 10)]

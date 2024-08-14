@@ -2,7 +2,7 @@
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Repositories;
+using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Extensions;

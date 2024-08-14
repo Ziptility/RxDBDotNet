@@ -3,11 +3,10 @@ using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
-using RxDBDotNet.Documents;
 using RxDBDotNet.Repositories;
 using RxDBDotNet.Services;
 
-namespace LiveDocs.GraphQLApi.Repositories;
+namespace LiveDocs.GraphQLApi.Services;
 
 /// <summary>
 ///     An implementation of IDocumentService using Entity Framework Core.

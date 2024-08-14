@@ -26,7 +26,7 @@ jobs:
         node-version: '18.x'
       
     - name: Install dependencies and build the client
-      working-directory: example/LiveDocs.RxDBClient
+      working-directory: example/livedocs-client
       run: |
         npm ci
         npm run build
@@ -39,6 +39,7 @@ jobs:
 
     - name: Test with coverage
       run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --collect:"XPlat Code Coverage" --settings coverlet.runsettings
+      timeout-minutes: 5
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1

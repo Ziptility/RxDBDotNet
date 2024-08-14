@@ -1,13 +1,13 @@
 ﻿using HotChocolate.AspNetCore;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
-using LiveDocs.GraphQLApi.Models;
-using LiveDocs.GraphQLApi.Repositories;
+using LiveDocs.GraphQLApi.Models.Replication;
+using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
-using Query = LiveDocs.GraphQLApi.Models.Query;
+using Query = LiveDocs.GraphQLApi.Models.GraphQL.Query;
 
 namespace LiveDocs.GraphQLApi;
 
@@ -30,37 +30,30 @@ public class Startup
 
         // Add services to the container
         services.AddProblemDetails()
-            .AddSingleton<IDocumentRepository<Hero>, InMemoryDocumentRepository<Hero>>()
-            .AddScoped<IDocumentRepository<User>, EfDocumentRepository<User, LiveDocsDbContext>>()
-            .AddScoped<IDocumentRepository<Workspace>, EfDocumentRepository<Workspace, LiveDocsDbContext>>()
-            .AddScoped<IDocumentRepository<LiveDoc>, EfDocumentRepository<LiveDoc, LiveDocsDbContext>>();
+            .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
+            .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
+            .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
 
         // Configure the GraphQL server
         services.AddGraphQLServer()
-            .ModifyRequestOptions(o =>
-            {
-                o.IncludeExceptionDetails = environment.IsDevelopment();
-            })
+            .ModifyRequestOptions(o => o.IncludeExceptionDetails = environment.IsDevelopment())
             // Simulate scenario where the library user
             // has already added their own root query type.
             .AddQueryType<Query>()
             .AddReplicationServer()
-            .RegisterService<IDocumentRepository<Workspace>>()
-            .AddReplicatedDocument<Hero>()
-            .AddReplicatedDocument<User>()
-            .AddReplicatedDocument<Workspace>()
-            .AddReplicatedDocument<LiveDoc>()
-            // A class to validate that the [GraphQLName] attribute is respected
-            // when building the schema
-            .AddReplicatedDocument<DocumentWithGraphQLName>()
-            .AddInMemorySubscriptions();
+            .RegisterService<IDocumentService<ReplicatedWorkspace>>()
+            .AddReplicatedDocument<ReplicatedUser>()
+            .AddReplicatedDocument<ReplicatedWorkspace>()
+            .AddReplicatedDocument<ReplicatedLiveDoc>()
+            .AddInMemorySubscriptions()
+            .AddSubscriptionDiagnostics();
 
         // Configure CORS
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
             {
-                corsPolicyBuilder.WithOrigins("http://localhost:1337", "http://localhost:3000")
+                corsPolicyBuilder.WithOrigins("http://localhost:3000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();

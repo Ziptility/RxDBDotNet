@@ -26,7 +26,6 @@ RxDBDotNet is an open-source library that facilitates real-time data replication
   - Provides efficient data pull and push operations
   - Supports GraphQL filtering for pull operations
 - **Conflict Handling**: Detects conflicts during push operations and returns them to the client for resolution
-- **Flexibility**: Can be integrated with various backend storage solutions through a repository pattern
 
 This library bridges the gap between RxDB-powered frontend applications and .NET backend services, allowing developers to build robust, real-time, offline-first applications with a .NET backend infrastructure.
 
@@ -63,21 +62,22 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 1. Define your document type:
 
    ```csharp
-   public class Hero : IReplicatedDocument
+   public class Workspace : IReplicatedDocument
    {
        public required Guid Id { get; init; }
-       public string? Name { get; set; }
+       public required string Name { get; set; }
        public required DateTimeOffset UpdatedAt { get; set; }
        public required bool IsDeleted { get; set; }
+       public List<string>? Topics { get; set; }
    }
    ```
 
-2. Implement the `IDocumentRepository<T>` interface for your document type:
+2. Implement the `IDocumentService<T>` interface for your document type:
 
    ```csharp
-   public class HeroRepository : BaseDocumentRepository<Hero>
+   public class WorkspaceService : BaseDocumentService<Workspace>
    {
-       public HeroRepository(IEventPublisher eventPublisher, ILogger<HeroRepository> logger)
+       public WorkspaceService(IEventPublisher eventPublisher, ILogger<WorkspaceService> logger)
            : base(eventPublisher, logger)
        {
        }
@@ -94,19 +94,14 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 
    // Add services to the container
    builder.Services
-       .AddSingleton<IDocumentRepository<Hero>, HeroRepository>();
-
+       .AddSingleton<IDocumentService<Workspace>, WorkspaceService>();
+   
    // Configure the GraphQL server
    builder.Services.AddGraphQLServer()
-       .ModifyRequestOptions(o =>
-       {
-           // Enable debugging features in development
-           o.IncludeExceptionDetails = builder.Environment.IsDevelopment();
-       })
        // Add RxDBDotNet replication support
        .AddReplicationServer()
        // Configure replication for your document type
-       .AddReplicatedDocument<Hero>()
+       .AddReplicatedDocument<Workspace>()
        // Enable pub/sub for GraphQL subscriptions
        .AddInMemorySubscriptions();
 
@@ -117,7 +112,7 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
        {
            corsPolicyBuilder
                // Replace with your RxDB client's origin
-               .WithOrigins("http://localhost:1337")
+               .WithOrigins("http://localhost:5000")
                .AllowAnyHeader()
                .AllowAnyMethod()
                // Required for WebSocket connections
@@ -133,15 +128,8 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
    // Enable WebSockets (required for subscriptions)
    app.UseWebSockets();
 
-   // Configure the GraphQL endpoint
-   app.MapGraphQL()
-       .WithOptions(new GraphQLServerOptions
-       {
-           Tool =
-           {
-               Enable = app.Environment.IsDevelopment(),
-           },
-       });
+   // Map the GraphQL endpoint
+   app.MapGraphQL();
 
    app.Run();
    ```
@@ -149,12 +137,12 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 4. Use the GraphQL API to interact with your documents:
 
    ```graphql
-   # Push a new hero
-   mutation PushHero {
-     pushHero(heroPushRow: [{
+   # Push a new workspace
+   mutation PushWorkspace {
+     pushWorkspace(workspacePushRow: [{
        newDocumentState: {
          id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-         name: "New Hero",
+         name: "New Workspace",
          updatedAt: "2023-07-18T12:00:00Z",
          isDeleted: false
        }
@@ -166,12 +154,12 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
      }
    }
 
-   # Pull heroes with filtering
-   query PullHeroes {
-     pullHero(
+   # Pull workspaces with filtering
+   query PullWorkspaces {
+     pullWorkspace(
        limit: 10
      ) {
-       documents(where: { name: { eq: "New Hero" } }) {
+       documents(where: { name: { eq: "New Workspace" } }) {
          id
          name
          updatedAt
@@ -184,9 +172,9 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
      }
    }
 
-   # Subscribe to hero updates
-   subscription StreamHeroes {
-     streamHero(headers: { Authorization: "Bearer your-auth-token" }) {
+   # Subscribe to workspace updates
+   subscription StreamWorkspaces {
+     streamWorkspace(headers: { Authorization: "Bearer your-auth-token" }) {
        documents {
          id
          name
@@ -209,7 +197,6 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 - **Real-Time Updates**: Provides real-time updates through GraphQL subscriptions.
 - **Conflict Detection**: Implements server-side conflict detection and reports conflicts to the client for resolution.
 - **GraphQL Filtering**: Supports filtering of documents during pull operations using GraphQL filters.
-- **Extensible**: Easily extendable to support different storage backends through the repository pattern.
 - **Type-Safe**: Fully supports C# nullable reference types for improved type safety.
 
 ## Contributing

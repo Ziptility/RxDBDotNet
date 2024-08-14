@@ -1,4 +1,5 @@
 ﻿using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -12,8 +13,6 @@ namespace RxDBDotNet.Tests.Helpers
     public sealed class GraphQLSubscriptionClient : IAsyncDisposable
     {
         private readonly WebSocket _webSocket;
-        private readonly CancellationTokenSource _cts;
-        private readonly TimeSpan _timeout;
         private bool _isDisposed;
 
         /// <summary>
@@ -21,11 +20,6 @@ namespace RxDBDotNet.Tests.Helpers
         /// </summary>
         /// <param name="webSocket">
         /// A WebSocket instance created by the test server, already connected to the GraphQL endpoint.</param>
-        /// <param name="timeout">
-        /// The maximum duration to wait for responses from the server.
-        /// This timeout applies to individual operations such as receiving messages.
-        /// If not specified, a default timeout of 30 minutes is used.
-        /// </param>
         /// <remarks>
         /// <para>
         /// This constructor initializes a new GraphQLSubscriptionClient with the provided WebSocket connection.
@@ -54,25 +48,26 @@ namespace RxDBDotNet.Tests.Helpers
         /// </code>
         /// </example>
         /// <exception cref="ArgumentNullException">Thrown if the webSocket parameter is null.</exception>
-        public GraphQLSubscriptionClient(WebSocket webSocket, TimeSpan? timeout = null)
+        public GraphQLSubscriptionClient(WebSocket webSocket)
         {
             _webSocket = webSocket ?? throw new ArgumentNullException(nameof(webSocket));
-            _cts = new CancellationTokenSource();
-            _timeout = timeout ?? TimeSpan.FromMinutes(30); // Default 30-minute timeout
         }
 
         /// <summary>
         /// Initializes the GraphQL subscription connection.
         /// This method should be called immediately after creating the client instance.
         /// </summary>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the initialization.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the connection initialization fails.</exception>
-        public async Task InitializeAsync()
+        public async Task InitializeAsync(CancellationToken cancellationToken)
         {
             var initMessage = new { type = "connection_init" };
-            await SendMessageAsync(initMessage);
 
-            var response = await ReceiveMessageAsync();
+            await SendMessageAsync(initMessage, cancellationToken);
+
+            var response = await ReceiveMessageAsync(cancellationToken);
+
             if (!string.Equals(response.Type, "connection_ack", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException($"Failed to initialize GraphQL subscription connection. Received message type: {response.Type}");
@@ -80,84 +75,151 @@ namespace RxDBDotNet.Tests.Helpers
         }
 
         /// <summary>
-        /// Creates an IAsyncEnumerable for a GraphQL subscription.
+        /// Creates an IAsyncEnumerable for a GraphQL subscription that allows collecting all responses.
         /// </summary>
         /// <typeparam name="TResponse">The type of the subscription response.</typeparam>
-        /// <param name="subscriptionQuery">The GraphQL subscription query.</param>
+        /// <param name="subscriptionQuery">The GraphQL subscription query to execute.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the subscription.</param>
         /// <returns>An IAsyncEnumerable of subscription responses.</returns>
         /// <remarks>
-        /// This method does not immediately send the subscription request.
-        /// The actual subscription is initiated when the returned IAsyncEnumerable is enumerated.
+        /// <para>
+        /// This method sends the subscription request immediately and starts yielding responses as they arrive.
+        /// It will continue to yield responses until the subscription is completed, an error occurs, or the operation is cancelled.
+        /// </para>
+        /// <para>
+        /// The method handles the following GraphQL over WebSocket protocol message types:
+        /// - "next": Yields the payload as a deserialized response.
+        /// - "complete": Ends the enumeration.
+        /// - "error": Throws an InvalidOperationException with the error details.
+        /// </para>
         /// </remarks>
-        public IAsyncEnumerable<TResponse> SubscribeAsync<TResponse>(string subscriptionQuery)
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when:
+        /// - The GraphQL server returns an error message.
+        /// - The subscription payload cannot be deserialized to the specified TResponse type.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// Thrown when:
+        /// - The WebSocket connection is closed unexpectedly.
+        /// - The WebSocket connection is closed prematurely.
+        /// </exception>
+        /// <exception cref="TimeoutException">
+        /// Thrown when a receive operation on the WebSocket connection times out.
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        /// Thrown when this method is called after the GraphQLSubscriptionClient has been disposed.
+        /// </exception>
+        /// <exception cref="OperationCanceledException">
+        /// Thrown when the operation is cancelled via the provided cancellationToken.
+        /// </exception>
+        public async IAsyncEnumerable<TResponse> SubscribeAndCollectAsync<TResponse>(
+            string subscriptionQuery,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            return new AsyncSubscriptionEnumerable<TResponse>(this, subscriptionQuery, _cts.Token);
+            await InitializeSubscriptionAsync(subscriptionQuery, cancellationToken);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var (messageType, payload) = await ReceiveMessageAsync(cancellationToken);
+
+                switch (messageType.ToLowerInvariant())
+                {
+                    case "next":
+                        if (payload != null)
+                        {
+                            var response = JsonSerializer.Deserialize<TResponse>(payload.ToJsonString(),
+                                SerializationUtils.GetJsonSerializerOptions());
+                            if (!EqualityComparer<TResponse?>.Default.Equals(response, default))
+                            {
+                                yield return response
+                                             ?? throw new InvalidOperationException($"The subscription payload cannot be deserialized to the specified {typeof(TResponse).Name} type");
+                            }
+                        }
+                        break;
+                    case "complete":
+                        yield break;
+                    case "error":
+                        throw new InvalidOperationException($"Subscription error: {payload?.ToJsonString()}");
+                }
+            }
+        }
+
+        private Task InitializeSubscriptionAsync(string subscriptionQuery, CancellationToken cancellationToken)
+        {
+            var subscribeMessage = new
+            {
+                id = Guid.NewGuid().ToString(),
+                type = "subscribe",
+                payload = new { query = subscriptionQuery },
+            };
+
+            return SendMessageAsync(subscribeMessage, cancellationToken);
         }
 
         /// <summary>
         /// Sends a message to the GraphQL server over the WebSocket connection.
         /// </summary>
         /// <param name="message">The message object to be sent.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task SendMessageAsync(object message)
+        private Task SendMessageAsync(object message, CancellationToken cancellationToken)
         {
             ObjectDisposedException.ThrowIf(_isDisposed, this);
 
             var json = JsonSerializer.Serialize(message, SerializationUtils.GetJsonSerializerOptions());
+
             var buffer = Encoding.UTF8.GetBytes(json);
-            await _webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, _cts.Token);
+
+            return _webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, endOfMessage: true, cancellationToken);
         }
 
         /// <summary>
         /// Receives a message from the GraphQL server over the WebSocket connection.
         /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A tuple containing the message type and payload.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the WebSocket connection closes unexpectedly.</exception>
         /// <exception cref="TimeoutException">Thrown when the receive operation times out.</exception>
         /// <exception cref="IOException">The WebSocket connection was closed prematurely or unexpectedly.</exception>
-        private async Task<(string Type, JsonNode? Payload)> ReceiveMessageAsync()
+        private async Task<(string Type, JsonNode? Payload)> ReceiveMessageAsync(CancellationToken cancellationToken)
         {
             var buffer = new byte[4096];
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
-            timeoutCts.CancelAfter(_timeout);
 
-            try
+            while (true)
             {
-                while (true)
+                ObjectDisposedException.ThrowIf(_isDisposed, this);
+
+                WebSocketReceiveResult result;
+                try
                 {
-                    ObjectDisposedException.ThrowIf(_isDisposed, this);
-
-                    WebSocketReceiveResult result;
-                    try
-                    {
-                        result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), timeoutCts.Token);
-                    }
-                    catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
-                    {
-                        throw new IOException("The WebSocket connection was closed prematurely.", ex);
-                    }
-
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        throw new IOException("WebSocket connection closed unexpectedly");
-                    }
-
-                    var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    var message = JsonNode.Parse(json);
-                    var messageType = message?["type"]?.GetValue<string>() ?? "";
-
-                    if (messageType.Equals("ping", StringComparison.OrdinalIgnoreCase))
-                    {
-                        await SendMessageAsync(new { type = "pong" });
-                        continue;
-                    }
-
-                    return (messageType, message?["payload"]);
+                    result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
                 }
-            }
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
-            {
-                throw new TimeoutException($"WebSocket receive operation timed out after {_timeout.TotalSeconds} seconds.");
+                catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+                {
+                    throw new IOException("The WebSocket connection was closed prematurely.", ex);
+                }
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    throw new IOException("WebSocket connection closed unexpectedly");
+                }
+
+                var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                var message = JsonNode.Parse(json);
+                var messageType = message?["type"]
+                                      ?.GetValue<string>()
+                                  ?? "";
+
+                if (messageType.Equals("ping", StringComparison.OrdinalIgnoreCase))
+                {
+                    await SendMessageAsync(new
+                    {
+                        type = "pong",
+                    }, cancellationToken);
+                    continue;
+                }
+
+                return (messageType, message?["payload"]);
             }
         }
 
@@ -185,130 +247,7 @@ namespace RxDBDotNet.Tests.Helpers
                 }
             }
 
-            await _cts.CancelAsync();
-
-            _cts.Dispose();
-
             _webSocket.Dispose();
-        }
-
-        /// <summary>
-        /// Represents an asynchronous enumerable for GraphQL subscription responses.
-        /// </summary>
-        /// <typeparam name="T">The type of the subscription response.</typeparam>
-        private sealed class AsyncSubscriptionEnumerable<T> : IAsyncEnumerable<T>
-        {
-            private readonly GraphQLSubscriptionClient _client;
-            private readonly string _subscriptionQuery;
-            private readonly CancellationToken _cancellationToken;
-
-            public AsyncSubscriptionEnumerable(GraphQLSubscriptionClient client, string subscriptionQuery, CancellationToken cancellationToken)
-            {
-                _client = client;
-                _subscriptionQuery = subscriptionQuery;
-                _cancellationToken = cancellationToken;
-            }
-
-            public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-            {
-                var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, cancellationToken);
-                return new AsyncSubscriptionEnumerator<T>(_client, _subscriptionQuery, combinedCts);
-            }
-        }
-
-        /// <summary>
-        /// Represents an asynchronous enumerator for GraphQL subscription responses.
-        /// </summary>
-        /// <typeparam name="T">The type of the subscription response.</typeparam>
-        private sealed class AsyncSubscriptionEnumerator<T> : IAsyncEnumerator<T>
-        {
-            private readonly GraphQLSubscriptionClient _client;
-            private readonly string _subscriptionQuery;
-            private readonly CancellationTokenSource _cts;
-            private bool _isSubscribed;
-            private bool _isDisposed;
-
-            public AsyncSubscriptionEnumerator(GraphQLSubscriptionClient client, string subscriptionQuery, CancellationTokenSource cts)
-            {
-                _client = client;
-                _subscriptionQuery = subscriptionQuery;
-                _cts = cts;
-            }
-
-            public T Current { get; private set; } = default!;
-
-            /// <summary>
-            /// Advances the enumerator asynchronously to the next element of the collection.
-            /// </summary>
-            /// <returns>
-            /// A ValueTask that will complete with a result of true if the enumerator successfully advanced
-            /// to the next element, or false if the enumerator has passed the end of the collection.
-            /// </returns>
-            /// <exception cref="InvalidOperationException">Failed to deserialize subscription data</exception>
-            public async ValueTask<bool> MoveNextAsync()
-            {
-                if (!_isSubscribed)
-                {
-                    await SubscribeAsync();
-                    _isSubscribed = true;
-                }
-
-                while (!_cts.Token.IsCancellationRequested)
-                {
-                    var (messageType, payload) = await _client.ReceiveMessageAsync();
-
-                    switch (messageType.ToLowerInvariant())
-                    {
-                        case "next":
-                            if (payload != null)
-                            {
-                                Current = JsonSerializer.Deserialize<T>(payload.ToJsonString(),
-                                              SerializationUtils.GetJsonSerializerOptions())
-                                          ?? throw new InvalidOperationException("Failed to deserialize subscription data");
-                                return true;
-                            }
-                            break;
-                        case "complete":
-                            return false;
-                        case "error":
-                            throw new InvalidOperationException($"Subscription error: {payload?.ToJsonString()}");
-                    }
-                }
-
-                return false;
-            }
-
-            /// <summary>
-            /// Sends the subscription request to the GraphQL server.
-            /// </summary>
-            private Task SubscribeAsync()
-            {
-                var subscribeMessage = new
-                {
-                    id = Guid.NewGuid().ToString(),
-                    type = "subscribe",
-                    payload = new { query = _subscriptionQuery },
-                };
-
-                return _client.SendMessageAsync(subscribeMessage);
-            }
-
-            /// <summary>
-            /// Disposes the enumerator.
-            /// </summary>
-            /// <remarks>
-            /// This method does not dispose the underlying GraphQLSubscriptionClient,
-            /// as it may be shared across multiple enumerators.
-            /// </remarks>
-            public ValueTask DisposeAsync()
-            {
-                if (!_isDisposed)
-                {
-                    _isDisposed = true;
-                    _cts.Dispose();
-                }
-                return ValueTask.CompletedTask;
-            }
         }
     }
 }

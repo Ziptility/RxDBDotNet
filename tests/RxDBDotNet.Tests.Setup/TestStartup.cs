@@ -25,16 +25,10 @@ public class TestStartup : Startup
         base.ConfigureServices(services, environment, builder, isAspireEnvironment);
 
         // Extend timeout for long-running operations
-        services.Configure<RequestExecutorOptions>(options =>
-        {
-            options.ExecutionTimeout = TimeSpan.FromHours(1);
-        });
+        services.Configure<RequestExecutorOptions>(options => options.ExecutionTimeout = TimeSpan.FromHours(1));
 
         // Configure WebSocket options for longer keep-alive
-        services.Configure<WebSocketOptions>(options =>
-        {
-            options.KeepAliveInterval = TimeSpan.FromMinutes(2);
-        });
+        services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
 
         builder.Logging.AddFilter(
             "Microsoft.EntityFrameworkCore.Database.Command",

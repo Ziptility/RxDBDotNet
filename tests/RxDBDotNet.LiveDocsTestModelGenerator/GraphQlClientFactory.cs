@@ -49,7 +49,7 @@ public static class GraphQlClientFactory
             var modifiedCsharpCode = string.Join(Environment.NewLine, lines);
 
             var currentDirectory = Directory.GetCurrentDirectory();
-            
+
             Console.WriteLine($"The current directory is '{currentDirectory}'");
 
             await File.WriteAllTextAsync("./Model/LiveDocsGraphQLClient.cs", modifiedCsharpCode);

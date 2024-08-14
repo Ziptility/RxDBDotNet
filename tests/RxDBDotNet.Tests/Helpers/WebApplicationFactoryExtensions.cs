@@ -6,8 +6,8 @@ namespace RxDBDotNet.Tests.Helpers
     {
         public static async Task<GraphQLSubscriptionClient> CreateGraphQLSubscriptionClientAsync<TProgram>(
             this WebApplicationFactory<TProgram> factory,
-            string subscriptionEndpoint = "/graphql",
-            TimeSpan? timeout = null) where TProgram : class
+            CancellationToken cancellationToken,
+            string subscriptionEndpoint = "/graphql") where TProgram : class
         {
             ArgumentNullException.ThrowIfNull(factory);
 
@@ -23,11 +23,11 @@ namespace RxDBDotNet.Tests.Helpers
 
             var webSocket = await wsClient.ConnectAsync(
                 new Uri(factory.Server.BaseAddress, subscriptionEndpoint),
-                CancellationToken.None);
+                cancellationToken);
 
             // Pass the timeout to the GraphQLSubscriptionClient
-            var client = new GraphQLSubscriptionClient(webSocket, timeout ?? TimeSpan.FromMinutes(30));
-            await client.InitializeAsync();
+            var client = new GraphQLSubscriptionClient(webSocket);
+            await client.InitializeAsync(cancellationToken);
             return client;
         }
     }

@@ -1,4 +1,5 @@
-﻿using System.Threading.Channels;
+﻿using System.Runtime.CompilerServices;
+using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using Microsoft.Extensions.Logging;
 using RxDBDotNet.Documents;
@@ -7,144 +8,96 @@ using RxDBDotNet.Models;
 namespace RxDBDotNet.Resolvers;
 
 /// <summary>
-/// Provides subscription functionality for real-time updates of replicated documents.
-/// This class implements the 'event observation' mode of the RxDB replication protocol.
+///     Provides subscription functionality for real-time updates of replicated documents.
+///     This class implements the 'event observation' mode of the RxDB replication protocol.
 /// </summary>
-/// <typeparam name="TDocument">The type of document being replicated. Must implement <see cref="IReplicatedDocument"/>.</typeparam>
+/// <typeparam name="TDocument">The type of document being replicated. Must implement <see cref="IReplicatedDocument" />.</typeparam>
 /// <remarks>
-/// Note that this class must not use constructor injection per:
-/// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
+///     Note that this class must not use constructor injection per:
+///     https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
 public sealed class SubscriptionResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
+    private const int RetryDelayMilliseconds = 5000;
+
     /// <summary>
-    /// Provides a stream of document changes for subscription.
-    /// This method is the entry point for GraphQL subscriptions and implements
-    /// the server-side push mechanism of the RxDB replication protocol.
+    ///     Provides a stream of document changes for subscription.
+    ///     This method is the entry point for GraphQL subscriptions and implements
+    ///     the server-side push mechanism of the RxDB replication protocol.
     /// </summary>
     /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
+    /// <param name="topics">An optional set topics to recieve events for when a document is changed.</param>
     /// <param name="logger">The logger used for logging information and errors.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <returns>An asynchronous enumerable of <see cref="DocumentPullBulk{TDocument}"/> representing the stream of document changes.</returns>
+    /// <returns>
+    ///     An asynchronous enumerable of <see cref="DocumentPullBulk{TDocument}" /> representing the stream of document
+    ///     changes.
+    /// </returns>
 #pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
     internal IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStream(
         ITopicEventReceiver eventReceiver,
+        List<string>? topics,
         ILogger<SubscriptionResolver<TDocument>> logger,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(eventReceiver);
         ArgumentNullException.ThrowIfNull(logger);
 
-        return new DocumentChangeAsyncEnumerable(eventReceiver, logger, cancellationToken);
+        return DocumentChangedStreamInternal(eventReceiver, topics, logger, cancellationToken);
     }
 
-    private sealed class DocumentChangeAsyncEnumerable : IAsyncEnumerable<DocumentPullBulk<TDocument>>
+    private static async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStreamInternal(
+        ITopicEventReceiver eventReceiver,
+        List<string>? topics,
+        ILogger<SubscriptionResolver<TDocument>> logger,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        private readonly ITopicEventReceiver _eventReceiver;
-        private readonly ILogger<SubscriptionResolver<TDocument>> _logger;
-        private readonly CancellationToken _cancellationToken;
+        var streamName = $"Stream_{typeof(TDocument).Name}";
 
-        public DocumentChangeAsyncEnumerable(
-            ITopicEventReceiver eventReceiver,
-            ILogger<SubscriptionResolver<TDocument>> logger,
-            CancellationToken cancellationToken)
+        while (!cancellationToken.IsCancellationRequested)
         {
-            _eventReceiver = eventReceiver;
-            _logger = logger;
-            _cancellationToken = cancellationToken;
-        }
-
-        public IAsyncEnumerator<DocumentPullBulk<TDocument>> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-        {
-            using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, cancellationToken);
-            return new DocumentChangeAsyncEnumerator(_eventReceiver, _logger, cancellationTokenSource.Token);
-        }
-    }
-
-    private sealed class DocumentChangeAsyncEnumerator : IAsyncEnumerator<DocumentPullBulk<TDocument>>
-    {
-        private readonly Channel<DocumentPullBulk<TDocument>> _channel;
-        private Task? _processTask;
-        private readonly CancellationTokenSource _cts;
-        private readonly ITopicEventReceiver _eventReceiver;
-        private readonly ILogger<SubscriptionResolver<TDocument>> _logger;
-
-        public DocumentChangeAsyncEnumerator(
-            ITopicEventReceiver eventReceiver,
-            ILogger<SubscriptionResolver<TDocument>> logger,
-            CancellationToken cancellationToken)
-        {
-            _channel = Channel.CreateUnbounded<DocumentPullBulk<TDocument>>(new UnboundedChannelOptions
-            {
-                SingleReader = true, // Optimize for single reader
-                SingleWriter = true, // We know we have only one writer
-            });
-            _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            _eventReceiver = eventReceiver;
-            _logger = logger;
-        }
-
-        public DocumentPullBulk<TDocument> Current { get; private set; } = default!;
-
-        public async ValueTask<bool> MoveNextAsync()
-        {
-            _processTask ??= ProcessEventsAsync(_cts.Token);
+            ISourceStream<DocumentPullBulk<TDocument>>? documentStream;
 
             try
             {
-                if (await _channel.Reader.WaitToReadAsync(_cts.Token).ConfigureAwait(false)
-                    && _channel.Reader.TryRead(out var item))
-                {
-                    Current = item;
-                    return true;
-                }
+                documentStream = await eventReceiver.SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
-                // Subscription was cancelled, which is a normal termination condition
+                logger.LogInformation("Document change stream for {DocumentType} was cancelled.", typeof(TDocument).Name);
+                yield break;
             }
-
-            return false;
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await _cts.CancelAsync().ConfigureAwait(false);
-            if (_processTask != null)
+            catch (Exception ex)
             {
-                await _processTask.ConfigureAwait(false);
+                logger.LogError(ex, "An error occurred while subscribing to the document change stream for {DocumentType}. Retrying in {Delay} ms.",
+                    typeof(TDocument).Name, RetryDelayMilliseconds);
+                await Task.Delay(RetryDelayMilliseconds, cancellationToken)
+                    .ConfigureAwait(false);
+                continue;
             }
-            _cts.Dispose();
-        }
 
-        private async Task ProcessEventsAsync(CancellationToken cancellationToken)
-        {
-            var streamName = $"Stream_{typeof(TDocument).Name}";
-
-            while (!cancellationToken.IsCancellationRequested)
+            await foreach (var pullDocumentResult in documentStream.ReadEventsAsync()
+                               .WithCancellation(cancellationToken)
+                               .ConfigureAwait(false))
             {
-                try
+                if (ShouldYieldDocuments(pullDocumentResult, topics))
                 {
-                    var documentSourceStream = await _eventReceiver.SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken).ConfigureAwait(false);
-
-                    await foreach (var pullDocumentResult in documentSourceStream.ReadEventsAsync().WithCancellation(cancellationToken).ConfigureAwait(false))
-                    {
-                        await _channel.Writer.WriteAsync(pullDocumentResult, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    _logger.LogInformation("Document change stream for {DocumentType} was cancelled.", typeof(TDocument).Name);
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "An error occurred while processing the document change stream for {DocumentType}. Retrying in 5 seconds.", typeof(TDocument).Name);
-                    await Task.Delay(5000, cancellationToken).ConfigureAwait(false);
+                    yield return pullDocumentResult;
                 }
             }
 
-            _channel.Writer.Complete();
+            // If we reach here, it means the stream has completed normally.
+            // We'll log this and continue the outer loop to resubscribe.
+            logger.LogInformation("Document change stream for {DocumentType} completed. Resubscribing.", typeof(TDocument).Name);
         }
+    }
+
+    private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string>? topics)
+    {
+        return pullDocumentResult.Documents
+            .Exists(doc => topics == null
+                           || topics.Count == 0
+                           || doc.Topics?.Intersect(topics, StringComparer.OrdinalIgnoreCase).Any() == true);
     }
 }

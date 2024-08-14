@@ -24,9 +24,9 @@ public class SchemaGenerationTests(ITestOutputHelper output) : TestBase(output)
         var schemaString = await schemaResponse.Content.ReadAsStringAsync();
 
         schemaString.Should()
-            .NotContain("DocumentWithGraphQLName");
+            .NotContain("ReplicatedWorkspace");
 
         schemaString.Should()
-            .Contain("GraphQLNamedDocument");
+            .Contain("Workspace");
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
-using RxDBDotNet.Documents;
 using RxDBDotNet.Repositories;
 using RxDBDotNet.Services;
 

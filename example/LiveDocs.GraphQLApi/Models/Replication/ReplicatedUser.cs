@@ -3,7 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using HotChocolate;
 using HotChocolate.Types;
 using LiveDocs.GraphQLApi.Models.Shared;
-using LiveDocs.GraphQLApi.Validations;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
 
@@ -55,10 +56,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
     public string FullName
     {
         get => $"{FirstName} {LastName}".Trim();
-        init
-        {
-            
-        }
+        init { }
     }
 
     /// <summary>
@@ -105,9 +103,9 @@ public sealed record ReplicatedUser : ReplicatedDocument
         }
 
         return base.Equals(other)
-               && _firstName == other._firstName
-               && _lastName == other._lastName
-               && _email == other._email
+               && string.Equals(_firstName, other._firstName, StringComparison.Ordinal)
+               && string.Equals(_lastName, other._lastName, StringComparison.Ordinal)
+               && string.Equals(_email, other._email, StringComparison.Ordinal)
                && Role == other.Role
                && WorkspaceId.Equals(other.WorkspaceId);
     }

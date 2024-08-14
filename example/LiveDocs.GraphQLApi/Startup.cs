@@ -36,10 +36,7 @@ public class Startup
 
         // Configure the GraphQL server
         services.AddGraphQLServer()
-            .ModifyRequestOptions(o =>
-            {
-                o.IncludeExceptionDetails = environment.IsDevelopment();
-            })
+            .ModifyRequestOptions(o => o.IncludeExceptionDetails = environment.IsDevelopment())
             // Simulate scenario where the library user
             // has already added their own root query type.
             .AddQueryType<Query>()

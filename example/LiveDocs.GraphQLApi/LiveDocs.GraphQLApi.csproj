@@ -1,36 +1,61 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-      <Nullable>enable</Nullable>
-      <Features>strict</Features>
-      <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
-      <AnalysisLevel>latest</AnalysisLevel>
-      <EnableNETAnalyzers>true</EnableNETAnalyzers>
-      <GenerateDocumentationFile>True</GenerateDocumentationFile>
-      <AnalysisMode>All</AnalysisMode>
-      <AnalysisModeGlobalization>None</AnalysisModeGlobalization>
-      <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
-      <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-      <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
-      <ImplicitUsings>enable</ImplicitUsings>
-      <WarningLevel>9999</WarningLevel>
-      <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-      <NoWarn>$(NoWarn);CA1848;CA2007;CA1716</NoWarn>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <Features>strict</Features>
+        <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <AnalysisMode>All</AnalysisMode>
+        <AnalysisModeGlobalization>None</AnalysisModeGlobalization>
+        <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <WarningLevel>9999</WarningLevel>
+        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+        <NoWarn>$(NoWarn);CA1848;CA2007;CA1716;MA0004</NoWarn>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\RxDBDotNet\RxDBDotNet.csproj" />
-    <ProjectReference Include="..\LiveDocs.ServiceDefaults\LiveDocs.ServiceDefaults.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\RxDBDotNet\RxDBDotNet.csproj" />
+        <ProjectReference Include="..\LiveDocs.ServiceDefaults\LiveDocs.ServiceDefaults.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="8.1.0" />
-    <PackageReference Include="Azure.Identity" Version="1.12.0" />
-    <PackageReference Include="HotChocolate.Types.Scalars" Version="13.9.11" />
-    <PackageReference Include="RT.Comb" Version="4.0.1" />
-    <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="8.1.0" />
+        <PackageReference Include="Azure.Identity" Version="1.12.0" />
+        <PackageReference Include="HotChocolate.Types.Scalars" Version="13.9.11" />
+        <PackageReference Include="RT.Comb" Version="4.0.1" />
+        <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
+    </ItemGroup>
+
+    <!-- Analyzers-->
+    <ItemGroup>
+        <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.0.0-beta" />
+        <PackageReference Include="Meziantou.Analyzer" Version="2.0.163">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="AsyncFixer" Version="1.6.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Roslynator.Analyzers" Version="4.12.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="4.12.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="SecurityCodeScan.VS2019" Version="5.6.7">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
 </Project>

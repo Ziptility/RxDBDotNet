@@ -13,17 +13,17 @@ public enum UserRole
     /// A regular user with standard permissions.
     /// </summary>
     [GraphQLName("User")]
-    User,
+    User = 0,
 
     /// <summary>
     /// An administrator with elevated permissions within their workspace.
     /// </summary>
     [GraphQLName("Admin")]
-    Admin,
+    Admin = 1,
 
     /// <summary>
     /// A super administrator with system-wide permissions across all workspaces.
     /// </summary>
     [GraphQLName("SuperAdmin")]
-    SuperAdmin,
+    SuperAdmin = 2,
 }

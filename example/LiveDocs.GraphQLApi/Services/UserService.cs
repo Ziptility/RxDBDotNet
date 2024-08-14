@@ -22,7 +22,7 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             WorkspaceId = user.Workspace!.ReplicatedDocumentId,
             IsDeleted = user.IsDeleted,
             UpdatedAt = user.UpdatedAt,
-            Topics = user.Topics == null ? null : user.Topics.Select(t => t.Name).ToList(),
+            Topics = user.Topics == null ? null : user.Topics.ConvertAll(t => t.Name),
         };
     }
 
@@ -30,16 +30,16 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
     {
         ArgumentNullException.ThrowIfNull(updatedDocument);
         ArgumentNullException.ThrowIfNull(entityToUpdate);
-        
+
         entityToUpdate.FirstName = updatedDocument.FirstName;
         entityToUpdate.LastName = updatedDocument.LastName;
         entityToUpdate.Email = updatedDocument.Email;
         entityToUpdate.Role = updatedDocument.Role;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
         entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
-            {
-                Name = t,
-            })
+        {
+            Name = t,
+        })
             .ToList();
 
         return entityToUpdate;

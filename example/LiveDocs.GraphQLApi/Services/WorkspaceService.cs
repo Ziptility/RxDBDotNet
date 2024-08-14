@@ -18,7 +18,7 @@ public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher event
             Name = workspace.Name,
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = workspace.UpdatedAt,
-            Topics = workspace.Topics == null ? null : workspace.Topics.Select(t => t.Name).ToList(),
+            Topics = workspace.Topics == null ? null : workspace.Topics.ConvertAll(t => t.Name),
         };
     }
 
@@ -26,22 +26,22 @@ public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher event
     {
         ArgumentNullException.ThrowIfNull(updatedDocument);
         ArgumentNullException.ThrowIfNull(entityToUpdate);
-        
+
         entityToUpdate.Name = updatedDocument.Name;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
         entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
-            {
-                Name = t,
-            })
+        {
+            Name = t,
+        })
             .ToList();
-        
+
         return entityToUpdate;
     }
 
     protected override Workspace Create(ReplicatedWorkspace newDocument)
     {
         ArgumentNullException.ThrowIfNull(newDocument);
-        
+
         return new Workspace
         {
             Id = Provider.Sql.Create(),

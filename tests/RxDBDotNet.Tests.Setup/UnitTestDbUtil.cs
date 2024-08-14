@@ -19,7 +19,7 @@ public static class UnitTestDbUtil
     {
         ArgumentNullException.ThrowIfNull(output);
 
-        await Semaphore.WaitAsync(cancellationToken);
+        await Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         try
         {
@@ -36,7 +36,7 @@ public static class UnitTestDbUtil
                     .WithPortBinding(hostPort, containerPort: 1433)
                     .Build();
 
-                await sqlServerDockerContainer.StartAsync(cancellationToken);
+                await sqlServerDockerContainer.StartAsync(cancellationToken).ConfigureAwait(false);
 
                 var connectionStringToMaster = sqlServerDockerContainer.GetConnectionString();
 
@@ -48,7 +48,7 @@ public static class UnitTestDbUtil
                     ConfigKeys.DbConnectionString,
                     connectionStringToTestDb);
 
-                await LiveDocsDbInitializer.InitializeAsync(serviceProvider, cancellationToken);
+                await LiveDocsDbInitializer.InitializeAsync(serviceProvider, cancellationToken).ConfigureAwait(false);
 
                 _isInitialized = true;
             }

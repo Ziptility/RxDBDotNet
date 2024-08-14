@@ -18,7 +18,7 @@ internal static class TestUtils
             Name = CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
-            Topics = new List<string>{ workspaceId.ToString() },
+            Topics = new List<string> { workspaceId.ToString() },
         };
 
         var workspaceInput = new WorkspaceInputPushRowGql

@@ -20,9 +20,9 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
                 .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
-            {
-                Authorization = "test-auth-token",
-            })
+                {
+                    Authorization = "test-auth-token",
+                })
             .Build();
 
         // Start the subscription task before creating the workspace
@@ -92,9 +92,9 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
                 .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
-            {
-                Authorization = "test-auth-token",
-            })
+                {
+                    Authorization = "test-auth-token",
+                })
             .Build();
 
         // Start the subscription task before creating the workspace

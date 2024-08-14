@@ -1,106 +1,102 @@
 ﻿using LiveDocs.GraphQLApi.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace LiveDocs.GraphQLApi.Data
+namespace LiveDocs.GraphQLApi.Data;
+
+public class LiveDocsDbContext(DbContextOptions options) : DbContext(options)
 {
-    public class LiveDocsDbContext(DbContextOptions options) : DbContext(options)
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Workspace> Workspaces => Set<Workspace>();
+    public DbSet<LiveDoc> LiveDocs => Set<LiveDoc>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        public DbSet<User> Users => Set<User>();
-        public DbSet<Workspace> Workspaces => Set<Workspace>();
-        public DbSet<LiveDoc> LiveDocs => Set<LiveDoc>();
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+        base.OnModelCreating(modelBuilder);
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        ConfigureUserEntity(modelBuilder);
+        ConfigureWorkspaceEntity(modelBuilder);
+        ConfigureLiveDocEntity(modelBuilder);
+    }
+
+    private static void ConfigureUserEntity(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>(entity =>
         {
-            ArgumentNullException.ThrowIfNull(modelBuilder);
-            
-            base.OnModelCreating(modelBuilder);
+            entity.Property(u => u.Id)
+                .ValueGeneratedNever();
 
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.Property(u => u.Id)
-                    .ValueGeneratedNever();
-                
-                entity.HasAlternateKey(u => u.ReplicatedDocumentId);
-                
-                entity.HasIndex(u => u.Email)
-                    .IsUnique();
+            entity.HasAlternateKey(u => u.ReplicatedDocumentId);
 
-                entity.Property(e => e.UpdatedAt)
-                    .IsRequired()
-                    .HasColumnType("datetimeoffset(7)"); // Configure for highest precision
+            entity.HasIndex(u => u.Email)
+                .IsUnique();
 
-                entity.HasOne(e => e.Workspace)
-                    .WithMany()
-                    .HasForeignKey(d => d.WorkspaceId)
-                    .IsRequired()
-                    .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(e => e.UpdatedAt)
+                .IsRequired()
+                .HasColumnType("datetimeoffset(7)"); // Highest precision
 
-                entity.OwnsMany(
-                    user => user.Topics,
-                    b =>
-                    {
-                        b.ToJson();
-                    });
-                entity.Navigation(e => e.Topics)
-                    .AutoInclude();
-            });
+            entity.HasOne(e => e.Workspace)
+                .WithMany()
+                .HasForeignKey(d => d.WorkspaceId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Workspace>(entity =>
-            {
-                entity.Property(w => w.Id)
-                    .ValueGeneratedNever();
+            entity.OwnsMany(user => user.Topics, b => b.ToJson());
+            entity.Navigation(e => e.Topics)
+                .AutoInclude();
+        });
+    }
 
-                entity.HasAlternateKey(u => u.ReplicatedDocumentId);
+    private static void ConfigureWorkspaceEntity(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Workspace>(entity =>
+        {
+            entity.Property(w => w.Id)
+                .ValueGeneratedNever();
 
-                entity.HasIndex(w => w.Name)
-                    .IsUnique();
+            entity.HasAlternateKey(u => u.ReplicatedDocumentId);
 
-                entity.Property(e => e.UpdatedAt)
-                    .IsRequired()
-                    .HasColumnType("datetimeoffset(7)"); // Configure for highest precision
+            entity.HasIndex(w => w.Name)
+                .IsUnique();
 
-                entity.OwnsMany(
-                    workspace => workspace.Topics,
-                    ownedNavigationBuilder =>
-                    {
-                        ownedNavigationBuilder.ToJson();
-                    });
-                entity.Navigation(e => e.Topics)
-                    .AutoInclude();
-            });
+            entity.Property(e => e.UpdatedAt)
+                .IsRequired()
+                .HasColumnType("datetimeoffset(7)"); // Highest precision
 
-            modelBuilder.Entity<LiveDoc>(entity =>
-            {
-                entity.Property(d => d.Id)
-                    .ValueGeneratedNever();
+            entity.OwnsMany(workspace => workspace.Topics, builder => builder.ToJson());
+            entity.Navigation(e => e.Topics)
+                .AutoInclude();
+        });
+    }
 
-                entity.HasAlternateKey(u => u.ReplicatedDocumentId);
+    private static void ConfigureLiveDocEntity(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<LiveDoc>(entity =>
+        {
+            entity.Property(d => d.Id)
+                .ValueGeneratedNever();
 
-                entity.Property(e => e.UpdatedAt)
-                    .IsRequired()
-                    .HasColumnType("datetimeoffset(7)"); // Configure for highest precision
+            entity.HasAlternateKey(u => u.ReplicatedDocumentId);
 
-                entity.HasOne(e => e.Owner)
-                    .WithMany()
-                    .HasForeignKey(d => d.OwnerId)
-                    .IsRequired()
-                    .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(e => e.UpdatedAt)
+                .IsRequired()
+                .HasColumnType("datetimeoffset(7)"); // Highest precision
 
-                entity.HasOne(e => e.Workspace)
-                    .WithMany()
-                    .HasForeignKey(d => d.WorkspaceId)
-                    .IsRequired()
-                    .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Owner)
+                .WithMany()
+                .HasForeignKey(d => d.OwnerId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
-                entity.OwnsMany(
-                    workspace => workspace.Topics,
-                    builder =>
-                    {
-                        builder.ToJson();
-                    });
-                entity.Navigation(e => e.Topics)
-                    .AutoInclude();
-            });
-        }
+            entity.HasOne(e => e.Workspace)
+                .WithMany()
+                .HasForeignKey(d => d.WorkspaceId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.OwnsMany(workspace => workspace.Topics, builder => builder.ToJson());
+            entity.Navigation(e => e.Topics)
+                .AutoInclude();
+        });
     }
 }

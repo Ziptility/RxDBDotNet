@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using HotChocolate;
-using LiveDocs.GraphQLApi.Validations;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
 
@@ -45,7 +46,7 @@ public sealed record ReplicatedLiveDoc : ReplicatedDocument
         }
 
         return base.Equals(other)
-               && Content == other.Content
+               && string.Equals(Content, other.Content, StringComparison.Ordinal)
                && OwnerId.Equals(other.OwnerId)
                && WorkspaceId.Equals(other.WorkspaceId);
     }

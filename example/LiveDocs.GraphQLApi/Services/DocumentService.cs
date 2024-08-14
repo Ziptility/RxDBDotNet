@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
-using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
+using RxDBDotNet.Documents;
 using RxDBDotNet.Repositories;
 using RxDBDotNet.Services;
 
@@ -12,11 +12,11 @@ namespace LiveDocs.GraphQLApi.Services;
 ///     An implementation of IDocumentService using Entity Framework Core.
 ///     This class provides optimized database access for document operations required by the RxDB replication protocol.
 /// </summary>
-/// <typeparam name="TDocument">The type of replicated document being managed, which must implement IReplicatedDocument.</typeparam>
 /// <typeparam name="TEntity">The type of entity in which the replicated document data is stored.</typeparam>
+/// <typeparam name="TDocument">The type of replicated document being managed, which must implement IReplicatedDocument.</typeparam>
 public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
-    where TDocument : ReplicatedDocument
     where TEntity : ReplicatedEntity
+    where TDocument : ReplicatedDocument
 {
     private readonly LiveDocsDbContext _dbContext;
     private readonly IEventPublisher _eventPublisher;
@@ -35,15 +35,15 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
     }
 
     /// <inheritdoc />
-    public async Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)
+    public Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)
     {
-        return await query.ToListAsync(cancellationToken);
+        return query.ToListAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
+    public Task<TDocument?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return await GetQueryableDocuments().Where(d => d.Id == id).SingleOrDefaultAsync(cancellationToken);
+        return GetQueryableDocuments().Where(d => d.Id == id).SingleOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -114,7 +114,7 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
     {
         ArgumentNullException.ThrowIfNull(document1);
         ArgumentNullException.ThrowIfNull(document2);
-        
+
         return document1.Equals(document2);
     }
 

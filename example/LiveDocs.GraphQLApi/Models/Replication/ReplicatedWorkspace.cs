@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using HotChocolate;
+using RxDBDotNet.Documents;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
 

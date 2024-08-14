@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LiveDocs.GraphQLApi.Validations;
+namespace RxDBDotNet.Validations;
 
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class NotDefaultAttribute : ValidationAttribute

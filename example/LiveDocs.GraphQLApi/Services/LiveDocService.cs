@@ -20,7 +20,7 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
             WorkspaceId = liveDoc.Workspace!.ReplicatedDocumentId,
             IsDeleted = liveDoc.IsDeleted,
             UpdatedAt = liveDoc.UpdatedAt,
-            Topics = liveDoc.Topics == null ? null : liveDoc.Topics.Select(t => t.Name).ToList(),
+            Topics = liveDoc.Topics == null ? null : liveDoc.Topics.ConvertAll(t => t.Name),
         };
     }
 
@@ -32,9 +32,9 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
         entityToUpdate.Content = updatedDocument.Content;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
         entityToUpdate.Topics = updatedDocument.Topics?.Select(t => new Topic
-            {
-                Name = t,
-            })
+        {
+            Name = t,
+        })
             .ToList();
 
         return entityToUpdate;
@@ -53,7 +53,7 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
             WorkspaceId = newDocument.WorkspaceId,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
-            Topics = newDocument.Topics?.Select(t => new Topic{ Name = t, }).ToList(),
+            Topics = newDocument.Topics?.Select(t => new Topic { Name = t, }).ToList(),
         };
     }
 }

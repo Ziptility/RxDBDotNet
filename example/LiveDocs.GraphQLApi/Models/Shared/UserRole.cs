@@ -4,26 +4,30 @@ using HotChocolate;
 namespace LiveDocs.GraphQLApi.Models.Shared;
 
 /// <summary>
-/// Represents the possible roles a user can have in the LiveDocs system.
+/// Defines the roles a user can have within the LiveDocs system,
+/// determining their level of access and permissions.
 /// </summary>
+/// <remarks>
+/// The roles are hierarchical, with each level having more permissions.
+/// </remarks>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum UserRole
 {
     /// <summary>
-    /// A regular user with standard permissions.
+    /// A standard user with access to basic features like viewing and editing their own documents.
     /// </summary>
-    [GraphQLName("User")]
-    User = 0,
+    [GraphQLName("StandardUser")]
+    StandardUser = 0,
 
     /// <summary>
-    /// An administrator with elevated permissions within their workspace.
+    /// A workspace administrator with permissions to manage users and settings within their own workspace.
     /// </summary>
-    [GraphQLName("Admin")]
-    Admin = 1,
+    [GraphQLName("WorkspaceAdmin")]
+    WorkspaceAdmin = 1,
 
     /// <summary>
-    /// A super administrator with system-wide permissions across all workspaces.
+    /// A system administrator with full control over all workspaces and system settings.
     /// </summary>
-    [GraphQLName("SuperAdmin")]
-    SuperAdmin = 2,
+    [GraphQLName("SystemAdmin")]
+    SystemAdmin = 2,
 }

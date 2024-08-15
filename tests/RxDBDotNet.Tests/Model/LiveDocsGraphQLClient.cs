@@ -1135,9 +1135,9 @@ namespace RxDBDotNet.Tests.Model
     #region enums
     public enum UserRoleGql
     {
-        User,
-        Admin,
-        SuperAdmin
+        StandardUser,
+        WorkspaceAdmin,
+        SystemAdmin
     }
     #endregion
 

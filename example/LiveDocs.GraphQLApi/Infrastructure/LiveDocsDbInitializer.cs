@@ -43,7 +43,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 FirstName = "Super",
                 LastName = "Admin",
                 Email = "superadmin@livedocs.org",
-                Role = UserRole.SuperAdmin,
+                Role = UserRole.SystemAdmin,
                 WorkspaceId = liveDocsWorkspace.Id,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,

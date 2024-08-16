@@ -1,5 +1,6 @@
 ﻿using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Models.Replication;
 using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +29,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
             var liveDocsWorkspace = new Workspace
             {
                 Id = workspacePk,
-                Name = "LiveDocs",
+                Name = "LiveDocs Org Workspace",
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
                 ReplicatedDocumentId = workspacePk,
@@ -37,13 +38,27 @@ namespace LiveDocs.GraphQLApi.Infrastructure
             await dbContext.Workspaces.AddAsync(liveDocsWorkspace, cancellationToken);
 
             var userPk = RT.Comb.Provider.Sql.Create();
+            var systemAdminReplicatedUser = new ReplicatedUser
+            {
+                Id = userPk,
+                FirstName = "System",
+                LastName = "Admin",
+                Email = "superadmin@livedocs.example.org",
+                JwtAccessToken = null,
+                WorkspaceId = liveDocsWorkspace.Id,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                IsDeleted = false,
+            };
+
+            var jwtAccessToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, UserRole.SystemAdmin);
+
             var superAdminUser = new User
             {
                 Id = userPk,
-                FirstName = "Super",
+                FirstName = "System",
                 LastName = "Admin",
-                Email = "superadmin@livedocs.org",
-                Role = UserRole.SystemAdmin,
+                Email = "systemadmin@livedocs.example.org",
+                JwtAccessToken = jwtAccessToken,
                 WorkspaceId = liveDocsWorkspace.Id,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,

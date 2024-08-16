@@ -12,27 +12,27 @@ public enum AccessType
     None = 0,
 
     /// <summary>
-    /// Represents read access to documents. This includes operations like queries and subscriptions.
+    /// Represents read access to replicated documents. This includes operations like queries and subscriptions.
     /// </summary>
     Read = 1 << 0,
 
     /// <summary>
-    /// Represents write access to documents. This includes operations like creating new documents and updating existing ones.
+    /// Represents write access to replicated documents. This includes operations like creating new documents and updating existing ones.
     /// </summary>
     Write = 1 << 1,
 
     /// <summary>
-    /// Represents delete access to documents. This allows for the deletion of documents.
+    /// Represents delete access to replicated documents. This allows for the deletion of documents.
     /// </summary>
     Delete = 1 << 2,
 
     /// <summary>
-    /// Represents both read and write access to documents.
+    /// Represents both read and write access to replicated documents.
     /// </summary>
     ReadWrite = Read | Write,
 
     /// <summary>
-    /// Represents full access to documents, including read, write, and delete operations.
+    /// Represents full access to replicated documents, including read, write, and delete operations.
     /// </summary>
     All = Read | Write | Delete,
 }

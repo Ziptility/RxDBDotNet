@@ -31,7 +31,7 @@ public sealed class SecurityOptions
     internal List<AccessPolicy> Policies { get; } = [];
 
     /// <summary>
-    /// Requires a minimum role for read access to the document.
+    /// Requires a minimum role for read access to the replicated document.
     /// </summary>
     /// <typeparam name="TRole">The enum type representing user roles. Must be defined with roles in ascending order of authority.</typeparam>
     /// <param name="minimumRole">The minimum role required for read access.</param>
@@ -44,7 +44,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a minimum role for write access to the document.
+    /// Requires a minimum role for write access to the replicated document.
     /// </summary>
     /// <typeparam name="TRole">The enum type representing user roles. Must be defined with roles in ascending order of authority.</typeparam>
     /// <param name="minimumRole">The minimum role required for write access.</param>
@@ -57,7 +57,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a minimum role for delete access to the document.
+    /// Requires a minimum role for delete access to the replicated document.
     /// </summary>
     /// <typeparam name="TRole">The enum type representing user roles. Must be defined with roles in ascending order of authority.</typeparam>
     /// <param name="minimumRole">The minimum role required for delete access.</param>
@@ -70,7 +70,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a minimum role for specified access types to the document.
+    /// Requires a minimum role for specified access types to the replicated document.
     /// </summary>
     /// <typeparam name="TRole">The enum type representing user roles. Must be defined with roles in ascending order of authority.</typeparam>
     /// <param name="minimumRole">The minimum role required for the specified access types.</param>
@@ -95,7 +95,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a custom condition to be met for read access to the document.
+    /// Requires a custom condition to be met for read access to the replicated document.
     /// </summary>
     /// <param name="requirement">A function that takes a ClaimsPrincipal and returns a boolean indicating if the requirement is met.</param>
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
@@ -105,7 +105,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a custom condition to be met for write access to the document.
+    /// Requires a custom condition to be met for write access to the replicated document.
     /// </summary>
     /// <param name="requirement">A function that takes a ClaimsPrincipal and returns a boolean indicating if the requirement is met.</param>
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
@@ -115,7 +115,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a custom condition to be met for delete access to the document.
+    /// Requires a custom condition to be met for delete access to the replicated document.
     /// </summary>
     /// <param name="requirement">A function that takes a ClaimsPrincipal and returns a boolean indicating if the requirement is met.</param>
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
@@ -125,7 +125,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a specific claim for read access to the document.
+    /// Requires a specific claim for read access to the replicated document.
     /// </summary>
     /// <param name="claimType">The type of the required claim.</param>
     /// <param name="claimValue">The required value of the claim.</param>
@@ -136,7 +136,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a specific claim for write access to the document.
+    /// Requires a specific claim for write access to the replicated document.
     /// </summary>
     /// <param name="claimType">The type of the required claim.</param>
     /// <param name="claimValue">The required value of the claim.</param>
@@ -147,7 +147,7 @@ public sealed class SecurityOptions
     }
 
     /// <summary>
-    /// Requires a specific claim for delete access to the document.
+    /// Requires a specific claim for delete access to the replicated document.
     /// </summary>
     /// <param name="claimType">The type of the required claim.</param>
     /// <param name="claimValue">The required value of the claim.</param>

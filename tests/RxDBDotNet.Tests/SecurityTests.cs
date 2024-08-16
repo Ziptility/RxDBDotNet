@@ -2,7 +2,7 @@
 
 namespace RxDBDotNet.Tests;
 
-public class AuthTests(ITestOutputHelper output) : TestBase(output)
+public class SecurityTests(ITestOutputHelper output) : TestBase(output)
 {
     [Fact]
     public void AStandardUserShouldNotBeAbleToCreateAWorkspace()

@@ -34,19 +34,7 @@ public class Startup
             .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
             .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
 
-        // Configure the GraphQL server
-        services.AddGraphQLServer()
-            .ModifyRequestOptions(o => o.IncludeExceptionDetails = environment.IsDevelopment())
-            // Simulate scenario where the library user
-            // has already added their own root query type.
-            .AddQueryType<Query>()
-            .AddReplicationServer()
-            .RegisterService<IDocumentService<ReplicatedWorkspace>>()
-            .AddReplicatedDocument<ReplicatedUser>()
-            .AddReplicatedDocument<ReplicatedWorkspace>()
-            .AddReplicatedDocument<ReplicatedLiveDoc>()
-            .AddInMemorySubscriptions()
-            .AddSubscriptionDiagnostics();
+        ConfigureGraphQLServer(services);
 
         // Configure CORS
         services.AddCors(options =>
@@ -59,6 +47,28 @@ public class Startup
                     .AllowCredentials();
             });
         });
+    }
+
+    protected virtual void ConfigureGraphQLServer(IServiceCollection services)
+    {
+        ConfigureDefaultGraphQLServer(services);
+    }
+
+    public static void ConfigureDefaultGraphQLServer(IServiceCollection services)
+    {
+        // Configure the GraphQL server
+        services.AddGraphQLServer()
+            .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
+            // Simulate scenario where the library user
+            // has already added their own root query type.
+            .AddQueryType<Query>()
+            .AddReplicationServer()
+            .RegisterService<IDocumentService<ReplicatedWorkspace>>()
+            .AddReplicatedDocument<ReplicatedUser>()
+            .AddReplicatedDocument<ReplicatedWorkspace>()
+            .AddReplicatedDocument<ReplicatedLiveDoc>()
+            .AddInMemorySubscriptions()
+            .AddSubscriptionDiagnostics();
     }
 
     protected static void ConfigureDatabase(
@@ -99,11 +109,6 @@ public class Startup
         // Enable WebSockets
         app.UseWebSockets();
 
-        ConfigureTheGraphQLEndpoint(app, env);
-    }
-
-    protected virtual void ConfigureTheGraphQLEndpoint(WebApplication app, IWebHostEnvironment env)
-    {
         app.MapGraphQL()
             .WithOptions(new GraphQLServerOptions
             {

@@ -28,7 +28,7 @@ namespace LiveDocs.GraphQLApi.Validations;
 /// For full token validation, consider using a more comprehensive solution involving token validation middleware or services.
 /// </para>
 /// </remarks>
-[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Property)]
 public sealed class JwtFormatAttribute : ValidationAttribute
 {
     /// <summary>

@@ -25,7 +25,7 @@ public static class JwtUtil
     /// <summary>
     /// The issuer of the JWT token, representing the application that generated the token.
     /// </summary>
-    public const string Issuer = "LiveDocsExampleApi";
+    public const string Issuer = "LiveDocsExampleApp";
 
     /// <summary>
     /// The audience for the JWT token, representing the intended recipients or clients of the token.

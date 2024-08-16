@@ -27,7 +27,9 @@
 
     <ItemGroup>
         <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="8.1.0" />
+        <PackageReference Include="Aspire.StackExchange.Redis" Version="8.1.0" />
         <PackageReference Include="Azure.Identity" Version="1.12.0" />
+        <PackageReference Include="HotChocolate.Subscriptions.Redis" Version="13.9.11" />
         <PackageReference Include="HotChocolate.Types.Scalars" Version="13.9.11" />
         <PackageReference Include="RT.Comb" Version="4.0.1" />
         <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
@@ -35,7 +37,7 @@
 
     <!-- Analyzers-->
     <ItemGroup>
-        <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.0.0-beta" />
+        <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.1.0-beta" />
         <PackageReference Include="Meziantou.Analyzer" Version="2.0.163">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

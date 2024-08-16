@@ -48,7 +48,10 @@ public class TestStartup : Startup
         builder.Configuration.AddEnvironmentVariables();
     }
 
-    protected override void ConfigureGraphQLServer(IServiceCollection services)
+    protected override void ConfigureGraphQLServer(
+        IServiceCollection services,
+        WebApplicationBuilder builder,
+        bool isAspireEnvironment)
     {
         // Preventing the base class from configuring the GraphQL server.
         // Each unit test will configure the server as needed via

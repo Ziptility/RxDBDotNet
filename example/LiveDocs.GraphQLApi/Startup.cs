@@ -7,6 +7,7 @@ using LiveDocs.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
+using StackExchange.Redis;
 using Query = LiveDocs.GraphQLApi.Models.GraphQL.Query;
 
 namespace LiveDocs.GraphQLApi;
@@ -20,7 +21,7 @@ public class Startup
         bool isAspireEnvironment)
     {
         // Configure the database context
-        ConfigureDatabase(services, builder, isAspireEnvironment);
+        ConfigureDbContext(services, builder, isAspireEnvironment);
 
         // Add service defaults & Aspire components if running with Aspire
         if (isAspireEnvironment)
@@ -34,23 +35,30 @@ public class Startup
             .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
             .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
 
-        ConfigureGraphQLServer(services);
+        ConfigureGraphQLServer(services, builder, isAspireEnvironment);
 
         // Configure CORS
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
             {
-                corsPolicyBuilder.WithOrigins("http://localhost:3000")
+                corsPolicyBuilder.AllowAnyOrigin()
                     .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
+                    .AllowAnyMethod();
+                //.AllowCredentials();
             });
         });
     }
 
-    protected virtual void ConfigureGraphQLServer(IServiceCollection services)
+    protected virtual void ConfigureGraphQLServer(IServiceCollection services,
+        WebApplicationBuilder builder,
+        bool isAspireEnvironment)
     {
+        if (isAspireEnvironment)
+        {
+            builder.AddRedisClient("redis");
+        }
+
         ConfigureDefaultGraphQLServer(services);
     }
 
@@ -67,11 +75,11 @@ public class Startup
             .AddReplicatedDocument<ReplicatedUser>()
             .AddReplicatedDocument<ReplicatedWorkspace>()
             .AddReplicatedDocument<ReplicatedLiveDoc>()
-            .AddInMemorySubscriptions()
+            .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>())
             .AddSubscriptionDiagnostics();
     }
 
-    protected static void ConfigureDatabase(
+    protected static void ConfigureDbContext(
         IServiceCollection services,
         WebApplicationBuilder builder,
         bool isAspireEnvironment)

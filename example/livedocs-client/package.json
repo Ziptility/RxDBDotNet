@@ -6,6 +6,7 @@
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
     "start": "next start",
+	"run": "npm run build && npm run start",
     "lint": "next lint --max-warnings=0",
     "lint:strict": "eslint --max-warnings=0 .",
     "typecheck": "tsc --noEmit",

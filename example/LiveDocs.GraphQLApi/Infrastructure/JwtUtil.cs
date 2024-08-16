@@ -70,8 +70,9 @@ public static class JwtUtil
             issuer: Issuer,
             audience: Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(120), // Token expiration
-            notBefore: DateTime.UtcNow, // Token is valid from the current time
+            expires: DateTime.UtcNow.AddMinutes(120),
+            // Token is valid from the current time
+            notBefore: DateTime.UtcNow,
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

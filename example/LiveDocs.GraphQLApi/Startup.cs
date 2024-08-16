@@ -61,7 +61,7 @@ public class Startup
         });
     }
 
-    protected void ConfigureDatabase(
+    protected static void ConfigureDatabase(
         IServiceCollection services,
         WebApplicationBuilder builder,
         bool isAspireEnvironment)

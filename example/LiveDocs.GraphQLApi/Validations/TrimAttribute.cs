@@ -26,7 +26,7 @@ namespace LiveDocs.GraphQLApi.Validations;
 public sealed class TrimAttribute : ValidationAttribute
 {
     /// <summary>
-    /// Overrides the <see cref="ValidationAttribute.IsValid"/> method to trim whitespace from the property value.
+    /// Trims whitespace from the property value.
     /// This method is called automatically during the validation process.
     /// </summary>
     /// <param name="value">The value of the property to be validated and trimmed.</param>

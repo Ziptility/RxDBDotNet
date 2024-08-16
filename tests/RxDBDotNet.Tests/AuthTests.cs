@@ -5,7 +5,7 @@ namespace RxDBDotNet.Tests;
 public class AuthTests(ITestOutputHelper output) : TestBase(output)
 {
     [Fact]
-    public async Task AStandardUserShouldNotBeAbleToCreateAWorkspace()
+    public void AStandardUserShouldNotBeAbleToCreateAWorkspace()
     {
         // Arrange
         using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));

@@ -12,7 +12,7 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
 
     protected WebApplicationFactory<TestProgram> Factory { get; set; } = null!;
 
-    protected HttpClient HttpClient => Factory.HttpClient();
+    protected HttpClient HttpClient => Factory.CreateHttpClient();
 
     protected ITestOutputHelper Output { get; } = output;
 

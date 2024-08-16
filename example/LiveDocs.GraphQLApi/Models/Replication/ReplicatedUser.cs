@@ -38,7 +38,11 @@ public sealed record ReplicatedUser : ReplicatedDocument
     /// <summary>
     /// The full name of the user.
     /// </summary>
-    public string FullName => $"{FirstName} {LastName}".Trim();
+    public string FullName
+    {
+        get => $"{FirstName} {LastName}".Trim();
+        init{}
+    }
 
     /// <summary>
     /// The email of the user. jThis must be globally unique.

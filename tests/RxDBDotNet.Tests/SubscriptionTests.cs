@@ -174,6 +174,8 @@ public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
+        // using var collectTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        // var collectTimeoutToken = collectTimeout.Token;
         var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testTimeoutToken);
 
         // Ensure the subscription is established

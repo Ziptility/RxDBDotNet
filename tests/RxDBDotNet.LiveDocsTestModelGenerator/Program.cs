@@ -8,7 +8,7 @@ public sealed class Program
     {
         Console.WriteLine("Generating LiveDocsGraphQLClient...");
 
-        var factory = WebApplicationFactorySetup.CreateWebApplicationFactory();
+        var factory = WebApplicationFactorySetupUtil.Setup();
 
         using var client = factory.CreateHttpClient();
 

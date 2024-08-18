@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.Setup;
 
-public static class WebApplicationFactorySetup
+public static class WebApplicationFactorySetupUtil
 {
-    public static WebApplicationFactory<TestProgram> CreateWebApplicationFactory(Action<IServiceCollection>? configureGraphQLServer = null)
+    public static WebApplicationFactory<TestProgram> Setup(Action<IServiceCollection>? configureGraphQLServer = null)
     {
 #pragma warning disable CA2000 // caller handles disposal
         return new WebApplicationFactory<TestProgram>().WithWebHostBuilder(builder =>
@@ -15,6 +16,8 @@ public static class WebApplicationFactorySetup
             builder.UseSolutionRelativeContentRoot("example/LiveDocs.GraphQLApi")
                 .ConfigureServices(serviceCollection =>
             {
+                serviceCollection.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
+
                 if (configureGraphQLServer != null)
                 {
                     configureGraphQLServer.Invoke(serviceCollection);

@@ -4,13 +4,13 @@ using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests.Setup;
 
-public static class UnitTestDbUtil
+public static class DbSetupUtil
 {
     private static readonly SemaphoreSlim Semaphore = new(1, 1);
 
     private static volatile bool _isInitialized;
 
-    public static async Task InitializeAsync(
+    public static async Task SetupAsync(
         IServiceProvider serviceProvider,
         ITestOutputHelper output,
         CancellationToken cancellationToken)

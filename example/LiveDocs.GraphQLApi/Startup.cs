@@ -42,10 +42,10 @@ public class Startup
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
             {
-                corsPolicyBuilder.AllowAnyOrigin()
+                corsPolicyBuilder.WithOrigins("http://localhost:3000")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
-                //.AllowCredentials();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
     }

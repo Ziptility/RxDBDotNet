@@ -16,9 +16,9 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
 
     protected ITestOutputHelper Output { get; } = output;
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
-        Factory = WebApplicationFactorySetup.CreateWebApplicationFactory();
+        Factory = WebApplicationFactorySetupUtil.Setup();
 
         _asyncTestServiceScope = Factory.Services.CreateAsyncScope();
 
@@ -27,7 +27,9 @@ public abstract class TestBase(ITestOutputHelper output) : IAsyncLifetime
         // Register the application stopping token
         var cancellationToken = applicationLifetime.ApplicationStopping;
 
-        return UnitTestDbUtil.InitializeAsync(_asyncTestServiceScope.ServiceProvider, Output, cancellationToken);
+        await RedisSetupUtil.SetupAsync(Output, cancellationToken);
+
+        await DbSetupUtil.SetupAsync(_asyncTestServiceScope.ServiceProvider, Output, cancellationToken);
     }
 
     public async Task DisposeAsync()

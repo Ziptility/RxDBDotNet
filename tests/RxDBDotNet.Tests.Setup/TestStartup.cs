@@ -1,8 +1,6 @@
-﻿using HotChocolate.AspNetCore;
-using HotChocolate.Execution.Options;
+﻿using HotChocolate.Execution.Options;
 using LiveDocs.GraphQLApi;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -50,22 +48,13 @@ public class TestStartup : Startup
         builder.Configuration.AddEnvironmentVariables();
     }
 
-    protected override void ConfigureTheGraphQLEndpoint(WebApplication app, IWebHostEnvironment env)
+    protected override void ConfigureGraphQLServer(
+        IServiceCollection services,
+        WebApplicationBuilder builder,
+        bool isAspireEnvironment)
     {
-        app.MapGraphQL()
-            .WithOptions(new GraphQLServerOptions
-            {
-                EnforceMultipartRequestsPreflightHeader = false,
-                Tool =
-                {
-                    Enable = false,
-                },
-                // Extend the timeouts for debugging
-                Sockets =
-                {
-                    //ConnectionInitializationTimeout = TimeSpan.FromMinutes(5),
-                    //KeepAliveInterval = TimeSpan.FromMinutes(1),
-                },
-            });
+        // Preventing the base class from configuring the GraphQL server.
+        // Each unit test will configure the server as needed via
+        // WebApplicationFactorySetup.CreateWebApplicationFactory().
     }
 }

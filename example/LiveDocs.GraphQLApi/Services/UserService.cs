@@ -18,7 +18,7 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email,
-            Role = user.Role,
+            JwtAccessToken = user.JwtAccessToken,
             WorkspaceId = user.Workspace!.ReplicatedDocumentId,
             IsDeleted = user.IsDeleted,
             UpdatedAt = user.UpdatedAt,
@@ -33,10 +33,9 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
         ArgumentNullException.ThrowIfNull(updatedDocument);
         ArgumentNullException.ThrowIfNull(entityToUpdate);
 
+        // For simplicity, email and JWT access token cannot be updated
         entityToUpdate.FirstName = updatedDocument.FirstName;
         entityToUpdate.LastName = updatedDocument.LastName;
-        entityToUpdate.Email = updatedDocument.Email;
-        entityToUpdate.Role = updatedDocument.Role;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
         entityToUpdate.Topics = updatedDocument.Topics?.ConvertAll(t => new Topic
         {
@@ -57,7 +56,7 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             FirstName = newDocument.FirstName,
             LastName = newDocument.LastName,
             Email = newDocument.Email,
-            Role = newDocument.Role,
+            JwtAccessToken = newDocument.JwtAccessToken,
             UpdatedAt = newDocument.UpdatedAt,
             IsDeleted = false,
             WorkspaceId = newDocument.WorkspaceId,

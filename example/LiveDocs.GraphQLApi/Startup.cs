@@ -7,6 +7,7 @@ using LiveDocs.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
+using StackExchange.Redis;
 using Query = LiveDocs.GraphQLApi.Models.GraphQL.Query;
 
 namespace LiveDocs.GraphQLApi;
@@ -20,7 +21,7 @@ public class Startup
         bool isAspireEnvironment)
     {
         // Configure the database context
-        ConfigureDatabase(services, builder, isAspireEnvironment);
+        ConfigureDbContext(services, builder, isAspireEnvironment);
 
         // Add service defaults & Aspire components if running with Aspire
         if (isAspireEnvironment)
@@ -34,19 +35,7 @@ public class Startup
             .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
             .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
 
-        // Configure the GraphQL server
-        services.AddGraphQLServer()
-            .ModifyRequestOptions(o => o.IncludeExceptionDetails = environment.IsDevelopment())
-            // Simulate scenario where the library user
-            // has already added their own root query type.
-            .AddQueryType<Query>()
-            .AddReplicationServer()
-            .RegisterService<IDocumentService<ReplicatedWorkspace>>()
-            .AddReplicatedDocument<ReplicatedUser>()
-            .AddReplicatedDocument<ReplicatedWorkspace>()
-            .AddReplicatedDocument<ReplicatedLiveDoc>()
-            .AddInMemorySubscriptions()
-            .AddSubscriptionDiagnostics();
+        ConfigureGraphQLServer(services, builder, isAspireEnvironment);
 
         // Configure CORS
         services.AddCors(options =>
@@ -61,7 +50,36 @@ public class Startup
         });
     }
 
-    protected void ConfigureDatabase(
+    protected virtual void ConfigureGraphQLServer(IServiceCollection services,
+        WebApplicationBuilder builder,
+        bool isAspireEnvironment)
+    {
+        if (isAspireEnvironment)
+        {
+            builder.AddRedisClient("redis");
+        }
+
+        ConfigureDefaultGraphQLServer(services);
+    }
+
+    public static void ConfigureDefaultGraphQLServer(IServiceCollection services)
+    {
+        // Configure the GraphQL server
+        services.AddGraphQLServer()
+            .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
+            // Simulate scenario where the library user
+            // has already added their own root query type.
+            .AddQueryType<Query>()
+            .AddReplicationServer()
+            .RegisterService<IDocumentService<ReplicatedWorkspace>>()
+            .AddReplicatedDocument<ReplicatedUser>()
+            .AddReplicatedDocument<ReplicatedWorkspace>()
+            .AddReplicatedDocument<ReplicatedLiveDoc>()
+            .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>())
+            .AddSubscriptionDiagnostics();
+    }
+
+    protected static void ConfigureDbContext(
         IServiceCollection services,
         WebApplicationBuilder builder,
         bool isAspireEnvironment)
@@ -99,11 +117,6 @@ public class Startup
         // Enable WebSockets
         app.UseWebSockets();
 
-        ConfigureTheGraphQLEndpoint(app, env);
-    }
-
-    protected virtual void ConfigureTheGraphQLEndpoint(WebApplication app, IWebHostEnvironment env)
-    {
         app.MapGraphQL()
             .WithOptions(new GraphQLServerOptions
             {

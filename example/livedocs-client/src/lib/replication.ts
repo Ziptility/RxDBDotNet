@@ -11,27 +11,17 @@ import { logError, notifyUser } from './errorHandling';
 import { workspaceSchema, userSchema, liveDocSchema, WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
 import { ReplicationCheckpoint, LiveDocsCollections } from '@/types';
 
-const GRAPHQL_ENDPOINT = process.env['NEXT_PUBLIC_GRAPHQL_ENDPOINT'];
-const WS_ENDPOINT = process.env['NEXT_PUBLIC_WS_ENDPOINT'];
-const JWT_TOKEN = process.env['NEXT_PUBLIC_JWT_TOKEN'];
-
-if (!JWT_TOKEN) {
-  throw new Error('NEXT_PUBLIC_JWT_TOKEN must be defined in environment variables');
-}
+const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
+const WS_ENDPOINT = 'ws://localhost:5414/graphql';
+const JWT_TOKEN =
+  'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJMaXZlRG9jcyIsImV4cCI6MTcyMjk1MTc2NCwiaWF0IjoxNzIyOTUxNzY0fQ.VP3WRdWB6R-lrHfsNM4o2AA95SgE2_PrJQSOoZTyYkg';
 
 const BATCH_SIZE = 50;
 
 const getGraphQLServerUrl = (): GraphQLServerUrl => {
   const url: GraphQLServerUrl = {};
-  if (GRAPHQL_ENDPOINT) {
-    url.http = GRAPHQL_ENDPOINT;
-  }
-  if (WS_ENDPOINT) {
-    url.ws = WS_ENDPOINT;
-  }
-  if (!url.http && !url.ws) {
-    throw new Error('At least one of GRAPHQL_ENDPOINT or WS_ENDPOINT must be defined');
-  }
+  url.http = GRAPHQL_ENDPOINT;
+  url.ws = WS_ENDPOINT;
   return url;
 };
 

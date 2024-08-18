@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using HotChocolate;
 using HotChocolate.Types;
-using LiveDocs.GraphQLApi.Models.Shared;
 using LiveDocs.GraphQLApi.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
@@ -10,44 +8,32 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 /// <summary>
 /// Represents a user of the LiveDocs system.
 /// </summary>
+/// <remarks>
+/// This class is part of a non-production example application and is not intended for use in a production environment.
+/// The <see cref="JwtAccessToken"/> property is used to store a JWT access token for the user.
+/// This token captures the user's identity, claims, and authorization information, allowing the system to simulate
+/// user authentication without requiring a full authentication infrastructure.
+/// In a production environment, it is highly recommended to implement a proper authentication and authorization system
+/// instead of relying on this approach.
+/// </remarks>
 [GraphQLName("User")]
 public sealed record ReplicatedUser : ReplicatedDocument
 {
-    private readonly string _firstName;
-    private readonly string _lastName;
-    private readonly string _email;
-
     /// <summary>
     /// The first name of the user.
     /// </summary>
     [Required]
+    [Trim]
     [Length(1, 256)]
-    public required string FirstName
-    {
-        get => _firstName;
-        [MemberNotNull(nameof(_firstName))]
-        init
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            _firstName = value.Trim();
-        }
-    }
+    public required string FirstName { get; init; }
 
     /// <summary>
     /// The last name of the user.
     /// </summary>
     [Required]
+    [Trim]
     [Length(1, 256)]
-    public required string LastName
-    {
-        get => _lastName;
-        [MemberNotNull(nameof(_lastName))]
-        init
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            _lastName = value.Trim();
-        }
-    }
+    public required string LastName { get; init; }
 
     /// <summary>
     /// The full name of the user.
@@ -55,32 +41,37 @@ public sealed record ReplicatedUser : ReplicatedDocument
     public string FullName
     {
         get => $"{FirstName} {LastName}".Trim();
-        init { }
+        init{}
     }
 
     /// <summary>
-    /// The email of the user.
+    /// The email of the user. jThis must be globally unique.
+    /// For simplicity in this example app, it cannot be updated.
     /// </summary>
     [Required]
+    [Trim]
     [EmailAddress]
     [GraphQLType(typeof(EmailAddressType))]
     [MaxLength(256)]
-    public required string Email
-    {
-        get => _email;
-        [MemberNotNull(nameof(_email))]
-        init
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            _email = value.Trim();
-        }
-    }
+    public required string Email { get; init; }
 
     /// <summary>
-    /// The role of the user.
+    /// A JWT access token used to simulate user authentication in a non-production environment.
+    /// For simplicity in this example app, it cannot be updated.
     /// </summary>
-    [Required]
-    public required UserRole Role { get; init; }
+    /// <remarks>
+    /// This property is included for demonstration purposes only. It allows the system to simulate
+    /// user authentication by capturing the user's identity, claims, and authorization information.
+    /// A null value represents an anonymous user.
+    /// <para>
+    /// Do not use this approach in a production environment; instead, implement a proper authentication
+    /// and authorization system.
+    /// </para>
+    /// </remarks>
+    [JwtFormat(AllowNull = true)]
+    [Trim]
+    [MaxLength(2000)]
+    public required string? JwtAccessToken { get; init; }
 
     /// <summary>
     /// The client-assigned identifier of the workspace to which the user belongs.
@@ -91,7 +82,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
 
     public bool Equals(ReplicatedUser? other)
     {
-        if (other is null)
+        if (other is null || GetType() != other.GetType())
         {
             return false;
         }
@@ -101,16 +92,23 @@ public sealed record ReplicatedUser : ReplicatedDocument
             return true;
         }
 
-        return base.Equals(other)
-               && string.Equals(_firstName, other._firstName, StringComparison.Ordinal)
-               && string.Equals(_lastName, other._lastName, StringComparison.Ordinal)
-               && string.Equals(_email, other._email, StringComparison.Ordinal)
-               && Role == other.Role
-               && WorkspaceId.Equals(other.WorkspaceId);
+        return base.Equals(other) &&
+               string.Equals(FirstName, other.FirstName, StringComparison.Ordinal) &&
+               string.Equals(LastName, other.LastName, StringComparison.Ordinal) &&
+               string.Equals(Email, other.Email, StringComparison.Ordinal) &&
+               string.Equals(JwtAccessToken, other.JwtAccessToken, StringComparison.Ordinal) &&
+               WorkspaceId.Equals(other.WorkspaceId);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(base.GetHashCode(), _firstName, _lastName, _email, (int)Role, WorkspaceId);
+        return HashCode.Combine(
+            base.GetHashCode(),
+            FirstName,
+            LastName,
+            Email,
+            JwtAccessToken,
+            WorkspaceId
+        );
     }
 }

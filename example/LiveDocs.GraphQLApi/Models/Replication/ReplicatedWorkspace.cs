@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
 using HotChocolate;
+using LiveDocs.GraphQLApi.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
 
@@ -14,21 +14,11 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 [GraphQLName("Workspace")]
 public sealed record ReplicatedWorkspace : ReplicatedDocument
 {
-    private readonly string _name;
-
     /// <summary>
     /// The name of the workspace. This must be globally unique.
     /// </summary>
     [Required]
+    [Trim]
     [MaxLength(30)]
-    public required string Name
-    {
-        get => _name;
-        [MemberNotNull(nameof(_name))]
-        init
-        {
-            ArgumentNullException.ThrowIfNull(value);
-            _name = value.Trim();
-        }
-    }
+    public required string Name { get; init; }
 }

@@ -42,18 +42,7 @@ cd example/livedocs-client
 npm install
 ```
 
-3. Set up environment variables:
-
-Create a `.env.local` file in the root directory and add the following variables:
-
-```
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:5414/graphql
-NEXT_PUBLIC_WS_ENDPOINT=ws://localhost:5414/graphql
-```
-
-Replace the URLs with your GraphQL server endpoints if they're different.
-
-4. Run the development server:
+3. Run the development server:
 
 ```bash
 npm run dev

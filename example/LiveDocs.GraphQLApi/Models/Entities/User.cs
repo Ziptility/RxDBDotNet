@@ -1,5 +1,5 @@
-﻿using LiveDocs.GraphQLApi.Models.Shared;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using LiveDocs.GraphQLApi.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Entities;
 
@@ -30,10 +30,20 @@ public sealed class User : ReplicatedEntity
     public required string Email { get; set; }
 
     /// <summary>
-    /// The role of the user.
+    /// A JWT access token used to simulate user authentication in a non-production environment.
     /// </summary>
-    [Required]
-    public required UserRole Role { get; set; }
+    /// <remarks>
+    /// This property is included for demonstration purposes only. It allows the system to simulate
+    /// user authentication by capturing the user's identity, claims, and authorization information.
+    /// A null value represents an anonymous user.
+    /// <para>
+    /// Do not use this approach in a production environment; instead, implement a proper authentication
+    /// and authorization system.
+    /// </para>
+    /// </remarks>
+    [JwtFormat(AllowNull = true)]
+    [MaxLength(2000)]
+    public required string? JwtAccessToken { get; init; }
 
     /// <summary>
     /// The server-generated primary key of the workspace to which the user belongs.

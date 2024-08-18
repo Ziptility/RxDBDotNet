@@ -38,17 +38,20 @@ const userSchemaLiteral = {
     },
     firstName: {
       type: 'string',
+      maxLength: 256,
     },
     lastName: {
       type: 'string',
+      maxLength: 256,
     },
     email: {
       type: 'string',
       format: 'email',
+      maxLength: 256,
     },
-    role: {
+    jwtAccessToken: {
       type: 'string',
-      enum: ['User', 'Admin', 'SuperAdmin'],
+      maxLength: 2000,
     },
     workspaceId: {
       type: 'string',
@@ -63,7 +66,7 @@ const userSchemaLiteral = {
       type: 'boolean',
     },
   },
-  required: ['id', 'firstName', 'lastName', 'email', 'role', 'workspaceId', 'updatedAt', 'isDeleted'],
+  required: ['id', 'firstName', 'lastName', 'email', 'workspaceId', 'updatedAt', 'isDeleted'],
 } as const;
 
 // LiveDoc Schema

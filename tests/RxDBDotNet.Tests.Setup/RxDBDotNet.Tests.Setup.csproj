@@ -28,12 +28,13 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
         <PackageReference Include="Testcontainers.MsSql" Version="3.9.0" />
+        <PackageReference Include="Testcontainers.Redis" Version="3.9.0" />
         <PackageReference Include="xunit" Version="2.9.0" />
     </ItemGroup>
 
     <!-- Analyzers-->
     <ItemGroup>
-        <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.0.0-beta" />
+        <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.1.0-beta" />
         <PackageReference Include="Meziantou.Analyzer" Version="2.0.163">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

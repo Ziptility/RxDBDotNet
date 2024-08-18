@@ -48,7 +48,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
 
     private static async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStreamInternal(
         ITopicEventReceiver eventReceiver,
-        List<string>? topics,
+        List<string>? subscriberTopics,
         ILogger<SubscriptionResolver<TDocument>> logger,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -81,7 +81,7 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
                                .WithCancellation(cancellationToken)
                                .ConfigureAwait(false))
             {
-                if (ShouldYieldDocuments(pullDocumentResult, topics))
+                if (ShouldYieldDocuments(pullDocumentResult, subscriberTopics))
                 {
                     yield return pullDocumentResult;
                 }
@@ -93,11 +93,12 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
         }
     }
 
-    private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string>? topics)
+    private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string>? subscriberTopics)
     {
         return pullDocumentResult.Documents
-            .Exists(doc => topics == null
-                           || topics.Count == 0
-                           || doc.Topics?.Intersect(topics, StringComparer.OrdinalIgnoreCase).Any() == true);
+            .Exists(doc => subscriberTopics == null
+                           || subscriberTopics.Count == 0
+                           // Not ignoring case to follow the pub/sub pattern of case-sensitive channels in redis
+                           || doc.Topics?.Intersect(subscriberTopics, StringComparer.Ordinal).Any() == true);
     }
 }

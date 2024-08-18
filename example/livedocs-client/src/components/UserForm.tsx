@@ -20,14 +20,14 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.
       setFirstName(user.firstName);
       setLastName(user.lastName);
       setEmail(user.email);
-      setRole(user.role as UserRole);
+      // setRole(user.role as UserRole);
       setWorkspaceId(user.workspaceId);
     }
   }, [user]);
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    void onSubmit({ firstName, lastName, email, role, workspaceId });
+    void onSubmit({ firstName, lastName, email, workspaceId });
     if (!user) {
       setFirstName('');
       setLastName('');

@@ -46,7 +46,7 @@ const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Elemen
             <TableRow key={user.id}>
               <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
               <TableCell>{user.email}</TableCell>
-              <TableCell>{user.role}</TableCell>
+              {/* <TableCell>{user.role}</TableCell> */}
               <TableCell>{user.workspaceId}</TableCell>
               <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
               <TableCell>

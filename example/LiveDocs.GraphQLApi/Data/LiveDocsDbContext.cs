@@ -1,4 +1,5 @@
 ﻿using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace LiveDocs.GraphQLApi.Data;
@@ -8,6 +9,7 @@ public class LiveDocsDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<User> Users => Set<User>();
     public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<LiveDoc> LiveDocs => Set<LiveDoc>();
+    public DbSet<Hero> Heroes => Set<Hero>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -17,6 +19,22 @@ public class LiveDocsDbContext(DbContextOptions options) : DbContext(options)
         ConfigureUserEntity(modelBuilder);
         ConfigureWorkspaceEntity(modelBuilder);
         ConfigureLiveDocEntity(modelBuilder);
+        ConfigureHeroEntity(modelBuilder);
+    }
+
+    private static void ConfigureHeroEntity(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Hero>(entity =>
+        {
+            entity.ToTable("Heroes");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever();
+
+            entity.Property(e => e.UpdatedAt)
+                .IsRequired()
+                .HasColumnType("datetimeoffset(7)");
+        });
     }
 
     private static void ConfigureUserEntity(ModelBuilder modelBuilder)

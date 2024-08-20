@@ -4,7 +4,8 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var redis = builder.AddRedis("redis");
+var redis = builder.AddRedis("redis", 6379)
+    .WithEndpoint(port: 6380, targetPort: 6379, name: "redis-endpoint");
 
 // Add SQL Server
 var password = builder.AddParameter("sqlpassword", secret: true);

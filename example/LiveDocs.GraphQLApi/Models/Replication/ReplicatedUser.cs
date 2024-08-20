@@ -71,7 +71,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
     [JwtFormat(AllowNull = true)]
     [Trim]
     [MaxLength(2000)]
-    public required string? JwtAccessToken { get; init; }
+    public string? JwtAccessToken { get; init; }
 
     /// <summary>
     /// The client-assigned identifier of the workspace to which the user belongs.

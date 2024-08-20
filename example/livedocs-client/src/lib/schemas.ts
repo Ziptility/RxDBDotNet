@@ -22,7 +22,7 @@ const workspaceSchemaLiteral = {
       type: 'boolean',
     },
   },
-  required: ['id', 'name', 'updatedAt', 'isDeleted'],
+  required: ['id', 'name', 'updatedAt'],
 } as const;
 
 // User Schema
@@ -66,7 +66,7 @@ const userSchemaLiteral = {
       type: 'boolean',
     },
   },
-  required: ['id', 'firstName', 'lastName', 'email', 'workspaceId', 'updatedAt', 'isDeleted'],
+  required: ['id', 'firstName', 'lastName', 'email', 'workspaceId', 'updatedAt'],
 } as const;
 
 // LiveDoc Schema
@@ -101,7 +101,7 @@ const liveDocSchemaLiteral = {
       type: 'boolean',
     },
   },
-  required: ['id', 'content', 'ownerId', 'workspaceId', 'updatedAt', 'isDeleted'],
+  required: ['id', 'content', 'ownerId', 'workspaceId', 'updatedAt'],
 } as const;
 
 // Create typed schemas

@@ -2,6 +2,7 @@
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
+using LiveDocs.GraphQLApi.Models.Shared;
 using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,7 @@ public class Startup
 
         // Add services to the container
         services.AddProblemDetails()
+            .AddScoped<IDocumentService<Hero>, HeroService>()
             .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
             .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
             .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
@@ -42,7 +44,9 @@ public class Startup
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
             {
-                corsPolicyBuilder.WithOrigins("http://localhost:3000")
+                corsPolicyBuilder.WithOrigins(
+                        "http://localhost:3000",
+                        "http://127.0.0.1:8888")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
@@ -71,10 +75,10 @@ public class Startup
             // has already added their own root query type.
             .AddQueryType<Query>()
             .AddReplicationServer()
-            .RegisterService<IDocumentService<ReplicatedWorkspace>>()
             .AddReplicatedDocument<ReplicatedUser>()
             .AddReplicatedDocument<ReplicatedWorkspace>()
             .AddReplicatedDocument<ReplicatedLiveDoc>()
+            .AddReplicatedDocument<Hero>()
             .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>())
             .AddSubscriptionDiagnostics();
     }

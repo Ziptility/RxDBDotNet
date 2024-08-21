@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.Setup;
 
@@ -16,8 +15,6 @@ public static class WebApplicationFactorySetupUtil
             builder.UseSolutionRelativeContentRoot("example/LiveDocs.GraphQLApi")
                 .ConfigureServices(serviceCollection =>
             {
-                serviceCollection.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
-
                 if (configureGraphQLServer != null)
                 {
                     configureGraphQLServer.Invoke(serviceCollection);

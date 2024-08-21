@@ -21,18 +21,17 @@ public sealed class AccessRequirementHandler : AuthorizationHandler<AccessRequir
         ArgumentNullException.ThrowIfNull(requirement);
 
         var user = context.User;
+
         var policies = requirement.SecurityOptions.Policies
             .Where(p => p.Type.HasFlag(requirement.Type));
 
-        foreach (var policy in policies)
+        if (policies.Any(policy => !policy.Requirement(user)))
         {
-            if (!policy.Requirement(user))
-            {
-                return Task.CompletedTask;
-            }
+            return Task.CompletedTask;
         }
 
         context.Succeed(requirement);
+
         return Task.CompletedTask;
     }
 }

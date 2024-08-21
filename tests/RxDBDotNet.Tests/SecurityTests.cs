@@ -1,8 +1,9 @@
-﻿using Xunit.Abstractions;
+﻿using RxDBDotNet.Tests.Setup;
+using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
 
-public class SecurityTests(ITestOutputHelper output) : TestBase(output)
+public class SecurityTests(ITestOutputHelper output) : TestSetupUtil(output)
 {
     [Fact]
     public void AStandardUserShouldNotBeAbleToCreateAWorkspace()

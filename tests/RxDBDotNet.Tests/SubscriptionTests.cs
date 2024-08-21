@@ -2,80 +2,91 @@
 using FluentAssertions;
 using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Model;
-using Xunit.Abstractions;
+using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 
-public class SubscriptionTests(ITestOutputHelper output) : TestBase(output)
+public class SubscriptionTests
 {
     [Fact]
-    public async Task TestCase5_1_CreateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscription()
+    public async Task TestCase5_1_CreateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscriptionAsync()
     {
-        // Arrange
-        using var timeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        var timeoutToken = timeoutTokenSource.Token;
+        TestContext? testContext = null;
 
-        await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(timeoutToken);
+        try
+        {
+            // Arrange
+            testContext = await TestSetupUtil.SetupAsync();
 
-        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
-                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
-                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
+            await using var subscriptionClient = await testContext.Factory.CreateGraphQLSubscriptionClientAsync(testContext.TestTimeoutToken);
+
+            var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                    .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
+                    .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
                 {
                     Authorization = "test-auth-token",
                 })
-            .Build();
+                .Build();
 
-        // Start the subscription task before creating the workspace
-        // so that we do not miss subscription data
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, timeoutToken, maxResponses: 3);
+            // Start the subscription task before creating the workspace
+            // so that we do not miss subscription data
+            var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testContext.TestTimeoutToken, maxResponses: 3);
 
-        // Ensure the subscription is established
-        await Task.Delay(1000, timeoutToken);
+            // Ensure the subscription is established
+            await Task.Delay(1000, testContext.TestTimeoutToken);
 
-        // Act
-        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync(timeoutToken);
+            // Act
+            var newWorkspace = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.TestTimeoutToken);
 
-        // Assert
-        var subscriptionResponses = await subscriptionTask;
+            // Assert
+            var subscriptionResponses = await subscriptionTask;
 
-        subscriptionResponses.Should()
-            .HaveCount(1);
-        var subscriptionResponse = subscriptionResponses[0];
-        subscriptionResponse.Should()
-            .NotBeNull("Subscription data should not be null.");
-        subscriptionResponse.Errors.Should()
-            .BeNullOrEmpty();
-        subscriptionResponse.Data.Should()
-            .NotBeNull();
-        subscriptionResponse.Data?.StreamWorkspace.Should()
-            .NotBeNull();
-        subscriptionResponse.Data?.StreamWorkspace?.Documents.Should()
-            .NotBeEmpty();
+            subscriptionResponses.Should()
+                .HaveCount(1);
+            var subscriptionResponse = subscriptionResponses[0];
+            subscriptionResponse.Should()
+                .NotBeNull("Subscription data should not be null.");
+            subscriptionResponse.Errors.Should()
+                .BeNullOrEmpty();
+            subscriptionResponse.Data.Should()
+                .NotBeNull();
+            subscriptionResponse.Data?.StreamWorkspace.Should()
+                .NotBeNull();
+            subscriptionResponse.Data?.StreamWorkspace?.Documents.Should()
+                .NotBeEmpty();
 
-        var streamedWorkspace = subscriptionResponse.Data?.StreamWorkspace?.Documents?.First();
-        streamedWorkspace.Should()
-            .NotBeNull();
+            var streamedWorkspace = subscriptionResponse.Data?.StreamWorkspace?.Documents?.First();
+            streamedWorkspace.Should()
+                .NotBeNull();
 
-        // Assert that the streamed workspace properties match the newWorkspace properties
-        streamedWorkspace?.Id.Should()
-            .Be(newWorkspace.Id, "The streamed workspace ID should match the created workspace ID");
-        streamedWorkspace?.Name.Should()
-            .Be(newWorkspace.Name?.Value, "The streamed workspace name should match the created workspace name");
-        streamedWorkspace?.IsDeleted.Should()
-            .Be(newWorkspace.IsDeleted?.Value, "The streamed workspace IsDeleted status should match the created workspace");
-        streamedWorkspace?.UpdatedAt.Should()
-            .BeCloseTo(newWorkspace.UpdatedAt?.Value ?? DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5),
-                "The streamed workspace UpdatedAt should be close to the created workspace's timestamp");
+            // Assert that the streamed workspace properties match the newWorkspace properties
+            streamedWorkspace?.Id.Should()
+                .Be(newWorkspace.Id, "The streamed workspace ID should match the created workspace ID");
+            streamedWorkspace?.Name.Should()
+                .Be(newWorkspace.Name?.Value, "The streamed workspace name should match the created workspace name");
+            streamedWorkspace?.IsDeleted.Should()
+                .Be(newWorkspace.IsDeleted?.Value, "The streamed workspace IsDeleted status should match the created workspace");
+            streamedWorkspace?.UpdatedAt.Should()
+                .BeCloseTo(newWorkspace.UpdatedAt?.Value ?? DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5),
+                    "The streamed workspace UpdatedAt should be close to the created workspace's timestamp");
 
-        // Assert on the checkpoint
-        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint.Should()
-            .NotBeNull("The checkpoint should be present");
-        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
-            .Be(newWorkspace.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
-        Debug.Assert(newWorkspace.UpdatedAt != null, "newWorkspace.UpdatedAt != null");
-        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
-            .BeCloseTo(newWorkspace.UpdatedAt.Value, TimeSpan.FromSeconds(5),
-                "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
+            // Assert on the checkpoint
+            subscriptionResponse.Data?.StreamWorkspace?.Checkpoint.Should()
+                .NotBeNull("The checkpoint should be present");
+            subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
+                .Be(newWorkspace.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
+            Debug.Assert(newWorkspace.UpdatedAt != null, "newWorkspace.UpdatedAt != null");
+            subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
+                .BeCloseTo(newWorkspace.UpdatedAt.Value, TimeSpan.FromSeconds(5),
+                    "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
+        }
+        finally
+        {
+            if (testContext != null)
+            {
+                await testContext.DisposeAsync();
+            }
+        }
     }
 
     [Fact]

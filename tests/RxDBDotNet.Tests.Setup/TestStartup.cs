@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.Setup;
 
@@ -27,6 +28,8 @@ public class TestStartup : Startup
 
         // Configure WebSocket options for longer keep-alive
         services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
+
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
 
         builder.Logging.AddFilter(
             "Microsoft.EntityFrameworkCore.Database.Command",

@@ -2,11 +2,12 @@
 using FluentAssertions;
 using GraphQlClientGenerator;
 using Newtonsoft.Json;
+using RxDBDotNet.Tests.Setup;
 using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
 
-public class SchemaGenerationTests(ITestOutputHelper output) : TestBase(output)
+public class SchemaGenerationTests(ITestOutputHelper output) : TestSetupUtil(output)
 {
     [Fact]
     public async Task GeneratedSchemaForADocumentShouldReflectTheNameDefinedInTheGraphQLNameAttribute()

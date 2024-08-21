@@ -2,11 +2,12 @@
 using RT.Comb;
 using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Model;
+using RxDBDotNet.Tests.Setup;
 using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
 
-public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestBase(output)
+public class BasicDocumentOperationsTests(ITestOutputHelper output) : TestSetupUtil(output)
 {
     [Fact]
     public async Task TestCase1_1_PushNewRowShouldCreateSingleDocument()

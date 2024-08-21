@@ -10,7 +10,8 @@ namespace LiveDocs.GraphQLApi.Infrastructure
     {
         public static async Task InitializeAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
         {
-            using var scope = serviceProvider.CreateScope();
+            await using var scope = serviceProvider.CreateAsyncScope();
+
             var dbContext = scope.ServiceProvider.GetRequiredService<LiveDocsDbContext>();
 
             await dbContext.Database.EnsureCreatedAsync(cancellationToken);

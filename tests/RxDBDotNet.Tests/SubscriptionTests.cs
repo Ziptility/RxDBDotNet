@@ -18,7 +18,7 @@ public class SubscriptionTests
             // Arrange
             testContext = await TestSetupUtil.SetupAsync();
 
-            await using var subscriptionClient = await testContext.Factory.CreateGraphQLSubscriptionClientAsync(testContext.TestTimeoutToken);
+            await using var subscriptionClient = await testContext.Factory.CreateGraphQLSubscriptionClientAsync(testContext.CancellationToken);
 
             var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                     .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
@@ -30,13 +30,13 @@ public class SubscriptionTests
 
             // Start the subscription task before creating the workspace
             // so that we do not miss subscription data
-            var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testContext.TestTimeoutToken, maxResponses: 3);
+            var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testContext.CancellationToken, maxResponses: 3);
 
             // Ensure the subscription is established
-            await Task.Delay(1000, testContext.TestTimeoutToken);
+            await Task.Delay(1000, testContext.CancellationToken);
 
             // Act
-            var newWorkspace = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.TestTimeoutToken);
+            var newWorkspace = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
 
             // Assert
             var subscriptionResponses = await subscriptionTask;
@@ -92,13 +92,16 @@ public class SubscriptionTests
     [Fact]
     public async Task TestCase5_1_1_UpdateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscription()
     {
-        // Arrange
-        using var timeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        var timeoutToken = timeoutTokenSource.Token;
+        TestContext? testContext = null;
 
-        var newWorkspace = await HttpClient.CreateNewWorkspaceAsync(timeoutToken);
+        try
+        {
+            // Arrange
+            testContext = await TestSetupUtil.SetupAsync();
 
-        await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(timeoutToken);
+            var newWorkspace = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+
+        await using var subscriptionClient = await testContext.Factory.CreateGraphQLSubscriptionClientAsync(testContext.CancellationToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
@@ -110,13 +113,13 @@ public class SubscriptionTests
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, timeoutToken, maxResponses: 3);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testContext.CancellationToken, maxResponses: 3);
 
         // Ensure the subscription is established
-        await Task.Delay(1000, timeoutToken);
+        await Task.Delay(1000, testContext.CancellationToken);
 
         // Act
-        var updatedWorkspace = await HttpClient.UpdateWorkspaceAsync(newWorkspace, timeoutToken);
+        var updatedWorkspace = await testContext.HttpClient.UpdateWorkspaceAsync(newWorkspace, testContext.CancellationToken);
 
         // Assert
         var subscriptionResponses = await subscriptionTask;
@@ -155,20 +158,31 @@ public class SubscriptionTests
         subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
             .BeCloseTo(updatedWorkspace.UpdatedAt, TimeSpan.FromSeconds(5),
                 "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
+        }
+        finally
+        {
+            if (testContext != null)
+            {
+                await testContext.DisposeAsync();
+            }
+        }
     }
 
     [Fact]
     public async Task TestCase5_2_ASubscriptionCanBeFilteredByTopic()
     {
-        // Arrange
-        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        var testTimeoutToken = testTimeoutTokenSource.Token;
+        TestContext? testContext = null;
 
-        var workspace1 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
-        var workspace2 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
-        var workspace3 = await HttpClient.CreateNewWorkspaceAsync(testTimeoutToken);
+        try
+        {
+            // Arrange
+            testContext = await TestSetupUtil.SetupAsync();
 
-        await using var subscriptionClient = await Factory.CreateGraphQLSubscriptionClientAsync(testTimeoutToken);
+            var workspace1 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+        var workspace2 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+        var workspace3 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+
+        await using var subscriptionClient = await testContext.Factory.CreateGraphQLSubscriptionClientAsync(testContext.CancellationToken);
 
         Debug.Assert(workspace3.Id != null, "workspace3.Id != null");
 
@@ -187,16 +201,16 @@ public class SubscriptionTests
         // so that we do not miss subscription data
         // using var collectTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         // var collectTimeoutToken = collectTimeout.Token;
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testTimeoutToken);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, testContext.CancellationToken);
 
         // Ensure the subscription is established
-        await Task.Delay(1000, testTimeoutToken);
+        await Task.Delay(1000, testContext.CancellationToken);
 
-        await HttpClient.UpdateWorkspaceAsync(workspace1, testTimeoutToken);
-        await HttpClient.UpdateWorkspaceAsync(workspace2, testTimeoutToken);
+        await testContext.HttpClient.UpdateWorkspaceAsync(workspace1, testContext.CancellationToken);
+        await testContext.HttpClient.UpdateWorkspaceAsync(workspace2, testContext.CancellationToken);
         // Update workspace 3 twice
-        var updatedWorkspace3 = await HttpClient.UpdateWorkspaceAsync(workspace3, testTimeoutToken);
-        await HttpClient.UpdateWorkspaceAsync(updatedWorkspace3, testTimeoutToken);
+        var updatedWorkspace3 = await testContext.HttpClient.UpdateWorkspaceAsync(workspace3, testContext.CancellationToken);
+        await testContext.HttpClient.UpdateWorkspaceAsync(updatedWorkspace3, testContext.CancellationToken);
 
         var subscriptionResponses = await subscriptionTask;
         subscriptionResponses.Should()
@@ -222,6 +236,14 @@ public class SubscriptionTests
             streamedWorkspace.Id.Should()
                 .Be(workspace3.Id);
         }
+        }
+        finally
+        {
+            if (testContext != null)
+            {
+                await testContext.DisposeAsync();
+            }
+        }
     }
 
     private static async Task<List<GqlSubscriptionResponse>> CollectSubscriptionDataAsync(
@@ -233,7 +255,7 @@ public class SubscriptionTests
     {
         var responses = new List<GqlSubscriptionResponse>();
 
-        collectTimespan ??= TimeSpan.FromSeconds(5);
+        collectTimespan ??= TimeSpan.FromSeconds(2);
 
         // Create a CancellationTokenSource with the specified timeout
         using var timeoutCts = new CancellationTokenSource(collectTimespan.Value);

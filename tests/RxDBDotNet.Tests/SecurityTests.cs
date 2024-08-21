@@ -1,31 +1,41 @@
 ﻿using RxDBDotNet.Tests.Setup;
-using Xunit.Abstractions;
 
 namespace RxDBDotNet.Tests;
 
-public class SecurityTests(ITestOutputHelper output) : TestSetupUtil(output)
+public class SecurityTests
 {
     [Fact]
-    public void AStandardUserShouldNotBeAbleToCreateAWorkspace()
+    public async Task AStandardUserShouldNotBeAbleToCreateAWorkspace()
     {
-        // Arrange
-        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        var testTimeoutToken = testTimeoutTokenSource.Token;
+        TestContext? testContext = null;
 
-        // Configure security for this test
+        try
+        {
+            // Arrange
+            testContext = await TestSetupUtil.SetupAsync();
 
-        // As a system admin user:
-        // 1. Create a workspace
+            // Configure security for this test
 
-        // 2. Create a standard user within the workspace
+            // As a system admin user:
+            // 1. Create a workspace
 
-        // As a standard user:
+            // 2. Create a standard user within the workspace
 
-        // Attempt to create a workspace
+            // As a standard user:
 
-        // Act
+            // Attempt to create a workspace
 
-        // Assert
-        // The response should contain an unauthorized error
+            // Act
+
+            // Assert
+            // The response should contain an unauthorized error
+        }
+        finally
+        {
+            if (testContext != null)
+            {
+                await testContext.DisposeAsync();
+            }
+        }
     }
 }

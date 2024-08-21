@@ -139,7 +139,7 @@ internal static class TestUtils
     {
         var query = new QueryQueryBuilderGql().WithPullWorkspace(
             new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
-            limit: 10);
+            limit: 20000);
 
         var response = await httpClient.PostGqlQueryAsync(query, cancellationToken);
 

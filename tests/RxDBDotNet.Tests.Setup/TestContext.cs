@@ -8,17 +8,24 @@ public sealed class TestContext : IAsyncDisposable
 
     public required HttpClient HttpClient { get; init; }
 
-    public required List<IAsyncDisposable> Disposables { get; init; }
+    public required List<IAsyncDisposable> AsyncDisposables { get; init; }
 
-    public required CancellationToken TestTimeoutToken { get; init; }
+    public required List<IDisposable> Disposables { get; init; }
+
+    public required CancellationToken CancellationToken { get; init; }
 
     public async ValueTask DisposeAsync()
     {
         try
         {
-            foreach (var asyncDisposable in Disposables)
+            foreach (var asyncDisposable in AsyncDisposables)
             {
                 await asyncDisposable.DisposeAsync();
+            }
+
+            foreach (var disposable in Disposables)
+            {
+                disposable.Dispose();
             }
         }
         catch

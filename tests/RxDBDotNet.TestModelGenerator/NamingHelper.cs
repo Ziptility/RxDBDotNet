@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace RxDBDotNet.LiveDocsTestModelGenerator;
+namespace RxDBDotNet.TestModelGenerator;
 
 internal static class NamingHelper
 {

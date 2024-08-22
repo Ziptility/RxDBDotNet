@@ -21,8 +21,8 @@
         <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
-    <Target Name="GenerateLiveDocsGraphQLClient" BeforeTargets="CoreCompile">
-        <Exec Command="dotnet run --project ../RxDBDotNet.LiveDocsTestModelGenerator/RxDBDotNet.LiveDocsTestModelGenerator.csproj" />
+    <Target Name="GenerateGraphQLTestModel" BeforeTargets="CoreCompile">
+        <Exec Command="dotnet run --project ../RxDBDotNet.TestModelGenerator/RxDBDotNet.TestModelGenerator.csproj" />
     </Target>
 
     <ItemGroup>

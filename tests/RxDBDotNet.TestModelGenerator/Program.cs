@@ -1,12 +1,12 @@
 ﻿using RxDBDotNet.Tests.Setup;
 
-namespace RxDBDotNet.LiveDocsTestModelGenerator;
+namespace RxDBDotNet.TestModelGenerator;
 
 public sealed class Program
 {
     public static async Task Main()
     {
-        Console.WriteLine("Generating LiveDocsGraphQLClient...");
+        Console.WriteLine("Generating GraphQLTestModel...");
 
         var factory = WebApplicationFactorySetupUtil.Setup();
 
@@ -16,11 +16,11 @@ public sealed class Program
         {
             await client.GenerateLiveDocsGraphQLClientAsync();
 
-            Console.WriteLine("LiveDocsGraphQLClient generated successfully.");
+            Console.WriteLine("GraphQLTestModel generated successfully.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error generating LiveDocsGraphQLClient: {ex.Message}");
+            Console.WriteLine($"Error generating GraphQLTestModel: {ex.Message}");
 
             Environment.Exit(1);
         }

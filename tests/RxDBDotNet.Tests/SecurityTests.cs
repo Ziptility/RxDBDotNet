@@ -2,21 +2,12 @@
 
 namespace RxDBDotNet.Tests;
 
-[Collection("Docker collection")]
+[Collection("DockerSetup")]
 public class SecurityTests
 {
-    private readonly DockerSetupFixture _fixture;
-
-    public SecurityTests(DockerSetupFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
     [Fact]
     public async Task AStandardUserShouldNotBeAbleToCreateAWorkspace()
     {
-        await _fixture.InitializeAsync();
-
         TestContext? testContext = null;
 
         try

@@ -6,21 +6,12 @@ using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 
-[Collection("Docker collection")]
+[Collection("DockerSetup")]
 public class BasicDocumentOperationsTests
 {
-    private readonly DockerSetupFixture _fixture;
-
-    public BasicDocumentOperationsTests(DockerSetupFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
     [Fact]
     public async Task TestCase1_1_PushNewRowShouldCreateSingleDocument()
     {
-        await _fixture.InitializeAsync();
-
         TestContext? testContext = null;
 
         try
@@ -79,8 +70,6 @@ public class BasicDocumentOperationsTests
     [Fact]
     public async Task TestCase1_2_PullBulkByDocumentIdShouldReturnSingleDocument()
     {
-        await _fixture.InitializeAsync();
-
         TestContext? testContext = null;
 
         try
@@ -125,8 +114,6 @@ public class BasicDocumentOperationsTests
     [Fact]
     public async Task PullBulkShouldReturnAllDocuments()
     {
-        await _fixture.InitializeAsync();
-
         TestContext? testContext = null;
 
         try
@@ -163,8 +150,6 @@ public class BasicDocumentOperationsTests
     [Fact]
     public async Task ItShouldHandleMultiplePullsFollowedByAPush()
     {
-        await _fixture.InitializeAsync();
-
         TestContext? testContext = null;
 
         try

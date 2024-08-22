@@ -6,21 +6,12 @@ using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 
-[Collection("Docker collection")]
+[Collection("DockerSetup")]
 public class SchemaGenerationTests
 {
-    private readonly DockerSetupFixture _fixture;
-
-    public SchemaGenerationTests(DockerSetupFixture fixture)
-    {
-        _fixture = fixture;
-    }
-
     [Fact]
     public async Task GeneratedSchemaForADocumentShouldReflectTheNameDefinedInTheGraphQLNameAttribute()
     {
-        await _fixture.InitializeAsync();
-
         TestContext? testContext = null;
 
         try
@@ -33,10 +24,10 @@ public class SchemaGenerationTests
         }), Encoding.UTF8, "application/json");
 
         // Act
-        var schemaResponse = await testContext.HttpClient.PostAsync("/graphql", requestContent);
+        var schemaResponse = await testContext.HttpClient.PostAsync("/graphql", requestContent, testContext.CancellationToken);
 
         // Assert
-        var schemaString = await schemaResponse.Content.ReadAsStringAsync();
+        var schemaString = await schemaResponse.Content.ReadAsStringAsync(testContext.CancellationToken);
 
         schemaString.Should()
             .NotContain("ReplicatedWorkspace");

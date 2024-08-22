@@ -21,7 +21,7 @@ public static class WebApplicationFactorySetupUtil
                 }
                 else
                 {
-                    Startup.ConfigureDefaultGraphQLServer(serviceCollection);
+                    Startup.ConfigureDefaultGraphQLServer(serviceCollection, Guid.NewGuid().ToString());
                 }
             });
         });

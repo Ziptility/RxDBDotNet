@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using LiveDocs.GraphQLApi.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -7,32 +6,32 @@ namespace RxDBDotNet.Tests.Setup;
 
 public static class TestSetupUtil
 {
-    private static readonly SemaphoreSlim Semaphore = new(1, 1);
+    //private static readonly SemaphoreSlim Semaphore = new(1, 1);
 
-    private static volatile bool _areDockerContainersInitialized;
+    //private static volatile bool _areDockerContainersInitialized;
 
-    public static async Task<TestContext> SetupAsync(Action<IServiceCollection>? configureGraphQLServer = null)
+    public static Task<TestContext> SetupAsync(Action<IServiceCollection>? configureGraphQLServer = null)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
 
-        try
-        {
-            await Semaphore.WaitAsync();
-
-            if (!_areDockerContainersInitialized)
-            {
-                await RedisSetupUtil.SetupAsync();
-
-                await DbSetupUtil.SetupAsync();
-
-                _areDockerContainersInitialized = true;
-            }
-        }
-        finally
-        {
-            Semaphore.Release();
-        }
+        // try
+        // {
+        //     await Semaphore.WaitAsync();
+        //
+        //     if (!_areDockerContainersInitialized)
+        //     {
+        //         await RedisSetupUtil.SetupAsync();
+        //
+        //         await DbSetupUtil.SetupAsync();
+        //
+        //         _areDockerContainersInitialized = true;
+        //     }
+        // }
+        // finally
+        // {
+        //     Semaphore.Release();
+        // }
 
         var testTimeout = GetTestTimeout();
 
@@ -61,16 +60,16 @@ public static class TestSetupUtil
 #pragma warning restore CA2000
         var linkedToken = linkedTokenSource.Token;
 
-        await LiveDocsDbInitializer.InitializeAsync(asyncTestServiceScope.ServiceProvider, linkedToken);
+        //await LiveDocsDbInitializer.InitializeAsync(asyncTestServiceScope.ServiceProvider, linkedToken);
 
-        return new TestContext
+        return Task.FromResult(new TestContext
         {
             Factory = factory,
             HttpClient = factory.CreateClient(),
             CancellationToken = linkedToken,
             AsyncDisposables = asyncDisposables,
             Disposables = disposables,
-        };
+        });
     }
 
     private static TimeSpan GetTestTimeout()

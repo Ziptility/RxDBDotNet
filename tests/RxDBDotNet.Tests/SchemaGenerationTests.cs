@@ -6,11 +6,21 @@ using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 
+[Collection("Docker collection")]
 public class SchemaGenerationTests
 {
+    private readonly DockerSetupFixture _fixture;
+
+    public SchemaGenerationTests(DockerSetupFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task GeneratedSchemaForADocumentShouldReflectTheNameDefinedInTheGraphQLNameAttribute()
     {
+        await _fixture.InitializeAsync();
+
         TestContext? testContext = null;
 
         try

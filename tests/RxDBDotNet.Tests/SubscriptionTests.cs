@@ -6,11 +6,21 @@ using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 
+[Collection("Docker collection")]
 public class SubscriptionTests
 {
+    private readonly DockerSetupFixture _fixture;
+
+    public SubscriptionTests(DockerSetupFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task TestCase5_1_CreateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscriptionAsync()
     {
+        await _fixture.InitializeAsync();
+
         TestContext? testContext = null;
 
         try
@@ -93,6 +103,8 @@ public class SubscriptionTests
     [Fact]
     public async Task TestCase5_1_1_UpdateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscription()
     {
+        await _fixture.InitializeAsync();
+
         TestContext? testContext = null;
 
         try
@@ -173,6 +185,8 @@ public class SubscriptionTests
     [Fact]
     public async Task TestCase5_2_ASubscriptionCanBeFilteredByTopic()
     {
+        await _fixture.InitializeAsync();
+
         TestContext? testContext = null;
 
         try

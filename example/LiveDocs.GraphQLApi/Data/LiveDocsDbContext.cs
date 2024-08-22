@@ -1,11 +1,40 @@
-﻿using LiveDocs.GraphQLApi.Models.Entities;
+﻿using LiveDocs.GraphQLApi.Infrastructure;
+using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace LiveDocs.GraphQLApi.Data;
 
-public class LiveDocsDbContext(DbContextOptions options) : DbContext(options)
+public class LiveDocsDbContext : DbContext
 {
+    public LiveDocsDbContext()
+    {
+    }
+
+    public LiveDocsDbContext(DbContextOptions options) : base(options)
+    {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(optionsBuilder);
+
+        if (optionsBuilder.IsConfigured)
+        {
+            return;
+        }
+
+        var sqlServerUrl = Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString);
+
+        optionsBuilder
+            .EnableSensitiveDataLogging()
+            .EnableDetailedErrors()
+            .UseSqlServer(
+                sqlServerUrl,
+                sqlServerDbContextOptionsBuilder => sqlServerDbContextOptionsBuilder
+                    .EnableRetryOnFailure());
+    }
+
     public DbSet<User> Users => Set<User>();
     public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<LiveDoc> LiveDocs => Set<LiveDoc>();

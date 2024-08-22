@@ -10,7 +10,7 @@ public sealed class AccessPolicy
     /// <summary>
     /// Gets the type of access this policy applies to.
     /// </summary>
-    public AccessType Type { get; }
+    public OperationType Type { get; }
 
     /// <summary>
     /// Gets the requirement function that determines if access should be granted.
@@ -22,7 +22,7 @@ public sealed class AccessPolicy
     /// </summary>
     /// <param name="type">The type of access this policy applies to.</param>
     /// <param name="requirement">A function that takes a ClaimsPrincipal and returns a boolean indicating if the requirement is met.</param>
-    public AccessPolicy(AccessType type, Func<ClaimsPrincipal, bool> requirement)
+    public AccessPolicy(OperationType type, Func<ClaimsPrincipal, bool> requirement)
     {
         Type = type;
         Requirement = requirement;

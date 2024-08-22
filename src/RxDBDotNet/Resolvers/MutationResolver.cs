@@ -1,6 +1,10 @@
-﻿using RxDBDotNet.Documents;
+﻿using System.Security.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
+using RxDBDotNet.Security;
 
 namespace RxDBDotNet.Resolvers;
 
@@ -20,13 +24,17 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     /// This method implements the conflict resolution part of the RxDB replication protocol.
     /// </summary>
     /// <param name="documents">The list of documents to push, including their assumed master state.</param>
-    /// <param name="service">The document service to be used for data access.</param>
+    /// <param name="documentService">The document service to be used for data access.</param>
+    /// <param name="authorizationService">The service used for authorization checks.</param>
+    /// <param name="httpContextAccessor">Provides access to the current user.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A task representing the asynchronous operation, with a result of any conflicting documents.</returns>
 #pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
     internal async Task<List<TDocument>> PushDocumentsAsync(
         List<DocumentPushRow<TDocument>?>? documents,
-        [Service] IDocumentService<TDocument> service,
+        [Service] IDocumentService<TDocument> documentService,
+        [Service] IAuthorizationService? authorizationService,
+        [Service] IHttpContextAccessor? httpContextAccessor,
         CancellationToken cancellationToken)
     {
         // Early return if no documents are provided.
@@ -38,13 +46,21 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
 
         // Step 1: Categorize documents and detect conflicts
         // This aligns with the RxDB protocol's requirement to detect conflicts before applying changes
-        var (conflicts, updates, creates) = await CategorizeDocumentsAsync(documents, service, cancellationToken).ConfigureAwait(false);
+        var (conflicts, updates, creates) = await CategorizeDocumentsAsync(documents, documentService, cancellationToken)
+            .ConfigureAwait(false);
 
         // Step 2: Apply changes only if there are no initial conflicts
         // This ensures atomicity of operations as per the RxDB protocol
         if (conflicts.Count == 0)
         {
-            var applyConflicts = await ApplyChangesAsync(creates, updates, service, cancellationToken).ConfigureAwait(false);
+            var applyConflicts = await ApplyChangesAsync(
+                creates,
+                updates,
+                documentService,
+                authorizationService,
+                httpContextAccessor,
+                cancellationToken).ConfigureAwait(false);
+
             conflicts.AddRange(applyConflicts);
         }
 
@@ -165,13 +181,17 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     /// </summary>
     /// <param name="creates">The list of new documents to create.</param>
     /// <param name="updates">The list of existing documents to update.</param>
-    /// <param name="service">The document service to be used for data access.</param>
+    /// <param name="documentService">The document service to be used for data access.</param>
+    /// <param name="authorizationService">The service used for authorization checks.</param>
+    /// <param name="httpContextAccessor">Provides access to the current user.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A list of documents that are considered conflicting if an error occurs during the process.</returns>
     private static async Task<List<TDocument>> ApplyChangesAsync(
         List<TDocument> creates,
         List<TDocument> updates,
-        IDocumentService<TDocument> service,
+        IDocumentService<TDocument> documentService,
+        IAuthorizationService? authorizationService,
+        IHttpContextAccessor? httpContextAccessor,
         CancellationToken cancellationToken)
     {
         try
@@ -179,18 +199,19 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
             // Create new documents
             foreach (var create in creates)
             {
-                await service.CreateDocumentAsync(create, cancellationToken).ConfigureAwait(false);
+                await AuthorizeCreateAsync(authorizationService, httpContextAccessor).ConfigureAwait(false);
+                await documentService.CreateDocumentAsync(create, cancellationToken).ConfigureAwait(false);
             }
 
             // Update existing documents
             foreach (var update in updates)
             {
-                await HandleDocumentUpdateAsync(update, service, cancellationToken).ConfigureAwait(false);
+                await HandleDocumentUpdateAsync(update, documentService, cancellationToken).ConfigureAwait(false);
             }
 
             // Commit all changes in a single transaction
             // This ensures atomicity of the entire operation, a key requirement of the RxDB protocol
-            await service.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await documentService.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             // If we reach here, all changes were applied successfully
             return [];
@@ -201,6 +222,35 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
             // we consider all documents as conflicting to ensure data integrity.
             // This is a conservative approach to maintain consistency with the RxDB protocol.
             return [.. creates, .. updates];
+        }
+    }
+
+    private static async Task AuthorizeCreateAsync(IAuthorizationService? authorizationService, IHttpContextAccessor? httpContextAccessor)
+    {
+        if (authorizationService != null)
+        {
+            var user = httpContextAccessor?.HttpContext?.User;
+            if (user != null)
+            {
+                var replicationContext = new AuthorizationContext
+                {
+                    OperationType = OperationType.Write,
+                    DocumentType = typeof(TDocument),
+                };
+
+                var authorizationResult = await authorizationService
+                    .AuthorizeAsync(user, replicationContext, "DynamicAuth")
+                    .ConfigureAwait(false);
+
+                if (!authorizationResult.Succeeded)
+                {
+                    throw new AuthenticationException("You are not authorized to access this resource.");
+                }
+            }
+            else
+            {
+                throw new AuthenticationException("You are not authorized to access this resource.");
+            }
         }
     }
 

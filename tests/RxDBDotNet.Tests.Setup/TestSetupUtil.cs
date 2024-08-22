@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿#pragma warning disable CA2000 // items are disposed at the end of the test via `await testContext.DisposeAsync();`
+using System.Diagnostics;
+using HotChocolate.Execution.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -6,43 +8,21 @@ namespace RxDBDotNet.Tests.Setup;
 
 public static class TestSetupUtil
 {
-    //private static readonly SemaphoreSlim Semaphore = new(1, 1);
-
-    //private static volatile bool _areDockerContainersInitialized;
-
-    public static Task<TestContext> SetupAsync(Action<IServiceCollection>? configureGraphQLServer = null)
+    public static Task<TestContext> SetupAsync(
+        Action<IServiceCollection>? configureServices = null,
+        Action<IRequestExecutorBuilder>? configureReplicatedDocuments = null)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
 
-        // try
-        // {
-        //     await Semaphore.WaitAsync();
-        //
-        //     if (!_areDockerContainersInitialized)
-        //     {
-        //         await RedisSetupUtil.SetupAsync();
-        //
-        //         await DbSetupUtil.SetupAsync();
-        //
-        //         _areDockerContainersInitialized = true;
-        //     }
-        // }
-        // finally
-        // {
-        //     Semaphore.Release();
-        // }
-
         var testTimeout = GetTestTimeout();
 
-#pragma warning disable CA2000 // dispose at end of test
         var timeoutTokenSource = new CancellationTokenSource(testTimeout);
         disposables.Add(timeoutTokenSource);
-#pragma warning restore CA2000
 
         var timeoutToken = timeoutTokenSource.Token;
 
-        var factory = WebApplicationFactorySetupUtil.Setup(configureGraphQLServer);
+        var factory = WebApplicationFactorySetupUtil.Setup(configureServices, configureReplicatedDocuments);
         asyncDisposables.Add(factory);
 
         var asyncTestServiceScope = factory.Services.CreateAsyncScope();
@@ -53,14 +33,12 @@ public static class TestSetupUtil
             .GetRequiredService<IHostApplicationLifetime>()
             .ApplicationStopping;
 
-#pragma warning disable CA2000 // dispose at end of test
-        // Combine the token into a single token
+        // Combine the timeoutToken and the applicationStoppingToek into a single token
+        // so that the tests will stop if the application is stopped or the timeout is reached
         var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeoutToken, applicationStoppingToken);
         disposables.Add(timeoutTokenSource);
-#pragma warning restore CA2000
-        var linkedToken = linkedTokenSource.Token;
 
-        //await LiveDocsDbInitializer.InitializeAsync(asyncTestServiceScope.ServiceProvider, linkedToken);
+        var linkedToken = linkedTokenSource.Token;
 
         return Task.FromResult(new TestContext
         {
@@ -74,6 +52,9 @@ public static class TestSetupUtil
 
     private static TimeSpan GetTestTimeout()
     {
-        return Debugger.IsAttached ? TimeSpan.FromMinutes(5) : TimeSpan.FromSeconds(10);
+        return Debugger.IsAttached
+            // If we are debugging, then ensure we don't timeout
+            ? TimeSpan.FromMinutes(5)
+            : TimeSpan.FromSeconds(10);
     }
 }

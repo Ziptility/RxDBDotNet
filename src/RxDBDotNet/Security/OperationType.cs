@@ -1,10 +1,10 @@
 ﻿namespace RxDBDotNet.Security;
 
 /// <summary>
-/// Defines the types of access that can be controlled in the RxDBDotNet security system.
+/// Defines the types of operations that can be controlled in the RxDBDotNet security system.
 /// </summary>
 [Flags]
-public enum AccessType
+public enum OperationType
 {
     /// <summary>
     /// Represents no access rights.

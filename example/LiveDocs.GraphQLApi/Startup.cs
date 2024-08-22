@@ -1,4 +1,5 @@
 ﻿using HotChocolate.AspNetCore;
+using HotChocolate.Execution.Configuration;
 using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
@@ -64,10 +65,12 @@ public class Startup
             builder.AddRedisClient("redis");
         }
 
-        ConfigureDefaultGraphQLServer(services);
+        var graphQLBuilder = ConfigureBaseGraphQLServer(services);
+
+        ConfigureDefaultReplicatedDocuments(graphQLBuilder);
     }
 
-    public static void ConfigureDefaultGraphQLServer(IServiceCollection services, string? topicPrefix = null)
+    public static IRequestExecutorBuilder ConfigureBaseGraphQLServer(IServiceCollection services, string? topicPrefix = null)
     {
         // Configure the GraphQL server
         var graphQLBuilder = services.AddGraphQLServer()
@@ -76,16 +79,25 @@ public class Startup
             // has already added their own root query type.
             .AddQueryType<Query>()
             .AddReplicationServer()
-            .AddReplicatedDocument<ReplicatedUser>()
-            .AddReplicatedDocument<ReplicatedWorkspace>()
-            .AddReplicatedDocument<ReplicatedLiveDoc>()
             .AddReplicatedDocument<Hero>()
             .AddSubscriptionDiagnostics();
+
+        graphQLBuilder = ConfigureDefaultReplicatedDocuments(graphQLBuilder);
 
         graphQLBuilder.AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
         {
             TopicPrefix = topicPrefix,
         });
+
+        return graphQLBuilder;
+    }
+
+    public static IRequestExecutorBuilder ConfigureDefaultReplicatedDocuments(IRequestExecutorBuilder graphQLBuilder)
+    {
+        return graphQLBuilder
+            .AddReplicatedDocument<ReplicatedUser>()
+            .AddReplicatedDocument<ReplicatedWorkspace>()
+            .AddReplicatedDocument<ReplicatedLiveDoc>();
     }
 
     protected static void ConfigureDbContext(
@@ -107,24 +119,18 @@ public class Startup
         }
     }
 
-    public void Configure(WebApplication app, IWebHostEnvironment env)
+    public void Configure(WebApplication app)
     {
         app.UseExceptionHandler();
 
-        if (env.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-        }
-        else
-        {
-            app.UseHsts();
-        }
+        app.UseDeveloperExceptionPage();
 
-        // Enable CORS
         app.UseCors();
 
-        // Enable WebSockets
         app.UseWebSockets();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapGraphQL()
             .WithOptions(new GraphQLServerOptions

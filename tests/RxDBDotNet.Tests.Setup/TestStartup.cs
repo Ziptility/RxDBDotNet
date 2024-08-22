@@ -56,8 +56,7 @@ public class TestStartup : Startup
         WebApplicationBuilder builder,
         bool isAspireEnvironment)
     {
-        // Preventing the base class from configuring the GraphQL server.
-        // Each unit test will configure the server as needed via
-        // WebApplicationFactorySetup.CreateWebApplicationFactory().
+        // This override prevents the base class from configuring the GraphQL server.
+        // Each unit test can configure the server as needed via TestSetupUtil.SetupAsync().
     }
 }

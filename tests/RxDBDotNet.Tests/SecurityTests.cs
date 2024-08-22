@@ -1,30 +1,51 @@
-﻿using Xunit.Abstractions;
+﻿using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 
-public class SecurityTests(ITestOutputHelper output) : TestBase(output)
+[Collection("Docker collection")]
+public class SecurityTests
 {
-    [Fact]
-    public void AStandardUserShouldNotBeAbleToCreateAWorkspace()
+    private readonly DockerSetupFixture _fixture;
+
+    public SecurityTests(DockerSetupFixture fixture)
     {
-        // Arrange
-        using var testTimeoutTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        var testTimeoutToken = testTimeoutTokenSource.Token;
+        _fixture = fixture;
+    }
 
-        // Configure security for this test
+    [Fact]
+    public async Task AStandardUserShouldNotBeAbleToCreateAWorkspace()
+    {
+        await _fixture.InitializeAsync();
 
-        // As a system admin user:
-        // 1. Create a workspace
+        TestContext? testContext = null;
 
-        // 2. Create a standard user within the workspace
+        try
+        {
+            // Arrange
+            testContext = await TestSetupUtil.SetupAsync();
 
-        // As a standard user:
+            // Configure security for this test
 
-        // Attempt to create a workspace
+            // As a system admin user:
+            // 1. Create a workspace
 
-        // Act
+            // 2. Create a standard user within the workspace
 
-        // Assert
-        // The response should contain an unauthorized error
+            // As a standard user:
+
+            // Attempt to create a workspace
+
+            // Act
+
+            // Assert
+            // The response should contain an unauthorized error
+        }
+        finally
+        {
+            if (testContext != null)
+            {
+                await testContext.DisposeAsync();
+            }
+        }
     }
 }

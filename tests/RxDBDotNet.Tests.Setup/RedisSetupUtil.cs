@@ -1,5 +1,6 @@
-﻿using Testcontainers.Redis;
-using Xunit.Abstractions;
+﻿using Docker.DotNet;
+using Docker.DotNet.Models;
+using Testcontainers.Redis;
 
 namespace RxDBDotNet.Tests.Setup;
 
@@ -9,26 +10,44 @@ public static class RedisSetupUtil
 
     private static volatile bool _isInitialized;
 
-    public static async Task SetupAsync(
-        ITestOutputHelper output,
-        CancellationToken cancellationToken)
+    public static async Task SetupAsync()
     {
-        ArgumentNullException.ThrowIfNull(output);
-
-        await Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await Semaphore.WaitAsync();
 
         try
         {
             if (!_isInitialized)
             {
-                output.WriteLine("Initializing redis");
+                const string containerName = "rxdbdotnet_test_redis";
 
-                var redisContainer = new RedisBuilder()
-                    .WithImage("redis:7.0")
-                    .WithPortBinding(3333, 6379)
-                    .Build();
+                // Check if the container already exists
+                using var dockerClientConfiguration = new DockerClientConfiguration();
+                using var client = dockerClientConfiguration.CreateClient();
+                var existingContainers = await client.Containers.ListContainersAsync(new ContainersListParameters
+                {
+                    All = true,
+                });
+                var existingContainer =
+                    existingContainers.FirstOrDefault(c => c.Names.Contains($"/{containerName}", StringComparer.OrdinalIgnoreCase));
 
-                await redisContainer.StartAsync(cancellationToken).ConfigureAwait(false);
+                if (existingContainer != null)
+                {
+                    if (!string.Equals(existingContainer.State, "running", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Start the existing container
+                        await client.Containers.StartContainerAsync(existingContainer.ID, new ContainerStartParameters());
+                    }
+                }
+                else
+                {
+                    var redisContainer = new RedisBuilder().WithName(containerName)
+                        .WithImage("redis:7.0")
+                        .WithPortBinding(3333, 6379)
+                        .WithCleanUp(false)
+                        .Build();
+
+                    await redisContainer.StartAsync();
+                }
 
                 _isInitialized = true;
             }

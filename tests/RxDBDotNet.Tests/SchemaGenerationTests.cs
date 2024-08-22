@@ -2,23 +2,38 @@
 using FluentAssertions;
 using GraphQlClientGenerator;
 using Newtonsoft.Json;
-using Xunit.Abstractions;
+using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 
-public class SchemaGenerationTests(ITestOutputHelper output) : TestBase(output)
+[Collection("Docker collection")]
+public class SchemaGenerationTests
 {
+    private readonly DockerSetupFixture _fixture;
+
+    public SchemaGenerationTests(DockerSetupFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task GeneratedSchemaForADocumentShouldReflectTheNameDefinedInTheGraphQLNameAttribute()
     {
-        // Arrange
-        using var requestContent = new StringContent(JsonConvert.SerializeObject(new
+        await _fixture.InitializeAsync();
+
+        TestContext? testContext = null;
+
+        try
+        {
+            // Arrange
+            testContext = await TestSetupUtil.SetupAsync();
+            using var requestContent = new StringContent(JsonConvert.SerializeObject(new
         {
             query = IntrospectionQuery.Text,
         }), Encoding.UTF8, "application/json");
 
         // Act
-        var schemaResponse = await HttpClient.PostAsync("/graphql", requestContent);
+        var schemaResponse = await testContext.HttpClient.PostAsync("/graphql", requestContent);
 
         // Assert
         var schemaString = await schemaResponse.Content.ReadAsStringAsync();
@@ -28,5 +43,13 @@ public class SchemaGenerationTests(ITestOutputHelper output) : TestBase(output)
 
         schemaString.Should()
             .Contain("Workspace");
+        }
+        finally
+        {
+            if (testContext != null)
+            {
+                await testContext.DisposeAsync();
+            }
+        }
     }
 }

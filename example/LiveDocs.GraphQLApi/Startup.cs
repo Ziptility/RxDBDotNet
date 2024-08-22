@@ -1,4 +1,5 @@
 ﻿using HotChocolate.AspNetCore;
+using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
@@ -66,10 +67,10 @@ public class Startup
         ConfigureDefaultGraphQLServer(services);
     }
 
-    public static void ConfigureDefaultGraphQLServer(IServiceCollection services)
+    public static void ConfigureDefaultGraphQLServer(IServiceCollection services, string? topicPrefix = null)
     {
         // Configure the GraphQL server
-        services.AddGraphQLServer()
+        var graphQLBuilder = services.AddGraphQLServer()
             .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
             // Simulate scenario where the library user
             // has already added their own root query type.
@@ -79,8 +80,12 @@ public class Startup
             .AddReplicatedDocument<ReplicatedWorkspace>()
             .AddReplicatedDocument<ReplicatedLiveDoc>()
             .AddReplicatedDocument<Hero>()
-            .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>())
             .AddSubscriptionDiagnostics();
+
+        graphQLBuilder.AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
+        {
+            TopicPrefix = topicPrefix,
+        });
     }
 
     protected static void ConfigureDbContext(

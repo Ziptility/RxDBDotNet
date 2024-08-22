@@ -14,15 +14,15 @@
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
-        <NoWarn>$(NoWarn);CA2007;CA1707;MA0051;MA0004;CA2234;MA0009;CA1054</NoWarn>
+        <NoWarn>$(NoWarn);CA2007;CA1707;MA0051;MA0004;CA2234;MA0009;CA1054;CA1711</NoWarn>
         <DefineConstants>GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON</DefineConstants>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
-    <Target Name="GenerateLiveDocsGraphQLClient" BeforeTargets="CoreCompile">
-        <Exec Command="dotnet run --project ../RxDBDotNet.LiveDocsTestModelGenerator/RxDBDotNet.LiveDocsTestModelGenerator.csproj" />
+    <Target Name="GenerateGraphQLTestModel" BeforeTargets="CoreCompile">
+        <Exec Command="dotnet run --project ../RxDBDotNet.TestModelGenerator/RxDBDotNet.TestModelGenerator.csproj" />
     </Target>
 
     <ItemGroup>
@@ -33,7 +33,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
         <PackageReference Include="xunit" Version="2.9.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
           <PrivateAssets>all</PrivateAssets>

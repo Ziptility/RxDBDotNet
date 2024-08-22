@@ -48,9 +48,6 @@ public static class GraphQLBuilderExtensions
     /// </summary>
     /// <typeparam name="TDocument">The type of document to support, which must implement IReplicatedDocument.</typeparam>
     /// <param name="builder">The HotChocolate IRequestExecutorBuilder to configure.</param>
-    /// <param name="configure">
-    ///    An optional configuration action to customize the replication options for the document type.
-    /// </param>
     /// <returns>The configured IRequestExecutorBuilder for method chaining.</returns>
     /// <remarks>
     ///     <para>
@@ -69,13 +66,9 @@ public static class GraphQLBuilderExtensions
     ///     </para>
     /// </remarks>
     public static IRequestExecutorBuilder AddReplicatedDocument<TDocument>(
-        this IRequestExecutorBuilder builder,
-        Action<ReplicationOptions<TDocument>>? configure = null)
+        this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        var options = new ReplicationOptions<TDocument>();
-        configure?.Invoke(options);
-
         return builder
             .AddResolver<QueryResolver<TDocument>>()
             .AddResolver<MutationResolver<TDocument>>()

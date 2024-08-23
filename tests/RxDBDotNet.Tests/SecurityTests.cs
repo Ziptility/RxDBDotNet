@@ -5,7 +5,6 @@ using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Extensions;
-using RxDBDotNet.Security;
 using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
@@ -32,6 +31,7 @@ public class SecurityTests
             void ConfigureReplicatedDocuments(IRequestExecutorBuilder graphQLBuilder)
             {
                 graphQLBuilder
+                    .AddAuthorization()
                     .AddReplicatedDocument<ReplicatedUser>()
                     .AddReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequireMinimumRoleToWrite(UserRole.WorkspaceAdmin))
                     .AddReplicatedDocument<ReplicatedLiveDoc>();

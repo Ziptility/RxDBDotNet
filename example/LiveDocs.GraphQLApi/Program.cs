@@ -8,28 +8,13 @@ public sealed class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Check if we're running in an Aspire environment
-        var isAspireEnvironment = builder.Configuration.GetValue<bool>(ConfigKeys.IsAspireEnvironment);
-
-        var startup = new Startup();
-        startup.ConfigureServices(builder.Services, builder.Environment, builder, isAspireEnvironment);
+        Startup.ConfigureServices(builder.Services, builder);
 
         var app = builder.Build();
-        startup.Configure(app, app.Environment);
 
-        if (isAspireEnvironment)
-        {
-#pragma warning disable ASP0000
-            var serviceProvider = builder.Services.BuildServiceProvider();
-#pragma warning restore ASP0000
+        Startup.Configure(app);
 
-            var applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
-
-            // Register the application stopping token
-            var cancellationToken = applicationLifetime.ApplicationStopping;
-
-            await LiveDocsDbInitializer.InitializeAsync(serviceProvider, cancellationToken);
-        }
+        await LiveDocsDbInitializer.InitializeAsync();
 
         await app.RunAsync();
     }

@@ -1,47 +1,26 @@
 ﻿using HotChocolate.AspNetCore;
-using HotChocolate.Execution.Configuration;
 using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Data;
-using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
 using LiveDocs.GraphQLApi.Models.Shared;
 using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
-using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Repositories;
 using StackExchange.Redis;
-using Query = LiveDocs.GraphQLApi.Models.GraphQL.Query;
 
 namespace LiveDocs.GraphQLApi;
 
-public class Startup
+public sealed class Startup
 {
-    public virtual void ConfigureServices(
+    public static void ConfigureServices(
         IServiceCollection services,
-        IHostEnvironment environment,
-        WebApplicationBuilder builder,
-        bool isAspireEnvironment)
+        WebApplicationBuilder builder)
     {
-        // Configure the database context
-        ConfigureDbContext(services, builder, isAspireEnvironment);
+        builder.AddServiceDefaults();
 
-        // Add service defaults & Aspire components if running with Aspire
-        if (isAspireEnvironment)
-        {
-            builder.AddServiceDefaults();
-        }
+        services.AddProblemDetails();
 
-        // Add services to the container
-        services.AddProblemDetails()
-            .AddScoped<IDocumentService<Hero>, HeroService>()
-            .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
-            .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
-            .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
-
-        ConfigureGraphQLServer(services, builder, isAspireEnvironment);
-
-        // Configure CORS
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(corsPolicyBuilder =>
@@ -54,72 +33,43 @@ public class Startup
                     .AllowCredentials();
             });
         });
+
+        builder.AddSqlServerDbContext<LiveDocsDbContext>("sqldata");
+
+        AddDependencies(services, builder);
+
+        AddGraphQL(services);
     }
 
-    protected virtual void ConfigureGraphQLServer(IServiceCollection services,
-        WebApplicationBuilder builder,
-        bool isAspireEnvironment)
+    private static void AddDependencies(IServiceCollection services, WebApplicationBuilder builder)
     {
-        if (isAspireEnvironment)
-        {
-            builder.AddRedisClient("redis");
-        }
+        // Redis is required for Hot Chocolate subscriptions
+        builder.AddRedisClient("redis");
 
-        var graphQLBuilder = ConfigureBaseGraphQLServer(services);
-
-        ConfigureDefaultReplicatedDocuments(graphQLBuilder);
+        services
+            .AddScoped<IDocumentService<Hero>, HeroService>()
+            .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
+            .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
+            .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
     }
 
-    public static IRequestExecutorBuilder ConfigureBaseGraphQLServer(IServiceCollection services, string? topicPrefix = null)
+    private static void AddGraphQL(IServiceCollection services)
     {
-        // Configure the GraphQL server
-        var graphQLBuilder = services.AddGraphQLServer()
+        services.AddGraphQLServer()
             .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
-            // Simulate scenario where the library user
-            // has already added their own root query type.
-            .AddQueryType<Query>()
             .AddReplicationServer()
+            .AddSubscriptionDiagnostics()
             .AddReplicatedDocument<Hero>()
-            .AddSubscriptionDiagnostics();
-
-        graphQLBuilder = ConfigureDefaultReplicatedDocuments(graphQLBuilder);
-
-        graphQLBuilder.AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
-        {
-            TopicPrefix = topicPrefix,
-        });
-
-        return graphQLBuilder;
-    }
-
-    public static IRequestExecutorBuilder ConfigureDefaultReplicatedDocuments(IRequestExecutorBuilder graphQLBuilder)
-    {
-        return graphQLBuilder
             .AddReplicatedDocument<ReplicatedUser>()
             .AddReplicatedDocument<ReplicatedWorkspace>()
-            .AddReplicatedDocument<ReplicatedLiveDoc>();
+            .AddReplicatedDocument<ReplicatedLiveDoc>()
+            .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
+            {
+                TopicPrefix = null,
+            });
     }
 
-    protected static void ConfigureDbContext(
-        IServiceCollection services,
-        WebApplicationBuilder builder,
-        bool isAspireEnvironment)
-    {
-        if (isAspireEnvironment)
-        {
-            // Use Aspire's SQL Server configuration when running with Aspire
-            builder.AddSqlServerDbContext<LiveDocsDbContext>("sqldata");
-        }
-        else
-        {
-            // Use a standard SQL Server configuration when not running with Aspire
-            services.AddDbContext<LiveDocsDbContext>(options =>
-                options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
-                                     ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
-        }
-    }
-
-    public void Configure(WebApplication app)
+    public static void Configure(WebApplication app)
     {
         app.UseExceptionHandler();
 
@@ -135,7 +85,6 @@ public class Startup
         app.MapGraphQL()
             .WithOptions(new GraphQLServerOptions
             {
-                EnforceMultipartRequestsPreflightHeader = false,
                 Tool =
                 {
                     Enable = true,

@@ -15,11 +15,11 @@ public sealed class TestProgram
 
         var builder = WebApplication.CreateBuilder(args);
 
-        var startup = new TestStartup();
-        startup.ConfigureServices(builder.Services, builder.Environment, builder, isAspireEnvironment: false);
+        TestStartup.ConfigureServices(builder.Services, builder);
 
         var webApplication = builder.Build();
-        startup.Configure(webApplication, webApplication.Environment);
+
+        TestStartup.Configure(webApplication);
 
         return webApplication.RunAsync();
     }

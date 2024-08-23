@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Repositories;
 using RxDBDotNet.Resolvers;
+using RxDBDotNet.Security;
 using static RxDBDotNet.Extensions.DocumentExtensions;
 
 namespace RxDBDotNet.Extensions;
@@ -37,13 +37,18 @@ internal sealed class MutationExtension<TDocument> : ObjectTypeExtension
                 var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
                 var cancellationToken = context.RequestAborted;
                 var authorizationService = context.Services.GetService<IAuthorizationService>();
-                var httpContextAccessor = context.Services.GetService<IHttpContextAccessor>();
+                var currentUser = context.GetUser();
+                var authorizationRequirements = new List<IAuthorizationRequirement>
+                {
+                    new OperationRequirement(Operation.Write, _ => true),
+                };
 
                 return mutation.PushDocumentsAsync(
                     documents,
                     documentService,
                     authorizationService,
-                    httpContextAccessor,
+                    currentUser,
+                    authorizationRequirements,
                     cancellationToken);
             });
     }

@@ -8,18 +8,18 @@ namespace LiveDocs.GraphQLApi.Infrastructure
 {
     public static class LiveDocsDbInitializer
     {
-        public static async Task InitializeAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+        public static async Task InitializeAsync()
         {
-            var dbContext = serviceProvider.GetRequiredService<LiveDocsDbContext>();
+            await using var dbContext = new LiveDocsDbContext();
 
-            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+            await dbContext.Database.EnsureCreatedAsync();
 
-            await SeedDataAsync(dbContext, cancellationToken);
+            await SeedDataAsync(dbContext);
         }
 
-        private static async Task SeedDataAsync(LiveDocsDbContext dbContext, CancellationToken cancellationToken)
+        private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
         {
-            if (await dbContext.Workspaces.AnyAsync(cancellationToken))
+            if (await dbContext.Workspaces.AnyAsync())
             {
                 return; // Data has already been seeded
             }
@@ -34,7 +34,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 ReplicatedDocumentId = workspacePk,
             };
 
-            await dbContext.Workspaces.AddAsync(liveDocsWorkspace, cancellationToken);
+            await dbContext.Workspaces.AddAsync(liveDocsWorkspace);
 
             var userPk = RT.Comb.Provider.Sql.Create();
             var systemAdminReplicatedUser = new ReplicatedUser
@@ -64,9 +64,9 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 ReplicatedDocumentId = userPk,
             };
 
-            await dbContext.Users.AddAsync(superAdminUser, cancellationToken);
+            await dbContext.Users.AddAsync(superAdminUser);
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesAsync();
         }
     }
 }

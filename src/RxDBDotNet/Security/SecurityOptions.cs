@@ -28,7 +28,7 @@ namespace RxDBDotNet.Security;
 /// </remarks>
 public sealed class SecurityOptions
 {
-    internal List<AccessPolicy> Policies { get; } = [];
+    internal List<OperationRequirement> Policies { get; } = [];
 
     /// <summary>
     /// Requires a minimum role for read access to the replicated document.
@@ -39,7 +39,7 @@ public sealed class SecurityOptions
     public SecurityOptions RequireMinimumRoleToRead<TRole>(TRole minimumRole)
         where TRole : struct, Enum
     {
-        RequireAccess(OperationType.Read, user => user.IsInRoleOrHigher(minimumRole));
+        RequireAccess(Operation.Read, user => user.IsInRoleOrHigher(minimumRole));
         return this;
     }
 
@@ -52,7 +52,7 @@ public sealed class SecurityOptions
     public SecurityOptions RequireMinimumRoleToWrite<TRole>(TRole minimumRole)
         where TRole : struct, Enum
     {
-        RequireAccess(OperationType.Write, user => user.IsInRoleOrHigher(minimumRole));
+        RequireAccess(Operation.Write, user => user.IsInRoleOrHigher(minimumRole));
         return this;
     }
 
@@ -65,7 +65,7 @@ public sealed class SecurityOptions
     public SecurityOptions RequireMinimumRoleToDelete<TRole>(TRole minimumRole)
         where TRole : struct, Enum
     {
-        RequireAccess(OperationType.Delete, user => user.IsInRoleOrHigher(minimumRole));
+        RequireAccess(Operation.Delete, user => user.IsInRoleOrHigher(minimumRole));
         return this;
     }
 
@@ -74,20 +74,20 @@ public sealed class SecurityOptions
     /// </summary>
     /// <typeparam name="TRole">The enum type representing user roles. Must be defined with roles in ascending order of authority.</typeparam>
     /// <param name="minimumRole">The minimum role required for the specified access types.</param>
-    /// <param name="operationType">The types of access to require the minimum role for. Defaults to all access types.</param>
+    /// <param name="operation">The types of access to require the minimum role for. Defaults to all access types.</param>
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
-    public SecurityOptions RequireMinimumRole<TRole>(TRole minimumRole, OperationType operationType = OperationType.All)
+    public SecurityOptions RequireMinimumRole<TRole>(TRole minimumRole, Operation operation = Operation.All)
         where TRole : struct, Enum
     {
-        if (operationType.HasFlag(OperationType.Read))
+        if (operation.HasFlag(Operation.Read))
         {
             RequireMinimumRoleToRead(minimumRole);
         }
-        if (operationType.HasFlag(OperationType.Write))
+        if (operation.HasFlag(Operation.Write))
         {
             RequireMinimumRoleToWrite(minimumRole);
         }
-        if (operationType.HasFlag(OperationType.Delete))
+        if (operation.HasFlag(Operation.Delete))
         {
             RequireMinimumRoleToDelete(minimumRole);
         }
@@ -101,7 +101,7 @@ public sealed class SecurityOptions
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
     public SecurityOptions RequireReadAccess(Func<ClaimsPrincipal, bool> requirement)
     {
-        return RequireAccess(OperationType.Read, requirement);
+        return RequireAccess(Operation.Read, requirement);
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public sealed class SecurityOptions
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
     public SecurityOptions RequireWriteAccess(Func<ClaimsPrincipal, bool> requirement)
     {
-        return RequireAccess(OperationType.Write, requirement);
+        return RequireAccess(Operation.Write, requirement);
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ public sealed class SecurityOptions
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
     public SecurityOptions RequireDeleteAccess(Func<ClaimsPrincipal, bool> requirement)
     {
-        return RequireAccess(OperationType.Delete, requirement);
+        return RequireAccess(Operation.Delete, requirement);
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public sealed class SecurityOptions
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
     public SecurityOptions RequireClaimForRead(string claimType, string claimValue)
     {
-        return RequireAccess(OperationType.Read, user => user.HasClaim(claimType, claimValue));
+        return RequireAccess(Operation.Read, user => user.HasClaim(claimType, claimValue));
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ public sealed class SecurityOptions
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
     public SecurityOptions RequireClaimForWrite(string claimType, string claimValue)
     {
-        return RequireAccess(OperationType.Write, user => user.HasClaim(claimType, claimValue));
+        return RequireAccess(Operation.Write, user => user.HasClaim(claimType, claimValue));
     }
 
     /// <summary>
@@ -154,34 +154,34 @@ public sealed class SecurityOptions
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
     public SecurityOptions RequireClaimForDelete(string claimType, string claimValue)
     {
-        return RequireAccess(OperationType.Delete, user => user.HasClaim(claimType, claimValue));
+        return RequireAccess(Operation.Delete, user => user.HasClaim(claimType, claimValue));
     }
 
     /// <summary>
     /// Requires the user to be authenticated for the specified access types.
     /// </summary>
-    /// <param name="operationType">The types of access to require authentication for. Defaults to all access types.</param>
+    /// <param name="operation">The types of access to require authentication for. Defaults to all access types.</param>
     /// <returns>The current SecurityOptions instance for method chaining.</returns>
-    public SecurityOptions RequireAuthentication(OperationType operationType = OperationType.All)
+    public SecurityOptions RequireAuthentication(Operation operation = Operation.All)
     {
-        if (operationType.HasFlag(OperationType.Read))
+        if (operation.HasFlag(Operation.Read))
         {
-            RequireAccess(OperationType.Read, user => user.Identity?.IsAuthenticated ?? false);
+            RequireAccess(Operation.Read, user => user.Identity?.IsAuthenticated ?? false);
         }
-        if (operationType.HasFlag(OperationType.Write))
+        if (operation.HasFlag(Operation.Write))
         {
-            RequireAccess(OperationType.Write, user => user.Identity?.IsAuthenticated ?? false);
+            RequireAccess(Operation.Write, user => user.Identity?.IsAuthenticated ?? false);
         }
-        if (operationType.HasFlag(OperationType.Delete))
+        if (operation.HasFlag(Operation.Delete))
         {
-            RequireAccess(OperationType.Delete, user => user.Identity?.IsAuthenticated ?? false);
+            RequireAccess(Operation.Delete, user => user.Identity?.IsAuthenticated ?? false);
         }
         return this;
     }
 
-    private SecurityOptions RequireAccess(OperationType operationType, Func<ClaimsPrincipal, bool> requirement)
+    private SecurityOptions RequireAccess(Operation operation, Func<ClaimsPrincipal, bool> requirement)
     {
-        Policies.Add(new AccessPolicy(operationType, requirement));
+        Policies.Add(new OperationRequirement(operation, requirement));
         return this;
     }
 }

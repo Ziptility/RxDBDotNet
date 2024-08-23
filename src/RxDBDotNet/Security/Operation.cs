@@ -4,7 +4,7 @@
 /// Defines the types of operations that can be controlled in the RxDBDotNet security system.
 /// </summary>
 [Flags]
-public enum OperationType
+public enum Operation
 {
     /// <summary>
     /// Represents no access rights.

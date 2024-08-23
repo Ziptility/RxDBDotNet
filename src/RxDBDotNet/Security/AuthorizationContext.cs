@@ -8,7 +8,7 @@ public record AuthorizationContext
     /// <summary>
     /// The type of operation being performed.
     /// </summary>
-    public required OperationType OperationType { get; init; }
+    public required Operation Operation { get; init; }
 
     /// <summary>
     /// The type of document for which the operation is being performed.

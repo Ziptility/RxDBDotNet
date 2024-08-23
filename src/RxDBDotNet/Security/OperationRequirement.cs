@@ -1,16 +1,17 @@
 ﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RxDBDotNet.Security;
 
 /// <summary>
 /// Represents a security policy for a specific type of access to a document.
 /// </summary>
-public sealed class AccessPolicy
+public sealed record OperationRequirement : IAuthorizationRequirement
 {
     /// <summary>
     /// Gets the type of access this policy applies to.
     /// </summary>
-    public OperationType Type { get; }
+    public Operation Operation { get; }
 
     /// <summary>
     /// Gets the requirement function that determines if access should be granted.
@@ -20,11 +21,11 @@ public sealed class AccessPolicy
     /// <summary>
     /// Initializes a new instance of the AccessPolicy class.
     /// </summary>
-    /// <param name="type">The type of access this policy applies to.</param>
+    /// <param name="operation">The type of access this policy applies to.</param>
     /// <param name="requirement">A function that takes a ClaimsPrincipal and returns a boolean indicating if the requirement is met.</param>
-    public AccessPolicy(OperationType type, Func<ClaimsPrincipal, bool> requirement)
+    public OperationRequirement(Operation operation, Func<ClaimsPrincipal, bool> requirement)
     {
-        Type = type;
+        Operation = operation;
         Requirement = requirement;
     }
 }

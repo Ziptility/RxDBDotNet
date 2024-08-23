@@ -1,36 +1,44 @@
 ﻿using HotChocolate.Execution.Options;
-using LiveDocs.GraphQLApi;
+using HotChocolate.Subscriptions;
+using LiveDocs.GraphQLApi.Data;
+using LiveDocs.GraphQLApi.Infrastructure;
+using LiveDocs.GraphQLApi.Models.Replication;
+using LiveDocs.GraphQLApi.Services;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RxDBDotNet.Extensions;
+using RxDBDotNet.Repositories;
 using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.Setup;
 
-public class TestStartup : Startup
+public sealed class TestStartup
 {
-    public override void ConfigureServices(
+    public static void ConfigureServices(
         IServiceCollection services,
-        IHostEnvironment environment,
-        WebApplicationBuilder builder,
-        bool isAspireEnvironment)
+        WebApplicationBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(environment);
-        ArgumentNullException.ThrowIfNull(builder);
+        services.AddProblemDetails();
 
-        base.ConfigureServices(services, environment, builder, isAspireEnvironment);
-
-        // Extend timeout for long-running operations
-        services.Configure<RequestExecutorOptions>(options => options.ExecutionTimeout = TimeSpan.FromHours(1));
+        // Extend timeout for long-running debugging sessions
+        services.Configure<RequestExecutorOptions>(options => options.ExecutionTimeout = TimeSpan.FromMinutes(15));
 
         // Configure WebSocket options for longer keep-alive
         services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
 
-        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
+        ConfigureLogging(builder);
 
+        AddDependencies(services);
+
+        AddDbContext(services);
+
+        AddGraphQL(services);
+    }
+
+    private static void ConfigureLogging(WebApplicationBuilder builder)
+    {
         builder.Logging.AddFilter(
             "Microsoft.EntityFrameworkCore.Database.Command",
             LogLevel.Critical);
@@ -47,16 +55,56 @@ public class TestStartup : Startup
             "Microsoft.AspNetCore.Http.Connections",
             LogLevel.Critical);
         builder.Logging.SetMinimumLevel(LogLevel.Critical);
-
-        builder.Configuration.AddEnvironmentVariables();
     }
 
-    protected override void ConfigureGraphQLServer(
-        IServiceCollection services,
-        WebApplicationBuilder builder,
-        bool isAspireEnvironment)
+    private static void AddDependencies(IServiceCollection services)
     {
-        // This override prevents the base class from configuring the GraphQL server.
-        // Each unit test can configure the server as needed via TestSetupUtil.SetupAsync().
+        // Redis is required for Hot Chocolate subscriptions
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
+
+        services
+            .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
+            .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
+            .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
+    }
+
+    private static void AddDbContext(IServiceCollection services)
+    {
+        // Use a standard SQL Server configuration when not running with Aspire
+        services.AddDbContext<LiveDocsDbContext>(options =>
+            options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
+                                 ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
+    }
+
+    private static void AddGraphQL(IServiceCollection services)
+    {
+        services.AddGraphQLServer()
+            .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
+            // Simulate scenario where the library user
+            // has already added their own root query type.
+            .AddQueryType<LiveDocs.GraphQLApi.Models.GraphQL.Query>()
+            .AddReplicationServer()
+            .AddReplicatedDocument<ReplicatedUser>()
+            .AddReplicatedDocument<ReplicatedWorkspace>()
+            .AddReplicatedDocument<ReplicatedLiveDoc>()
+            .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
+            {
+                TopicPrefix = null,
+            })
+            .AddSubscriptionDiagnostics();
+    }
+
+    public static void Configure(WebApplication app)
+    {
+        app.UseExceptionHandler();
+
+        app.UseDeveloperExceptionPage();
+
+        app.UseWebSockets();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapGraphQL();
     }
 }

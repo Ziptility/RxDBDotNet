@@ -5,7 +5,7 @@ namespace RxDBDotNet.Security;
 /// <summary>
 /// Handles the evaluation of access requirements for RxDBDotNet documents.
 /// </summary>
-public sealed class AccessRequirementHandler : AuthorizationHandler<AccessRequirement>
+public sealed class AccessRequirementHandler : AuthorizationHandler<OperationRequirement>
 {
     /// <summary>
     /// Handles the evaluation of an access requirement.
@@ -15,22 +15,22 @@ public sealed class AccessRequirementHandler : AuthorizationHandler<AccessRequir
     /// <returns>A task that represents the asynchronous authorization operation.</returns>
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        AccessRequirement requirement)
+        OperationRequirement requirement)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(requirement);
 
-        var user = context.User;
-
-        var policies = requirement.SecurityOptions.Policies
-            .Where(p => p.Type.HasFlag(requirement.Type));
-
-        if (policies.Any(policy => !policy.Requirement(user)))
-        {
-            return Task.CompletedTask;
-        }
-
-        context.Succeed(requirement);
+        // var user = context.User;
+        //
+        // var policies = requirement.Requirement
+        //     .Where(p => p.Type.HasFlag(requirement.Operation));
+        //
+        // if (policies.Any(policy => !policy.Requirement(user)))
+        // {
+        //     return Task.CompletedTask;
+        // }
+        //
+        // context.Succeed(requirement);
 
         return Task.CompletedTask;
     }

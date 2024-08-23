@@ -79,9 +79,6 @@ public sealed class Startup
 
         app.UseWebSockets();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
-
         app.MapGraphQL()
             .WithOptions(new GraphQLServerOptions
             {

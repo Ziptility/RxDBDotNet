@@ -14,8 +14,17 @@ public sealed class Program
 
         Startup.Configure(app);
 
-        await LiveDocsDbInitializer.InitializeAsync();
+        await InitializeDatabaseAsync();
 
         await app.RunAsync();
+    }
+
+    private static Task InitializeDatabaseAsync()
+    {
+        const string dbConnectionString = "Server=127.0.0.1,1146;Database=LiveDocsDb;User Id=sa;Password=Admin123!;TrustServerCertificate=True";
+
+        Environment.SetEnvironmentVariable(ConfigKeys.DbConnectionString, dbConnectionString);
+
+        return LiveDocsDbInitializer.InitializeAsync();
     }
 }

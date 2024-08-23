@@ -1,6 +1,4 @@
 ﻿using System.Diagnostics;
-using FluentAssertions;
-using RT.Comb;
 using RxDBDotNet.Tests.Model;
 using static RxDBDotNet.Tests.Helpers.Strings;
 

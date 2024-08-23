@@ -1,6 +1,7 @@
 ﻿#pragma warning disable CA2000 // items are disposed at the end of the test via `await testContext.DisposeAsync();`
 using System.Diagnostics;
 using HotChocolate.Execution.Configuration;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -9,6 +10,7 @@ namespace RxDBDotNet.Tests.Setup;
 public static class TestSetupUtil
 {
     public static Task<TestContext> SetupAsync(
+        Action<IApplicationBuilder>? configureApp = null,
         Action<IServiceCollection>? configureServices = null,
         Action<IRequestExecutorBuilder>? configureReplicatedDocuments = null)
     {
@@ -22,7 +24,7 @@ public static class TestSetupUtil
 
         var timeoutToken = timeoutTokenSource.Token;
 
-        var factory = WebApplicationFactorySetupUtil.Setup(configureServices, configureReplicatedDocuments);
+        var factory = WebApplicationFactorySetupUtil.Setup(configureApp, configureServices, configureReplicatedDocuments);
         asyncDisposables.Add(factory);
 
         var asyncTestServiceScope = factory.Services.CreateAsyncScope();

@@ -1,8 +1,5 @@
-﻿using System.Text;
-using FluentAssertions;
-using GraphQlClientGenerator;
+﻿using GraphQlClientGenerator;
 using Newtonsoft.Json;
-using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 

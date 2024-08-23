@@ -1,8 +1,5 @@
-﻿using FluentAssertions;
-using RT.Comb;
-using RxDBDotNet.Tests.Helpers;
+﻿using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Model;
-using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 

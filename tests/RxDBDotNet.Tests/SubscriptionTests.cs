@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
-using FluentAssertions;
 using RxDBDotNet.Tests.Helpers;
 using RxDBDotNet.Tests.Model;
-using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 

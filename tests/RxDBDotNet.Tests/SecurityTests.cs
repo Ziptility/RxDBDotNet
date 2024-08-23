@@ -1,13 +1,4 @@
-﻿using HotChocolate.Execution.Configuration;
-using LiveDocs.GraphQLApi.Infrastructure;
-using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Models.Shared;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
-using RxDBDotNet.Extensions;
-using RxDBDotNet.Tests.Setup;
-
-namespace RxDBDotNet.Tests;
+﻿namespace RxDBDotNet.Tests;
 
 [Collection("DockerSetup")]
 public class SecurityTests
@@ -21,6 +12,11 @@ public class SecurityTests
         {
             // Arrange
             // Configure security for this test
+            void ConfigureApp(IApplicationBuilder app)
+            {
+                app.UseAuthentication();
+                app.UseAuthorization();
+            }
             void ConfigureServices(IServiceCollection services)
             {
                 // Add authentication
@@ -37,7 +33,7 @@ public class SecurityTests
                     .AddReplicatedDocument<ReplicatedLiveDoc>();
             }
 
-            testContext = await TestSetupUtil.SetupAsync(ConfigureServices, ConfigureReplicatedDocuments);
+            testContext = await TestSetupUtil.SetupAsync(ConfigureApp, ConfigureServices, ConfigureReplicatedDocuments);
 
             // As a system admin user:
             // 1. Create a workspace

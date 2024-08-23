@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace RxDBDotNet.Tests.Model;
+﻿namespace RxDBDotNet.Tests.Model;
 
 /// <summary>
 /// Represents the details of a validation problem, typically used for BadRequest (400) responses in ASP.NET Core.

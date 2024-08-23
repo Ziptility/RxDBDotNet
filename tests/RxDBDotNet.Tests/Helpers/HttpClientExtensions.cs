@@ -1,8 +1,4 @@
-﻿using System.Net;
-using System.Text;
-using System.Text.Json;
-using FluentAssertions;
-using RxDBDotNet.Tests.Model;
+﻿using RxDBDotNet.Tests.Model;
 using static RxDBDotNet.Tests.Helpers.SerializationUtils;
 using GraphQLRequest = RxDBDotNet.Tests.Model.GraphQLRequest;
 

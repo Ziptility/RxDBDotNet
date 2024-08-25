@@ -17,11 +17,16 @@ public class SecurityTests
                 app.UseAuthentication();
                 app.UseAuthorization();
             }
+
             void ConfigureServices(IServiceCollection services)
             {
                 // Add authentication
                 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(options => options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters());
+
+                // Define the security policy for this test where the user must be in the role of a workspace admin to create a workspace
+                services.AddAuthorizationBuilder()
+                    .AddPolicy(nameof(UserRole.WorkspaceAdmin), policy => policy.RequireRole(nameof(UserRole.WorkspaceAdmin)));
             }
 
             void ConfigureReplicatedDocuments(IRequestExecutorBuilder graphQLBuilder)
@@ -29,7 +34,7 @@ public class SecurityTests
                 graphQLBuilder
                     .AddAuthorization()
                     .AddReplicatedDocument<ReplicatedUser>()
-                    .AddReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequireMinimumRoleToWrite(UserRole.WorkspaceAdmin))
+                    .AddReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToCreate(nameof(UserRole.WorkspaceAdmin)))
                     .AddReplicatedDocument<ReplicatedLiveDoc>();
             }
 

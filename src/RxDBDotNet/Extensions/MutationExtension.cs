@@ -38,17 +38,14 @@ internal sealed class MutationExtension<TDocument> : ObjectTypeExtension
                 var cancellationToken = context.RequestAborted;
                 var authorizationService = context.Services.GetService<IAuthorizationService>();
                 var currentUser = context.GetUser();
-                var authorizationRequirements = new List<IAuthorizationRequirement>
-                {
-                    new OperationRequirement(Operation.Write, _ => true),
-                };
+                var securityOptions = context.Services.GetService<SecurityOptions<TDocument>>();
 
                 return mutation.PushDocumentsAsync(
                     documents,
                     documentService,
                     authorizationService,
                     currentUser,
-                    authorizationRequirements,
+                    securityOptions,
                     cancellationToken);
             });
     }

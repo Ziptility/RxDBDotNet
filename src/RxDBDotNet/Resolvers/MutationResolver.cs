@@ -26,7 +26,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     /// <param name="documentService">The document service to be used for data access.</param>
     /// <param name="authorizationService">The service used for authorization checks.</param>
     /// <param name="currentUser">Provides access to the current user.</param>
-    /// <param name="authorizationRequirements">A collection of authorization requirements to be checked.</param>
+    /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A task representing the asynchronous operation, with a result of any conflicting documents.</returns>
 #pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
@@ -35,7 +35,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         IDocumentService<TDocument> documentService,
         IAuthorizationService? authorizationService,
         ClaimsPrincipal? currentUser,
-        List<IAuthorizationRequirement>? authorizationRequirements,
+        SecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
     {
         // Early return if no documents are provided.
@@ -60,7 +60,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
                 documentService,
                 authorizationService,
                 currentUser,
-                authorizationRequirements,
+                securityOptions,
                 cancellationToken).ConfigureAwait(false);
 
             conflicts.AddRange(applyConflicts);
@@ -186,7 +186,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     /// <param name="documentService">The document service to be used for data access.</param>
     /// <param name="authorizationService">The service used for authorization checks.</param>
     /// <param name="currentUser">Provides access to the current user.</param>
-    /// <param name="authorizationRequirements">A collection of authorization requirements to be checked.</param>
+    /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A list of documents that are considered conflicting if an error occurs during the process.</returns>
     private static async Task<List<TDocument>> ApplyChangesAsync(
@@ -195,7 +195,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         IDocumentService<TDocument> documentService,
         IAuthorizationService? authorizationService,
         ClaimsPrincipal? currentUser,
-        List<IAuthorizationRequirement>? authorizationRequirements,
+        SecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
     {
         try
@@ -206,7 +206,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
                 await AuthorizeCreateAsync(
                         authorizationService,
                         currentUser,
-                        authorizationRequirements)
+                        securityOptions)
                     .ConfigureAwait(false);
                 await documentService.CreateDocumentAsync(create, cancellationToken).ConfigureAwait(false);
             }
@@ -236,7 +236,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     private static async Task AuthorizeCreateAsync(
         IAuthorizationService? authorizationService,
         ClaimsPrincipal? currentUser,
-        IEnumerable<IAuthorizationRequirement>? requirements)
+        SecurityOptions<TDocument>? requirements)
     {
         if (authorizationService != null && requirements != null)
         {
@@ -244,12 +244,12 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
             {
                 var replicationContext = new AuthorizationContext
                 {
-                    Operation = Operation.Write,
+                    Operation = Operation.Create,
                     DocumentType = typeof(TDocument),
                 };
 
                 var authorizationResult = await authorizationService
-                    .AuthorizeAsync(currentUser, replicationContext, requirements)
+                    .AuthorizeAsync(currentUser, replicationContext, requirements.PolicyRequirements)
                     .ConfigureAwait(false);
 
                 if (!authorizationResult.Succeeded)

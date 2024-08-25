@@ -73,8 +73,14 @@ public static class GraphQLBuilderExtensions
         Action<ReplicationOptions<TDocument>>? configure = null)
         where TDocument : class, IReplicatedDocument
     {
-        var options = new ReplicationOptions<TDocument>();
-        configure?.Invoke(options);
+        ArgumentNullException.ThrowIfNull(builder);
+
+        var replicationOptions = new ReplicationOptions<TDocument>();
+        configure?.Invoke(replicationOptions);
+        if (replicationOptions.Security.PolicyRequirements.Count > 0)
+        {
+            builder.Services.AddSingleton(replicationOptions.Security);
+        }
 
         return builder
             .AddResolver<QueryResolver<TDocument>>()

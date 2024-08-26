@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Tests.Model;
+﻿using System.Net.Http.Headers;
+using RxDBDotNet.Tests.Model;
 using static RxDBDotNet.Tests.Helpers.SerializationUtils;
 using GraphQLRequest = RxDBDotNet.Tests.Model.GraphQLRequest;
 
@@ -67,21 +68,22 @@ internal static class HttpClientExtensions
     }
 
     /// <summary>
-    ///     Send a GraphQL mutation request to the specified Uri.
+    /// Sends a GraphQL mutation request to the specified Uri.
     /// </summary>
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="mutationBuilder">The GraphQL mutation to execute.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="expectSuccess">Whether the request is expected to be successful.</param>
+    /// <param name="jwtAccessToken">The JWT access token, if required.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
-    /// <exception cref="ArgumentNullException">httpClient</exception>
-    /// <exception cref="ArgumentNullException">mutationBuilder</exception>
-    /// <exception cref="InvalidOperationException">httpClient</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpClient"/> or <paramref name="mutationBuilder"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when <paramref name="httpClient"/> is in an invalid state.</exception>
     public static Task<GqlMutationResponse> PostGqlMutationAsync(
         this HttpClient httpClient,
         MutationQueryBuilderGql mutationBuilder,
         CancellationToken cancellationToken,
-        bool expectSuccess = true)
+        bool expectSuccess = true,
+        string? jwtAccessToken = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
 
@@ -91,14 +93,16 @@ internal static class HttpClientExtensions
             httpClient,
             mutationBuilder,
             cancellationToken,
-            expectSuccess);
+            expectSuccess,
+            jwtAccessToken);
     }
 
     private static async Task<GqlMutationResponse> PostGqlMutationInternalAsync(
         HttpClient httpClient,
         MutationQueryBuilderGql mutationBuilder,
         CancellationToken cancellationToken,
-        bool expectSuccess = true)
+        bool expectSuccess = true,
+        string? jwtAccessToken = null)
     {
         var graphQlRequest = new GraphQLRequest
         {
@@ -113,6 +117,12 @@ internal static class HttpClientExtensions
             json,
             Encoding.UTF8,
             "application/json");
+
+        // Set the Authorization header if the JWT access token is provided
+        if (!string.IsNullOrWhiteSpace(jwtAccessToken))
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtAccessToken);
+        }
 
         var response = await httpClient.PostAsync(
             Routes.GraphQL,

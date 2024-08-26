@@ -18,16 +18,9 @@ public sealed class PolicyRequirementHandler : AuthorizationHandler<PolicyRequir
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(requirement);
 
-        if (context.User.HasClaim(c => string.Equals(c.Type, requirement.Policy, StringComparison.Ordinal)
-                                       && Enum.TryParse<Operation>(c.Value, out var operation)
-                                       && (operation & requirement.Operation) == requirement.Operation))
-        {
-            context.Succeed(requirement);
-        }
-        else
-        {
-            context.Fail();
-        }
+        var documentOperation = context.Resource as DocumentOperation;
+
+        // Please implement the logic to evaluate the policy requirement here
 
         return Task.CompletedTask;
     }

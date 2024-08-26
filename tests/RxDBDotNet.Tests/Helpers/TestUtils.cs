@@ -6,7 +6,10 @@ namespace RxDBDotNet.Tests.Helpers;
 
 internal static class TestUtils
 {
-    public static async Task<WorkspaceInputGql> CreateNewWorkspaceAsync(this HttpClient httpClient, CancellationToken cancellationToken)
+    public static async Task<WorkspaceInputGql> CreateNewWorkspaceAsync(
+        this HttpClient httpClient,
+        CancellationToken cancellationToken,
+        string? jwtAccessToken = null)
     {
         var workspaceId = Provider.Sql.Create();
 
@@ -34,7 +37,7 @@ internal static class TestUtils
             new MutationQueryBuilderGql().WithPushWorkspace(new WorkspaceQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await httpClient.PostGqlMutationAsync(createWorkspace, cancellationToken);
+        var response = await httpClient.PostGqlMutationAsync(createWorkspace, cancellationToken, jwtAccessToken: jwtAccessToken);
 
         // Assert
         response.Errors.Should()

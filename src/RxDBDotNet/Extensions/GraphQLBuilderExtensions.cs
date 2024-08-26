@@ -1,9 +1,11 @@
 ﻿using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Resolvers;
+using RxDBDotNet.Security;
 using RxDBDotNet.Services;
 using static RxDBDotNet.Extensions.DocumentExtensions;
 
@@ -31,6 +33,7 @@ public static class GraphQLBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.Services.AddSingleton<IEventPublisher, DefaultEventPublisher>();
+        builder.Services.AddSingleton<IAuthorizationHandler, PolicyRequirementHandler>();
 
         // Add support for filtering
         builder.AddFiltering();

@@ -46,6 +46,7 @@ public static class TestSetupUtil
         {
             Factory = factory,
             HttpClient = factory.CreateClient(),
+            ServiceProvider = asyncTestServiceScope.ServiceProvider,
             CancellationToken = linkedToken,
             AsyncDisposables = asyncDisposables,
             Disposables = disposables,

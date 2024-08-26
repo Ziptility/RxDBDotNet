@@ -1,9 +1,9 @@
 ﻿namespace RxDBDotNet.Security;
 
 /// <summary>
-/// Represents the context in which an operation is being performed.
+/// Represents an operation performed on a document.
 /// </summary>
-public record AuthorizationContext
+public record DocumentOperation
 {
     /// <summary>
     /// The type of operation being performed.

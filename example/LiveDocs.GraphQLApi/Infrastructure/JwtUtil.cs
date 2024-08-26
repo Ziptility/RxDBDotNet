@@ -130,10 +130,10 @@ public static class JwtUtil
             ValidateIssuerSigningKey = true, // Ensure the token was signed with the correct signing key
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey)), // Specify the signing key
 
-            RequireSignedTokens = true, // Ensure the token is signed
-
-            ValidateTokenReplay = true, // Prevent replay attacks by validating that the token is unique
-            RequireAudience = true, // Explicitly require an audience claim
+            // RequireSignedTokens = true, // Ensure the token is signed
+            //
+            // ValidateTokenReplay = true, // Prevent replay attacks by validating that the token is unique
+            // RequireAudience = true, // Explicitly require an audience claim
         };
     }
 }

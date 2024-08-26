@@ -58,7 +58,11 @@ public sealed class SecurityOptions<TDocument> where TDocument : class, IReplica
     {
         PolicyRequirements.Add(new PolicyRequirement
         {
-            Operation = operations,
+            DocumentOperation = new DocumentOperation
+            {
+                Operation = operations,
+                DocumentType = typeof(TDocument),
+            },
             Policy = policy,
         });
 

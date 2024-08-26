@@ -242,7 +242,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         {
             if (currentUser != null)
             {
-                var replicationContext = new AuthorizationContext
+                var replicationContext = new DocumentOperation
                 {
                     Operation = Operation.Create,
                     DocumentType = typeof(TDocument),

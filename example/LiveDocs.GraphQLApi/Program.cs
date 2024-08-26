@@ -7,7 +7,7 @@ using LiveDocs.GraphQLApi.Models.Shared;
 using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
 using RxDBDotNet.Extensions;
-using RxDBDotNet.Repositories;
+using RxDBDotNet.Services;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);

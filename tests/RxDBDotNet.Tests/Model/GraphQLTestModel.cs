@@ -1065,6 +1065,8 @@ namespace RxDBDotNet.Tests.Model
         public const string String = "String";
         public const string Uuid = "UUID";
 
+        public const string ApplyPolicy = "ApplyPolicy";
+
         public const string Checkpoint = "Checkpoint";
         public const string LiveDoc = "LiveDoc";
         public const string LiveDocPullBulk = "LiveDocPullBulk";
@@ -1126,6 +1128,15 @@ namespace RxDBDotNet.Tests.Model
                 { typeof(WorkspaceInputPushRowGql), "WorkspaceInputPushRow" }
             };
 }
+    #endregion
+
+    #region enums
+    public enum ApplyPolicyGql
+    {
+        [EnumMember(Value = "BEFORE_RESOLVER")] BeforeResolver,
+        [EnumMember(Value = "AFTER_RESOLVER")] AfterResolver,
+        [EnumMember(Value = "VALIDATION")] Validation
+    }
     #endregion
 
     #nullable enable

@@ -1,10 +1,8 @@
-﻿using System.Security.Authentication;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
-using RxDBDotNet.Repositories;
 using RxDBDotNet.Security;
+using RxDBDotNet.Services;
 
 namespace RxDBDotNet.Resolvers;
 
@@ -24,18 +22,18 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     /// </summary>
     /// <param name="documents">The list of documents to push, including their assumed master state.</param>
     /// <param name="documentService">The document service to be used for data access.</param>
-    /// <param name="authorizationService">The service used for authorization checks.</param>
     /// <param name="currentUser">Provides access to the current user.</param>
     /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
+    /// <param name="authorizationHelper">The service used for authorization checks.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A task representing the asynchronous operation, with a result of any conflicting documents.</returns>
 #pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
     internal async Task<List<TDocument>> PushDocumentsAsync(
         List<DocumentPushRow<TDocument>?>? documents,
         IDocumentService<TDocument> documentService,
-        IAuthorizationService? authorizationService,
         ClaimsPrincipal? currentUser,
         SecurityOptions<TDocument>? securityOptions,
+        AuthorizationHelper authorizationHelper,
         CancellationToken cancellationToken)
     {
         // Early return if no documents are provided.
@@ -58,7 +56,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
                 creates,
                 updates,
                 documentService,
-                authorizationService,
+                authorizationHelper,
                 currentUser,
                 securityOptions,
                 cancellationToken).ConfigureAwait(false);
@@ -184,7 +182,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     /// <param name="creates">The list of new documents to create.</param>
     /// <param name="updates">The list of existing documents to update.</param>
     /// <param name="documentService">The document service to be used for data access.</param>
-    /// <param name="authorizationService">The service used for authorization checks.</param>
+    /// <param name="authorizationHelper">The service used for authorization checks.</param>
     /// <param name="currentUser">Provides access to the current user.</param>
     /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
@@ -193,7 +191,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         List<TDocument> creates,
         List<TDocument> updates,
         IDocumentService<TDocument> documentService,
-        IAuthorizationService? authorizationService,
+        AuthorizationHelper authorizationHelper,
         ClaimsPrincipal? currentUser,
         SecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
@@ -204,10 +202,11 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
             foreach (var create in creates)
             {
                 await AuthorizeCreateAsync(
-                        authorizationService,
+                        authorizationHelper,
                         currentUser,
                         securityOptions)
                     .ConfigureAwait(false);
+
                 await documentService.CreateDocumentAsync(create, cancellationToken).ConfigureAwait(false);
             }
 
@@ -233,35 +232,21 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         }
     }
 
-    private static async Task AuthorizeCreateAsync(
-        IAuthorizationService? authorizationService,
+    private static Task AuthorizeCreateAsync(
+        AuthorizationHelper authorizationHelper,
         ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? requirements)
+        SecurityOptions<TDocument>? securityOptions)
     {
-        if (authorizationService != null && requirements != null)
+        var documentOperation = new DocumentOperation
         {
-            if (currentUser != null)
-            {
-                var replicationContext = new DocumentOperation
-                {
-                    Operation = Operation.Create,
-                    DocumentType = typeof(TDocument),
-                };
+            Operation = Operation.Create,
+            DocumentType = typeof(TDocument),
+        };
 
-                var authorizationResult = await authorizationService
-                    .AuthorizeAsync(currentUser, replicationContext, requirements.PolicyRequirements)
-                    .ConfigureAwait(false);
-
-                if (!authorizationResult.Succeeded)
-                {
-                    throw new AuthenticationException("You are not authorized to access this resource.");
-                }
-            }
-            else
-            {
-                throw new AuthenticationException("You are not authorized to access this resource.");
-            }
-        }
+        return authorizationHelper.AuthorizeAsync(
+            currentUser,
+            documentOperation,
+            securityOptions);
     }
 
     /// <summary>

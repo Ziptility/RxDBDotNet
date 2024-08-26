@@ -1,6 +1,6 @@
 ﻿using RxDBDotNet.Documents;
 
-namespace RxDBDotNet.Repositories;
+namespace RxDBDotNet.Services;
 
 /// <summary>
 /// Defines the contract for a service that handles document operations for replication in RxDBDotNet.

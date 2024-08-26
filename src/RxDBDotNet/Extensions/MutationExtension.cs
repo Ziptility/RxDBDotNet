@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
-using RxDBDotNet.Repositories;
 using RxDBDotNet.Resolvers;
 using RxDBDotNet.Security;
+using RxDBDotNet.Services;
 using static RxDBDotNet.Extensions.DocumentExtensions;
 
 namespace RxDBDotNet.Extensions;
@@ -26,6 +25,7 @@ internal sealed class MutationExtension<TDocument> : ObjectTypeExtension
             {
                 Disable = true,
             })
+            //.Authorize()
             .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
             .Argument(pushRowArgName, a => a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
                 .Description($"The list of {graphQLTypeName} documents to push to the server."))
@@ -36,16 +36,16 @@ internal sealed class MutationExtension<TDocument> : ObjectTypeExtension
                 var documentService = context.Service<IDocumentService<TDocument>>();
                 var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
                 var cancellationToken = context.RequestAborted;
-                var authorizationService = context.Services.GetService<IAuthorizationService>();
+                var authorizationHelper = context.Services.GetRequiredService<AuthorizationHelper>();
                 var currentUser = context.GetUser();
                 var securityOptions = context.Services.GetService<SecurityOptions<TDocument>>();
 
                 return mutation.PushDocumentsAsync(
                     documents,
                     documentService,
-                    authorizationService,
                     currentUser,
                     securityOptions,
+                    authorizationHelper,
                     cancellationToken);
             });
     }

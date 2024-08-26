@@ -1,7 +1,7 @@
 ﻿using HotChocolate.Resolvers;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
-using RxDBDotNet.Repositories;
+using RxDBDotNet.Services;
 
 namespace RxDBDotNet.Resolvers;
 

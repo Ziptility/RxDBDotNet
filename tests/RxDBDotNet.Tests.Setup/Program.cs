@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RxDBDotNet.Repositories;
+using RxDBDotNet.Services;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);

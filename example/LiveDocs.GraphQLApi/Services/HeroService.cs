@@ -1,7 +1,6 @@
 ﻿using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.EntityFrameworkCore;
-using RxDBDotNet.Repositories;
 using RxDBDotNet.Services;
 
 namespace LiveDocs.GraphQLApi.Services;

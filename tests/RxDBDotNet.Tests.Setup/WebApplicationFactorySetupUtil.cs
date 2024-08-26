@@ -19,7 +19,9 @@ public static class WebApplicationFactorySetupUtil
     public static WebApplicationFactory<Program> Setup(
         Action<IApplicationBuilder>? configureApp = null,
         Action<IServiceCollection>? configureServices = null,
+#pragma warning disable RCS1163
         Action<IRequestExecutorBuilder>? configureReplicatedDocuments = null)
+#pragma warning restore RCS1163
     {
         return new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -28,42 +30,34 @@ public static class WebApplicationFactorySetupUtil
                 .UseSolutionRelativeContentRoot("example/LiveDocs.GraphQLApi")
                 .Configure(app =>
                 {
-                    ConfigureAppDefaults(app);
-
-                    configureApp?.Invoke(app);
+                    if (configureApp != null)
+                    {
+                        configureApp.Invoke(app);
+                    }
+                    else
+                    {
+                        ConfigureAppDefaults(app);
+                    }
                 })
                 .ConfigureServices(services =>
                 {
                     configureServices?.Invoke(services);
 
-                    var graphQLBuilder = ConfigureGraphQLDefaults(services);
-
-                    if (configureReplicatedDocuments != null)
-                    {
-                        // This enables configuration of replicated documents on a per test basis
-                        configureReplicatedDocuments.Invoke(graphQLBuilder);
-                    }
-                    else
-                    {
-                        ConfigureReplicatedDocumentDefaults(graphQLBuilder);
-                    }
+                    ConfigureGraphQLDefaults(services);
                 });
         });
     }
 
     private static void ConfigureAppDefaults(IApplicationBuilder app)
     {
-        app.UseExceptionHandler();
+        app.UseWebSockets();
 
         app.UseRouting();
 
-        app.UseDeveloperExceptionPage();
-
-        app.UseWebSockets();
-
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapGraphQL().WithOptions(new GraphQLServerOptions
+            endpoints.MapGraphQL()
+                .WithOptions(new GraphQLServerOptions
             {
                 Tool =
                 {
@@ -76,6 +70,7 @@ public static class WebApplicationFactorySetupUtil
     private static IRequestExecutorBuilder ConfigureGraphQLDefaults(IServiceCollection services)
     {
         return services.AddGraphQLServer()
+            .AddAuthorization()
             .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
             // Simulate scenario where the library user
             // has already added their own root query type.
@@ -84,16 +79,12 @@ public static class WebApplicationFactorySetupUtil
             .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
             {
                 // Make redis topics unique per unit test
-                TopicPrefix = Guid.NewGuid().ToString(),
+                TopicPrefix = Guid.NewGuid()
+                    .ToString(),
             })
-            .AddSubscriptionDiagnostics();
-    }
-
-    private static void ConfigureReplicatedDocumentDefaults(IRequestExecutorBuilder graphQLBuilder)
-    {
-        graphQLBuilder
+            .AddSubscriptionDiagnostics()
             .AddReplicatedDocument<ReplicatedUser>()
-            .AddReplicatedDocument<ReplicatedWorkspace>()
+            .AddReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToCreate("IsWorkspaceAdmin"))
             .AddReplicatedDocument<ReplicatedLiveDoc>();
     }
 

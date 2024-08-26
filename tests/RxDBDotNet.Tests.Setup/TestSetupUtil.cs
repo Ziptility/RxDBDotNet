@@ -12,7 +12,7 @@ public static class TestSetupUtil
     public static Task<TestContext> SetupAsync(
         Action<IApplicationBuilder>? configureApp = null,
         Action<IServiceCollection>? configureServices = null,
-        Action<IRequestExecutorBuilder>? configureReplicatedDocuments = null)
+        Action<IRequestExecutorBuilder>? configureGraphQL = null)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
@@ -24,7 +24,7 @@ public static class TestSetupUtil
 
         var timeoutToken = timeoutTokenSource.Token;
 
-        var factory = WebApplicationFactorySetupUtil.Setup(configureApp, configureServices, configureReplicatedDocuments);
+        var factory = WebApplicationFactorySetupUtil.Setup(configureApp, configureServices, configureGraphQL);
         asyncDisposables.Add(factory);
 
         var asyncTestServiceScope = factory.Services.CreateAsyncScope();

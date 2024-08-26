@@ -4,7 +4,7 @@ namespace RxDBDotNet.Tests.Setup;
 
 public sealed class TestContext : IAsyncDisposable
 {
-    public required WebApplicationFactory<Program> Factory { get; init; }
+    public required WebApplicationFactory<TestProgram> Factory { get; init; }
 
     public required HttpClient HttpClient { get; init; }
 

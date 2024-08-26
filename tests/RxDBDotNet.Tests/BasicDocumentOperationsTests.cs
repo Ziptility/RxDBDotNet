@@ -52,8 +52,7 @@ public class BasicDocumentOperationsTests
             response.Data.PushWorkspace?.Should()
                 .BeNullOrEmpty();
 
-            // Verify the workspace exists in the database
-            await testContext.HttpClient.VerifyWorkspaceExists(newWorkspace, testContext.CancellationToken);
+            await testContext.HttpClient.VerifyWorkspaceAsync(newWorkspace, testContext.CancellationToken);
         }
         finally
         {
@@ -81,7 +80,7 @@ public class BasicDocumentOperationsTests
             {
                 Id = new UuidOperationFilterInputGql
                 {
-                    Eq = workspace1.Id?.Value,
+                    Eq = workspace1.workspaceInputGql.Id?.Value,
                 },
             };
             var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
@@ -97,7 +96,7 @@ public class BasicDocumentOperationsTests
             response.Data.PullWorkspace?.Documents.Should()
                 .HaveCount(1);
             response.Data.PullWorkspace?.Documents.Should()
-                .ContainSingle(workspace => workspace.Id == workspace1.Id);
+                .ContainSingle(workspace => workspace.Id == workspace1.workspaceInputGql.Id);
         }
         finally
         {
@@ -131,9 +130,9 @@ public class BasicDocumentOperationsTests
                 .BeNullOrEmpty();
 
             response.Data.PullWorkspace?.Documents.Should()
-                .ContainSingle(workspace => workspace.Id == workspace1.Id);
+                .ContainSingle(workspace => workspace.Id == workspace1.workspaceInputGql.Id);
             response.Data.PullWorkspace?.Documents.Should()
-                .ContainSingle(workspace => workspace.Id == workspace2.Id);
+                .ContainSingle(workspace => workspace.Id == workspace2.workspaceInputGql.Id);
         }
         finally
         {
@@ -185,7 +184,7 @@ public class BasicDocumentOperationsTests
         {
             Id = new UuidOperationFilterInputGql
             {
-                Eq = newWorkspace.Id?.Value,
+                Eq = newWorkspace.workspaceInputGql.Id?.Value,
             },
         };
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()

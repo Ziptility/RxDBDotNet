@@ -1,9 +1,15 @@
 ﻿using HotChocolate.AspNetCore;
+using HotChocolate.Execution.Options;
+using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Security;
+using RxDBDotNet.Services;
 using RxDBDotNet.Tests.Helpers;
+using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests;
 
@@ -18,7 +24,6 @@ public class SecurityTests
         try
         {
             // Arrange
-            // Configure security for this test
             void ConfigureApp(IApplicationBuilder app)
             {
                 app.UseExceptionHandler();
@@ -43,13 +48,35 @@ public class SecurityTests
 
             void ConfigureServices(IServiceCollection services)
             {
+                services.AddProblemDetails();
+
+                // Extend timeout for long-running debugging sessions
+                services.Configure<RequestExecutorOptions>(options => options.ExecutionTimeout = TimeSpan.FromMinutes(15));
+
+                // Configure WebSocket options for longer keep-alive
+                services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
+
+                // Redis is required for Hot Chocolate subscriptions
+                services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
+
+                services.AddDbContext<LiveDocsDbContext>(options =>
+                    options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
+                                         ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
+
+                services
+                    .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
+                    .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
+                    .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
+
                 services.AddScoped<AuthorizationHelper>();
 
                 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(options =>
                     {
                         options.Audience = JwtUtil.Audience;
+
                         options.IncludeErrorDetails = true;
+
                         options.RequireHttpsMetadata = false;
 
                         options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters();
@@ -86,9 +113,29 @@ public class SecurityTests
                     .AddPolicy("IsWorkspaceAdmin", policy => policy.RequireRole(nameof(UserRole.WorkspaceAdmin)));
             }
 
-            testContext = await TestSetupUtil.SetupAsync(ConfigureApp, ConfigureServices, configureReplicatedDocuments: null);
+            void ConfigureGraphQL(IRequestExecutorBuilder graphQLBuilder)
+            {
+                graphQLBuilder
+                    .AddAuthorization()
+                    .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
+                    // Simulate scenario where the library user
+                    // has already added their own root query type.
+                    .AddQueryType<Query>()
+                    .AddReplicationServer()
+                    .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
+                    {
+                        // Make redis topics unique per unit test
+                        TopicPrefix = Guid.NewGuid()
+                            .ToString(),
+                    })
+                    .AddSubscriptionDiagnostics()
+                    .AddReplicatedDocument<ReplicatedUser>()
+                    .AddReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToCreate("IsWorkspaceAdmin"))
+                    .AddReplicatedDocument<ReplicatedLiveDoc>();
+            }
 
-            // 1. Create a workspace
+            testContext = await TestSetupUtil.SetupAsync(ConfigureApp, ConfigureServices, ConfigureGraphQL);
+
             var dbContext = testContext.ServiceProvider.GetRequiredService<LiveDocsDbContext>();
             var workspace = new Workspace
             {
@@ -101,7 +148,6 @@ public class SecurityTests
             };
             await dbContext.Workspaces.AddAsync(workspace, testContext.CancellationToken);
 
-            // 2. Create a standard user within the workspace
             var workspaceAdminReplicatedUser = new ReplicatedUser
             {
                 Id = Guid.NewGuid(),
@@ -133,17 +179,13 @@ public class SecurityTests
 
             await dbContext.SaveChangesAsync(testContext.CancellationToken);
 
-            // As a standard user:
-            await testContext.HttpClient.CreateNewWorkspaceAsync(
+            // Act
+            var response = await testContext.HttpClient.CreateNewWorkspaceAsync(
                 testContext.CancellationToken,
                 jwtAccessToken: workspaceAdminToken);
 
-            // Attempt to create a workspace
-
-            // Act
-
             // Assert
-            // The response should not contain an unauthorized error
+            await testContext.HttpClient.VerifyWorkspaceAsync(response.workspaceInputGql, testContext.CancellationToken);
         }
         finally
         {
@@ -178,15 +220,35 @@ public class SecurityTests
                         .WithOptions(new GraphQLServerOptions
                         {
                             Tool =
-                        {
-                            Enable = true,
-                        },
+                            {
+                                Enable = true,
+                            },
                         });
                 });
             }
 
             void ConfigureServices(IServiceCollection services)
             {
+                services.AddProblemDetails();
+
+                // Extend timeout for long-running debugging sessions
+                services.Configure<RequestExecutorOptions>(options => options.ExecutionTimeout = TimeSpan.FromMinutes(15));
+
+                // Configure WebSocket options for longer keep-alive
+                services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
+
+                // Redis is required for Hot Chocolate subscriptions
+                services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
+
+                services.AddDbContext<LiveDocsDbContext>(options =>
+                    options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
+                                         ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
+
+                services
+                    .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
+                    .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
+                    .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
+
                 services.AddScoped<AuthorizationHelper>();
 
                 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -230,9 +292,29 @@ public class SecurityTests
                     .AddPolicy("IsWorkspaceAdmin", policy => policy.RequireRole(nameof(UserRole.WorkspaceAdmin)));
             }
 
-            testContext = await TestSetupUtil.SetupAsync(ConfigureApp, ConfigureServices, configureReplicatedDocuments: null);
+            void ConfigureGraphQL(IRequestExecutorBuilder graphQLBuilder)
+            {
+                graphQLBuilder
+                    .AddAuthorization()
+                    .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
+                    // Simulate scenario where the library user
+                    // has already added their own root query type.
+                    .AddQueryType<Query>()
+                    .AddReplicationServer()
+                    .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
+                    {
+                        // Make redis topics unique per unit test
+                        TopicPrefix = Guid.NewGuid()
+                            .ToString(),
+                    })
+                    .AddSubscriptionDiagnostics()
+                    .AddReplicatedDocument<ReplicatedUser>()
+                    .AddReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToCreate("IsWorkspaceAdmin"))
+                    .AddReplicatedDocument<ReplicatedLiveDoc>();
+            }
 
-            // 1. Create a workspace
+            testContext = await TestSetupUtil.SetupAsync(ConfigureApp, ConfigureServices, ConfigureGraphQL);
+
             var dbContext = testContext.ServiceProvider.GetRequiredService<LiveDocsDbContext>();
             var workspace = new Workspace
             {
@@ -245,7 +327,6 @@ public class SecurityTests
             };
             await dbContext.Workspaces.AddAsync(workspace, testContext.CancellationToken);
 
-            // 2. Create a standard user within the workspace
             var standardUserReplicatedUser = new ReplicatedUser
             {
                 Id = Guid.NewGuid(),
@@ -277,15 +358,11 @@ public class SecurityTests
 
             await dbContext.SaveChangesAsync(testContext.CancellationToken);
 
-            // As a standard user:
+            // Act
             await testContext.HttpClient.CreateNewWorkspaceAsync(
                 testContext.CancellationToken,
                 jwtAccessToken: standardUserToken);
-
-            // Attempt to create a workspace
-
-            // Act
-
+            
             // Assert
             // The response should not contain an unauthorized error
         }

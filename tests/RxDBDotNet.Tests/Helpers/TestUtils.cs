@@ -6,14 +6,17 @@ namespace RxDBDotNet.Tests.Helpers;
 
 internal static class TestUtils
 {
-    public static async Task<WorkspaceInputGql> CreateNewWorkspaceAsync(
+    public static async Task<(WorkspaceInputGql workspaceInputGql, GqlMutationResponse response)> CreateNewWorkspaceAsync(
         this HttpClient httpClient,
         CancellationToken cancellationToken,
+        bool? expectSuccess = null,
         string? jwtAccessToken = null)
     {
+        expectSuccess ??= true;
+
         var workspaceId = Provider.Sql.Create();
 
-        var newWorkspace = new WorkspaceInputGql
+        var workspaceInputGql = new WorkspaceInputGql
         {
             Id = workspaceId,
             Name = CreateString(),
@@ -25,7 +28,7 @@ internal static class TestUtils
         var workspaceInput = new WorkspaceInputPushRowGql
         {
             AssumedMasterState = null,
-            NewDocumentState = newWorkspace,
+            NewDocumentState = workspaceInputGql,
         };
 
         var pushWorkspaceInputGql = new List<WorkspaceInputPushRowGql?>
@@ -36,16 +39,13 @@ internal static class TestUtils
         var createWorkspace =
             new MutationQueryBuilderGql().WithPushWorkspace(new WorkspaceQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        // Act
-        var response = await httpClient.PostGqlMutationAsync(createWorkspace, cancellationToken, jwtAccessToken: jwtAccessToken);
+        var response = await httpClient.PostGqlMutationAsync(
+            createWorkspace,
+            cancellationToken,
+            expectSuccess: expectSuccess.Value,
+            jwtAccessToken: jwtAccessToken);
 
-        // Assert
-        response.Errors.Should()
-            .BeNullOrEmpty();
-        response.Data.PushWorkspace?.Should()
-            .BeNullOrEmpty();
-
-        return newWorkspace;
+        return (workspaceInputGql, response);
     }
 
     public static async Task<WorkspaceGql> UpdateWorkspaceAsync(this HttpClient httpClient, WorkspaceInputGql workspace, CancellationToken cancellationToken)
@@ -136,7 +136,7 @@ internal static class TestUtils
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken);
     }
 
-    public static async Task VerifyWorkspaceExists(this HttpClient httpClient, WorkspaceInputGql workspaceInput, CancellationToken cancellationToken)
+    public static async Task VerifyWorkspaceAsync(this HttpClient httpClient, WorkspaceInputGql workspaceInput, CancellationToken cancellationToken)
     {
         var query = new QueryQueryBuilderGql().WithPullWorkspace(
             new WorkspacePullBulkQueryBuilderGql().WithAllFields(),

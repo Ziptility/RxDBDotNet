@@ -359,12 +359,13 @@ public class SecurityTests
             await dbContext.SaveChangesAsync(testContext.CancellationToken);
 
             // Act
-            await testContext.HttpClient.CreateNewWorkspaceAsync(
+            var result = await testContext.HttpClient.CreateNewWorkspaceAsync(
                 testContext.CancellationToken,
                 jwtAccessToken: standardUserToken);
-            
+
             // Assert
-            // The response should not contain an unauthorized error
+            result.response.Data.PushWorkspace.Should()
+                .HaveCount(1, "Since the user was unauthorized, the new workspace should be returned");
         }
         finally
         {

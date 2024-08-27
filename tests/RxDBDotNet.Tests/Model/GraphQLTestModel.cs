@@ -1065,10 +1065,14 @@ namespace RxDBDotNet.Tests.Model
         public const string String = "String";
         public const string Uuid = "UUID";
 
+        public const string AuthenticationError = "AuthenticationError";
         public const string Checkpoint = "Checkpoint";
         public const string LiveDoc = "LiveDoc";
         public const string LiveDocPullBulk = "LiveDocPullBulk";
         public const string Mutation = "Mutation";
+        public const string PushLiveDocPayload = "PushLiveDocPayload";
+        public const string PushUserPayload = "PushUserPayload";
+        public const string PushWorkspacePayload = "PushWorkspacePayload";
         public const string Query = "Query";
         public const string Subscription = "Subscription";
         public const string User = "User";
@@ -1084,6 +1088,9 @@ namespace RxDBDotNet.Tests.Model
         public const string LiveDocInputCheckpoint = "LiveDocInputCheckpoint";
         public const string LiveDocInputHeaders = "LiveDocInputHeaders";
         public const string LiveDocInputPushRow = "LiveDocInputPushRow";
+        public const string PushLiveDocInput = "PushLiveDocInput";
+        public const string PushUserInput = "PushUserInput";
+        public const string PushWorkspaceInput = "PushWorkspaceInput";
         public const string StringOperationFilterInput = "StringOperationFilterInput";
         public const string UserFilterInput = "UserFilterInput";
         public const string UserInput = "UserInput";
@@ -1097,12 +1104,18 @@ namespace RxDBDotNet.Tests.Model
         public const string WorkspaceInputHeaders = "WorkspaceInputHeaders";
         public const string WorkspaceInputPushRow = "WorkspaceInputPushRow";
 
+        public const string PushLiveDocError = "PushLiveDocError";
+        public const string PushUserError = "PushUserError";
+        public const string PushWorkspaceError = "PushWorkspaceError";
+
+        public const string Error = "Error";
+
         public static readonly IReadOnlyDictionary<global::System.Type, string> ReverseMapping =
             new Dictionary<global::System.Type, string>
             {
+                { typeof(string), "String" },
                 { typeof(Guid), "UUID" },
                 { typeof(DateTimeOffset), "DateTime" },
-                { typeof(string), "String" },
                 { typeof(bool), "Boolean" },
                 { typeof(BooleanOperationFilterInputGql), "BooleanOperationFilterInput" },
                 { typeof(DateTimeOperationFilterInputGql), "DateTimeOperationFilterInput" },
@@ -1112,6 +1125,9 @@ namespace RxDBDotNet.Tests.Model
                 { typeof(LiveDocInputCheckpointGql), "LiveDocInputCheckpoint" },
                 { typeof(LiveDocInputHeadersGql), "LiveDocInputHeaders" },
                 { typeof(LiveDocInputPushRowGql), "LiveDocInputPushRow" },
+                { typeof(PushLiveDocInputGql), "PushLiveDocInput" },
+                { typeof(PushUserInputGql), "PushUserInput" },
+                { typeof(PushWorkspaceInputGql), "PushWorkspaceInput" },
                 { typeof(StringOperationFilterInputGql), "StringOperationFilterInput" },
                 { typeof(UserFilterInputGql), "UserFilterInput" },
                 { typeof(UserInputGql), "UserInput" },
@@ -1152,9 +1168,9 @@ namespace RxDBDotNet.Tests.Model
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
         {
-            new GraphQlFieldMetadata { Name = "pushUser", IsComplex = true, QueryBuilderType = typeof(UserQueryBuilderGql) },
-            new GraphQlFieldMetadata { Name = "pushWorkspace", IsComplex = true, QueryBuilderType = typeof(WorkspaceQueryBuilderGql) },
-            new GraphQlFieldMetadata { Name = "pushLiveDoc", IsComplex = true, QueryBuilderType = typeof(LiveDocQueryBuilderGql) }
+            new GraphQlFieldMetadata { Name = "pushUser", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(PushUserPayloadQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "pushWorkspace", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(PushWorkspacePayloadQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "pushLiveDoc", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(PushLiveDocPayloadQueryBuilderGql) }
         };
 
         protected override string TypeName { get; } = "Mutation";
@@ -1167,35 +1183,29 @@ namespace RxDBDotNet.Tests.Model
 
         public MutationQueryBuilderGql WithParameter<T>(GraphQlQueryParameter<T> parameter) => WithParameterInternal(parameter);
 
-        public MutationQueryBuilderGql WithPushUser(UserQueryBuilderGql userQueryBuilder, QueryBuilderParameter<IEnumerable<UserInputPushRowGql?>>? userPushRow = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public MutationQueryBuilderGql WithPushUser(PushUserPayloadQueryBuilderGql pushUserPayloadQueryBuilder, QueryBuilderParameter<PushUserInputGql> input, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
-            if (userPushRow != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "userPushRow", ArgumentValue = userPushRow} );
-
-            return WithObjectField("pushUser", alias, userQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
+            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "input", ArgumentValue = input} );
+            return WithObjectField("pushUser", alias, pushUserPayloadQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public MutationQueryBuilderGql ExceptPushUser() => ExceptField("pushUser");
 
-        public MutationQueryBuilderGql WithPushWorkspace(WorkspaceQueryBuilderGql workspaceQueryBuilder, QueryBuilderParameter<IEnumerable<WorkspaceInputPushRowGql?>>? workspacePushRow = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public MutationQueryBuilderGql WithPushWorkspace(PushWorkspacePayloadQueryBuilderGql pushWorkspacePayloadQueryBuilder, QueryBuilderParameter<PushWorkspaceInputGql> input, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
-            if (workspacePushRow != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "workspacePushRow", ArgumentValue = workspacePushRow} );
-
-            return WithObjectField("pushWorkspace", alias, workspaceQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
+            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "input", ArgumentValue = input} );
+            return WithObjectField("pushWorkspace", alias, pushWorkspacePayloadQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public MutationQueryBuilderGql ExceptPushWorkspace() => ExceptField("pushWorkspace");
 
-        public MutationQueryBuilderGql WithPushLiveDoc(LiveDocQueryBuilderGql liveDocQueryBuilder, QueryBuilderParameter<IEnumerable<LiveDocInputPushRowGql?>>? liveDocPushRow = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        public MutationQueryBuilderGql WithPushLiveDoc(PushLiveDocPayloadQueryBuilderGql pushLiveDocPayloadQueryBuilder, QueryBuilderParameter<PushLiveDocInputGql> input, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
         {
             var args = new List<QueryBuilderArgumentInfo>();
-            if (liveDocPushRow != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "liveDocPushRow", ArgumentValue = liveDocPushRow} );
-
-            return WithObjectField("pushLiveDoc", alias, liveDocQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
+            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "input", ArgumentValue = input} );
+            return WithObjectField("pushLiveDoc", alias, pushLiveDocPayloadQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
         }
 
         public MutationQueryBuilderGql ExceptPushLiveDoc() => ExceptField("pushLiveDoc");
@@ -1408,6 +1418,22 @@ namespace RxDBDotNet.Tests.Model
         public CheckpointQueryBuilderGql ExceptUpdatedAt() => ExceptField("updatedAt");
     }
 
+    public partial class AuthenticationErrorQueryBuilderGql : GraphQlQueryBuilder<AuthenticationErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "message" }
+        };
+
+        protected override string TypeName { get; } = "AuthenticationError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public AuthenticationErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
+
+        public AuthenticationErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
+    }
+
     public partial class WorkspaceQueryBuilderGql : GraphQlQueryBuilder<WorkspaceQueryBuilderGql>
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
@@ -1490,6 +1516,26 @@ namespace RxDBDotNet.Tests.Model
         public LiveDocQueryBuilderGql ExceptTopics() => ExceptField("topics");
     }
 
+    public partial class ErrorQueryBuilderGql : GraphQlQueryBuilder<ErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "message" }
+        };
+
+        public ErrorQueryBuilderGql() => WithTypeName();
+
+        protected override string TypeName { get; } = "Error";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public ErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
+
+        public ErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
+
+        public ErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+    }
+
     public partial class QueryQueryBuilderGql : GraphQlQueryBuilder<QueryQueryBuilderGql>
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
@@ -1553,6 +1599,108 @@ namespace RxDBDotNet.Tests.Model
         }
 
         public QueryQueryBuilderGql ExceptPullLiveDoc() => ExceptField("pullLiveDoc");
+    }
+
+    public partial class PushUserErrorQueryBuilderGql : GraphQlQueryBuilder<PushUserErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata = Array.Empty<GraphQlFieldMetadata>();
+
+        public PushUserErrorQueryBuilderGql() => WithTypeName();
+
+        protected override string TypeName { get; } = "PushUserError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public PushUserErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+    }
+
+    public partial class PushUserPayloadQueryBuilderGql : GraphQlQueryBuilder<PushUserPayloadQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "user", IsComplex = true, QueryBuilderType = typeof(UserQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "errors", IsComplex = true, QueryBuilderType = typeof(PushUserErrorQueryBuilderGql) }
+        };
+
+        protected override string TypeName { get; } = "PushUserPayload";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public PushUserPayloadQueryBuilderGql WithUser(UserQueryBuilderGql userQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("user", alias, userQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushUserPayloadQueryBuilderGql ExceptUser() => ExceptField("user");
+
+        public PushUserPayloadQueryBuilderGql WithErrors(PushUserErrorQueryBuilderGql pushUserErrorQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("errors", alias, pushUserErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushUserPayloadQueryBuilderGql ExceptErrors() => ExceptField("errors");
+    }
+
+    public partial class PushWorkspaceErrorQueryBuilderGql : GraphQlQueryBuilder<PushWorkspaceErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata = Array.Empty<GraphQlFieldMetadata>();
+
+        public PushWorkspaceErrorQueryBuilderGql() => WithTypeName();
+
+        protected override string TypeName { get; } = "PushWorkspaceError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public PushWorkspaceErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+    }
+
+    public partial class PushWorkspacePayloadQueryBuilderGql : GraphQlQueryBuilder<PushWorkspacePayloadQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "workspace", IsComplex = true, QueryBuilderType = typeof(WorkspaceQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "errors", IsComplex = true, QueryBuilderType = typeof(PushWorkspaceErrorQueryBuilderGql) }
+        };
+
+        protected override string TypeName { get; } = "PushWorkspacePayload";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public PushWorkspacePayloadQueryBuilderGql WithWorkspace(WorkspaceQueryBuilderGql workspaceQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("workspace", alias, workspaceQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushWorkspacePayloadQueryBuilderGql ExceptWorkspace() => ExceptField("workspace");
+
+        public PushWorkspacePayloadQueryBuilderGql WithErrors(PushWorkspaceErrorQueryBuilderGql pushWorkspaceErrorQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("errors", alias, pushWorkspaceErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushWorkspacePayloadQueryBuilderGql ExceptErrors() => ExceptField("errors");
+    }
+
+    public partial class PushLiveDocErrorQueryBuilderGql : GraphQlQueryBuilder<PushLiveDocErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata = Array.Empty<GraphQlFieldMetadata>();
+
+        public PushLiveDocErrorQueryBuilderGql() => WithTypeName();
+
+        protected override string TypeName { get; } = "PushLiveDocError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public PushLiveDocErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+    }
+
+    public partial class PushLiveDocPayloadQueryBuilderGql : GraphQlQueryBuilder<PushLiveDocPayloadQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "liveDoc", IsComplex = true, QueryBuilderType = typeof(LiveDocQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "errors", IsComplex = true, QueryBuilderType = typeof(PushLiveDocErrorQueryBuilderGql) }
+        };
+
+        protected override string TypeName { get; } = "PushLiveDocPayload";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public PushLiveDocPayloadQueryBuilderGql WithLiveDoc(LiveDocQueryBuilderGql liveDocQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("liveDoc", alias, liveDocQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushLiveDocPayloadQueryBuilderGql ExceptLiveDoc() => ExceptField("liveDoc");
+
+        public PushLiveDocPayloadQueryBuilderGql WithErrors(PushLiveDocErrorQueryBuilderGql pushLiveDocErrorQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("errors", alias, pushLiveDocErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushLiveDocPayloadQueryBuilderGql ExceptErrors() => ExceptField("errors");
     }
     #endregion
 
@@ -2893,14 +3041,71 @@ namespace RxDBDotNet.Tests.Model
             if (_any.Name != null) yield return _any;
         }
     }
+
+    public partial class PushUserInputGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _userPushRow;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<UserInputPushRowGql?>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<UserInputPushRowGql?>?>? UserPushRow
+        {
+            get => (QueryBuilderParameter<ICollection<UserInputPushRowGql?>?>?)_userPushRow.Value;
+            set => _userPushRow = new InputPropertyInfo { Name = "userPushRow", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_userPushRow.Name != null) yield return _userPushRow;
+        }
+    }
+
+    public partial class PushWorkspaceInputGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _workspacePushRow;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<WorkspaceInputPushRowGql?>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<WorkspaceInputPushRowGql?>?>? WorkspacePushRow
+        {
+            get => (QueryBuilderParameter<ICollection<WorkspaceInputPushRowGql?>?>?)_workspacePushRow.Value;
+            set => _workspacePushRow = new InputPropertyInfo { Name = "workspacePushRow", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_workspacePushRow.Name != null) yield return _workspacePushRow;
+        }
+    }
+
+    public partial class PushLiveDocInputGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _liveDocPushRow;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<LiveDocInputPushRowGql?>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<LiveDocInputPushRowGql?>?>? LiveDocPushRow
+        {
+            get => (QueryBuilderParameter<ICollection<LiveDocInputPushRowGql?>?>?)_liveDocPushRow.Value;
+            set => _liveDocPushRow = new InputPropertyInfo { Name = "liveDocPushRow", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_liveDocPushRow.Name != null) yield return _liveDocPushRow;
+        }
+    }
     #endregion
 
     #region data classes
     public partial class MutationGql
     {
-        public ICollection<UserGql>? PushUser { get; set; }
-        public ICollection<WorkspaceGql>? PushWorkspace { get; set; }
-        public ICollection<LiveDocGql>? PushLiveDoc { get; set; }
+        public PushUserPayloadGql? PushUser { get; set; }
+        public PushWorkspacePayloadGql? PushWorkspace { get; set; }
+        public PushLiveDocPayloadGql? PushLiveDoc { get; set; }
     }
 
     public partial class SubscriptionGql
@@ -2948,6 +3153,12 @@ namespace RxDBDotNet.Tests.Model
         public DateTimeOffset? UpdatedAt { get; set; }
     }
 
+    [GraphQlObjectType("AuthenticationError")]
+    public partial class AuthenticationErrorGql : IPushUserErrorGql, IErrorGql
+    {
+        public string Message { get; set; }
+    }
+
     public partial class WorkspaceGql
     {
         public string Name { get; set; }
@@ -2968,11 +3179,55 @@ namespace RxDBDotNet.Tests.Model
         public ICollection<string>? Topics { get; set; }
     }
 
+    public partial interface IErrorGql
+    {
+        string Message { get; set; }
+    }
+
     public partial class QueryGql
     {
         public UserPullBulkGql? PullUser { get; set; }
         public WorkspacePullBulkGql? PullWorkspace { get; set; }
         public LiveDocPullBulkGql? PullLiveDoc { get; set; }
+    }
+
+    public partial interface IPushUserErrorGql
+    {
+    }
+
+    public partial class PushUserPayloadGql
+    {
+        public ICollection<UserGql>? User { get; set; }
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(GraphQlInterfaceJsonConverter))]
+        #endif
+        public ICollection<IPushUserErrorGql>? Errors { get; set; }
+    }
+
+    public partial interface IPushWorkspaceErrorGql
+    {
+    }
+
+    public partial class PushWorkspacePayloadGql
+    {
+        public ICollection<WorkspaceGql>? Workspace { get; set; }
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(GraphQlInterfaceJsonConverter))]
+        #endif
+        public ICollection<IPushWorkspaceErrorGql>? Errors { get; set; }
+    }
+
+    public partial interface IPushLiveDocErrorGql
+    {
+    }
+
+    public partial class PushLiveDocPayloadGql
+    {
+        public ICollection<LiveDocGql>? LiveDoc { get; set; }
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(GraphQlInterfaceJsonConverter))]
+        #endif
+        public ICollection<IPushLiveDocErrorGql>? Errors { get; set; }
     }
     #endregion
 #nullable restore

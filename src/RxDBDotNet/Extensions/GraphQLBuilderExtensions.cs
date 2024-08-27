@@ -1,9 +1,13 @@
-﻿using HotChocolate.Execution.Configuration;
+﻿using System.Security.Authentication;
+using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
+using HotChocolate.Subscriptions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Resolvers;
+using RxDBDotNet.Security;
 using RxDBDotNet.Services;
 using static RxDBDotNet.Extensions.DocumentExtensions;
 
@@ -32,8 +36,9 @@ public static class GraphQLBuilderExtensions
 
         builder.Services.AddSingleton<IEventPublisher, DefaultEventPublisher>();
 
-        // Add support for filtering
-        builder.AddFiltering();
+        builder
+            .AddFiltering()
+            .AddMutationConventions();
 
         // Ensure Query, Mutation, and Subscription types exist
         EnsureRootTypesExist(builder);
@@ -94,10 +99,35 @@ public static class GraphQLBuilderExtensions
     private static IRequestExecutorBuilder ConfigureDocumentQueries<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        builder.AddTypeExtension<QueryExtension<TDocument>>();
-
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
         var pullBulkTypeName = $"{graphQLTypeName}PullBulk";
+        var pullDocumentsName = $"pull{graphQLTypeName}";
+        var checkpointInputTypeName = $"{graphQLTypeName}InputCheckpoint";
+
+        builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
+        {
+            objectTypeDescriptor.Name("Query")
+                .Field(pullDocumentsName)
+                .UseFiltering<TDocument>()
+                .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
+                .Argument("checkpoint", a => a.Type(checkpointInputTypeName)
+                    .Description($"The last known checkpoint for {graphQLTypeName} replication."))
+                .Argument("limit", a => a.Type<NonNullType<IntType>>()
+                    .Description($"The maximum number of {graphQLTypeName} documents to return."))
+                .Description(
+                    $"Pulls {graphQLTypeName} documents from the server based on the given checkpoint, limit, optional filters, and projections")
+                .Resolve(context =>
+                {
+                    var queryResolver = context.Resolver<QueryResolver<TDocument>>();
+                    var checkpoint = context.ArgumentValue<Checkpoint?>("checkpoint");
+                    var limit = context.ArgumentValue<int>("limit");
+                    var service = context.Service<IDocumentService<TDocument>>();
+                    var cancellationToken = context.RequestAborted;
+
+                    return queryResolver.PullDocumentsAsync(checkpoint, limit, service, context,
+                        cancellationToken);
+                });
+        }));
 
         builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(objectTypeDescriptor =>
         {
@@ -110,8 +140,6 @@ public static class GraphQLBuilderExtensions
                 .Type<NonNullType<ObjectType<Checkpoint>>>()
                 .Description("The new checkpoint after this pull operation.");
         }));
-
-        var checkpointInputTypeName = $"{graphQLTypeName}InputCheckpoint";
 
         return builder.AddType(new InputObjectType<Checkpoint>(inputObjectTypeDescriptor =>
         {
@@ -129,10 +157,39 @@ public static class GraphQLBuilderExtensions
     private static IRequestExecutorBuilder ConfigureDocumentMutations<TDocument>(this IRequestExecutorBuilder builder)
         where TDocument : class, IReplicatedDocument
     {
-        builder.AddTypeExtension<MutationExtension<TDocument>>();
-
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
         var pushRowTypeName = $"{graphQLTypeName}InputPushRow";
+        var pushDocumentsName = $"push{graphQLTypeName}";
+        var pushRowArgName = $"{char.ToLowerInvariant(graphQLTypeName[0])}{graphQLTypeName[1..]}PushRow";
+
+        builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
+        {
+            objectTypeDescriptor.Name("Mutation")
+                .Field(pushDocumentsName)
+                .Error<AuthenticationException>()
+                .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
+                .Argument(pushRowArgName, a => a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
+                    .Description($"The list of {graphQLTypeName} documents to push to the server."))
+                .Description($"Pushes {graphQLTypeName} documents to the server and detects any conflicts.")
+                .Resolve(context =>
+                {
+                    var mutation = context.Resolver<MutationResolver<TDocument>>();
+                    var documentService = context.Service<IDocumentService<TDocument>>();
+                    var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
+                    var cancellationToken = context.RequestAborted;
+                    var authorizationHelper = context.Services.GetRequiredService<AuthorizationHelper>();
+                    var currentUser = context.GetUser();
+                    var securityOptions = context.Services.GetService<SecurityOptions<TDocument>>();
+
+                    return mutation.PushDocumentsAsync(
+                        documents,
+                        documentService,
+                        currentUser,
+                        securityOptions,
+                        authorizationHelper,
+                        cancellationToken);
+                });
+        }));
 
         return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(inputObjectTypeDescriptor =>
         {
@@ -151,15 +208,45 @@ public static class GraphQLBuilderExtensions
         where TDocument : class, IReplicatedDocument
     {
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
-        return builder.AddTypeExtension<SubscriptionExtension<TDocument>>()
-            .AddType(new InputObjectType<Headers>(d =>
-            {
-                d.Name($"{graphQLTypeName}InputHeaders");
-                d.Field(f => f.Authorization)
-                    .Type<NonNullType<StringType>>()
-                    .Name("Authorization")
-                    .Description("The JWT bearer token for authentication.");
-            }));
+        var streamDocumentName = $"stream{graphQLTypeName}";
+        var headersInputTypeName = $"{graphQLTypeName}InputHeaders";
+
+        builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
+        {
+            objectTypeDescriptor.Name("Subscription")
+                .Field(streamDocumentName)
+                .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
+                .Argument("headers", a => a.Type(headersInputTypeName)
+                    .Description($"Headers for {graphQLTypeName} subscription authentication."))
+                .Argument("topics", a => a.Type<ListType<NonNullType<StringType>>>())
+                .Description($"An optional set topics to receive events for when {graphQLTypeName} is upserted."
+                             + $" If null then events will be received for all {graphQLTypeName} upserts.")
+                .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
+                .Subscribe(context =>
+                {
+                    var headers = context.ArgumentValue<Headers>("headers");
+                    if (!IsAuthorized(headers))
+                    {
+                        throw new UnauthorizedAccessException("Invalid or missing authorization token");
+                    }
+
+                    var subscription = context.Service<SubscriptionResolver<TDocument>>();
+                    var topicEventReceiver = context.Service<ITopicEventReceiver>();
+                    var logger = context.Service<ILogger<SubscriptionResolver<TDocument>>>();
+                    var topics = context.ArgumentValue<List<string>?>("topics");
+
+                    return subscription.DocumentChangedStream(topicEventReceiver, topics, logger, context.RequestAborted);
+                });
+        }));
+
+        return builder.AddType(new InputObjectType<Headers>(d =>
+        {
+            d.Name($"{graphQLTypeName}InputHeaders");
+            d.Field(f => f.Authorization)
+                .Type<NonNullType<StringType>>()
+                .Name("Authorization")
+                .Description("The JWT bearer token for authentication.");
+        }));
     }
 
     /// <summary>
@@ -186,5 +273,16 @@ public static class GraphQLBuilderExtensions
 
         // Register a root Subscription type if not already added
         builder.ConfigureSchema(schemaBuilder => schemaBuilder.TryAddRootType(() => new ObjectType<Subscription>(), OperationType.Subscription));
+    }
+
+    private static bool IsAuthorized(Headers? headers)
+    {
+        if (headers != null)
+        {
+            // Implement your authorization logic here
+            // For example, validate the JWT token in headers.Authorization
+        }
+
+        return true;
     }
 }

@@ -1,7 +1,9 @@
 ﻿using System.Net.Http.Headers;
 using RxDBDotNet.Tests.Model;
 using static RxDBDotNet.Tests.Helpers.SerializationUtils;
+using Formatting = RxDBDotNet.Tests.Model.Formatting;
 using GraphQLRequest = RxDBDotNet.Tests.Model.GraphQLRequest;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace RxDBDotNet.Tests.Helpers;
 
@@ -73,7 +75,6 @@ internal static class HttpClientExtensions
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="mutationBuilder">The GraphQL mutation to execute.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <param name="expectSuccess">Whether the request is expected to be successful.</param>
     /// <param name="jwtAccessToken">The JWT access token, if required.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpClient"/> or <paramref name="mutationBuilder"/> is null.</exception>
@@ -82,7 +83,6 @@ internal static class HttpClientExtensions
         this HttpClient httpClient,
         MutationQueryBuilderGql mutationBuilder,
         CancellationToken cancellationToken,
-        bool expectSuccess = true,
         string? jwtAccessToken = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -93,7 +93,6 @@ internal static class HttpClientExtensions
             httpClient,
             mutationBuilder,
             cancellationToken,
-            expectSuccess,
             jwtAccessToken);
     }
 
@@ -101,7 +100,6 @@ internal static class HttpClientExtensions
         HttpClient httpClient,
         MutationQueryBuilderGql mutationBuilder,
         CancellationToken cancellationToken,
-        bool expectSuccess = true,
         string? jwtAccessToken = null)
     {
         var graphQlRequest = new GraphQLRequest
@@ -128,16 +126,10 @@ internal static class HttpClientExtensions
             Routes.GraphQL,
             stringContent, cancellationToken);
 
-        if (expectSuccess && !response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new InvalidOperationException(responseContent);
-        }
-
-        if (expectSuccess)
-        {
-            response.StatusCode.Should()
-                .Be(HttpStatusCode.OK);
         }
 
         return await response.DeserializeHttpResponseAsync<GqlMutationResponse>();
@@ -147,11 +139,8 @@ internal static class HttpClientExtensions
     {
         var json = await response.Content.ReadAsStringAsync();
 
-        return JsonSerializer.Deserialize<T>(
-                   json,
-                   GetJsonSerializerOptions())
-               ?? throw new InvalidOperationException(
-                   $"The response of type {typeof(T).Name} was null.");
+        return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, GetJsonSerializerSettings())
+               ?? throw new InvalidOperationException($"The response of type {typeof(T).Name} was null.");
     }
 
     private static void ThrowIfInvalidParams(HttpClient httpClient, string uri)

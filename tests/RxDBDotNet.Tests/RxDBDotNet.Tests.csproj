@@ -15,7 +15,7 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
         <NoWarn>$(NoWarn);CA2007;CA1707;MA0051;MA0004;CA2234;MA0009;CA1054;CA1711;CA1062</NoWarn>
-        <DefineConstants>GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON</DefineConstants>
+        <!-- <DefineConstants>GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON</DefineConstants> -->
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>

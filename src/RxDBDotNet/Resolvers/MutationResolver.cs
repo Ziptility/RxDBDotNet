@@ -33,7 +33,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         IDocumentService<TDocument> documentService,
         ClaimsPrincipal? currentUser,
         SecurityOptions<TDocument>? securityOptions,
-        AuthorizationHelper authorizationHelper,
+        AuthorizationHelper? authorizationHelper,
         CancellationToken cancellationToken)
     {
         // Early return if no documents are provided.
@@ -191,52 +191,47 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         List<TDocument> creates,
         List<TDocument> updates,
         IDocumentService<TDocument> documentService,
-        AuthorizationHelper authorizationHelper,
+        AuthorizationHelper? authorizationHelper,
         ClaimsPrincipal? currentUser,
         SecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
     {
-        try
+        // Create new documents
+        foreach (var create in creates)
         {
-            // Create new documents
-            foreach (var create in creates)
-            {
-                await AuthorizeCreateAsync(
-                        authorizationHelper,
-                        currentUser,
-                        securityOptions)
-                    .ConfigureAwait(false);
+            await AuthorizeCreateAsync(authorizationHelper, currentUser, securityOptions)
+                .ConfigureAwait(false);
 
-                await documentService.CreateDocumentAsync(create, cancellationToken).ConfigureAwait(false);
-            }
-
-            // Update existing documents
-            foreach (var update in updates)
-            {
-                await HandleDocumentUpdateAsync(update, documentService, cancellationToken).ConfigureAwait(false);
-            }
-
-            // Commit all changes in a single transaction
-            // This ensures atomicity of the entire operation, a key requirement of the RxDB protocol
-            await documentService.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-            // If we reach here, all changes were applied successfully
-            return [];
+            await documentService.CreateDocumentAsync(create, cancellationToken)
+                .ConfigureAwait(false);
         }
-        catch (Exception)
+
+        // Update existing documents
+        foreach (var update in updates)
         {
-            // If any exception occurs during the update process,
-            // we consider all documents as conflicting to ensure data integrity.
-            // This is a conservative approach to maintain consistency with the RxDB protocol.
-            return [.. creates, .. updates];
+            await HandleDocumentUpdateAsync(update, documentService, cancellationToken)
+                .ConfigureAwait(false);
         }
+
+        // Commit all changes in a single transaction
+        // This ensures atomicity of the entire operation, a key requirement of the RxDB protocol
+        await documentService.SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        // If we reach here, all changes were applied successfully
+        return [];
     }
 
     private static Task AuthorizeCreateAsync(
-        AuthorizationHelper authorizationHelper,
+        AuthorizationHelper? authorizationHelper,
         ClaimsPrincipal? currentUser,
         SecurityOptions<TDocument>? securityOptions)
     {
+        if (authorizationHelper == null)
+        {
+            return Task.CompletedTask;
+        }
+
         var documentOperation = new DocumentOperation
         {
             Operation = Operation.Create,

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Security;
 using RxDBDotNet.Services;
 using RxDBDotNet.Tests.Helpers;
+using RxDBDotNet.Tests.Model;
 using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests;
@@ -180,7 +181,7 @@ public class SecurityTests
             await dbContext.SaveChangesAsync(testContext.CancellationToken);
 
             // Act
-            var response = await testContext.HttpClient.CreateNewWorkspaceAsync(
+            var response = await testContext.HttpClient.CreateWorkspaceAsync(
                 testContext.CancellationToken,
                 jwtAccessToken: workspaceAdminToken);
 
@@ -248,8 +249,6 @@ public class SecurityTests
                     .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
                     .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
                     .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
-
-                services.AddScoped<AuthorizationHelper>();
 
                 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(options =>
@@ -359,13 +358,14 @@ public class SecurityTests
             await dbContext.SaveChangesAsync(testContext.CancellationToken);
 
             // Act
-            var result = await testContext.HttpClient.CreateNewWorkspaceAsync(
+            var (_, response) = await testContext.HttpClient.CreateWorkspaceAsync(
                 testContext.CancellationToken,
                 jwtAccessToken: standardUserToken);
 
             // Assert
-            result.response.Data.PushWorkspace.Should()
-                .HaveCount(1, "Since the user was unauthorized, the new workspace should be returned");
+            response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
+            response.Data.PushWorkspace?.Errors.Should().HaveCount(1);
+            response.Data.PushWorkspace?.Errors?.Single().Should().BeOfType<UnauthorizedAccessErrorGql>();
         }
         finally
         {

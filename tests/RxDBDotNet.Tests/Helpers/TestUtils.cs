@@ -6,17 +6,14 @@ namespace RxDBDotNet.Tests.Helpers;
 
 internal static class TestUtils
 {
-    public static async Task<(WorkspaceInputGql workspaceInputGql, GqlMutationResponse response)> CreateNewWorkspaceAsync(
+    public static async Task<(WorkspaceInputGql workspaceInputGql, GqlMutationResponse response)> CreateWorkspaceAsync(
         this HttpClient httpClient,
         CancellationToken cancellationToken,
-        bool? expectSuccess = null,
         string? jwtAccessToken = null)
     {
-        expectSuccess ??= true;
-
         var workspaceId = Provider.Sql.Create();
 
-        var workspaceInputGql = new WorkspaceInputGql
+        var newWorkspace = new WorkspaceInputGql
         {
             Id = workspaceId,
             Name = CreateString(),
@@ -25,30 +22,39 @@ internal static class TestUtils
             Topics = new List<string> { workspaceId.ToString() },
         };
 
-        var workspaceInput = new WorkspaceInputPushRowGql
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
         {
             AssumedMasterState = null,
-            NewDocumentState = workspaceInputGql,
+            NewDocumentState = newWorkspace,
         };
 
-        var pushWorkspaceInputGql = new List<WorkspaceInputPushRowGql?>
+        var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            workspaceInput,
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var createWorkspace =
-            new MutationQueryBuilderGql().WithPushWorkspace(new WorkspaceQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var createWorkspace = new MutationQueryBuilderGql()
+            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql()
+                .WithAllFields()
+                .WithErrors(new PushWorkspaceErrorQueryBuilderGql()
+                    .WithAuthenticationErrorFragment(new AuthenticationErrorQueryBuilderGql()
+                        .WithAllFields())), pushWorkspaceInputGql);
 
         var response = await httpClient.PostGqlMutationAsync(
             createWorkspace,
             cancellationToken,
-            expectSuccess: expectSuccess.Value,
             jwtAccessToken: jwtAccessToken);
 
-        return (workspaceInputGql, response);
+        return (newWorkspace, response);
     }
 
-    public static async Task<WorkspaceGql> UpdateWorkspaceAsync(this HttpClient httpClient, WorkspaceInputGql workspace, CancellationToken cancellationToken)
+    public static async Task<WorkspaceGql> UpdateWorkspaceAsync(
+        this HttpClient httpClient,
+        WorkspaceInputGql workspace,
+        CancellationToken cancellationToken)
     {
         var assumedMasterState = new WorkspaceInputGql
         {
@@ -59,7 +65,7 @@ internal static class TestUtils
             Topics = workspace.Topics,
         };
 
-        var newDocumentState = new WorkspaceInputGql
+        var updatedWorkspace = new WorkspaceInputGql
         {
             Id = workspace.Id,
             Name = CreateString(),
@@ -68,26 +74,28 @@ internal static class TestUtils
             Topics = workspace.Topics,
         };
 
-        var pushWorkspace = new List<WorkspaceInputPushRowGql?>
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
         {
-            new()
+            AssumedMasterState = assumedMasterState,
+            NewDocumentState = updatedWorkspace,
+        };
+
+        var workspaceInputGql = new PushWorkspaceInputGql
+        {
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
             {
-                AssumedMasterState = assumedMasterState,
-                NewDocumentState = newDocumentState,
+                workspaceInputPushRowGql,
             },
         };
 
-        var updateWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(
-            new WorkspaceQueryBuilderGql().WithAllFields(),
-            pushWorkspace);
+        var updateWorkspace = new MutationQueryBuilderGql()
+            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql()
+                .WithAllFields(), workspaceInputGql);
 
         var response = await httpClient.PostGqlMutationAsync(updateWorkspace, cancellationToken);
 
         response.Errors.Should()
             .BeNullOrEmpty();
-
-        response.Data.PushWorkspace.Should()
-            .BeEmpty();
 
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken);
     }
@@ -100,37 +108,39 @@ internal static class TestUtils
             Name = workspace.Name,
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = workspace.UpdatedAt,
-            Topics = workspace.Topics == null ? null : (List<string>)workspace.Topics,
+            Topics = (List<string>?)workspace.Topics,
         };
 
-        var newDocumentState = new WorkspaceInputGql
+        var updatedWorkspace = new WorkspaceInputGql
         {
             Id = workspace.Id,
             Name = CreateString(),
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = DateTimeOffset.Now,
-            Topics = workspace.Topics == null ? null : (List<string>)workspace.Topics,
+            Topics = (List<string>?)workspace.Topics,
         };
 
-        var pushWorkspace = new List<WorkspaceInputPushRowGql?>
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
         {
-            new()
+            AssumedMasterState = assumedMasterState,
+            NewDocumentState = updatedWorkspace,
+        };
+
+        var workspaceInputGql = new PushWorkspaceInputGql
+        {
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
             {
-                AssumedMasterState = assumedMasterState,
-                NewDocumentState = newDocumentState,
+                workspaceInputPushRowGql,
             },
         };
 
-        var updateWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(
-            new WorkspaceQueryBuilderGql().WithAllFields(),
-            pushWorkspace);
+        var updateWorkspace = new MutationQueryBuilderGql()
+            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql()
+                .WithAllFields(), workspaceInputGql);
 
         var response = await httpClient.PostGqlMutationAsync(updateWorkspace, cancellationToken);
 
         response.Errors.Should()
-            .BeNullOrEmpty();
-
-        response.Data.PushWorkspace.Should()
             .BeNullOrEmpty();
 
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken);

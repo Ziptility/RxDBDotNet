@@ -1,4 +1,6 @@
-﻿namespace RxDBDotNet.Tests.Model;
+﻿using System.Text.Json.Serialization;
+
+namespace RxDBDotNet.Tests.Model;
 
 public partial class QueryGql
 {

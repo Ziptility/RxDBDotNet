@@ -1065,6 +1065,7 @@ namespace RxDBDotNet.Tests.Model
         public const string String = "String";
         public const string Uuid = "UUID";
 
+        public const string ArgumentNullError = "ArgumentNullError";
         public const string AuthenticationError = "AuthenticationError";
         public const string Checkpoint = "Checkpoint";
         public const string LiveDoc = "LiveDoc";
@@ -1075,6 +1076,7 @@ namespace RxDBDotNet.Tests.Model
         public const string PushWorkspacePayload = "PushWorkspacePayload";
         public const string Query = "Query";
         public const string Subscription = "Subscription";
+        public const string UnauthorizedAccessError = "UnauthorizedAccessError";
         public const string User = "User";
         public const string UserPullBulk = "UserPullBulk";
         public const string Workspace = "Workspace";
@@ -1434,6 +1436,43 @@ namespace RxDBDotNet.Tests.Model
         public AuthenticationErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
     }
 
+    public partial class UnauthorizedAccessErrorQueryBuilderGql : GraphQlQueryBuilder<UnauthorizedAccessErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "message" }
+        };
+
+        protected override string TypeName { get; } = "UnauthorizedAccessError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public UnauthorizedAccessErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
+
+        public UnauthorizedAccessErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
+    }
+
+    public partial class ArgumentNullErrorQueryBuilderGql : GraphQlQueryBuilder<ArgumentNullErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "message" },
+            new GraphQlFieldMetadata { Name = "paramName" }
+        };
+
+        protected override string TypeName { get; } = "ArgumentNullError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public ArgumentNullErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
+
+        public ArgumentNullErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
+
+        public ArgumentNullErrorQueryBuilderGql WithParamName(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("paramName", alias, new GraphQlDirective?[] { skip, include });
+
+        public ArgumentNullErrorQueryBuilderGql ExceptParamName() => ExceptField("paramName");
+    }
+
     public partial class WorkspaceQueryBuilderGql : GraphQlQueryBuilder<WorkspaceQueryBuilderGql>
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
@@ -1534,6 +1573,10 @@ namespace RxDBDotNet.Tests.Model
         public ErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
 
         public ErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public ErrorQueryBuilderGql WithUnauthorizedAccessErrorFragment(UnauthorizedAccessErrorQueryBuilderGql unauthorizedAccessErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(unauthorizedAccessErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public ErrorQueryBuilderGql WithArgumentNullErrorFragment(ArgumentNullErrorQueryBuilderGql argumentNullErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(argumentNullErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
     }
 
     public partial class QueryQueryBuilderGql : GraphQlQueryBuilder<QueryQueryBuilderGql>
@@ -1612,6 +1655,10 @@ namespace RxDBDotNet.Tests.Model
         public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
 
         public PushUserErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushUserErrorQueryBuilderGql WithUnauthorizedAccessErrorFragment(UnauthorizedAccessErrorQueryBuilderGql unauthorizedAccessErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(unauthorizedAccessErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushUserErrorQueryBuilderGql WithArgumentNullErrorFragment(ArgumentNullErrorQueryBuilderGql argumentNullErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(argumentNullErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
     }
 
     public partial class PushUserPayloadQueryBuilderGql : GraphQlQueryBuilder<PushUserPayloadQueryBuilderGql>
@@ -1646,6 +1693,10 @@ namespace RxDBDotNet.Tests.Model
         public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
 
         public PushWorkspaceErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushWorkspaceErrorQueryBuilderGql WithUnauthorizedAccessErrorFragment(UnauthorizedAccessErrorQueryBuilderGql unauthorizedAccessErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(unauthorizedAccessErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushWorkspaceErrorQueryBuilderGql WithArgumentNullErrorFragment(ArgumentNullErrorQueryBuilderGql argumentNullErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(argumentNullErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
     }
 
     public partial class PushWorkspacePayloadQueryBuilderGql : GraphQlQueryBuilder<PushWorkspacePayloadQueryBuilderGql>
@@ -1680,6 +1731,10 @@ namespace RxDBDotNet.Tests.Model
         public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
 
         public PushLiveDocErrorQueryBuilderGql WithAuthenticationErrorFragment(AuthenticationErrorQueryBuilderGql authenticationErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(authenticationErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushLiveDocErrorQueryBuilderGql WithUnauthorizedAccessErrorFragment(UnauthorizedAccessErrorQueryBuilderGql unauthorizedAccessErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(unauthorizedAccessErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public PushLiveDocErrorQueryBuilderGql WithArgumentNullErrorFragment(ArgumentNullErrorQueryBuilderGql argumentNullErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(argumentNullErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
     }
 
     public partial class PushLiveDocPayloadQueryBuilderGql : GraphQlQueryBuilder<PushLiveDocPayloadQueryBuilderGql>
@@ -3157,6 +3212,19 @@ namespace RxDBDotNet.Tests.Model
     public partial class AuthenticationErrorGql : IPushUserErrorGql, IErrorGql
     {
         public string Message { get; set; }
+    }
+
+    [GraphQlObjectType("UnauthorizedAccessError")]
+    public partial class UnauthorizedAccessErrorGql : IPushUserErrorGql, IErrorGql
+    {
+        public string Message { get; set; }
+    }
+
+    [GraphQlObjectType("ArgumentNullError")]
+    public partial class ArgumentNullErrorGql : IPushUserErrorGql, IErrorGql
+    {
+        public string Message { get; set; }
+        public string? ParamName { get; set; }
     }
 
     public partial class WorkspaceGql

@@ -36,10 +36,9 @@ public class SubscriptionTests
             await Task.Delay(1000, testContext.CancellationToken);
 
             // Act
-            var result = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+            var (newWorkspace, _) = await testContext.HttpClient.CreateWorkspaceAsync(testContext.CancellationToken);
 
             // Assert
-            var newWorkspace = result.workspaceInputGql;
 
             var subscriptionResponses = await subscriptionTask;
 
@@ -101,7 +100,7 @@ public class SubscriptionTests
             // Arrange
             testContext = await TestSetupUtil.SetupAsync();
 
-            var result = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+            var (workspaceInputGql, _) = await testContext.HttpClient.CreateWorkspaceAsync(testContext.CancellationToken);
 
             await using var subscriptionClient = await testContext.Factory.CreateGraphQLSubscriptionClientAsync(testContext.CancellationToken);
 
@@ -122,7 +121,7 @@ public class SubscriptionTests
             await Task.Delay(1000, testContext.CancellationToken);
 
             // Act
-            var updatedWorkspace = await testContext.HttpClient.UpdateWorkspaceAsync(result.workspaceInputGql, testContext.CancellationToken);
+            var updatedWorkspace = await testContext.HttpClient.UpdateWorkspaceAsync(workspaceInputGql, testContext.CancellationToken);
 
             // Assert
             var subscriptionResponses = await subscriptionTask;
@@ -157,7 +156,7 @@ public class SubscriptionTests
             subscriptionResponse.Data?.StreamWorkspace?.Checkpoint.Should()
                 .NotBeNull("The checkpoint should be present");
             subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
-                .Be(result.workspaceInputGql.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
+                .Be(workspaceInputGql.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
             subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
                 .BeCloseTo(updatedWorkspace.UpdatedAt, TimeSpan.FromSeconds(5),
                     "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
@@ -181,9 +180,9 @@ public class SubscriptionTests
             // Arrange
             testContext = await TestSetupUtil.SetupAsync();
 
-            var workspace1 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
-            var workspace2 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
-            var workspace3 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+            var (workspaceInputGql, _) = await testContext.HttpClient.CreateWorkspaceAsync(testContext.CancellationToken);
+            var workspace2 = await testContext.HttpClient.CreateWorkspaceAsync(testContext.CancellationToken);
+            var workspace3 = await testContext.HttpClient.CreateWorkspaceAsync(testContext.CancellationToken);
 
             await using var subscriptionClient = await testContext.Factory.CreateGraphQLSubscriptionClientAsync(testContext.CancellationToken);
 
@@ -208,7 +207,7 @@ public class SubscriptionTests
             // Ensure the subscription is established
             await Task.Delay(1000, testContext.CancellationToken);
 
-            await testContext.HttpClient.UpdateWorkspaceAsync(workspace1.workspaceInputGql, testContext.CancellationToken);
+            await testContext.HttpClient.UpdateWorkspaceAsync(workspaceInputGql, testContext.CancellationToken);
             await testContext.HttpClient.UpdateWorkspaceAsync(workspace2.workspaceInputGql, testContext.CancellationToken);
             // Update workspace 3 twice
             var updatedWorkspace3 = await testContext.HttpClient.UpdateWorkspaceAsync(workspace3.workspaceInputGql, testContext.CancellationToken);

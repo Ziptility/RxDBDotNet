@@ -53,4 +53,5 @@ public class SecurityTests : IAsyncLifetime
             .Should()
             .BeOfType<UnauthorizedAccessErrorGql>();
     }
+        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
 }

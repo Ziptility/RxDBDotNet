@@ -223,7 +223,7 @@ internal static class TestUtils
         existingWorkspace.Name.Should()
             .Be(workspaceInput.Name?.Value);
         existingWorkspace.IsDeleted.Should()
-            .Be(workspaceInput.IsDeleted?.Value);
+            .Be(workspaceInput.IsDeleted);
         existingWorkspace.UpdatedAt.Should()
             .Be(workspaceInput.UpdatedAt?.Value.StripMicroseconds());
         existingWorkspace.Topics.Should()

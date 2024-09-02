@@ -1338,59 +1338,6 @@ namespace RxDBDotNet.Tests.Model
         public LiveDocPullBulkQueryBuilderGql ExceptCheckpoint() => ExceptField("checkpoint");
     }
 
-    public partial class AuthenticationErrorQueryBuilderGql : GraphQlQueryBuilder<AuthenticationErrorQueryBuilderGql>
-    {
-        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
-        {
-            new GraphQlFieldMetadata { Name = "message" }
-        };
-
-        protected override string TypeName { get; } = "AuthenticationError";
-
-        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
-
-        public AuthenticationErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
-
-        public AuthenticationErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
-    }
-
-    public partial class UnauthorizedAccessErrorQueryBuilderGql : GraphQlQueryBuilder<UnauthorizedAccessErrorQueryBuilderGql>
-    {
-        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
-        {
-            new GraphQlFieldMetadata { Name = "message" }
-        };
-
-        protected override string TypeName { get; } = "UnauthorizedAccessError";
-
-        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
-
-        public UnauthorizedAccessErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
-
-        public UnauthorizedAccessErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
-    }
-
-    public partial class ArgumentNullErrorQueryBuilderGql : GraphQlQueryBuilder<ArgumentNullErrorQueryBuilderGql>
-    {
-        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
-        {
-            new GraphQlFieldMetadata { Name = "message" },
-            new GraphQlFieldMetadata { Name = "paramName" }
-        };
-
-        protected override string TypeName { get; } = "ArgumentNullError";
-
-        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
-
-        public ArgumentNullErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
-
-        public ArgumentNullErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
-
-        public ArgumentNullErrorQueryBuilderGql WithParamName(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("paramName", alias, new GraphQlDirective?[] { skip, include });
-
-        public ArgumentNullErrorQueryBuilderGql ExceptParamName() => ExceptField("paramName");
-    }
-
     public partial class UserQueryBuilderGql : GraphQlQueryBuilder<UserQueryBuilderGql>
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
@@ -1471,6 +1418,59 @@ namespace RxDBDotNet.Tests.Model
         public CheckpointQueryBuilderGql WithUpdatedAt(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("updatedAt", alias, new GraphQlDirective?[] { skip, include });
 
         public CheckpointQueryBuilderGql ExceptUpdatedAt() => ExceptField("updatedAt");
+    }
+
+    public partial class AuthenticationErrorQueryBuilderGql : GraphQlQueryBuilder<AuthenticationErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "message" }
+        };
+
+        protected override string TypeName { get; } = "AuthenticationError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public AuthenticationErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
+
+        public AuthenticationErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
+    }
+
+    public partial class UnauthorizedAccessErrorQueryBuilderGql : GraphQlQueryBuilder<UnauthorizedAccessErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "message" }
+        };
+
+        protected override string TypeName { get; } = "UnauthorizedAccessError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public UnauthorizedAccessErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
+
+        public UnauthorizedAccessErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
+    }
+
+    public partial class ArgumentNullErrorQueryBuilderGql : GraphQlQueryBuilder<ArgumentNullErrorQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "message" },
+            new GraphQlFieldMetadata { Name = "paramName" }
+        };
+
+        protected override string TypeName { get; } = "ArgumentNullError";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public ArgumentNullErrorQueryBuilderGql WithMessage(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("message", alias, new GraphQlDirective?[] { skip, include });
+
+        public ArgumentNullErrorQueryBuilderGql ExceptMessage() => ExceptField("message");
+
+        public ArgumentNullErrorQueryBuilderGql WithParamName(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("paramName", alias, new GraphQlDirective?[] { skip, include });
+
+        public ArgumentNullErrorQueryBuilderGql ExceptParamName() => ExceptField("paramName");
     }
 
     public partial class WorkspaceQueryBuilderGql : GraphQlQueryBuilder<WorkspaceQueryBuilderGql>
@@ -2214,11 +2214,11 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<bool>))]
         #endif
-        public QueryBuilderParameter<bool?>? IsDeleted
+        public QueryBuilderParameter<bool>? IsDeleted
         {
-            get => (QueryBuilderParameter<bool?>?)_isDeleted.Value;
+            get => (QueryBuilderParameter<bool>?)_isDeleted.Value;
             set => _isDeleted = new InputPropertyInfo { Name = "isDeleted", Value = value };
         }
 
@@ -2367,11 +2367,11 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<bool>))]
         #endif
-        public QueryBuilderParameter<bool?>? IsDeleted
+        public QueryBuilderParameter<bool>? IsDeleted
         {
-            get => (QueryBuilderParameter<bool?>?)_isDeleted.Value;
+            get => (QueryBuilderParameter<bool>?)_isDeleted.Value;
             set => _isDeleted = new InputPropertyInfo { Name = "isDeleted", Value = value };
         }
 
@@ -2557,11 +2557,11 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<bool?>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<bool>))]
         #endif
-        public QueryBuilderParameter<bool?>? IsDeleted
+        public QueryBuilderParameter<bool>? IsDeleted
         {
-            get => (QueryBuilderParameter<bool?>?)_isDeleted.Value;
+            get => (QueryBuilderParameter<bool>?)_isDeleted.Value;
             set => _isDeleted = new InputPropertyInfo { Name = "isDeleted", Value = value };
         }
 
@@ -3188,6 +3188,26 @@ namespace RxDBDotNet.Tests.Model
         public CheckpointGql? Checkpoint { get; set; }
     }
 
+    public partial class UserGql
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string FullName { get; set; }
+        public string? Email { get; set; }
+        public string? JwtAccessToken { get; set; }
+        public Guid WorkspaceId { get; set; }
+        public Guid Id { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
+        public ICollection<string>? Topics { get; set; }
+    }
+
+    public partial class CheckpointGql
+    {
+        public Guid? LastDocumentId { get; set; }
+        public DateTimeOffset? UpdatedAt { get; set; }
+    }
+
     [GraphQlObjectType("AuthenticationError")]
     public partial class AuthenticationErrorGql : IPushUserErrorGql, IErrorGql
     {
@@ -3207,31 +3227,11 @@ namespace RxDBDotNet.Tests.Model
         public string? ParamName { get; set; }
     }
 
-    public partial class UserGql
-    {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string FullName { get; set; }
-        public string? Email { get; set; }
-        public string? JwtAccessToken { get; set; }
-        public Guid WorkspaceId { get; set; }
-        public Guid Id { get; set; }
-        public bool? IsDeleted { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
-        public ICollection<string>? Topics { get; set; }
-    }
-
-    public partial class CheckpointGql
-    {
-        public Guid? LastDocumentId { get; set; }
-        public DateTimeOffset? UpdatedAt { get; set; }
-    }
-
     public partial class WorkspaceGql
     {
         public string Name { get; set; }
         public Guid Id { get; set; }
-        public bool? IsDeleted { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
         public ICollection<string>? Topics { get; set; }
     }
@@ -3242,7 +3242,7 @@ namespace RxDBDotNet.Tests.Model
         public Guid OwnerId { get; set; }
         public Guid WorkspaceId { get; set; }
         public Guid Id { get; set; }
-        public bool? IsDeleted { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
         public ICollection<string>? Topics { get; set; }
     }

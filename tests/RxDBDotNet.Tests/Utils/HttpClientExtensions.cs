@@ -65,18 +65,7 @@ internal static class HttpClientExtensions
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtAccessToken);
         }
 
-        var response = await httpClient.PostAsync("/graphql", jsonContent, cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException(responseContent);
-        }
-
-        response.StatusCode.Should()
-            .Be(HttpStatusCode.OK);
-
-        return response;
+        return await httpClient.PostAsync("/graphql", jsonContent, cancellationToken);
     }
 
     /// <summary>

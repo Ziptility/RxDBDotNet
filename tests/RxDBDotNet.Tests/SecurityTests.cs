@@ -98,10 +98,8 @@ public class SecurityTests : IAsyncLifetime
         // Assert
         response.Errors.Should()
             .NotBeNullOrEmpty();
-        response.Errors?.FirstOrDefault()
-            ?.Message.Should()
-            .Contain("Access denied");
-        response.Data.PullWorkspace.Should()
+        response.Errors?.FirstOrDefault()?.Message.Should().Be("The current user is not authorized to access this resource.");
+        response.Data?.PullWorkspace.Should()
             .BeNull();
     }
 }

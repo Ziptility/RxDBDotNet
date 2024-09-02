@@ -1,11 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Security.Claims;
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using Microsoft.Extensions.Logging;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
-using RxDBDotNet.Security;
 
 namespace RxDBDotNet.Resolvers;
 
@@ -30,9 +28,6 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
     /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
     /// <param name="topics">An optional set of topics to receive events for when a document is changed.</param>
     /// <param name="logger">The logger used for logging information and errors.</param>
-    /// <param name="currentUser">The current user making the request, used for authorization purposes.</param>
-    /// <param name="securityOptions">The security options for the document type.</param>
-    /// <param name="authorizationHelper">The helper used for authorization checks.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <returns>
     /// An asynchronous enumerable of <see cref="DocumentPullBulk{TDocument}" /> representing the stream of document changes.
@@ -42,9 +37,6 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
         ITopicEventReceiver eventReceiver,
         List<string>? topics,
         ILogger<SubscriptionResolver<TDocument>> logger,
-        ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions,
-        AuthorizationHelper? authorizationHelper,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(eventReceiver);
@@ -54,9 +46,6 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
             eventReceiver,
             topics,
             logger,
-            currentUser,
-            securityOptions,
-            authorizationHelper,
             cancellationToken);
     }
 
@@ -64,14 +53,8 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
         ITopicEventReceiver eventReceiver,
         List<string>? subscriberTopics,
         ILogger<SubscriptionResolver<TDocument>> logger,
-        ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions,
-        AuthorizationHelper? authorizationHelper,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await AuthorizeReadAsync(authorizationHelper, currentUser, securityOptions)
-            .ConfigureAwait(false);
-
         var streamName = $"Stream_{typeof(TDocument).Name}";
 
         while (!cancellationToken.IsCancellationRequested)
@@ -120,27 +103,5 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
                            || subscriberTopics.Count == 0
                            // Not ignoring case to follow the pub/sub pattern of case-sensitive channels in redis
                            || doc.Topics?.Intersect(subscriberTopics, StringComparer.Ordinal).Any() == true);
-    }
-
-    private static Task AuthorizeReadAsync(
-        AuthorizationHelper? authorizationHelper,
-        ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions)
-    {
-        if (authorizationHelper == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        var documentOperation = new DocumentOperation
-        {
-            Operation = Operation.Read,
-            DocumentType = typeof(TDocument),
-        };
-
-        return authorizationHelper.AuthorizeAsync(
-            currentUser,
-            documentOperation,
-            securityOptions);
     }
 }

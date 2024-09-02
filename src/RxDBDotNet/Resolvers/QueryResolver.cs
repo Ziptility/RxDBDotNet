@@ -1,8 +1,7 @@
-﻿using System.Security.Claims;
+﻿using HotChocolate.Execution;
 using HotChocolate.Resolvers;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
-using RxDBDotNet.Security;
 using RxDBDotNet.Services;
 
 namespace RxDBDotNet.Resolvers;
@@ -28,10 +27,8 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// <param name="limit">The maximum number of documents to return.</param>
     /// <param name="service">The document service to be used for data access.</param>
     /// <param name="context">The GraphQL context which contains any filters or projections.</param>
-    /// <param name="currentUser">Provides access to the current user.</param>
-    /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
-    /// <param name="authorizationHelper">The service used for authorization checks.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
+    /// <exception cref="QueryException"></exception>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a
     /// <see cref="DocumentPullBulk{TDocument}"/> object containing the pulled documents and the new checkpoint.
@@ -41,21 +38,15 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// It uses a combination of the UpdatedAt timestamp and the document ID to ensure consistent and complete results,
     /// even when multiple documents have the same UpdatedAt value.
     /// </remarks>
-// Method is too long. This is because of the extensive documentation, which is acceptable in this case for maintainability.
+    // Method is too long. This is because of the extensive documentation, which is acceptable in this case for maintainability.
 #pragma warning disable MA0051, CA1822
     internal async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
         IDocumentService<TDocument> service,
         IResolverContext context,
-        ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions,
-        AuthorizationHelper? authorizationHelper,
         CancellationToken cancellationToken)
     {
-        await AuthorizeReadAsync(authorizationHelper, currentUser, securityOptions)
-            .ConfigureAwait(false);
-
         var query = service.GetQueryableDocuments();
 
         // If a checkpoint is provided, we use it to filter the documents.
@@ -131,27 +122,5 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
             Documents = documents,
             Checkpoint = newCheckpoint,
         };
-    }
-
-    private static Task AuthorizeReadAsync(
-        AuthorizationHelper? authorizationHelper,
-        ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions)
-    {
-        if (authorizationHelper == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        var documentOperation = new DocumentOperation
-        {
-            Operation = Operation.Read,
-            DocumentType = typeof(TDocument),
-        };
-
-        return authorizationHelper.AuthorizeAsync(
-            currentUser,
-            documentOperation,
-            securityOptions);
     }
 }

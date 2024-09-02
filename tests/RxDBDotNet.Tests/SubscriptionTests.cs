@@ -73,7 +73,7 @@ public class SubscriptionTests : IAsyncLifetime
         streamedWorkspace?.Name.Should()
             .Be(newWorkspace.Name?.Value, "The streamed workspace name should match the created workspace name");
         streamedWorkspace?.IsDeleted.Should()
-            .Be(newWorkspace.IsDeleted?.Value, "The streamed workspace IsDeleted status should match the created workspace");
+            .Be(newWorkspace.IsDeleted, "The streamed workspace IsDeleted status should match the created workspace");
         streamedWorkspace?.UpdatedAt.Should()
             .BeCloseTo(newWorkspace.UpdatedAt?.Value ?? DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5),
                 "The streamed workspace UpdatedAt should be close to the created workspace's timestamp");

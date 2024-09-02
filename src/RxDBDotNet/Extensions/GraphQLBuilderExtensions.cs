@@ -105,7 +105,7 @@ public static class GraphQLBuilderExtensions
 
         builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
         {
-            var field = objectTypeDescriptor.Name("Query")
+            var queryField = objectTypeDescriptor.Name("Query")
                 .Field(pullDocumentsName)
                 .UseFiltering<TDocument>()
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
@@ -122,15 +122,11 @@ public static class GraphQLBuilderExtensions
                     var limit = context.ArgumentValue<int>("limit");
                     var service = context.Service<IDocumentService<TDocument>>();
                     var cancellationToken = context.RequestAborted;
-                    var authorizationHelper = context.Services.GetService<AuthorizationHelper>();
-                    var currentUser = context.GetUser();
-                    var securityOptions = replicationOptions.Security;
 
-                    return queryResolver.PullDocumentsAsync(checkpoint, limit, service, context,
-                        currentUser, securityOptions, authorizationHelper, cancellationToken);
+                    return queryResolver.PullDocumentsAsync(checkpoint, limit, service, context, cancellationToken);
                 });
 
-            AddFieldErrorTypes(field, replicationOptions);
+            AddReadAuthorizationIfNecessary(queryField, replicationOptions);
         }));
 
         builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(objectTypeDescriptor =>
@@ -156,6 +152,17 @@ public static class GraphQLBuilderExtensions
                 .Type<IdType>()
                 .Description("The ID of the last document included in the synchronization batch.");
         }));
+    }
+
+    private static void AddReadAuthorizationIfNecessary<TDocument>(
+        IObjectFieldDescriptor queryField,
+        ReplicationOptions<TDocument> replicationOptions) where TDocument : class, IReplicatedDocument
+    {
+        foreach (var readPolicyRequirement in replicationOptions.Security.PolicyRequirements.Where(pr =>
+                     pr.DocumentOperation.Operation == Operation.Read))
+        {
+            queryField.Authorize(readPolicyRequirement.Policy);
+        }
     }
 
     private static IRequestExecutorBuilder ConfigureDocumentMutations<TDocument>(
@@ -241,7 +248,7 @@ public static class GraphQLBuilderExtensions
 
         builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
         {
-            objectTypeDescriptor.Name("Subscription")
+            var subscriptionField = objectTypeDescriptor.Name("Subscription")
                 .Field(streamDocumentName)
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
                 .Argument("headers", a => a.Type(headersInputTypeName)
@@ -262,13 +269,13 @@ public static class GraphQLBuilderExtensions
                     var topicEventReceiver = context.Service<ITopicEventReceiver>();
                     var logger = context.Service<ILogger<SubscriptionResolver<TDocument>>>();
                     var topics = context.ArgumentValue<List<string>?>("topics");
-                    var authorizationHelper = context.Services.GetService<AuthorizationHelper>();
-                    var currentUser = context.GetUser();
-                    var securityOptions = replicationOptions.Security;
+                    context.Services.GetService<AuthorizationHelper>();
+                    context.GetUser();
 
-                    return subscription.DocumentChangedStream(topicEventReceiver, topics, logger, currentUser,
-                        securityOptions, authorizationHelper, context.RequestAborted);
+                    return subscription.DocumentChangedStream(topicEventReceiver, topics, logger, context.RequestAborted);
                 });
+
+            AddReadAuthorizationIfNecessary(subscriptionField, replicationOptions);
         }));
 
         return builder.AddType(new InputObjectType<Headers>(d =>

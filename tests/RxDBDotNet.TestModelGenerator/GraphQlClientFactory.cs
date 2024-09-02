@@ -33,6 +33,7 @@ public static class GraphQlClientFactory
                 ScalarFieldTypeMappingProvider = new ScalarFieldTypeMappingProvider(),
                 ClassSuffix = "Gql",
                 CSharpVersion = CSharpVersion.NewestWithNullableReferences,
+                DataClassMemberNullability = DataClassMemberNullability.DefinedBySchema,
             };
 
             var generator = new GraphQlGenerator(config);

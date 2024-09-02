@@ -25,7 +25,8 @@ public static class TestSetupUtil
         Action<IApplicationBuilder>? configureApp = null,
         Action<IServiceCollection>? configureServices = null,
         Action<IRequestExecutorBuilder>? configureGraphQL = null,
-        bool setupAuthorization = false)
+        bool setupAuthorization = false,
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
@@ -50,7 +51,7 @@ public static class TestSetupUtil
             },
             graphQLBuilder =>
             {
-                ConfigureGraphQL(graphQLBuilder, setupAuthorization);
+                ConfigureGraphQL(graphQLBuilder, setupAuthorization, configureWorkspaceSecurity);
                 configureGraphQL?.Invoke(graphQLBuilder);
             });
 
@@ -122,7 +123,10 @@ public static class TestSetupUtil
         }
     }
 
-    private static void ConfigureGraphQL(IRequestExecutorBuilder graphQLBuilder, bool setupAuthorization)
+    private static void ConfigureGraphQL(
+        IRequestExecutorBuilder graphQLBuilder,
+        bool setupAuthorization,
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity)
     {
         graphQLBuilder
             .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
@@ -135,7 +139,7 @@ public static class TestSetupUtil
             {
                 if (setupAuthorization)
                 {
-                    options.Security.RequirePolicyToCreate("IsWorkspaceAdmin");
+                    configureWorkspaceSecurity?.Invoke(options.Security);
                 }
             })
             .AddReplicatedDocument<ReplicatedLiveDoc>();
@@ -182,7 +186,8 @@ public static class TestSetupUtil
     private static void ConfigureAuthorization(IServiceCollection services)
     {
         services.AddAuthorizationBuilder()
-            .AddPolicy("IsWorkspaceAdmin", policy => policy.RequireRole(nameof(UserRole.WorkspaceAdmin)));
+            .AddPolicy("IsWorkspaceAdmin", policy => policy.RequireRole(nameof(UserRole.WorkspaceAdmin)))
+            .AddPolicy("IsSystemAdmin", policy => policy.RequireRole(nameof(UserRole.SystemAdmin)));
     }
 
     private static TimeSpan GetTestTimeout()

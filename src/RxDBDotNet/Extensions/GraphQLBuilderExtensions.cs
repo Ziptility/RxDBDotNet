@@ -105,7 +105,7 @@ public static class GraphQLBuilderExtensions
 
         builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
         {
-            objectTypeDescriptor.Name("Query")
+            var field = objectTypeDescriptor.Name("Query")
                 .Field(pullDocumentsName)
                 .UseFiltering<TDocument>()
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
@@ -129,6 +129,8 @@ public static class GraphQLBuilderExtensions
                     return queryResolver.PullDocumentsAsync(checkpoint, limit, service, context,
                         currentUser, securityOptions, authorizationHelper, cancellationToken);
                 });
+
+            AddFieldErrorTypes(field, replicationOptions);
         }));
 
         builder.AddType(new ObjectType<DocumentPullBulk<TDocument>>(objectTypeDescriptor =>

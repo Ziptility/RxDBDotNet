@@ -10,8 +10,6 @@ public class SecurityTests : IAsyncLifetime
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true);
-
         return Task.CompletedTask;
     }
 
@@ -24,6 +22,9 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldBeAbleToCreateAWorkspace()
     {
         // Arrange
+        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+            configureWorkspaceSecurity: options => options.RequirePolicyToCreate("IsWorkspaceAdmin"));
+
         var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
         var admin = await _testContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, _testContext.CancellationToken);
 
@@ -38,6 +39,9 @@ public class SecurityTests : IAsyncLifetime
     public async Task AStandardUserShouldNotBeAbleToCreateAWorkspace()
     {
         // Arrange
+        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+            configureWorkspaceSecurity: options => options.RequirePolicyToCreate("IsWorkspaceAdmin"));
+
         var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
         var standardUser = await _testContext.CreateUserAsync(workspace, UserRole.StandardUser, _testContext.CancellationToken);
 
@@ -53,5 +57,51 @@ public class SecurityTests : IAsyncLifetime
             .Should()
             .BeOfType<UnauthorizedAccessErrorGql>();
     }
+
+    [Fact]
+    public async Task ASystemAdminShouldBeAbleToReadAWorkspace()
+    {
+        // Arrange
+        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+            configureWorkspaceSecurity: options => options.RequirePolicyToRead("IsSystemAdmin"));
+
+        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
+        var systemAdmin = await _testContext.CreateUserAsync(workspace, UserRole.SystemAdmin, _testContext.CancellationToken);
+
+        // Act
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
         var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+
+        // Assert
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PullWorkspace.Should()
+            .NotBeNull();
+        response.Data.PullWorkspace?.Documents.Should()
+            .NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task AWorkspaceAdminShouldNotBeAbleToReadAWorkspaceWhenSystemAdminIsRequired()
+    {
+        // Arrange
+        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+            configureWorkspaceSecurity: options => options.RequirePolicyToRead("IsSystemAdmin"));
+
+        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
+        var workspaceAdmin = await _testContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, _testContext.CancellationToken);
+
+        // Act
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
+        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken, workspaceAdmin.JwtAccessToken);
+
+        // Assert
+        response.Errors.Should()
+            .NotBeNullOrEmpty();
+        response.Errors?.FirstOrDefault()
+            ?.Message.Should()
+            .Contain("Access denied");
+        response.Data.PullWorkspace.Should()
+            .BeNull();
+    }
 }

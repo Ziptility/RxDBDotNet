@@ -16,25 +16,28 @@ internal static class HttpClientExtensions
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="queryBuilder">The GraphQL string.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
+    ///  <param name="jwtAccessToken">The JWT access token, if required.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">queryBuilder</exception>
     public static Task<GqlQueryResponse> PostGqlQueryAsync(
         this HttpClient httpClient,
         QueryQueryBuilderGql queryBuilder,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? jwtAccessToken = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(queryBuilder);
 
-        return PostGqlQueryInternalAsync(httpClient, queryBuilder, cancellationToken);
+        return PostGqlQueryInternalAsync(httpClient, queryBuilder, cancellationToken, jwtAccessToken);
     }
 
     private static async Task<GqlQueryResponse> PostGqlQueryInternalAsync(
         HttpClient httpClient,
         IGraphQlQueryBuilder queryBuilder,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? jwtAccessToken = null)
     {
-        var response = await PostGqlQueryAsync(httpClient, queryBuilder, cancellationToken);
+        var response = await PostGqlQueryAsync(httpClient, queryBuilder, cancellationToken, jwtAccessToken);
 
         return await response.DeserializeHttpResponseAsync<GqlQueryResponse>();
     }
@@ -42,7 +45,8 @@ internal static class HttpClientExtensions
     private static async Task<HttpResponseMessage> PostGqlQueryAsync(
         this HttpClient httpClient,
         IGraphQlQueryBuilder queryBuilder,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? jwtAccessToken = null)
     {
         var queryJson = queryBuilder.Build();
 
@@ -54,6 +58,12 @@ internal static class HttpClientExtensions
         var json = JsonSerializer.Serialize(graphQlRequest, GetJsonSerializerOptions());
 
         using var jsonContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+        // Set the Authorization header if the JWT access token is provided
+        if (!string.IsNullOrWhiteSpace(jwtAccessToken))
+        {
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtAccessToken);
+        }
 
         var response = await httpClient.PostAsync("/graphql", jsonContent, cancellationToken);
 

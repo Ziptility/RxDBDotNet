@@ -1,4 +1,6 @@
-﻿namespace RxDBDotNet.Tests.Setup;
+﻿using Xunit;
+
+namespace RxDBDotNet.Tests.Setup;
 
 public sealed class DockerSetupUtil : IAsyncLifetime
 {

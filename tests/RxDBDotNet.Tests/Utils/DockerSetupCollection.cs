@@ -1,4 +1,4 @@
-﻿namespace RxDBDotNet.Tests.Setup;
+﻿namespace RxDBDotNet.Tests.Utils;
 
 [CollectionDefinition("DockerSetup")]
 public class DockerSetupCollection : ICollectionFixture<DockerSetupUtil>

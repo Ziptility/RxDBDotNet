@@ -1,11 +1,12 @@
 ﻿using System.Net.Http.Headers;
+using Newtonsoft.Json;
 using RxDBDotNet.Tests.Model;
-using static RxDBDotNet.Tests.Helpers.SerializationUtils;
+using static RxDBDotNet.Tests.Utils.SerializationUtils;
 using Formatting = RxDBDotNet.Tests.Model.Formatting;
 using GraphQLRequest = RxDBDotNet.Tests.Model.GraphQLRequest;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace RxDBDotNet.Tests.Helpers;
+namespace RxDBDotNet.Tests.Utils;
 
 internal static class HttpClientExtensions
 {
@@ -22,15 +23,10 @@ internal static class HttpClientExtensions
         QueryQueryBuilderGql queryBuilder,
         CancellationToken cancellationToken)
     {
-        ThrowIfInvalidParams(
-            httpClient,
-            Routes.GraphQL);
-
+        ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(queryBuilder);
 
-        return PostGqlQueryInternalAsync(
-            httpClient,
-            queryBuilder, cancellationToken);
+        return PostGqlQueryInternalAsync(httpClient, queryBuilder, cancellationToken);
     }
 
     private static async Task<GqlQueryResponse> PostGqlQueryInternalAsync(
@@ -43,7 +39,10 @@ internal static class HttpClientExtensions
         return await response.DeserializeHttpResponseAsync<GqlQueryResponse>();
     }
 
-    private static async Task<HttpResponseMessage> PostGqlQueryAsync(this HttpClient httpClient, IGraphQlQueryBuilder queryBuilder, CancellationToken cancellationToken)
+    private static async Task<HttpResponseMessage> PostGqlQueryAsync(
+        this HttpClient httpClient,
+        IGraphQlQueryBuilder queryBuilder,
+        CancellationToken cancellationToken)
     {
         var queryJson = queryBuilder.Build();
 
@@ -64,21 +63,25 @@ internal static class HttpClientExtensions
             throw new InvalidOperationException(responseContent);
         }
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should()
+            .Be(HttpStatusCode.OK);
 
         return response;
     }
 
     /// <summary>
-    /// Sends a GraphQL mutation request to the specified Uri.
+    ///     Sends a GraphQL mutation request to the specified Uri.
     /// </summary>
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="mutationBuilder">The GraphQL mutation to execute.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="jwtAccessToken">The JWT access token, if required.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="httpClient"/> or <paramref name="mutationBuilder"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when <paramref name="httpClient"/> is in an invalid state.</exception>
+    /// <exception cref="ArgumentNullException">
+    ///     Thrown when <paramref name="httpClient" /> or
+    ///     <paramref name="mutationBuilder" /> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">Thrown when <paramref name="httpClient" /> is in an invalid state.</exception>
     public static Task<GqlMutationResponse> PostGqlMutationAsync(
         this HttpClient httpClient,
         MutationQueryBuilderGql mutationBuilder,
@@ -89,11 +92,7 @@ internal static class HttpClientExtensions
 
         ArgumentNullException.ThrowIfNull(mutationBuilder);
 
-        return PostGqlMutationInternalAsync(
-            httpClient,
-            mutationBuilder,
-            cancellationToken,
-            jwtAccessToken);
+        return PostGqlMutationInternalAsync(httpClient, mutationBuilder, cancellationToken, jwtAccessToken);
     }
 
     private static async Task<GqlMutationResponse> PostGqlMutationInternalAsync(
@@ -107,14 +106,9 @@ internal static class HttpClientExtensions
             Query = mutationBuilder.Build(Formatting.Indented),
         };
 
-        var json = JsonSerializer.Serialize(
-            graphQlRequest,
-            GetJsonSerializerOptions());
+        var json = JsonSerializer.Serialize(graphQlRequest, GetJsonSerializerOptions());
 
-        using var stringContent = new StringContent(
-            json,
-            Encoding.UTF8,
-            "application/json");
+        using var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
 
         // Set the Authorization header if the JWT access token is provided
         if (!string.IsNullOrWhiteSpace(jwtAccessToken))
@@ -122,9 +116,7 @@ internal static class HttpClientExtensions
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtAccessToken);
         }
 
-        var response = await httpClient.PostAsync(
-            Routes.GraphQL,
-            stringContent, cancellationToken);
+        var response = await httpClient.PostAsync("graphql", stringContent, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -139,19 +131,7 @@ internal static class HttpClientExtensions
     {
         var json = await response.Content.ReadAsStringAsync();
 
-        return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, GetJsonSerializerSettings())
+        return JsonConvert.DeserializeObject<T>(json, GetJsonSerializerSettings())
                ?? throw new InvalidOperationException($"The response of type {typeof(T).Name} was null.");
-    }
-
-    private static void ThrowIfInvalidParams(HttpClient httpClient, string uri)
-    {
-        ArgumentNullException.ThrowIfNull(httpClient);
-
-        if (string.IsNullOrWhiteSpace(uri))
-        {
-            throw new ArgumentException(
-                "Can't be null or empty",
-                nameof(uri));
-        }
     }
 }

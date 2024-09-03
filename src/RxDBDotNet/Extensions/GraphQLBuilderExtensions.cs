@@ -259,18 +259,15 @@ public static class GraphQLBuilderExtensions
                 .Resolve(context => context.GetEventMessage<DocumentPullBulk<TDocument>>())
                 .Subscribe(context =>
                 {
-                    var headers = context.ArgumentValue<Headers>("headers");
-                    if (!IsAuthorized(headers))
-                    {
-                        throw new UnauthorizedAccessException("Invalid or missing authorization token");
-                    }
-
                     var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
                     var topicEventReceiver = context.Service<ITopicEventReceiver>();
                     var logger = context.Service<ILogger<SubscriptionResolver<TDocument>>>();
                     var topics = context.ArgumentValue<List<string>?>("topics");
-                    context.Services.GetService<AuthorizationHelper>();
-                    context.GetUser();
+
+                    // Note that even though the rxdb protocol defines a headers parameter,
+                    // we ignore it in the RxDBDotNet implementation and expect the client
+                    // to pass the Authorization header in the HTTP request in an idiomatic
+                    // way for Hot Chocolate subscriptions and ASP.NET applications.
 
                     return subscription.DocumentChangedStream(topicEventReceiver, topics, logger, context.RequestAborted);
                 });
@@ -312,16 +309,5 @@ public static class GraphQLBuilderExtensions
 
         // Register a root Subscription type if not already added
         builder.ConfigureSchema(schemaBuilder => schemaBuilder.TryAddRootType(() => new ObjectType<Subscription>(), OperationType.Subscription));
-    }
-
-    private static bool IsAuthorized(Headers? headers)
-    {
-        if (headers != null)
-        {
-            // Implement your authorization logic here
-            // For example, validate the JWT token in headers.Authorization
-        }
-
-        return true;
     }
 }

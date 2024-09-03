@@ -2,14 +2,21 @@
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
+using Microsoft.EntityFrameworkCore;
 using RT.Comb;
 using RxDBDotNet.Services;
 
 namespace LiveDocs.GraphQLApi.Services;
 
-public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
-    : DocumentService<User, ReplicatedUser>(dbContext, eventPublisher)
+public class UserService : DocumentService<User, ReplicatedUser>
 {
+    private readonly LiveDocsDbContext _dbContext;
+
+    public UserService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher) : base(dbContext, eventPublisher)
+    {
+        _dbContext = dbContext;
+    }
+
     protected override Expression<Func<User, ReplicatedUser>> ProjectToDocument()
     {
         return user => new ReplicatedUser
@@ -45,9 +52,14 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
         return entityToUpdate;
     }
 
-    protected override User Create(ReplicatedUser newDocument)
+    protected override async Task<User> CreateAsync(ReplicatedUser newDocument, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(newDocument);
+
+        var workspacePk = await _dbContext.Workspaces
+            .Where(w => w.ReplicatedDocumentId == newDocument.WorkspaceId)
+            .Select(w => w.Id)
+            .SingleAsync(cancellationToken);
 
         return new User
         {
@@ -59,8 +71,8 @@ public class UserService(LiveDocsDbContext dbContext, IEventPublisher eventPubli
             JwtAccessToken = newDocument.JwtAccessToken,
             UpdatedAt = newDocument.UpdatedAt,
             IsDeleted = false,
-            WorkspaceId = newDocument.WorkspaceId,
-            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t, }),
+            WorkspaceId = workspacePk,
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t }),
         };
     }
 }

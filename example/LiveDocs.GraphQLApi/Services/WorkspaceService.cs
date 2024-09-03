@@ -7,9 +7,12 @@ using RxDBDotNet.Services;
 
 namespace LiveDocs.GraphQLApi.Services;
 
-public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
-    : DocumentService<Workspace, ReplicatedWorkspace>(dbContext, eventPublisher)
+public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
 {
+    public WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher) : base(dbContext, eventPublisher)
+    {
+    }
+
     protected override Expression<Func<Workspace, ReplicatedWorkspace>> ProjectToDocument()
     {
         return workspace => new ReplicatedWorkspace
@@ -39,18 +42,18 @@ public class WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher event
         return entityToUpdate;
     }
 
-    protected override Workspace Create(ReplicatedWorkspace newDocument)
+    protected override Task<Workspace> CreateAsync(ReplicatedWorkspace newDocument, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(newDocument);
 
-        return new Workspace
+        return Task.FromResult(new Workspace
         {
             Id = Provider.Sql.Create(),
             ReplicatedDocumentId = newDocument.Id,
             Name = newDocument.Name,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
-            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t, }),
-        };
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t }),
+        });
     }
 }

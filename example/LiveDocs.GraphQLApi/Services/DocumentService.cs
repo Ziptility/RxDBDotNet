@@ -51,7 +51,7 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
         ArgumentNullException.ThrowIfNull(document);
 
         await _dbContext.Set<TEntity>()
-            .AddAsync(Create(document), cancellationToken);
+            .AddAsync(await CreateAsync(document, cancellationToken), cancellationToken);
 
         _pendingEvents.Add(document);
 
@@ -131,9 +131,10 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
     protected abstract TEntity Update(TDocument updatedDocument, TEntity entityToUpdate);
 
     /// <summary>
-    /// Creates a new entity from the provided document.
+    /// Asynchronously creates a new entity from the provided document.
     /// </summary>
-    /// <param name="newDocument">The new document from which to crete the entity.</param>
-    /// <returns>The newly created entity.</returns>
-    protected abstract TEntity Create(TDocument newDocument);
+    /// <param name="newDocument">The new document from which to create the entity.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the newly created entity.</returns>
+    protected abstract Task<TEntity> CreateAsync(TDocument newDocument, CancellationToken cancellationToken);
 }

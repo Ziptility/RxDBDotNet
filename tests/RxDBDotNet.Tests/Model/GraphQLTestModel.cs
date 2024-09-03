@@ -2169,11 +2169,11 @@ namespace RxDBDotNet.Tests.Model
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
+        [JsonConverter(typeof(QueryBuilderParameterConverter<string?>))]
         #endif
-        public QueryBuilderParameter<string>? FullName
+        public QueryBuilderParameter<string?>? FullName
         {
-            get => (QueryBuilderParameter<string>?)_fullName.Value;
+            get => (QueryBuilderParameter<string?>?)_fullName.Value;
             set => _fullName = new InputPropertyInfo { Name = "fullName", Value = value };
         }
 
@@ -3192,7 +3192,7 @@ namespace RxDBDotNet.Tests.Model
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
         public string? Email { get; set; }
         public string? JwtAccessToken { get; set; }
         public Guid WorkspaceId { get; set; }

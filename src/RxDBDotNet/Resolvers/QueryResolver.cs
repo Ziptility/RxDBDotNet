@@ -94,14 +94,18 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
 
         var documents = await service.ExecuteQueryAsync(limitedQuery, cancellationToken).ConfigureAwait(false);
 
-        // If no documents are returned, we return an empty result with a null checkpoint
-        // This signals to the client that there are no more documents to pull
+        // If no documents are returned, we return an empty result with the same checkpoint
+        // This is a crucial part of the RxDB replication protocol:
+        // When there are no new documents since the last checkpoint, we must return
+        // the same checkpoint to indicate that the client is up-to-date.
+        // This allows the client to maintain its current sync state and efficiently
+        // handle subsequent synchronization requests.
         if (documents.Count == 0)
         {
             return new DocumentPullBulk<TDocument>
             {
                 Documents = [],
-                Checkpoint = new Checkpoint
+                Checkpoint = checkpoint ?? new Checkpoint
                 {
                     LastDocumentId = null,
                     UpdatedAt = null,

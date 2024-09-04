@@ -1,4 +1,9 @@
 ﻿using System.Diagnostics;
+using HotChocolate.Execution;
+using HotChocolate.Subscriptions;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
+using RxDBDotNet.Models;
 using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
 
@@ -21,18 +26,181 @@ public class SubscriptionTests : IAsyncLifetime
         await _testContext.DisposeAsync();
     }
 
+    /// <summary>
+    ///     Tests the behavior of the SubscriptionResolver when handling empty document updates.
+    ///     This test validates that the resolver correctly processes updates with no documents
+    ///     but with an updated checkpoint, which is a valid scenario in the RxDB replication protocol.
+    /// </summary>
+    /// <remarks>
+    ///     In the RxDB replication protocol:
+    ///     1. Empty document lists in updates are valid and should be processed.
+    ///     2. The checkpoint should always be updated, even if no documents are present.
+    ///     3. The client (subscriber) should receive these updates to keep its checkpoint current.
+    /// </remarks>
     [Fact]
-    public async Task TestCase5_1_CreateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscriptionAsync()
+    public async Task DocumentChangedStream_ShouldHandleEmptyDocuments()
+    {
+        // Arrange
+        var mockSourceStream = new Mock<ISourceStream<DocumentPullBulk<ReplicatedWorkspace>>>();
+        var emptyUpdate = new DocumentPullBulk<ReplicatedWorkspace>
+        {
+            Documents = [],
+            Checkpoint = new Checkpoint
+            {
+                LastDocumentId = Guid.NewGuid(),
+                UpdatedAt = DateTimeOffset.UtcNow,
+            },
+        };
+
+        mockSourceStream.Setup(x => x.ReadEventsAsync())
+            .Returns(CreateAsyncEnumerable(emptyUpdate));
+
+        var mockTopicEventReceiver = new Mock<ITopicEventReceiver>();
+        mockTopicEventReceiver.Setup(x => x.SubscribeAsync<DocumentPullBulk<ReplicatedWorkspace>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockSourceStream.Object);
+
+        _testContext = TestSetupUtil.Setup(configureServices: services =>
+        {
+            services.RemoveAll<ITopicEventReceiver>();
+            services.AddSingleton(mockTopicEventReceiver.Object);
+        });
+
+        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields())
+            .Build();
+
+        // Act
+        var subscriptionResponses =
+            await CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, _testContext.CancellationToken, maxResponses: 1);
+
+        // Assert
+        // Validate that we received exactly one response, as per the RxDB protocol
+        // which states that each change should trigger a subscription event
+        subscriptionResponses.Should()
+            .HaveCount(1, "The subscription should emit an event even for empty document updates");
+
+        var response = subscriptionResponses[0];
+
+        // Ensure no errors occurred during the subscription process
+        response.Errors.Should()
+            .BeNullOrEmpty("The subscription should not produce any errors");
+
+        // Validate that the response contains the expected data structure
+        response.Data.Should()
+            .NotBeNull("The subscription response should contain data");
+        response.Data?.StreamWorkspace.Should()
+            .NotBeNull("The StreamWorkspace field should be present in the response");
+
+        // Check that the Documents list is empty, as we sent an empty update
+        response.Data?.StreamWorkspace?.Documents.Should()
+            .BeEmpty("The Documents list should be empty for an empty update");
+
+        // Validate that the Checkpoint is correctly updated and transmitted
+        // This is crucial for the RxDB replication protocol to maintain sync state
+        response.Data?.StreamWorkspace?.Checkpoint.Should()
+            .NotBeNull("The Checkpoint should be present even in empty updates");
+        response.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
+            .Be(emptyUpdate.Checkpoint.LastDocumentId, "The LastDocumentId in the response should match the one in the empty update");
+        response.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
+            .BeCloseTo(emptyUpdate.Checkpoint.UpdatedAt!.Value, TimeSpan.FromSeconds(1),
+                "The UpdatedAt timestamp should be close to the one in the empty update");
+    }
+
+    private static async IAsyncEnumerable<DocumentPullBulk<ReplicatedWorkspace>> CreateAsyncEnumerable(DocumentPullBulk<ReplicatedWorkspace> item)
+    {
+        await Task.Delay(10);
+
+        yield return item;
+    }
+
+    [Fact]
+    public async Task DocumentChangedStream_ShouldHandleCancellationAndDisposeStream()
+    {
+        // Arrange
+        await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+
+        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields())
+            .Build();
+
+        // Create a cancellation token source with a short timeout
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        {
+            await foreach (var _ in subscriptionClient.SubscribeAndCollectAsync<GqlSubscriptionResponse>(subscriptionQuery, cts.Token))
+            {
+                // This should not be reached
+                Assert.Fail("Subscription should have been cancelled");
+            }
+        });
+    }
+
+    [Fact]
+    public async Task DocumentChangedStream_ShouldHandleExceptionAndDisposeStream()
+    {
+        // Arrange
+        var mockSourceStream = new Mock<ISourceStream<DocumentPullBulk<ReplicatedWorkspace>>>();
+        mockSourceStream.Setup(x => x.ReadEventsAsync())
+            .Returns(ThrowAfterFirstYield);
+
+        var disposeCalled = false;
+        mockSourceStream.Setup(x => x.DisposeAsync())
+            .Callback(() => disposeCalled = true)
+            .Returns(ValueTask.CompletedTask);
+
+        var mockTopicEventReceiver = new Mock<ITopicEventReceiver>();
+        mockTopicEventReceiver.Setup(x => x.SubscribeAsync<DocumentPullBulk<ReplicatedWorkspace>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockSourceStream.Object);
+
+        _testContext = TestSetupUtil.Setup(configureServices: services => services.AddSingleton(mockTopicEventReceiver.Object));
+
+        await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+
+        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields())
+            .Build();
+
+        // Act & Assert
+        var exceptionThrown = false;
+        try
+        {
+            await foreach (var _ in subscriptionClient.SubscribeAndCollectAsync<GqlSubscriptionResponse>(subscriptionQuery,
+                               _testContext.CancellationToken))
+            {
+                // We expect to get here once before the exception is thrown
+            }
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Test exception during enumeration"))
+        {
+            exceptionThrown = true;
+        }
+
+        // Assert that the exception was thrown
+        Assert.True(exceptionThrown, "Expected exception was not thrown");
+
+        // Assert that DisposeAsync was called
+        Assert.True(disposeCalled, "DisposeAsync was not called on the stream");
+    }
+
+    private static IAsyncEnumerable<DocumentPullBulk<ReplicatedWorkspace>> ThrowAfterFirstYield()
+    {
+        return new ThrowingAsyncEnumerable();
+    }
+
+    [Fact]
+    public async Task CreateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscriptionAsync()
     {
         // Arrange
         await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
-                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
-            {
-                Authorization = "test-auth-token",
-            })
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()))
             .Build();
 
         // Start the subscription task before creating the workspace
@@ -90,7 +258,7 @@ public class SubscriptionTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TestCase5_1_1_UpdateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscription()
+    public async Task UpdateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscription()
     {
         // Arrange
         var (workspaceInputGql, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
@@ -99,10 +267,7 @@ public class SubscriptionTests : IAsyncLifetime
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
-                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), new WorkspaceInputHeadersGql
-            {
-                Authorization = "test-auth-token",
-            })
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()))
             .Build();
 
         // Start the subscription task before creating the workspace
@@ -155,7 +320,7 @@ public class SubscriptionTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TestCase5_2_ASubscriptionCanBeFilteredByTopic()
+    public async Task ASubscriptionCanBeFilteredByTopic()
     {
         // Arrange
         var (workspaceInputGql, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
@@ -169,11 +334,8 @@ public class SubscriptionTests : IAsyncLifetime
         // Only subscribe to update events for workspace3
         List<string> topics = [workspace3.workspaceInputGql.Id.Value.ToString()];
 
-        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
-                new WorkspaceInputHeadersGql
-                {
-                    Authorization = "test-auth-token",
-                }, topics)
+        var subscriptionQuery = new SubscriptionQueryBuilderGql()
+            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), topics: topics)
             .Build();
 
         // Start the subscription task before creating the workspace
@@ -252,5 +414,25 @@ public class SubscriptionTests : IAsyncLifetime
         }
 
         return responses;
+    }
+
+    private sealed class ThrowingAsyncEnumerable : IAsyncEnumerable<DocumentPullBulk<ReplicatedWorkspace>>
+    {
+        public async IAsyncEnumerator<DocumentPullBulk<ReplicatedWorkspace>> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        {
+            yield return new DocumentPullBulk<ReplicatedWorkspace>
+            {
+                Documents = [],
+                Checkpoint = new Checkpoint
+                {
+                    LastDocumentId = Guid.NewGuid(),
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                },
+            };
+
+            await Task.Delay(1, cancellationToken);
+
+            throw new InvalidOperationException("Test exception during enumeration");
+        }
     }
 }

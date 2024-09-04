@@ -3,7 +3,6 @@ using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
 using HotChocolate.Subscriptions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Resolvers;
@@ -261,7 +260,6 @@ public static class GraphQLBuilderExtensions
                 {
                     var subscription = context.Resolver<SubscriptionResolver<TDocument>>();
                     var topicEventReceiver = context.Service<ITopicEventReceiver>();
-                    var logger = context.Service<ILogger<SubscriptionResolver<TDocument>>>();
                     var topics = context.ArgumentValue<List<string>?>("topics");
 
                     // Note that even though the rxdb protocol defines a headers parameter,
@@ -269,7 +267,7 @@ public static class GraphQLBuilderExtensions
                     // to pass the Authorization header in the HTTP request in an idiomatic
                     // way for Hot Chocolate subscriptions and ASP.NET applications.
 
-                    return subscription.DocumentChangedStream(topicEventReceiver, topics, logger, context.RequestAborted);
+                    return subscription.DocumentChangedStream(topicEventReceiver, topics, context.RequestAborted);
                 });
 
             AddReadAuthorizationIfNecessary(subscriptionField, replicationOptions);

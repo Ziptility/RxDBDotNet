@@ -117,7 +117,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithLimit_ShouldReturnLimitedDocuments()
     {
         // Arrange
-        var (workspace, user, liveDoc1) = await CreateLiveDocAsync();
+        var (workspace, user, _) = await CreateLiveDocAsync();
         await _testContext.HttpClient.CreateLiveDocAsync(workspace, user, _testContext.CancellationToken);
         await _testContext.HttpClient.CreateLiveDocAsync(workspace, user, _testContext.CancellationToken);
 

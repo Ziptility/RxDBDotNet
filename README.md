@@ -3,6 +3,7 @@
 <p align="left">
   <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
     <img src="https://img.shields.io/nuget/v/RxDBDotNet.svg" alt="NuGet" style="margin-right: 10px;">
+    
   </a>
   <a href="https://codecov.io/github/Ziptility/RxDBDotNet" style="text-decoration:none;">
     <img src="https://codecov.io/github/Ziptility/RxDBDotNet/graph/badge.svg?token=VvuBJEsIHT" alt="codecov">
@@ -12,44 +13,41 @@
   </a>
 </p>
 
-RxDBDotNet is an open-source library that facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate. It implements the server side of the RxDB replication protocol, enabling seamless offline-first capabilities and real-time updates for any client application that supports RxDB while providing a robust .NET backend implementation.
-
-## Key Points
-
-- **Backend**: Implements the server-side of the [RxDB replication protocol](https://rxdb.info/replication.html) in .NET
-- **Frontend**: Compatible with any client that supports the RxDB replication protocol (JavaScript, TypeScript, React Native, etc.)
-- **Protocol**: Uses GraphQL for communication, leveraging the Hot Chocolate library for .NET
-- **Features**: 
-  - Supports real-time synchronization
-  - Enables offline-first capabilities
-  - Detects conflicts and reports them to the client
-  - Provides efficient data pull and push operations
-  - Supports GraphQL filtering for pull operations
-- **Conflict Handling**: Detects conflicts during push operations and returns them to the client for resolution
-
-This library bridges the gap between RxDB-powered frontend applications and .NET backend services, allowing developers to build robust, real-time, offline-first applications with a .NET backend infrastructure.
+RxDBDotNet is an open-source library that implements the server-side of the [RxDB replication protocol](https://rxdb.info/replication.html) for .NET backends. It enables real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate, facilitating offline-first capabilities and real-time updates.
 
 ## Table of Contents
 
+- [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Features](#features)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Advanced Features](#advanced-features)
 - [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
 - [License](#license)
-- [Acknowledgments](#acknowledgments)
-- [Contact Information](#contact-information)
+- [Contact](#contact)
+
+## Features
+
+RxDBDotNet fully supports the RxDB replication protocol, offering:
+
+- **Pull Replication**: Efficiently retrieve data from the server using checkpoint iteration and event observation.
+- **Push Replication**: Send local changes to the server with conflict detection.
+- **Real-time Updates**: Subscribe to data changes using GraphQL subscriptions for event observation.
+- **Conflict Detection**: Server-side conflict detection during push operations.
+- **Checkpoint Management**: Track synchronization progress using checkpoints for efficient data transfer.
+- **Offline-First Support**: Continue local operations when offline and sync when back online.
+- **Custom Document Types**: Define and use your own document types that implement `IReplicatedDocument`.
+- **Flexible Storage**: Implement your own storage solution or use provided ones.
 
 ## Installation
-
-To install and set up RxDBDotNet in your project, follow these steps:
 
 1. Install the RxDBDotNet NuGet package:
    ```bash
    dotnet add package RxDBDotNet
    ```
 
-2. Install the required dependencies:
+2. Install required dependencies:
    ```bash
    dotnet add package HotChocolate.AspNetCore
    dotnet add package HotChocolate.Data
@@ -72,20 +70,79 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
    }
    ```
 
-2. Implement the `IDocumentService<T>` interface for your document type:
+   This document type implements `IReplicatedDocument`, which ensures it has the necessary properties for replication, including `Id`, `UpdatedAt`, and `IsDeleted`.
+
+2. Implement the `IDocumentService<T>` interface for your document type. For this quick start, we'll use a simple in-memory implementation:
 
    ```csharp
-   public class WorkspaceService : BaseDocumentService<Workspace>
+   using System.Collections.Concurrent;
+   using System.Linq.Expressions;
+
+   public class InMemoryWorkspaceService : IDocumentService<Workspace>
    {
-       public WorkspaceService(IEventPublisher eventPublisher, ILogger<WorkspaceService> logger)
-           : base(eventPublisher, logger)
+       private readonly ConcurrentDictionary<Guid, Workspace> _workspaces = new();
+       private readonly IEventPublisher _eventPublisher;
+
+       public InMemoryWorkspaceService(IEventPublisher eventPublisher)
        {
+           _eventPublisher = eventPublisher;
        }
 
-       // Implement the required methods
-       // ...
+       public Task<Workspace?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+       {
+           _workspaces.TryGetValue(id, out var workspace);
+           return Task.FromResult(workspace);
+       }
+
+       public Task<IReadOnlyList<Workspace>> GetManyAsync(Expression<Func<Workspace, bool>> predicate, int limit, CancellationToken cancellationToken)
+       {
+           var result = _workspaces.Values
+               .AsQueryable()
+               .Where(predicate)
+               .Take(limit)
+               .ToList();
+
+           return Task.FromResult<IReadOnlyList<Workspace>>(result);
+       }
+
+       public async Task<Workspace> CreateAsync(Workspace document, CancellationToken cancellationToken)
+       {
+           if (_workspaces.TryAdd(document.Id, document))
+           {
+               await _eventPublisher.PublishAsync(document, cancellationToken);
+               return document;
+           }
+           throw new InvalidOperationException("Failed to add workspace");
+       }
+
+       public async Task<Workspace> UpdateAsync(Workspace document, CancellationToken cancellationToken)
+       {
+           if (_workspaces.TryGetValue(document.Id, out var existingWorkspace))
+           {
+               if (_workspaces.TryUpdate(document.Id, document, existingWorkspace))
+               {
+                   await _eventPublisher.PublishAsync(document, cancellationToken);
+                   return document;
+               }
+           }
+           throw new InvalidOperationException("Failed to update workspace");
+       }
+
+       public Task<IReadOnlyList<Workspace>> GetUpdatedAsync(DateTimeOffset since, Guid checkpointToken, int limit, CancellationToken cancellationToken)
+       {
+           var result = _workspaces.Values
+               .Where(w => w.UpdatedAt > since && w.Id.CompareTo(checkpointToken) > 0)
+               .OrderBy(w => w.UpdatedAt)
+               .ThenBy(w => w.Id)
+               .Take(limit)
+               .ToList();
+
+           return Task.FromResult<IReadOnlyList<Workspace>>(result);
+       }
    }
    ```
+
+   This implementation provides a simple in-memory storage for workspaces using a `ConcurrentDictionary`. It supports the core operations required by the RxDB replication protocol, including checkpoint-based querying and event publishing.
 
 3. In your `Program.cs`, configure the services and GraphQL schema:
 
@@ -94,50 +151,33 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
 
    // Add services to the container
    builder.Services
-       .AddSingleton<IDocumentService<Workspace>, WorkspaceService>();
-   
-   // Configure the GraphQL server
-   builder.Services.AddGraphQLServer()
-       // Add RxDBDotNet replication support
-       .AddReplicationServer()
-       // Configure replication for your document type
-       .AddReplicatedDocument<Workspace>()
-       // Enable pub/sub for GraphQL subscriptions
-       .AddInMemorySubscriptions();
+       .AddSingleton<IDocumentService<Workspace>, InMemoryWorkspaceService>()
+       .AddSingleton<IEventPublisher, InMemoryEventPublisher>();
 
-   // Configure CORS to allow requests from your RxDB client
-   builder.Services.AddCors(options =>
-   {
-       options.AddDefaultPolicy(corsPolicyBuilder =>
-       {
-           corsPolicyBuilder
-               // Replace with your RxDB client's origin
-               .WithOrigins("http://localhost:5000")
-               .AllowAnyHeader()
-               .AllowAnyMethod()
-               // Required for WebSocket connections
-               .AllowCredentials();
-       });
-   });
+   // Configure the GraphQL server
+   builder.Services
+       .AddGraphQLServer()
+       .AddQueryType()
+       .AddMutationType()
+       .AddSubscriptionType()
+       .AddReplicationServer()
+       .AddReplicatedDocument<Workspace>()
+       .AddInMemorySubscriptions();
 
    var app = builder.Build();
 
-   // Enable CORS
-   app.UseCors();
-
-   // Enable WebSockets (required for subscriptions)
    app.UseWebSockets();
-
-   // Map the GraphQL endpoint
    app.MapGraphQL();
 
    app.Run();
    ```
 
+   This setup configures the GraphQL server to support the RxDB replication protocol, including query, mutation, and subscription types necessary for pull replication, push replication, and real-time updates.
+
 4. Use the GraphQL API to interact with your documents:
 
    ```graphql
-   # Push a new workspace
+   # Push a new workspace (Push Replication)
    mutation PushWorkspace {
      pushWorkspace(workspacePushRow: [{
        newDocumentState: {
@@ -154,7 +194,7 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
      }
    }
 
-   # Pull workspaces with filtering
+   # Pull workspaces with filtering (Pull Replication)
    query PullWorkspaces {
      pullWorkspace(
        limit: 10
@@ -172,7 +212,7 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
      }
    }
 
-   # Subscribe to workspace updates
+   # Subscribe to workspace updates (Event Observation)
    subscription StreamWorkspaces {
      streamWorkspace(headers: { Authorization: "Bearer your-auth-token" }) {
        documents {
@@ -189,15 +229,211 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
    }
    ```
 
-## Features
+   These GraphQL operations demonstrate the core components of the RxDB replication protocol: push replication, pull replication with checkpoint management, and event observation through subscriptions.
 
-- **RxDB Replication Protocol**: Implements the full [RxDB replication protocol](https://rxdb.info/replication.html), including pull, push, and real-time subscriptions.
-- **GraphQL Integration**: Seamlessly integrates with GraphQL using the Hot Chocolate library.
-- **Offline-First**: Supports offline-first application architecture.
-- **Real-Time Updates**: Provides real-time updates through GraphQL subscriptions.
-- **Conflict Detection**: Implements server-side conflict detection and reports conflicts to the client for resolution.
-- **GraphQL Filtering**: Supports filtering of documents during pull operations using GraphQL filters.
-- **Type-Safe**: Fully supports C# nullable reference types for improved type safety.
+## RxDB Replication Protocol Implementation
+
+RxDBDotNet thoroughly implements the RxDB replication protocol:
+
+1. **Document-Level Replication**: Supports the git-like replication model where clients can make local changes and merge them with the server state.
+
+2. **Transfer-Level Protocol**:
+   - **Pull Handler**: Implemented via the `PullWorkspace` query, supporting checkpoint-based iteration.
+   - **Push Handler**: Implemented via the `PushWorkspace` mutation, handling client-side writes and conflict detection.
+   - **Pull Stream**: Implemented using GraphQL subscriptions (`StreamWorkspace`), enabling real-time updates.
+
+3. **Checkpoint Iteration**: Supports efficient data synchronization using checkpoints, allowing clients to catch up with server state after being offline.
+
+4. **Event Observation**: Utilizes GraphQL subscriptions for real-time event streaming from the server to the client.
+
+5. **Data Layout**: 
+   - Ensures documents are sortable by their last write time (`UpdatedAt`).
+   - Uses soft deletes (`IsDeleted` flag) instead of physical deletion.
+
+6. **Conflict Handling**: Implements server-side conflict detection during push operations.
+
+7. **Offline-First Support**: Allows clients to continue operations offline and sync when back online.
+
+8. **Batch Processing**: Supports processing documents in batches for better performance.
+
+This implementation ensures that RxDBDotNet is fully compatible with RxDB clients, providing a robust, efficient, and real-time replication solution for .NET backends.
+
+## Advanced Features
+
+### Policy-Based Security
+
+RxDBDotNet supports policy-based security using the Microsoft.AspNetCore.Authorization infrastructure. This allows you to define and apply fine-grained access control to your replicated documents.
+
+#### How It Works
+
+1. You define policies using the standard ASP.NET Core authorization mechanisms.
+2. You configure which policies apply to which document types and operations using RxDBDotNet's `SecurityOptions`.
+3. RxDBDotNet automatically enforces these policies during replication operations.
+
+#### Configuration
+
+1. First, define your authorization policies in your `Program.cs` or startup code:
+
+```csharp
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("IsWorkspaceAdmin", policy =>
+        policy.RequireClaim("WorkspaceRole", "Admin"));
+    
+    options.AddPolicy("CanReadWorkspace", policy =>
+        policy.RequireClaim("WorkspaceRole", "Admin", "Reader"));
+});
+```
+
+2. When configuring your GraphQL server, add security options for your replicated documents:
+
+```csharp
+builder.Services
+    .AddGraphQLServer()
+    // ... other configuration ...
+    .AddReplicatedDocument<Workspace>(options =>
+    {
+        options.Security = new SecurityOptions()
+            .RequirePolicyToRead("CanReadWorkspace")
+            .RequirePolicyToWrite("IsWorkspaceAdmin");
+    });
+```
+
+This configuration ensures that:
+- Only users with the "Admin" or "Reader" role can read workspaces.
+- Only users with the "Admin" role can create, update, or delete workspaces.
+
+#### Usage
+
+With this configuration in place, RxDBDotNet will automatically enforce these policies:
+
+- During pull replication, only documents that the user is authorized to read will be returned.
+- During push replication, writes will only be accepted if the user is authorized to write.
+- For subscriptions, events will only be sent for documents the user is authorized to read.
+
+#### Example
+
+Here's how you might use this in practice:
+
+1. Set up your authentication mechanism (e.g., JWT).
+2. Configure your policies and RxDBDotNet security as shown above.
+3. When making GraphQL requests, include the authentication token.
+
+RxDBDotNet will then use the claims in the authentication token to enforce your policies automatically.
+
+For more detailed examples and advanced scenarios, please refer to our unit tests in the `SecurityTests` class.
+
+### Subscription Topics
+
+RxDBDotNet supports subscription topics, allowing clients to subscribe to specific subsets of documents based on their topics. This feature is particularly useful for scenarios where you want to filter real-time updates based on certain criteria, such as tenant, organization, or any relevent topic for which you want to receive updates.
+
+#### How It Works
+
+1. When creating or updating a document, you can specify one or more topics for that document.
+2. When subscribing to document updates, clients can specify which topics they're interested in.
+3. Clients will only receive updates for documents that match their specified topics.
+
+#### Configuration
+
+To use subscription topics, your document type should include a property to store topics. For example:
+
+```csharp
+public class LiveDoc : IReplicatedDocument
+{
+    public required Guid Id { get; init; }
+    public required string Content { get; set; }
+    public required DateTimeOffset UpdatedAt { get; set; }
+    public required bool IsDeleted { get; set; }
+    public required Guid WorkspaceId { get; set; }
+    public List<string>? Topics { get; set; }
+}
+```
+
+#### Usage
+
+1. Setting topics when creating or updating a document:
+
+```csharp
+var liveDoc = new LiveDoc
+{
+    Id = Guid.NewGuid(),
+    Content = "New document content",
+    UpdatedAt = DateTimeOffset.UtcNow,
+    IsDeleted = false,
+    WorkspaceId = workspaceId,
+    Topics = new List<string> { $"workspace-{workspaceId}" }
+};
+
+await documentService.CreateAsync(liveDoc, CancellationToken.None);
+```
+
+2. Subscribing to specific topics:
+
+In your GraphQL subscription, you can specify the topics you're interested in:
+
+```graphql
+subscription StreamLiveDocs {
+  streamLiveDoc(topics: ["workspace-123e4567-e89b-12d3-a456-426614174000"]) {
+    documents {
+      id
+      content
+      updatedAt
+      isDeleted
+      workspaceId
+    }
+    checkpoint {
+      updatedAt
+      lastDocumentId
+    }
+  }
+}
+```
+
+This subscription will only receive updates for LiveDocs that have "workspace-123e4567-e89b-12d3-a456-426614174000" as one of their topics.
+
+#### Example Scenario
+
+Let's consider a scenario where you have multiple workspaces, and clients should only receive updates for the LiveDocs within a specific workspace:
+
+1. When creating a LiveDoc, set its workspace ID as a topic:
+
+```csharp
+var liveDoc = new LiveDoc
+{
+    Id = Guid.NewGuid(),
+    Content = "Document in Workspace A",
+    UpdatedAt = DateTimeOffset.UtcNow,
+    IsDeleted = false,
+    WorkspaceId = workspaceId,
+    Topics = new List<string> { $"workspace-{workspaceId}" }
+};
+
+await documentService.CreateAsync(liveDoc, CancellationToken.None);
+```
+
+2. Clients can then subscribe only to LiveDocs within their specific workspace:
+
+```graphql
+subscription StreamWorkspaceLiveDocs {
+  streamLiveDoc(topics: ["workspace-123e4567-e89b-12d3-a456-426614174000"]) {
+    documents {
+      id
+      content
+      updatedAt
+      isDeleted
+      workspaceId
+    }
+    checkpoint {
+      updatedAt
+      lastDocumentId
+    }
+  }
+}
+```
+
+This way, each client will only receive updates for the LiveDocs within their specific workspace, improving performance and maintaining data isolation between workspaces.
+
+By leveraging subscription topics, RxDBDotNet provides a powerful mechanism for filtering real-time updates, enabling efficient and secure data synchronization within specific workspaces or other organizational structures.
 
 ## Contributing
 
@@ -232,3 +468,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact Information
 
 If you have any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).
+

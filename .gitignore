@@ -400,3 +400,4 @@ FodyWeavers.xsd
 /example/LiveDocs.RxDBClient/public/bundle.js
 /example/livedocs-client/.next
 /example/livedocs-client/.env.local
+/RxDBReplicationProtocol.txt

@@ -8,65 +8,63 @@ namespace LiveDocs.GraphQLApi.Infrastructure
 {
     public static class LiveDocsDbInitializer
     {
-        public static async Task InitializeAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
+        public static async Task InitializeAsync()
         {
-            var dbContext = serviceProvider.GetRequiredService<LiveDocsDbContext>();
+            await using var dbContext = new LiveDocsDbContext();
 
-            await dbContext.Database.EnsureCreatedAsync(cancellationToken);
+            await dbContext.Database.EnsureCreatedAsync();
 
-            await SeedDataAsync(dbContext, cancellationToken);
+            await SeedDataAsync(dbContext);
         }
 
-        private static async Task SeedDataAsync(LiveDocsDbContext dbContext, CancellationToken cancellationToken)
+        private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
         {
-            if (await dbContext.Workspaces.AnyAsync(cancellationToken))
+            if (await dbContext.Workspaces.AnyAsync())
             {
                 return; // Data has already been seeded
             }
 
-            var workspacePk = RT.Comb.Provider.Sql.Create();
-            var liveDocsWorkspace = new Workspace
+            var rootWorkspace = new Workspace
             {
-                Id = workspacePk,
-                Name = "LiveDocs Org Workspace",
+                Id = RT.Comb.Provider.Sql.Create(),
+                Name = "LiveDocs Example Org Workspace",
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
-                ReplicatedDocumentId = workspacePk,
+                ReplicatedDocumentId = Guid.NewGuid(),
             };
 
-            await dbContext.Workspaces.AddAsync(liveDocsWorkspace, cancellationToken);
+            await dbContext.Workspaces.AddAsync(rootWorkspace);
 
-            var userPk = RT.Comb.Provider.Sql.Create();
             var systemAdminReplicatedUser = new ReplicatedUser
             {
-                Id = userPk,
+                Id = Guid.NewGuid(),
                 FirstName = "System",
                 LastName = "Admin",
-                Email = "superadmin@livedocs.example.org",
+                Email = "systemadmin@livedocs.example.org",
                 JwtAccessToken = null,
-                WorkspaceId = liveDocsWorkspace.Id,
+                WorkspaceId = rootWorkspace.ReplicatedDocumentId,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
             };
 
             var jwtAccessToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, UserRole.SystemAdmin);
 
-            var superAdminUser = new User
+            var systemAdminUser = new User
             {
-                Id = userPk,
-                FirstName = "System",
-                LastName = "Admin",
-                Email = "systemadmin@livedocs.example.org",
+                Id = RT.Comb.Provider.Sql.Create(),
+                FirstName = systemAdminReplicatedUser.FirstName,
+                LastName = systemAdminReplicatedUser.LastName,
+                Email = systemAdminReplicatedUser.Email,
                 JwtAccessToken = jwtAccessToken,
-                WorkspaceId = liveDocsWorkspace.Id,
-                UpdatedAt = DateTimeOffset.UtcNow,
-                IsDeleted = false,
-                ReplicatedDocumentId = userPk,
+                WorkspaceId = rootWorkspace.Id,
+                UpdatedAt = systemAdminReplicatedUser.UpdatedAt,
+                IsDeleted = systemAdminReplicatedUser.IsDeleted,
+                ReplicatedDocumentId = systemAdminReplicatedUser.Id,
             };
 
-            await dbContext.Users.AddAsync(superAdminUser, cancellationToken);
+            await dbContext.Users.AddAsync(systemAdminUser);
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesAsync();
         }
     }
 }

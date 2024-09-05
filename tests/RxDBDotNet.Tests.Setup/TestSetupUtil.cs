@@ -1,48 +1,61 @@
 ﻿using System.Diagnostics;
+using System.Net;
+using HotChocolate.Execution.Configuration;
+using LiveDocs.GraphQLApi.Data;
+using LiveDocs.GraphQLApi.Infrastructure;
+using LiveDocs.GraphQLApi.Models.Replication;
+using LiveDocs.GraphQLApi.Models.Shared;
+using LiveDocs.GraphQLApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RxDBDotNet.Extensions;
+using RxDBDotNet.Security;
+using RxDBDotNet.Services;
+using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.Setup;
 
 public static class TestSetupUtil
 {
-    //private static readonly SemaphoreSlim Semaphore = new(1, 1);
-
-    //private static volatile bool _areDockerContainersInitialized;
-
-    public static Task<TestContext> SetupAsync(Action<IServiceCollection>? configureGraphQLServer = null)
+    public static TestContext Setup(
+        Action<IApplicationBuilder>? configureApp = null,
+        Action<IServiceCollection>? configureServices = null,
+        Action<IRequestExecutorBuilder>? configureGraphQL = null,
+        bool setupAuthorization = false,
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null,
+        Action<List<Type>>? configureWorkspaceErrors = null)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
 
-        // try
-        // {
-        //     await Semaphore.WaitAsync();
-        //
-        //     if (!_areDockerContainersInitialized)
-        //     {
-        //         await RedisSetupUtil.SetupAsync();
-        //
-        //         await DbSetupUtil.SetupAsync();
-        //
-        //         _areDockerContainersInitialized = true;
-        //     }
-        // }
-        // finally
-        // {
-        //     Semaphore.Release();
-        // }
-
         var testTimeout = GetTestTimeout();
 
-#pragma warning disable CA2000 // dispose at end of test
         var timeoutTokenSource = new CancellationTokenSource(testTimeout);
         disposables.Add(timeoutTokenSource);
-#pragma warning restore CA2000
 
         var timeoutToken = timeoutTokenSource.Token;
 
-        var factory = WebApplicationFactorySetupUtil.Setup(configureGraphQLServer);
+        var factory = WebApplicationFactorySetupUtil.Setup(
+            app =>
+            {
+                ConfigureAppDefaults(app, setupAuthorization);
+                configureApp?.Invoke(app);
+            },
+            services =>
+            {
+                ConfigureServiceDefaults(services, setupAuthorization);
+                configureServices?.Invoke(services);
+            },
+            graphQLBuilder =>
+            {
+                ConfigureGraphQL(graphQLBuilder, setupAuthorization, configureWorkspaceSecurity, configureWorkspaceErrors);
+                configureGraphQL?.Invoke(graphQLBuilder);
+            });
+
         asyncDisposables.Add(factory);
 
         var asyncTestServiceScope = factory.Services.CreateAsyncScope();
@@ -53,27 +66,129 @@ public static class TestSetupUtil
             .GetRequiredService<IHostApplicationLifetime>()
             .ApplicationStopping;
 
-#pragma warning disable CA2000 // dispose at end of test
-        // Combine the token into a single token
         var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeoutToken, applicationStoppingToken);
-        disposables.Add(timeoutTokenSource);
-#pragma warning restore CA2000
+        disposables.Add(linkedTokenSource);
+
         var linkedToken = linkedTokenSource.Token;
 
-        //await LiveDocsDbInitializer.InitializeAsync(asyncTestServiceScope.ServiceProvider, linkedToken);
-
-        return Task.FromResult(new TestContext
+        return new TestContext
         {
             Factory = factory,
             HttpClient = factory.CreateClient(),
+            ServiceProvider = asyncTestServiceScope.ServiceProvider,
             CancellationToken = linkedToken,
             AsyncDisposables = asyncDisposables,
             Disposables = disposables,
-        });
+        };
+    }
+
+    private static void ConfigureAppDefaults(IApplicationBuilder app, bool setupAuthorization)
+    {
+        if (setupAuthorization)
+        {
+            app.UseAuthentication();
+        }
+
+        app.UseWebSockets();
+        app.UseRouting();
+
+        if (setupAuthorization)
+        {
+            app.UseAuthorization();
+        }
+
+        app.UseEndpoints(endpoints => endpoints.MapGraphQL());
+    }
+
+    private static void ConfigureServiceDefaults(IServiceCollection services, bool setupAuthorization)
+    {
+        services.AddProblemDetails();
+        services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
+        services.AddDbContext<LiveDocsDbContext>(options =>
+            options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
+                                 ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
+
+        services.AddScoped<IDocumentService<ReplicatedUser>, UserService>()
+            .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
+            .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
+
+        if (setupAuthorization)
+        {
+            services.AddScoped<AuthorizationHelper>();
+            ConfigureAuthentication(services);
+            ConfigureAuthorization(services);
+        }
+    }
+
+    private static void ConfigureGraphQL(
+        IRequestExecutorBuilder graphQLBuilder,
+        bool setupAuthorization,
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity,
+        Action<List<Type>>? configureWorkspaceErrors)
+    {
+        graphQLBuilder
+            .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
+            .AddReplicationServer()
+            .AddRedisSubscriptions()
+            .AddReplicatedDocument<ReplicatedUser>()
+            .AddReplicatedDocument<ReplicatedWorkspace>(options =>
+            {
+                configureWorkspaceSecurity?.Invoke(options.Security);
+                configureWorkspaceErrors?.Invoke(options.Errors);
+            })
+            .AddReplicatedDocument<ReplicatedLiveDoc>();
+
+        if (setupAuthorization)
+        {
+            graphQLBuilder.AddAuthorization();
+        }
+    }
+
+    private static void ConfigureAuthentication(IServiceCollection services)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Audience = JwtUtil.Audience;
+                options.IncludeErrorDetails = true;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters();
+                ConfigureJwtBearerEvents(options);
+            });
+    }
+
+    private static void ConfigureJwtBearerEvents(JwtBearerOptions options)
+    {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = _ => Task.CompletedTask,
+            OnAuthenticationFailed = ctx =>
+            {
+                ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                ctx.Fail(ctx.Exception);
+                return Task.CompletedTask;
+            },
+            OnForbidden = ctx =>
+            {
+                ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                ctx.Fail(nameof(HttpStatusCode.Forbidden));
+                return Task.CompletedTask;
+            },
+        };
+    }
+
+    private static void ConfigureAuthorization(IServiceCollection services)
+    {
+        services.AddAuthorizationBuilder()
+            .AddPolicy("IsWorkspaceAdmin", policy => policy.RequireRole(nameof(UserRole.WorkspaceAdmin)))
+            .AddPolicy("IsSystemAdmin", policy => policy.RequireRole(nameof(UserRole.SystemAdmin)));
     }
 
     private static TimeSpan GetTestTimeout()
     {
-        return Debugger.IsAttached ? TimeSpan.FromMinutes(5) : TimeSpan.FromSeconds(10);
+        return Debugger.IsAttached
+            ? TimeSpan.FromMinutes(5)
+            : TimeSpan.FromSeconds(10);
     }
 }

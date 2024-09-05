@@ -1,10 +1,10 @@
 # LiveDocs Example Client
 
-This project is an example client for the LiveDocs system, demonstrating real-time collaborative document management using RxDB, GraphQL, and React.
+This project is a **work-in-progress** example client for the LiveDocs system, demonstrating real-time collaborative document management using RxDB, GraphQL, and React. **Please note that this is not a fully functional client application yet.**
 
 ## Overview
 
-LiveDocs is a real-time collaborative document management system that allows users to create and manage workspaces, users, and live documents. This client application provides a user interface for interacting with the LiveDocs system, showcasing the following features:
+LiveDocs is an example real-time collaborative document management system that allows users to create and manage workspaces, users, and live documents. This client application provides a user interface for interacting with the LiveDocs system, showcasing the following features:
 
 - Real-time synchronization with the RxDBDotNet GraphQL backend
 - Offline-first capabilities using RxDB

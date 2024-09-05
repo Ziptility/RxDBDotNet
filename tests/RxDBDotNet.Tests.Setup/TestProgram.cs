@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
 
 namespace RxDBDotNet.Tests.Setup;
 
@@ -6,21 +7,32 @@ public sealed class TestProgram
 {
     public static Task Main(string[] args)
     {
-        Environment.SetEnvironmentVariable(
-            "DOTNET_USE_POLLING_FILE_WATCHER",
-            "true");
-        Environment.SetEnvironmentVariable(
-            "DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE",
-            "false");
-
         var builder = WebApplication.CreateBuilder(args);
 
-        var startup = new TestStartup();
-        startup.ConfigureServices(builder.Services, builder.Environment, builder, isAspireEnvironment: false);
+        ConfigureLogging(builder);
 
-        var webApplication = builder.Build();
-        startup.Configure(webApplication, webApplication.Environment);
+        var app = builder.Build();
 
-        return webApplication.RunAsync();
+        return app.RunAsync();
+    }
+
+    private static void ConfigureLogging(WebApplicationBuilder builder)
+    {
+        builder.Logging.AddFilter(
+            "Microsoft.EntityFrameworkCore.Database.Command",
+            LogLevel.Critical);
+        builder.Logging.AddFilter(
+            "Microsoft.EntityFrameworkCore.Infrastructure",
+            LogLevel.Critical);
+        builder.Logging.AddFilter(
+            "Microsoft.AspNetCore",
+            LogLevel.Critical);
+        builder.Logging.AddFilter(
+            "Microsoft.AspNetCore.SignalR",
+            LogLevel.Critical);
+        builder.Logging.AddFilter(
+            "Microsoft.AspNetCore.Http.Connections",
+            LogLevel.Critical);
+        builder.Logging.SetMinimumLevel(LogLevel.Critical);
     }
 }

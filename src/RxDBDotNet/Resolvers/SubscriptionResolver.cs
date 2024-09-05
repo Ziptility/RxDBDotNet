@@ -1,7 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
-using Microsoft.Extensions.Logging;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 
@@ -18,16 +17,13 @@ namespace RxDBDotNet.Resolvers;
 /// </remarks>
 public sealed class SubscriptionResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
-    private const int RetryDelayMilliseconds = 5000;
-
     /// <summary>
     ///     Provides a stream of document changes for subscription.
     ///     This method is the entry point for GraphQL subscriptions and implements
     ///     the server-side push mechanism of the RxDB replication protocol.
     /// </summary>
     /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
-    /// <param name="topics">An optional set topics to recieve events for when a document is changed.</param>
-    /// <param name="logger">The logger used for logging information and errors.</param>
+    /// <param name="topics">An optional set of topics to receive events for when a document is changed.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <returns>
     ///     An asynchronous enumerable of <see cref="DocumentPullBulk{TDocument}" /> representing the stream of document
@@ -37,68 +33,61 @@ public sealed class SubscriptionResolver<TDocument> where TDocument : class, IRe
     internal IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStream(
         ITopicEventReceiver eventReceiver,
         List<string>? topics,
-        ILogger<SubscriptionResolver<TDocument>> logger,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(eventReceiver);
-        ArgumentNullException.ThrowIfNull(logger);
 
-        return DocumentChangedStreamInternal(eventReceiver, topics, logger, cancellationToken);
+        return DocumentChangedStreamInternal(eventReceiver, topics, cancellationToken);
     }
 
     private static async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStreamInternal(
         ITopicEventReceiver eventReceiver,
         List<string>? subscriberTopics,
-        ILogger<SubscriptionResolver<TDocument>> logger,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var streamName = $"Stream_{typeof(TDocument).Name}";
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            ISourceStream<DocumentPullBulk<TDocument>>? documentStream;
+            ISourceStream<DocumentPullBulk<TDocument>>? documentStream = null;
 
             try
             {
                 documentStream = await eventReceiver.SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken)
                     .ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogInformation("Document change stream for {DocumentType} was cancelled.", typeof(TDocument).Name);
-                yield break;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "An error occurred while subscribing to the document change stream for {DocumentType}. Retrying in {Delay} ms.",
-                    typeof(TDocument).Name, RetryDelayMilliseconds);
-                await Task.Delay(RetryDelayMilliseconds, cancellationToken)
-                    .ConfigureAwait(false);
-                continue;
-            }
 
-            await foreach (var pullDocumentResult in documentStream.ReadEventsAsync()
-                               .WithCancellation(cancellationToken)
-                               .ConfigureAwait(false))
-            {
-                if (ShouldYieldDocuments(pullDocumentResult, subscriberTopics))
+                await foreach (var pullDocumentResult in documentStream.ReadEventsAsync()
+                                   .WithCancellation(cancellationToken)
+                                   .ConfigureAwait(false))
                 {
-                    yield return pullDocumentResult;
+                    if (ShouldYieldDocuments(pullDocumentResult, subscriberTopics))
+                    {
+                        yield return pullDocumentResult;
+                    }
                 }
             }
-
-            // If we reach here, it means the stream has completed normally.
-            // We'll log this and continue the outer loop to resubscribe.
-            logger.LogInformation("Document change stream for {DocumentType} completed. Resubscribing.", typeof(TDocument).Name);
+            finally
+            {
+                // Ensure we dispose of the stream if it was created
+                if (documentStream != null)
+                {
+                    await documentStream.DisposeAsync()
+                        .ConfigureAwait(false);
+                }
+            }
         }
     }
 
     private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string>? subscriberTopics)
     {
-        return pullDocumentResult.Documents
-            .Exists(doc => subscriberTopics == null
-                           || subscriberTopics.Count == 0
-                           // Not ignoring case to follow the pub/sub pattern of case-sensitive channels in redis
-                           || doc.Topics?.Intersect(subscriberTopics, StringComparer.Ordinal).Any() == true);
+        // In the RxDB replication protocol:
+        // 1. Empty document lists in updates are valid and should be processed.
+        // 2. The checkpoint should always be updated, even if no documents are present.
+        // 3. The client (subscriber) should receive these updates to keep its checkpoint current.
+        return pullDocumentResult.Documents.Count == 0
+               || pullDocumentResult.Documents.Exists(doc => subscriberTopics == null
+                                                             || subscriberTopics.Count == 0
+                                                             // Not ignoring case to follow the pub/sub pattern of case-sensitive channels in redis
+                                                             || doc.Topics?.Intersect(subscriberTopics, StringComparer.Ordinal).Any() == true);
     }
 }

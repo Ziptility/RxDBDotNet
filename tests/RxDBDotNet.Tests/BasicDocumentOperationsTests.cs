@@ -1,209 +1,156 @@
-﻿using FluentAssertions;
-using RT.Comb;
-using RxDBDotNet.Tests.Helpers;
-using RxDBDotNet.Tests.Model;
-using RxDBDotNet.Tests.Setup;
+﻿using RxDBDotNet.Tests.Model;
+using RxDBDotNet.Tests.Utils;
 
 namespace RxDBDotNet.Tests;
 
-[Collection("Docker collection")]
-public class BasicDocumentOperationsTests
+[Collection("DockerSetup")]
+public class BasicDocumentOperationsTests : IAsyncLifetime
 {
-    private readonly DockerSetupFixture _fixture;
+    private TestContext _testContext = null!;
 
-    public BasicDocumentOperationsTests(DockerSetupFixture fixture)
+    public Task InitializeAsync()
     {
-        _fixture = fixture;
+        _testContext = TestSetupUtil.Setup();
+
+        return Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _testContext.DisposeAsync();
     }
 
     [Fact]
-    public async Task TestCase1_1_PushNewRowShouldCreateSingleDocument()
+    public async Task PushNewRowShouldCreateSingleDocument()
     {
-        await _fixture.InitializeAsync();
-
-        TestContext? testContext = null;
-
-        try
+        // Arrange
+        var workspaceId = Provider.Sql.Create();
+        var workspaceInput = new WorkspaceInputGql
         {
-            // Arrange
-            testContext = await TestSetupUtil.SetupAsync();
-
-            var workspaceId = Provider.Sql.Create();
-            var newWorkspace = new WorkspaceInputGql
+            Id = workspaceId,
+            Name = Strings.CreateString(),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false,
+            Topics = new List<string>
             {
-                Id = workspaceId,
-                Name = Strings.CreateString(),
-                UpdatedAt = DateTimeOffset.UtcNow,
-                IsDeleted = false,
-                Topics = new List<string>
-                {
-                    workspaceId.ToString(),
-                },
-            };
+                workspaceId.ToString(),
+            },
+        };
 
-            var workspaceInput = new WorkspaceInputPushRowGql
-            {
-                AssumedMasterState = null,
-                NewDocumentState = newWorkspace,
-            };
-
-            var pushWorkspaceInputGql = new List<WorkspaceInputPushRowGql?>
-            {
-                workspaceInput,
-            };
-
-            var createWorkspace =
-                new MutationQueryBuilderGql().WithPushWorkspace(new WorkspaceQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
-
-            // Act
-            var response = await testContext.HttpClient.PostGqlMutationAsync(createWorkspace, testContext.CancellationToken);
-
-            // Assert
-            response.Errors.Should()
-                .BeNullOrEmpty();
-            response.Data.PushWorkspace?.Should()
-                .BeNullOrEmpty();
-
-            // Verify the workspace exists in the database
-            await testContext.HttpClient.VerifyWorkspaceExists(newWorkspace, testContext.CancellationToken);
-        }
-        finally
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
         {
-            if (testContext != null)
+            AssumedMasterState = null,
+            NewDocumentState = workspaceInput,
+        };
+
+        var workspaceInputGql = new PushWorkspaceInputGql
+        {
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
             {
-                await testContext.DisposeAsync();
-            }
-        }
+                workspaceInputPushRowGql,
+            },
+        };
+
+        var createWorkspace =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), workspaceInputGql);
+
+        // Act
+        var response = await _testContext.HttpClient.PostGqlMutationAsync(createWorkspace, _testContext.CancellationToken);
+
+        // Assert
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+
+        await _testContext.HttpClient.VerifyWorkspaceAsync(workspaceInput, _testContext.CancellationToken);
     }
 
     [Fact]
-    public async Task TestCase1_2_PullBulkByDocumentIdShouldReturnSingleDocument()
+    public async Task PullBulkByDocumentIdShouldReturnSingleDocument()
     {
-        await _fixture.InitializeAsync();
+        // Arrange
+        var workspace1 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
 
-        TestContext? testContext = null;
-
-        try
+        var workspaceById = new WorkspaceFilterInputGql
         {
-            // Arrange
-            testContext = await TestSetupUtil.SetupAsync();
-
-            var workspace1 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
-            await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
-
-            var workspaceById = new WorkspaceFilterInputGql
+            Id = new UuidOperationFilterInputGql
             {
-                Id = new UuidOperationFilterInputGql
-                {
-                    Eq = workspace1.Id?.Value,
-                },
-            };
-            var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
-                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 1000, where: workspaceById);
+                Eq = workspace1.workspaceInputGql.Id?.Value,
+            },
+        };
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 1000, where: workspaceById);
 
-            // Act
-            var response = await testContext.HttpClient.PostGqlQueryAsync(query, testContext.CancellationToken);
+        // Act
+        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
 
-            // Assert
-            response.Errors.Should()
-                .BeNullOrEmpty();
+        // Assert
+        response.Errors.Should()
+            .BeNullOrEmpty();
 
-            response.Data.PullWorkspace?.Documents.Should()
-                .HaveCount(1);
-            response.Data.PullWorkspace?.Documents.Should()
-                .ContainSingle(workspace => workspace.Id == workspace1.Id);
-        }
-        finally
-        {
-            if (testContext != null)
-            {
-                await testContext.DisposeAsync();
-            }
-        }
+        response.Data.PullWorkspace?.Documents.Should()
+            .HaveCount(1);
+        response.Data.PullWorkspace?.Documents.Should()
+            .ContainSingle(workspace => workspace.Id == workspace1.workspaceInputGql.Id);
     }
 
     [Fact]
     public async Task PullBulkShouldReturnAllDocuments()
     {
-        await _fixture.InitializeAsync();
+        // Arrange
+        var workspace1 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        var workspace2 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
 
-        TestContext? testContext = null;
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
+            .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 1000);
 
-        try
-        {
-            // Arrange
-            testContext = await TestSetupUtil.SetupAsync();
-            var workspace1 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
-            var workspace2 = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+        // Act
+        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
 
-            var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
-                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 1000);
+        // Assert
+        response.Errors.Should()
+            .BeNullOrEmpty();
 
-            // Act
-            var response = await testContext.HttpClient.PostGqlQueryAsync(query, testContext.CancellationToken);
-
-            // Assert
-            response.Errors.Should()
-                .BeNullOrEmpty();
-
-            response.Data.PullWorkspace?.Documents.Should()
-                .ContainSingle(workspace => workspace.Id == workspace1.Id);
-            response.Data.PullWorkspace?.Documents.Should()
-                .ContainSingle(workspace => workspace.Id == workspace2.Id);
-        }
-        finally
-        {
-            if (testContext != null)
-            {
-                await testContext.DisposeAsync();
-            }
-        }
+        response.Data.PullWorkspace?.Documents.Should()
+            .ContainSingle(workspace => workspace.Id == workspace1.workspaceInputGql.Id);
+        response.Data.PullWorkspace?.Documents.Should()
+            .ContainSingle(workspace => workspace.Id == workspace2.workspaceInputGql.Id);
     }
 
     [Fact]
     public async Task ItShouldHandleMultiplePullsFollowedByAPush()
     {
-        await _fixture.InitializeAsync();
+        // Arrange
 
-        TestContext? testContext = null;
+        // Act
+        var response = await PushAndPullDocumentAsync(_testContext);
+        var response2 = await PushAndPullDocumentAsync(_testContext);
+        var response3 = await PushAndPullDocumentAsync(_testContext);
 
-        try
-        {
-            // Arrange
-            testContext = await TestSetupUtil.SetupAsync();
-            // Act
-            var response = await PushAndPullDocumentAsync(testContext);
-            var response2 = await PushAndPullDocumentAsync(testContext);
-            var response3 = await PushAndPullDocumentAsync(testContext);
-
-            // Assert
-            response.Errors.Should()
-                .BeNullOrEmpty();
-            response2.Errors.Should()
-                .BeNullOrEmpty();
-            response3.Errors.Should()
-                .BeNullOrEmpty();
-        }
-        finally
-        {
-            if (testContext != null)
-            {
-                await testContext.DisposeAsync();
-            }
-        }
+        // Assert
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response2.Errors.Should()
+            .BeNullOrEmpty();
+        response3.Errors.Should()
+            .BeNullOrEmpty();
     }
 
     private static async Task<GqlQueryResponse> PushAndPullDocumentAsync(TestContext testContext)
     {
         // Push a document
-        var newWorkspace = await testContext.HttpClient.CreateNewWorkspaceAsync(testContext.CancellationToken);
+        var (workspaceInputGql, _) = await testContext.HttpClient.CreateWorkspaceAsync(testContext.CancellationToken);
 
         // Pull a document
         var workspaceById = new WorkspaceFilterInputGql
         {
             Id = new UuidOperationFilterInputGql
             {
-                Eq = newWorkspace.Id?.Value,
+                Eq = workspaceInputGql.Id?.Value,
             },
         };
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()

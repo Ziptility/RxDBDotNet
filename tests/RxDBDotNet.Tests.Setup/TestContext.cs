@@ -14,6 +14,8 @@ public sealed class TestContext : IAsyncDisposable
 
     public required CancellationToken CancellationToken { get; init; }
 
+    public required IServiceProvider ServiceProvider { get; init; }
+
     public async ValueTask DisposeAsync()
     {
         try

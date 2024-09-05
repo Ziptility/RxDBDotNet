@@ -19,7 +19,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <WarningLevel>9999</WarningLevel>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-        <NoWarn>$(NoWarn);CA1848;NU5104;RCS1181;MA0004;CA2007;CA1711</NoWarn>
+        <NoWarn>$(NoWarn);CA1848;NU5104;RCS1181;MA0004;CA2007;CA1711;CA1062</NoWarn>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <GenerateProgramFile>false</GenerateProgramFile>

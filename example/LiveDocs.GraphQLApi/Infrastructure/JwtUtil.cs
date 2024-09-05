@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using LiveDocs.GraphQLApi.Models.Replication;
@@ -47,15 +48,16 @@ public static class JwtUtil
     {
         ArgumentNullException.ThrowIfNull(user);
 
+        var now = DateTimeOffset.UtcNow;
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()), // User's unique ID as the subject claim
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Unique identifier for the token
-            new(ClaimTypes.Role, role.ToString()), // User's role claim
-            new(JwtRegisteredClaimNames.Email, user.Email), // User's email claim
-            new(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString("O"), ClaimValueTypes.Integer64), // Issued At claim (iat)
-            new(JwtRegisteredClaimNames.Nbf, DateTime.UtcNow.ToString("O"), ClaimValueTypes.Integer64), // Not Before claim (nbf)
-            new(CustomClaimTypes.WorkspaceId, user.WorkspaceId.ToString()), // Custom claim for workspace
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString("D", CultureInfo.InvariantCulture)), // User's unique ID as the subject claim
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("D", CultureInfo.InvariantCulture)), // Unique identifier for the token
+            new(ClaimTypes.Role, role.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
+            new(JwtRegisteredClaimNames.Nbf, now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
+            new(CustomClaimTypes.WorkspaceId, user.WorkspaceId.ToString("D", CultureInfo.InvariantCulture)),
         };
 
         if (additionalClaims != null)
@@ -70,9 +72,7 @@ public static class JwtUtil
             issuer: Issuer,
             audience: Audience,
             claims: claims,
-            // Token is valid from the current time
-            notBefore: DateTime.UtcNow,
-            expires: DateTime.UtcNow.AddMinutes(120),
+            expires: now.AddMinutes(120).UtcDateTime,
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

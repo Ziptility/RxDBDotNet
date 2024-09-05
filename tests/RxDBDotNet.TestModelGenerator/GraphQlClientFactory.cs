@@ -33,13 +33,14 @@ public static class GraphQlClientFactory
                 ScalarFieldTypeMappingProvider = new ScalarFieldTypeMappingProvider(),
                 ClassSuffix = "Gql",
                 CSharpVersion = CSharpVersion.NewestWithNullableReferences,
+                DataClassMemberNullability = DataClassMemberNullability.DefinedBySchema,
             };
 
             var generator = new GraphQlGenerator(config);
             var csharpCode = generator.GenerateFullClientCSharpFile(schema, "RxDBDotNet.Tests.Model");
 
             // Split the generated code into lines
-            var lines = csharpCode.Split(new[] { Environment.NewLine }, StringSplitOptions.None).ToList();
+            var lines = csharpCode.Split([Environment.NewLine], StringSplitOptions.None).ToList();
 
             // Insert the pragma warning disable line
             // since the GraphQlClientGenerator library does not correctly handle nullable reference types

@@ -2,14 +2,22 @@
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
+using Microsoft.EntityFrameworkCore;
 using RT.Comb;
 using RxDBDotNet.Services;
 
 namespace LiveDocs.GraphQLApi.Services;
 
-public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
-    : DocumentService<LiveDoc, ReplicatedLiveDoc>(dbContext, eventPublisher)
+public class LiveDocService : DocumentService<LiveDoc, ReplicatedLiveDoc>
 {
+    private readonly LiveDocsDbContext _dbContext;
+
+    public LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher)
+        : base(dbContext, eventPublisher)
+    {
+        _dbContext = dbContext;
+    }
+
     protected override Expression<Func<LiveDoc, ReplicatedLiveDoc>> ProjectToDocument()
     {
         return liveDoc => new ReplicatedLiveDoc
@@ -41,20 +49,30 @@ public class LiveDocService(LiveDocsDbContext dbContext, IEventPublisher eventPu
         return entityToUpdate;
     }
 
-    protected override LiveDoc Create(ReplicatedLiveDoc newDocument)
+    protected override async Task<LiveDoc> CreateAsync(ReplicatedLiveDoc newDocument, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(newDocument);
+
+        var workspacePk = await _dbContext.Workspaces
+            .Where(w => w.ReplicatedDocumentId == newDocument.WorkspaceId)
+            .Select(w => w.Id)
+            .SingleAsync(cancellationToken);
+
+        var ownerPk = await _dbContext.Users
+            .Where(w => w.ReplicatedDocumentId == newDocument.OwnerId)
+            .Select(w => w.Id)
+            .SingleAsync(cancellationToken);
 
         return new LiveDoc
         {
             Id = Provider.Sql.Create(),
             ReplicatedDocumentId = newDocument.Id,
             Content = newDocument.Content,
-            OwnerId = newDocument.OwnerId,
-            WorkspaceId = newDocument.WorkspaceId,
+            OwnerId = ownerPk,
+            WorkspaceId = workspacePk,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
-            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t, }),
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t }),
         };
     }
 }

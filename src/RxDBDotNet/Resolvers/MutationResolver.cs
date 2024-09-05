@@ -1,32 +1,39 @@
-﻿using RxDBDotNet.Documents;
+﻿using System.Security.Claims;
+using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
-using RxDBDotNet.Repositories;
+using RxDBDotNet.Security;
+using RxDBDotNet.Services;
 
 namespace RxDBDotNet.Resolvers;
 
 /// <summary>
-/// Represents a GraphQL mutation resolver for pushing documents.
-/// This class implements the server-side logic for the 'push' operation in the RxDB replication protocol.
+///     Represents a GraphQL mutation resolver for pushing documents.
+///     This class implements the server-side logic for the 'push' operation in the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being replicated, which must implement IReplicatedDocument.</typeparam>
 /// <remarks>
-/// Note that this class must not use constructor injection per:
-/// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
+///     Note that this class must not use constructor injection per:
+///     https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
 public sealed class MutationResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
-    /// Pushes a set of documents to the server and handles any conflicts.
-    /// This method implements the conflict resolution part of the RxDB replication protocol.
+    ///     Pushes a set of documents to the server and detects any conflicts.
     /// </summary>
     /// <param name="documents">The list of documents to push, including their assumed master state.</param>
-    /// <param name="service">The document service to be used for data access.</param>
+    /// <param name="documentService">The document service to be used for data access.</param>
+    /// <param name="currentUser">Provides access to the current user.</param>
+    /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
+    /// <param name="authorizationHelper">The service used for authorization checks.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A task representing the asynchronous operation, with a result of any conflicting documents.</returns>
 #pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
     internal async Task<List<TDocument>> PushDocumentsAsync(
         List<DocumentPushRow<TDocument>?>? documents,
-        [Service] IDocumentService<TDocument> service,
+        IDocumentService<TDocument> documentService,
+        ClaimsPrincipal? currentUser,
+        SecurityOptions<TDocument>? securityOptions,
+        AuthorizationHelper? authorizationHelper,
         CancellationToken cancellationToken)
     {
         // Early return if no documents are provided.
@@ -38,13 +45,17 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
 
         // Step 1: Categorize documents and detect conflicts
         // This aligns with the RxDB protocol's requirement to detect conflicts before applying changes
-        var (conflicts, updates, creates) = await CategorizeDocumentsAsync(documents, service, cancellationToken).ConfigureAwait(false);
+        var (conflicts, updates, creates) = await CategorizeDocumentsAsync(documents, documentService, cancellationToken)
+            .ConfigureAwait(false);
 
         // Step 2: Apply changes only if there are no initial conflicts
         // This ensures atomicity of operations as per the RxDB protocol
         if (conflicts.Count == 0)
         {
-            var applyConflicts = await ApplyChangesAsync(creates, updates, service, cancellationToken).ConfigureAwait(false);
+            var applyConflicts = await ApplyChangesAsync(creates, updates, documentService, authorizationHelper,
+                    currentUser, securityOptions, cancellationToken)
+                .ConfigureAwait(false);
+
             conflicts.AddRange(applyConflicts);
         }
 
@@ -54,8 +65,8 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     }
 
     /// <summary>
-    /// Categorizes the incoming documents into conflicts, updates, and new creates.
-    /// This method aligns with the RxDB protocol's requirement to detect conflicts before applying changes.
+    ///     Categorizes the incoming documents into conflicts, updates, and new creates.
+    ///     This method aligns with the RxDB protocol's requirement to detect conflicts before applying changes.
     /// </summary>
     /// <param name="documents">The list of documents to categorize.</param>
     /// <param name="service">The document service to be used for data access.</param>
@@ -92,7 +103,8 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
             if (existing != null)
             {
                 // Document exists in the service, handle potential conflicts
-                HandleExistingDocument(document, existing, conflicts, updates, service);
+                HandleExistingDocument(document, existing, conflicts, updates,
+                    service);
             }
             else
             {
@@ -105,8 +117,8 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     }
 
     /// <summary>
-    /// Handles the categorization of an existing document.
-    /// This method implements the conflict detection mechanism as per the RxDB protocol.
+    ///     Handles the categorization of an existing document.
+    ///     This method implements the conflict detection mechanism as per the RxDB protocol.
     /// </summary>
     /// <param name="document">The document push row containing the new state and assumed master state.</param>
     /// <param name="existing">The existing document in the service.</param>
@@ -135,8 +147,8 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     }
 
     /// <summary>
-    /// Handles the categorization of a new document.
-    /// This method deals with edge cases where the client might be out of sync.
+    ///     Handles the categorization of a new document.
+    ///     This method deals with edge cases where the client might be out of sync.
     /// </summary>
     /// <param name="document">The document push row containing the new state and assumed master state.</param>
     /// <param name="conflicts">The list to add conflicting documents to.</param>
@@ -160,68 +172,108 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     }
 
     /// <summary>
-    /// Applies the changes to the service, including creating new documents and updating existing ones.
-    /// This method ensures atomicity of operations as per the RxDB protocol.
+    ///     Applies the changes to the service, including creating new documents and updating existing ones.
+    ///     This method ensures atomicity of operations as per the RxDB protocol.
     /// </summary>
     /// <param name="creates">The list of new documents to create.</param>
     /// <param name="updates">The list of existing documents to update.</param>
-    /// <param name="service">The document service to be used for data access.</param>
+    /// <param name="documentService">The document service to be used for data access.</param>
+    /// <param name="authorizationHelper">The service used for authorization checks.</param>
+    /// <param name="currentUser">Provides access to the current user.</param>
+    /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
     /// <returns>A list of documents that are considered conflicting if an error occurs during the process.</returns>
     private static async Task<List<TDocument>> ApplyChangesAsync(
         List<TDocument> creates,
         List<TDocument> updates,
-        IDocumentService<TDocument> service,
+        IDocumentService<TDocument> documentService,
+        AuthorizationHelper? authorizationHelper,
+        ClaimsPrincipal? currentUser,
+        SecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
     {
-        try
+        // Create new documents
+        foreach (var create in creates)
         {
-            // Create new documents
-            foreach (var create in creates)
-            {
-                await service.CreateDocumentAsync(create, cancellationToken).ConfigureAwait(false);
-            }
+            await AuthorizeOperationAsync(authorizationHelper, currentUser, securityOptions, Operation.Create)
+                .ConfigureAwait(false);
 
-            // Update existing documents
-            foreach (var update in updates)
-            {
-                await HandleDocumentUpdateAsync(update, service, cancellationToken).ConfigureAwait(false);
-            }
-
-            // Commit all changes in a single transaction
-            // This ensures atomicity of the entire operation, a key requirement of the RxDB protocol
-            await service.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-            // If we reach here, all changes were applied successfully
-            return [];
+            await documentService.CreateDocumentAsync(create, cancellationToken)
+                .ConfigureAwait(false);
         }
-        catch (Exception)
+
+        // Update existing documents
+        foreach (var update in updates)
         {
-            // If any exception occurs during the update process,
-            // we consider all documents as conflicting to ensure data integrity.
-            // This is a conservative approach to maintain consistency with the RxDB protocol.
-            return [.. creates, .. updates];
+            await HandleDocumentUpdateAsync(update, documentService, authorizationHelper, currentUser,
+                    securityOptions, cancellationToken)
+                .ConfigureAwait(false);
         }
+
+        // Commit all changes in a single transaction
+        // This ensures atomicity of the entire operation, a key requirement of the RxDB protocol
+        await documentService.SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        // If we reach here, all changes were applied successfully
+        return [];
     }
 
     /// <summary>
-    /// Handles the update of a single document, including soft deletes as per RxDB protocol.
+    ///     Handles the update of a single document, including soft deletes as per RxDB protocol.
     /// </summary>
     /// <param name="update">The document to update.</param>
     /// <param name="service">The document service to be used for data access.</param>
+    /// <param name="authorizationHelper">The service used for authorization checks.</param>
+    /// <param name="currentUser">Provides access to the current user.</param>
+    /// <param name="securityOptions">A collection of authorization requirements to be checked.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
-    private static async Task HandleDocumentUpdateAsync(TDocument update, IDocumentService<TDocument> service, CancellationToken cancellationToken)
+    private static async Task HandleDocumentUpdateAsync(
+        TDocument update,
+        IDocumentService<TDocument> service,
+        AuthorizationHelper? authorizationHelper,
+        ClaimsPrincipal? currentUser,
+        SecurityOptions<TDocument>? securityOptions,
+        CancellationToken cancellationToken)
     {
         if (update.IsDeleted)
         {
+            await AuthorizeOperationAsync(authorizationHelper, currentUser, securityOptions, Operation.Delete)
+                .ConfigureAwait(false);
+
             // Handle soft deletes as per RxDB protocol
             // Documents are never physically deleted, only marked as deleted
-            await service.MarkAsDeletedAsync(update, cancellationToken).ConfigureAwait(false);
+            await service.MarkAsDeletedAsync(update, cancellationToken)
+                .ConfigureAwait(false);
         }
         else
         {
+            await AuthorizeOperationAsync(authorizationHelper, currentUser, securityOptions, Operation.Update)
+                .ConfigureAwait(false);
+
             // Update the existing document
-            await service.UpdateDocumentAsync(update, cancellationToken).ConfigureAwait(false);
+            await service.UpdateDocumentAsync(update, cancellationToken)
+                .ConfigureAwait(false);
         }
+    }
+
+    private static Task AuthorizeOperationAsync(
+        AuthorizationHelper? authorizationHelper,
+        ClaimsPrincipal? currentUser,
+        SecurityOptions<TDocument>? securityOptions,
+        Operation operation)
+    {
+        if (authorizationHelper == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var documentOperation = new DocumentOperation
+        {
+            Operation = operation,
+            DocumentType = typeof(TDocument),
+        };
+
+        return authorizationHelper.AuthorizeAsync(currentUser, documentOperation, securityOptions);
     }
 }

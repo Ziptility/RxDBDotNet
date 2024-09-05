@@ -38,7 +38,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
     /// <summary>
     /// The full name of the user.
     /// </summary>
-    public string FullName
+    public string? FullName
     {
         get => $"{FirstName} {LastName}".Trim();
         init{}

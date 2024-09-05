@@ -1,7 +1,8 @@
-﻿using HotChocolate.Resolvers;
+﻿using HotChocolate.Execution;
+using HotChocolate.Resolvers;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
-using RxDBDotNet.Repositories;
+using RxDBDotNet.Services;
 
 namespace RxDBDotNet.Resolvers;
 
@@ -27,6 +28,7 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// <param name="service">The document service to be used for data access.</param>
     /// <param name="context">The GraphQL context which contains any filters or projections.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the work.</param>
+    /// <exception cref="QueryException"></exception>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a
     /// <see cref="DocumentPullBulk{TDocument}"/> object containing the pulled documents and the new checkpoint.
@@ -36,12 +38,12 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
     /// It uses a combination of the UpdatedAt timestamp and the document ID to ensure consistent and complete results,
     /// even when multiple documents have the same UpdatedAt value.
     /// </remarks>
-// Method is too long. This is because of the extensive documentation, which is acceptable in this case for maintainability.
+    // Method is too long. This is because of the extensive documentation, which is acceptable in this case for maintainability.
 #pragma warning disable MA0051, CA1822
     internal async Task<DocumentPullBulk<TDocument>> PullDocumentsAsync(
         Checkpoint? checkpoint,
         int limit,
-        [Service] IDocumentService<TDocument> service,
+        IDocumentService<TDocument> service,
         IResolverContext context,
         CancellationToken cancellationToken)
     {
@@ -92,14 +94,18 @@ public sealed class QueryResolver<TDocument> where TDocument : class, IReplicate
 
         var documents = await service.ExecuteQueryAsync(limitedQuery, cancellationToken).ConfigureAwait(false);
 
-        // If no documents are returned, we return an empty result with a null checkpoint
-        // This signals to the client that there are no more documents to pull
+        // If no documents are returned, we return an empty result with the same checkpoint
+        // This is a crucial part of the RxDB replication protocol:
+        // When there are no new documents since the last checkpoint, we must return
+        // the same checkpoint to indicate that the client is up-to-date.
+        // This allows the client to maintain its current sync state and efficiently
+        // handle subsequent synchronization requests.
         if (documents.Count == 0)
         {
             return new DocumentPullBulk<TDocument>
             {
                 Documents = [],
-                Checkpoint = new Checkpoint
+                Checkpoint = checkpoint ?? new Checkpoint
                 {
                     LastDocumentId = null,
                     UpdatedAt = null,

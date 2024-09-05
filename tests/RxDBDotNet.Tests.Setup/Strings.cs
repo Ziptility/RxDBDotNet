@@ -1,4 +1,4 @@
-﻿namespace RxDBDotNet.Tests.Helpers;
+﻿namespace RxDBDotNet.Tests.Setup;
 
 public static class Strings
 {
@@ -15,9 +15,7 @@ public static class Strings
         for (var i = 0; i < length; i++)
         {
 #pragma warning disable SCS0005, CA5394 // Weak random number generator. // only used for unit tests
-            chars[i] = allowedChars[Random.Next(
-                0,
-                allowedChars.Length)];
+            chars[i] = allowedChars[Random.Next(0, allowedChars.Length)];
 #pragma warning restore SCS0005, CA5394 // Weak random number generator.
         }
 

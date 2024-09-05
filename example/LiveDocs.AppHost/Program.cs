@@ -1,5 +1,3 @@
-// see https://learn.microsoft.com/en-us/dotnet/aspire/get-started/build-aspire-apps-with-nodejs
-
 using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -9,18 +7,18 @@ var redis = builder.AddRedis("redis", 6379)
 
 // Add SQL Server
 var password = builder.AddParameter("sqlpassword", secret: true);
-var sqlDb = builder.AddSqlServer("sql", password: password, port: 16032)
+var sqlDb = builder.AddSqlServer("sql", password: password, port: 1433)
+    .WithEndpoint(port: 1146, targetPort: 1433, name: "sql-endpoint")
     .AddDatabase("sqldata", databaseName: "LiveDocsDb");
 
 builder.AddProject<LiveDocs_GraphQLApi>("replicationApi", "http")
     .WithReference(redis)
     .WithReference(sqlDb)
-    .WithEnvironment("SQL_PASSWORD", password)
-    .WithEnvironment("IsAspireEnvironment", "true");
+    .WithEnvironment("SQL_PASSWORD", password);
 
 builder.AddNpmApp("livedocs-client", "../livedocs-client", "run")
     .WithHttpEndpoint(port: 1337, env: "PORT")
     .WithEnvironment("NODE_ENV", "production")
     .WithExternalHttpEndpoints();
 
-builder.Build().Run();
+await builder.Build().RunAsync();

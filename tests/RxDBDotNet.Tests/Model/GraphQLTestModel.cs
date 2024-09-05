@@ -1820,25 +1820,6 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
-    public partial class UserInputHeadersGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _authorization;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
-        #endif
-        public QueryBuilderParameter<string>? Authorization
-        {
-            get => (QueryBuilderParameter<string>?)_authorization.Value;
-            set => _authorization = new InputPropertyInfo { Name = "Authorization", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_authorization.Name != null) yield return _authorization;
-        }
-    }
-
     public partial class WorkspaceInputCheckpointGql : IGraphQlInputObject
     {
         private InputPropertyInfo _updatedAt;
@@ -1899,25 +1880,6 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
-    public partial class WorkspaceInputHeadersGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _authorization;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
-        #endif
-        public QueryBuilderParameter<string>? Authorization
-        {
-            get => (QueryBuilderParameter<string>?)_authorization.Value;
-            set => _authorization = new InputPropertyInfo { Name = "Authorization", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_authorization.Name != null) yield return _authorization;
-        }
-    }
-
     public partial class LiveDocInputCheckpointGql : IGraphQlInputObject
     {
         private InputPropertyInfo _updatedAt;
@@ -1975,25 +1937,6 @@ namespace RxDBDotNet.Tests.Model
         {
             if (_assumedMasterState.Name != null) yield return _assumedMasterState;
             if (_newDocumentState.Name != null) yield return _newDocumentState;
-        }
-    }
-
-    public partial class LiveDocInputHeadersGql : IGraphQlInputObject
-    {
-        private InputPropertyInfo _authorization;
-
-        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
-        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
-        #endif
-        public QueryBuilderParameter<string>? Authorization
-        {
-            get => (QueryBuilderParameter<string>?)_authorization.Value;
-            set => _authorization = new InputPropertyInfo { Name = "Authorization", Value = value };
-        }
-
-        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
-        {
-            if (_authorization.Name != null) yield return _authorization;
         }
     }
 
@@ -2255,6 +2198,25 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
+    public partial class UserInputHeadersGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _authorization;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
+        #endif
+        public QueryBuilderParameter<string>? Authorization
+        {
+            get => (QueryBuilderParameter<string>?)_authorization.Value;
+            set => _authorization = new InputPropertyInfo { Name = "Authorization", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_authorization.Name != null) yield return _authorization;
+        }
+    }
+
     public partial class WorkspaceFilterInputGql : IGraphQlInputObject
     {
         private InputPropertyInfo _and;
@@ -2400,6 +2362,25 @@ namespace RxDBDotNet.Tests.Model
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
             if (_topics.Name != null) yield return _topics;
+        }
+    }
+
+    public partial class WorkspaceInputHeadersGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _authorization;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
+        #endif
+        public QueryBuilderParameter<string>? Authorization
+        {
+            get => (QueryBuilderParameter<string>?)_authorization.Value;
+            set => _authorization = new InputPropertyInfo { Name = "Authorization", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_authorization.Name != null) yield return _authorization;
         }
     }
 
@@ -2592,6 +2573,25 @@ namespace RxDBDotNet.Tests.Model
             if (_isDeleted.Name != null) yield return _isDeleted;
             if (_updatedAt.Name != null) yield return _updatedAt;
             if (_topics.Name != null) yield return _topics;
+        }
+    }
+
+    public partial class LiveDocInputHeadersGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _authorization;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<string>))]
+        #endif
+        public QueryBuilderParameter<string>? Authorization
+        {
+            get => (QueryBuilderParameter<string>?)_authorization.Value;
+            set => _authorization = new InputPropertyInfo { Name = "Authorization", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_authorization.Name != null) yield return _authorization;
         }
     }
 

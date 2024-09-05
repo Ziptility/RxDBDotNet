@@ -245,13 +245,24 @@ public static class GraphQLBuilderExtensions
         var streamDocumentName = $"stream{graphQLTypeName}";
         var headersInputTypeName = $"{graphQLTypeName}InputHeaders";
 
-        builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
+        return builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
         {
             var subscriptionField = objectTypeDescriptor.Name("Subscription")
                 .Field(streamDocumentName)
                 .Type<NonNullType<ObjectType<DocumentPullBulk<TDocument>>>>()
-                .Argument("headers", a => a.Type(headersInputTypeName)
-                    .Description($"Headers for {graphQLTypeName} subscription authentication."))
+                .Argument("headers", a => a
+                    .Type(new InputObjectType(d =>
+                    {
+                        d.Name(headersInputTypeName);
+                        d.Field("Authorization")
+                            .Type<NonNullType<StringType>>()
+                            .Description("The JWT bearer token for authentication.");
+                    }))
+                    .Description($"Headers for {graphQLTypeName} subscription authentication. " +
+                                 "Note: This parameter is defined to maintain compatibility with the RxDB protocol, " +
+                                 "but is not used in the RxDBDotNet implementation. Instead, clients should pass " +
+                                 "the Authorization header in the HTTP request following standard practices for " +
+                                 "Hot Chocolate subscriptions and ASP.NET applications."))
                 .Argument("topics", a => a.Type<ListType<NonNullType<StringType>>>())
                 .Description($"An optional set topics to receive events for when {graphQLTypeName} is upserted."
                              + $" If null then events will be received for all {graphQLTypeName} upserts.")
@@ -262,24 +273,10 @@ public static class GraphQLBuilderExtensions
                     var topicEventReceiver = context.Service<ITopicEventReceiver>();
                     var topics = context.ArgumentValue<List<string>?>("topics");
 
-                    // Note that even though the rxdb protocol defines a headers parameter,
-                    // we ignore it in the RxDBDotNet implementation and expect the client
-                    // to pass the Authorization header in the HTTP request in an idiomatic
-                    // way for Hot Chocolate subscriptions and ASP.NET applications.
-
                     return subscription.DocumentChangedStream(topicEventReceiver, topics, context.RequestAborted);
                 });
 
             AddReadAuthorizationIfNecessary(subscriptionField, replicationOptions);
-        }));
-
-        return builder.AddType(new InputObjectType<Headers>(d =>
-        {
-            d.Name($"{graphQLTypeName}InputHeaders");
-            d.Field(f => f.Authorization)
-                .Type<NonNullType<StringType>>()
-                .Name("Authorization")
-                .Description("The JWT bearer token for authentication.");
         }));
     }
 

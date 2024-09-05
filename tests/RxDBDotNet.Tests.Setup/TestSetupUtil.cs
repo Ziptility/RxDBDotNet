@@ -26,7 +26,8 @@ public static class TestSetupUtil
         Action<IServiceCollection>? configureServices = null,
         Action<IRequestExecutorBuilder>? configureGraphQL = null,
         bool setupAuthorization = false,
-        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null)
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null,
+        Action<List<Type>>? configureWorkspaceErrors = null)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
@@ -41,17 +42,17 @@ public static class TestSetupUtil
         var factory = WebApplicationFactorySetupUtil.Setup(
             app =>
             {
-                ConfigureApp(app, setupAuthorization);
+                ConfigureAppDefaults(app, setupAuthorization);
                 configureApp?.Invoke(app);
             },
             services =>
             {
-                ConfigureServices(services, setupAuthorization);
+                ConfigureServiceDefaults(services, setupAuthorization);
                 configureServices?.Invoke(services);
             },
             graphQLBuilder =>
             {
-                ConfigureGraphQL(graphQLBuilder, setupAuthorization, configureWorkspaceSecurity);
+                ConfigureGraphQL(graphQLBuilder, setupAuthorization, configureWorkspaceSecurity, configureWorkspaceErrors);
                 configureGraphQL?.Invoke(graphQLBuilder);
             });
 
@@ -81,11 +82,8 @@ public static class TestSetupUtil
         };
     }
 
-    private static void ConfigureApp(IApplicationBuilder app, bool setupAuthorization)
+    private static void ConfigureAppDefaults(IApplicationBuilder app, bool setupAuthorization)
     {
-        app.UseExceptionHandler();
-        app.UseDeveloperExceptionPage();
-
         if (setupAuthorization)
         {
             app.UseAuthentication();
@@ -102,7 +100,7 @@ public static class TestSetupUtil
         app.UseEndpoints(endpoints => endpoints.MapGraphQL());
     }
 
-    private static void ConfigureServices(IServiceCollection services, bool setupAuthorization)
+    private static void ConfigureServiceDefaults(IServiceCollection services, bool setupAuthorization)
     {
         services.AddProblemDetails();
         services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
@@ -126,21 +124,18 @@ public static class TestSetupUtil
     private static void ConfigureGraphQL(
         IRequestExecutorBuilder graphQLBuilder,
         bool setupAuthorization,
-        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity)
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity,
+        Action<List<Type>>? configureWorkspaceErrors)
     {
         graphQLBuilder
             .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
-            .AddQueryType<Query>()
             .AddReplicationServer()
             .AddRedisSubscriptions()
-            .AddSubscriptionDiagnostics()
             .AddReplicatedDocument<ReplicatedUser>()
             .AddReplicatedDocument<ReplicatedWorkspace>(options =>
             {
-                if (setupAuthorization)
-                {
-                    configureWorkspaceSecurity?.Invoke(options.Security);
-                }
+                configureWorkspaceSecurity?.Invoke(options.Security);
+                configureWorkspaceErrors?.Invoke(options.Errors);
             })
             .AddReplicatedDocument<ReplicatedLiveDoc>();
 

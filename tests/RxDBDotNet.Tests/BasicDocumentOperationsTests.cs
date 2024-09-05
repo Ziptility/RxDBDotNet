@@ -21,7 +21,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TestCase1_1_PushNewRowShouldCreateSingleDocument()
+    public async Task PushNewRowShouldCreateSingleDocument()
     {
         // Arrange
         var workspaceId = Provider.Sql.Create();
@@ -69,7 +69,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TestCase1_2_PullBulkByDocumentIdShouldReturnSingleDocument()
+    public async Task PullBulkByDocumentIdShouldReturnSingleDocument()
     {
         // Arrange
         var workspace1 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);

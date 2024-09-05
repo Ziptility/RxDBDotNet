@@ -3,7 +3,6 @@
 <p align="left">
   <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
     <img src="https://img.shields.io/nuget/v/RxDBDotNet.svg" alt="NuGet" style="margin-right: 10px;">
-    
   </a>
   <a href="https://codecov.io/github/Ziptility/RxDBDotNet" style="text-decoration:none;">
     <img src="https://codecov.io/github/Ziptility/RxDBDotNet/graph/badge.svg?token=VvuBJEsIHT" alt="codecov">
@@ -13,19 +12,69 @@
   </a>
 </p>
 
-RxDBDotNet is an open-source library that implements the server-side of the [RxDB replication protocol](https://rxdb.info/replication.html) for .NET backends. It enables real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate, facilitating offline-first capabilities and real-time updates.
+RxDBDotNet is a .NET library that implements the server-side of the RxDB replication protocol, enabling real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate.
+
+## Why RxDBDotNet?
+
+- Seamless integration with RxDB clients
+- Built on top of the popular Hot Chocolate GraphQL server
+- Supports offline-first capabilities and real-time updates
+- Easy to set up and use with minimal configuration
+- Flexible and extensible for custom document types and storage solutions
 
 ## Table of Contents
 
+- [Getting Started](#getting-started)
 - [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Usage](#usage)
+- [RxDB Replication Protocol Implementation](#rxdb-replication-protocol-implementation)
 - [Advanced Features](#advanced-features)
 - [Contributing](#contributing)
+- [Code of Conduct](#code-of-conduct)
 - [License](#license)
+- [Acknowledgments](#acknowledgments)
 - [Contact](#contact)
+
+## Getting Started
+
+Here's a minimal example to get you up and running with RxDBDotNet:
+
+1. Install the package:
+   ```bash
+   dotnet add package RxDBDotNet
+   ```
+
+2. Define a document type:
+   ```csharp
+   public class SimpleDoc : IReplicatedDocument
+   {
+       public required Guid Id { get; init; }
+       public required string Content { get; set; }
+       public required DateTimeOffset UpdatedAt { get; set; }
+       public required bool IsDeleted { get; set; }
+   }
+   ```
+
+3. Configure services in `Program.cs`:
+   ```csharp
+   builder.Services
+       .AddSingleton<IDocumentService<SimpleDoc>, InMemoryDocumentService<SimpleDoc>>()
+       .AddSingleton<IEventPublisher, InMemoryEventPublisher>();
+
+   builder.Services
+       .AddGraphQLServer()
+       .AddQueryType()
+       .AddMutationType()
+       .AddSubscriptionType()
+       .AddReplicationServer()
+       .AddReplicatedDocument<SimpleDoc>()
+       .AddInMemorySubscriptions();
+   ```
+
+4. Run your application and start using the GraphQL API for replication!
+
+For more detailed setup and usage, see the [Quick Start](#quick-start) section.
 
 ## Features
 
@@ -38,7 +87,11 @@ RxDBDotNet fully supports the RxDB replication protocol, offering:
 - **Checkpoint Management**: Track synchronization progress using checkpoints for efficient data transfer.
 - **Offline-First Support**: Continue local operations when offline and sync when back online.
 - **Custom Document Types**: Define and use your own document types that implement `IReplicatedDocument`.
-- **Flexible Storage**: Implement your own storage solution or use provided ones.
+- **Flexible Storage**: Implement your own storage solution or use provided ones like `InMemoryDocumentService`.
+- **Policy-Based Security**: Apply fine-grained access control to your replicated documents using ASP.NET Core Authorization policies.
+- **Subscription Topics**: Filter real-time updates based on specific criteria or organizational structures.
+- **Custom Error Types**: Define and handle specific exception types during replication operations for more detailed error reporting.
+- **Hot Chocolate Integration**: Built on top of the popular Hot Chocolate GraphQL server for .NET.
 
 ## Installation
 
@@ -254,8 +307,6 @@ RxDBDotNet thoroughly implements the RxDB replication protocol:
 
 7. **Offline-First Support**: Allows clients to continue operations offline and sync when back online.
 
-8. **Batch Processing**: Supports processing documents in batches for better performance.
-
 This implementation ensures that RxDBDotNet is fully compatible with RxDB clients, providing a robust, efficient, and real-time replication solution for .NET backends.
 
 ## Advanced Features
@@ -325,7 +376,7 @@ For more detailed examples and advanced scenarios, please refer to our unit test
 
 ### Subscription Topics
 
-RxDBDotNet supports subscription topics, allowing clients to subscribe to specific subsets of documents based on their topics. This feature is particularly useful for scenarios where you want to filter real-time updates based on certain criteria, such as tenant, organization, or any relevent topic for which you want to receive updates.
+RxDBDotNet supports subscription topics, allowing clients to subscribe to specific subsets of documents based on their topics. This feature is particularly useful for scenarios where you want to filter real-time updates based on certain criteria, such as tenant, organization, or any relevant topic for which you want to receive updates.
 
 #### How It Works
 
@@ -435,6 +486,135 @@ This way, each client will only receive updates for the LiveDocs within their sp
 
 By leveraging subscription topics, RxDBDotNet provides a powerful mechanism for filtering real-time updates, enabling efficient and secure data synchronization within specific workspaces or other organizational structures.
 
+### Custom Error Types
+
+RxDBDotNet allows you to configure custom error types through the ReplicationOptions.Errors property when setting up your replicated documents. This feature enables you to define specific exception types that can be handled during replication operations, providing more detailed error information to your clients.
+
+```csharp
+// Define your document type
+public class User : IReplicatedDocument
+{
+    public required Guid Id { get; init; }
+    public required string Username { get; set; }
+    public required DateTimeOffset UpdatedAt { get; set; }
+    public required bool IsDeleted { get; set; }
+}
+
+// Define custom exceptions
+public class UserNameTakenException : Exception
+{
+    public UserNameTakenException(string username)
+        : base($"The username {username} is already taken.")
+    {
+    }
+}
+
+public class InvalidUserNameException : Exception
+{
+    public InvalidUserNameException(string username)
+        : base($"The username {username} is invalid.")
+    {
+    }
+}
+
+// Implement your document service
+public class UserService : IDocumentService<User>
+{
+    // ... other methods ...
+
+    public async Task<User> CreateAsync(User document, CancellationToken cancellationToken)
+    {
+        // Check if username is valid
+        if (string.IsNullOrWhiteSpace(document.Username))
+        {
+            throw new InvalidUserNameException(document.Username);
+        }
+
+        // Check if username is already taken
+        if (await IsUsernameTaken(document.Username, cancellationToken))
+        {
+            throw new UserNameTakenException(document.Username);
+        }
+
+        // Create user
+        // ... implementation details ...
+
+        return document;
+    }
+
+    // ... other methods ...
+}
+
+// Configure services in Program.cs
+builder.Services
+    .AddSingleton<IDocumentService<User>, UserService>()
+    .AddSingleton<IEventPublisher, InMemoryEventPublisher>();
+
+// Configure the GraphQL server
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType()
+    .AddMutationType()
+    .AddSubscriptionType()
+    .AddReplicationServer()
+    .AddReplicatedDocument<User>(options =>
+    {
+        options.Errors = new List<Type>
+        {
+            typeof(UserNameTakenException),
+            typeof(InvalidUserNameException)
+        };
+    })
+    .AddInMemorySubscriptions();
+```
+
+In this example:
+
+1. We define a `User` document type that implements `IReplicatedDocument`.
+2. We create custom exceptions `UserNameTakenException` and `InvalidUserNameException`.
+3. We implement a `UserService` that throws these exceptions in appropriate scenarios.
+4. When configuring the GraphQL server, we add these exception types to the `ReplicationOptions.Errors` list when calling `AddReplicatedDocument<User>()`.
+
+Now, when these exceptions are thrown in your `UserService` during replication operations, RxDBDotNet will handle them appropriately. For example, during a push operation:
+
+```graphql
+mutation PushUser {
+  pushUser(userPushRow: [{
+    newDocumentState: {
+      id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      username: "takenUsername",
+      updatedAt: "2023-07-18T12:00:00Z",
+      isDeleted: false
+    }
+  }]) {
+    id
+    username
+    updatedAt
+    isDeleted
+  }
+}
+```
+
+If the username is already taken, the operation might return:
+
+```json
+{
+  "data": {
+    "pushUser": null
+  },
+  "errors": [
+    {
+      "message": "The username takenUsername is already taken.",
+      "extensions": {
+        "code": "USER_NAME_TAKEN"
+      }
+    }
+  ]
+}
+```
+
+By leveraging these custom exception types, you provide more detailed error information to your clients, making it easier to handle specific error scenarios during replication processes.
+
 ## Contributing
 
 We welcome contributions to RxDBDotNet! Here's how you can contribute:
@@ -465,7 +645,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Thanks to the RxDB project for inspiring this .NET implementation.
 - Thanks to the Hot Chocolate team for their excellent GraphQL server implementation.
 
-## Contact Information
+## Contact
 
 If you have any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).
-

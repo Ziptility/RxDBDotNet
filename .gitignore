@@ -401,3 +401,4 @@ FodyWeavers.xsd
 /example/livedocs-client/.next
 /example/livedocs-client/.env.local
 /RxDBReplicationProtocol.txt
+/mutations.md

@@ -327,7 +327,7 @@ app.Run();
      }
    }
    
-   # After initiating the subscription above, to see real-time updates, open a new tabe and run the following mutation:
+   # After initiating the subscription above, to see real-time updates, open a new tab and run the following mutation:
    mutation CreateWorkspace {
       pushWorkspace(
         input: {

@@ -36,7 +36,7 @@ Ready to dive in? [Get started](#getting-started) or [contribute](#contributing)
 - [Getting Started](#getting-started)
 - [Features](#features)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
+- [Quick Start Example](#quick-start-example)
 - [RxDB Replication Protocol Implementation](#rxdb-replication-protocol-implementation)
 - [Advanced Features](#advanced-features)
 - [Contributing](#contributing)
@@ -45,7 +45,7 @@ Ready to dive in? [Get started](#getting-started) or [contribute](#contributing)
 - [Acknowledgments](#acknowledgments)
 - [Contact](#contact)
 
-## Getting Started
+## Installation
 
 Here are the minimial steps to get you up and running with RxDBDotNet in your existing project:
 

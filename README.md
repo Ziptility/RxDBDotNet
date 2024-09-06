@@ -34,10 +34,8 @@ Ready to dive in? [Get started](#getting-started) or [contribute](#contributing)
 ## Table of Contents
 
 - [Getting Started](#getting-started)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start Example](#quick-start-example)
-- [RxDB Replication Protocol Implementation](#rxdb-replication-protocol-implementation)
+- [Sample Implementation](#sample-implementation)
+- [RxDB Replication Protocol Details](#rxdb-replication-protocol-details)
 - [Advanced Features](#advanced-features)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
@@ -45,7 +43,7 @@ Ready to dive in? [Get started](#getting-started) or [contribute](#contributing)
 - [Acknowledgments](#acknowledgments)
 - [Contact](#contact)
 
-## Installation
+## Getting Started
 
 Here are the minimial steps to get you up and running with RxDBDotNet in your existing project:
 
@@ -95,7 +93,7 @@ Here are the minimial steps to get you up and running with RxDBDotNet in your ex
 
 4. Run your application and start using the GraphQL API for replication!
 
-## Quick Start Example
+## Sample Implementation
 
 Here's a more detailed example that demonstrates how to set up a simple document type and implement the required services to enable replication.
 
@@ -376,7 +374,7 @@ app.Run();
 
 These GraphQL operations demonstrate the core components of the RxDB replication protocol: push replication, pull replication with checkpoint management, and event observation through subscriptions.
 
-## RxDB Replication Protocol Implementation
+## RxDB Replication Protocol Details
 
 RxDBDotNet thoroughly implements the RxDB replication protocol with additional error handling conventions:
 

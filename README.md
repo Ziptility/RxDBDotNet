@@ -47,229 +47,273 @@ Ready to dive in? [Get started](#getting-started) or [contribute](#contributing)
 
 ## Getting Started
 
-Here's a minimal example to get you up and running with RxDBDotNet:
+Here are the minimial steps to get you up and running with RxDBDotNet in your existing project:
 
 1. Install the package:
    ```bash
    dotnet add package RxDBDotNet
    ```
 
-2. Define a document type:
+2. Implement `IReplicatedDocument` for the type of document you want to replicate:
    ```csharp
-   public class SimpleDoc : IReplicatedDocument
-   {
-       public required Guid Id { get; init; }
-       public required string Content { get; set; }
-       public required DateTimeOffset UpdatedAt { get; set; }
-       public required bool IsDeleted { get; set; }
-   }
+    public class Workspace : IReplicatedDocument
+    {
+        public required Guid Id { get; init; }
+        public required string Name { get; set; }
+        public required DateTimeOffset UpdatedAt { get; set; }
+        public required bool IsDeleted { get; set; }
+        public List<string>? Topics { get; set; }
+    }
    ```
 
 3. Configure services in `Program.cs`:
    ```csharp
-   builder.Services
-       .AddSingleton<IDocumentService<SimpleDoc>, InMemoryDocumentService<SimpleDoc>>()
-       .AddSingleton<IEventPublisher, InMemoryEventPublisher>();
+    // Implement and add your document service to the DI container
+    builder.Services
+        .AddSingleton<IDocumentService<Workspace>, WorkspaceService>();
 
-   builder.Services
-       .AddGraphQLServer()
-       .AddQueryType()
-       .AddMutationType()
-       .AddSubscriptionType()
-       .AddReplicationServer()
-       .AddReplicatedDocument<SimpleDoc>()
-       .AddInMemorySubscriptions();
+    // Configure the Hot Chocolate GraphQL server
+    builder.Services
+        .AddGraphQLServer()
+        // Enable RxDBDotNet replication services
+        .AddReplicationServer()
+        // Register the document to be replicated
+        .AddReplicatedDocument<Workspace>()
+        .AddInMemorySubscriptions();
+
+    var app = builder.Build();
+
+    app.UseWebSockets();
+    app.MapGraphQL().WithOptions(new GraphQLServerOptions
+    {
+        // To display the BananaCakePop UI
+        Tool = { Enable = true },
+    });
+
+    app.Run();
    ```
 
 4. Run your application and start using the GraphQL API for replication!
 
-For more detailed setup and usage, see the [Quick Start](#quick-start) section.
+## Quick Start Example
 
-## Installation
+Here's a more detailed example that demonstrates how to set up a simple document type and implement the required services to enable replication.
 
-1. Install the RxDBDotNet NuGet package:
-   ```bash
-   dotnet add package RxDBDotNet
+1. Create a new ASP.NET Core Web API project:
+```
+dotnet new webapi -minimal -n RxDBDotNetExample --no-openapi
+cd RxDBDotNetExample
+```
+
+2. Add the required NuGet packages:
+```
+dotnet add package RxDBDotNet
+dotnet add package HotChocolate.AspNetCore
+dotnet add package HotChocolate.Data
+```
+
+3. Create a new file named `Workspace.cs` in the project root and add the following content:
+```csharp
+using RxDBDotNet.Documents;
+
+namespace RxDBDotNetExample;
+
+public class Workspace : IReplicatedDocument
+{
+    public required Guid Id { get; init; }
+    public required string Name { get; set; }
+    public required DateTimeOffset UpdatedAt { get; set; }
+    public required bool IsDeleted { get; set; }
+    public List<string>? Topics { get; set; }
+}
+```
+
+4. Create a new file named `WorkspaceService.cs` in the project root and add the following content:
+```csharp
+using System.Collections.Concurrent;
+using RxDBDotNet.Services;
+
+namespace RxDBDotNetExample;
+
+public class WorkspaceService : IDocumentService<Workspace>
+{
+    private readonly ConcurrentDictionary<Guid, Workspace> _documents = new();
+    private readonly IEventPublisher _eventPublisher;
+
+    public WorkspaceService(IEventPublisher eventPublisher)
+    {
+        _eventPublisher = eventPublisher;
+    }
+
+    public Task<Workspace?> GetDocumentByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        _documents.TryGetValue(id, out var document);
+        return Task.FromResult(document);
+    }
+
+    public Task<List<Workspace>> ExecuteQueryAsync(IQueryable<Workspace> query, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(query.ToList());
+    }
+
+    public async Task<Workspace> CreateDocumentAsync(Workspace document, CancellationToken cancellationToken)
+    {
+        if (_documents.TryAdd(document.Id, document))
+        {
+            await _eventPublisher.PublishDocumentChangedEventAsync(document, cancellationToken);
+            return document;
+        }
+        throw new InvalidOperationException("Failed to add document");
+    }
+
+    public async Task<Workspace> UpdateDocumentAsync(Workspace document, CancellationToken cancellationToken)
+    {
+        if (_documents.TryGetValue(document.Id, out var existingDocument))
+        {
+            if (_documents.TryUpdate(document.Id, document, existingDocument))
+            {
+                await _eventPublisher.PublishDocumentChangedEventAsync(document, cancellationToken);
+                return document;
+            }
+        }
+        throw new InvalidOperationException("Failed to update document");
+    }
+
+    public Task<Workspace> MarkAsDeletedAsync(Workspace document, CancellationToken cancellationToken)
+    {
+        document.IsDeleted = true;
+        return UpdateDocumentAsync(document, cancellationToken);
+    }
+
+    public bool AreDocumentsEqual(Workspace document1, Workspace document2)
+    {
+        return document1.Id == document2.Id &&
+                document1.Name == document2.Name &&
+                document1.UpdatedAt == document2.UpdatedAt &&
+                document1.IsDeleted == document2.IsDeleted;
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        // In-memory implementation doesn't need to save changes
+        return Task.CompletedTask;
+    }
+
+    public IQueryable<Workspace> GetQueryableDocuments()
+    {
+        return _documents.Values.AsQueryable();
+    }
+}
+```
+
+3. Open `Program.cs` and replace its content with the following:
+
+```csharp
+using HotChocolate.AspNetCore;
+using RxDBDotNet.Extensions;
+using RxDBDotNet.Services;
+using RxDBDotNetExample;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add your document service to the DI container
+builder.Services
+    .AddSingleton<IDocumentService<Workspace>, WorkspaceService>();
+
+// Configure the Hot Chocolate GraphQL server
+builder.Services
+    .AddGraphQLServer()
+    // Enable RxDBDotNet replication services
+    .AddReplicationServer()
+    // Register a type of document to be replicated
+    .AddReplicatedDocument<Workspace>()
+    .AddInMemorySubscriptions();
+
+var app = builder.Build();
+
+app.UseWebSockets();
+app.MapGraphQL().WithOptions(new GraphQLServerOptions
+{
+    // To display the BananaCakePop UI
+    Tool = { Enable = true },
+});
+
+app.Run();
+```
+
+5. Open `launchSettings.json` and replace its content with the following:
+
+```json
+{
+    "profiles": {
+    "http": {
+        "commandName": "Project",
+        "dotnetRunMessages": true,
+        "launchBrowser": true,
+        "launchUrl": "graphql",
+        "applicationUrl": "http://localhost:5001",
+        "environmentVariables": {
+            "ASPNETCORE_ENVIRONMENT": "Development"
+        }
+    }
+    }
+}
+```
+
+6. Run the application:
+   ```
+   dotnet run --launch-profile http
    ```
 
-2. Install required dependencies:
-   ```bash
-   dotnet add package HotChocolate.AspNetCore
-   dotnet add package HotChocolate.Data
-   ```
+7. Open a web browser and navigate to [http://localhost:5200/graphql](http://localhost:5200/graphql). You should see the BananaCakePop GraphQL UI.
 
-## Quick Start
-
-Here's a step-by-step guide to get you started with RxDBDotNet:
-
-1. Define your document type:
-
-   ```csharp
-   public class Workspace : IReplicatedDocument
-   {
-       public required Guid Id { get; init; }
-       public required string Name { get; set; }
-       public required DateTimeOffset UpdatedAt { get; set; }
-       public required bool IsDeleted { get; set; }
-       public List<string>? Topics { get; set; }
-   }
-   ```
-
-2. Implement the `IDocumentService<T>` interface for your document type. For this quick start, we'll use a simple in-memory implementation:
-
-   ```csharp
-   using System.Collections.Concurrent;
-   using System.Linq.Expressions;
-
-   public class InMemoryWorkspaceService : IDocumentService<Workspace>
-   {
-       private readonly ConcurrentDictionary<Guid, Workspace> _workspaces = new();
-       private readonly IEventPublisher _eventPublisher;
-
-       public InMemoryWorkspaceService(IEventPublisher eventPublisher)
-       {
-           _eventPublisher = eventPublisher;
-       }
-
-       public Task<Workspace?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-       {
-           _workspaces.TryGetValue(id, out var workspace);
-           return Task.FromResult(workspace);
-       }
-
-       public Task<IReadOnlyList<Workspace>> GetManyAsync(Expression<Func<Workspace, bool>> predicate, int limit, CancellationToken cancellationToken)
-       {
-           var result = _workspaces.Values
-               .AsQueryable()
-               .Where(predicate)
-               .Take(limit)
-               .ToList();
-
-           return Task.FromResult<IReadOnlyList<Workspace>>(result);
-       }
-
-       public async Task<Workspace> CreateAsync(Workspace document, CancellationToken cancellationToken)
-       {
-           if (_workspaces.TryAdd(document.Id, document))
-           {
-               await _eventPublisher.PublishAsync(document, cancellationToken);
-               return document;
-           }
-           throw new InvalidOperationException("Failed to add workspace");
-       }
-
-       public async Task<Workspace> UpdateAsync(Workspace document, CancellationToken cancellationToken)
-       {
-           if (_workspaces.TryGetValue(document.Id, out var existingWorkspace))
-           {
-               if (_workspaces.TryUpdate(document.Id, document, existingWorkspace))
-               {
-                   await _eventPublisher.PublishAsync(document, cancellationToken);
-                   return document;
-               }
-           }
-           throw new InvalidOperationException("Failed to update workspace");
-       }
-
-       public Task<IReadOnlyList<Workspace>> GetUpdatedAsync(DateTimeOffset since, Guid checkpointToken, int limit, CancellationToken cancellationToken)
-       {
-           var result = _workspaces.Values
-               .Where(w => w.UpdatedAt > since && w.Id.CompareTo(checkpointToken) > 0)
-               .OrderBy(w => w.UpdatedAt)
-               .ThenBy(w => w.Id)
-               .Take(limit)
-               .ToList();
-
-           return Task.FromResult<IReadOnlyList<Workspace>>(result);
-       }
-   }
-   ```
-
-3. In your `Program.cs`, configure the services and GraphQL schema:
-
-   ```csharp
-   var builder = WebApplication.CreateBuilder(args);
-
-   // Add services to the container
-   builder.Services
-       .AddSingleton<IDocumentService<Workspace>, InMemoryWorkspaceService>()
-       .AddSingleton<IEventPublisher, InMemoryEventPublisher>();
-
-   // Configure the GraphQL server
-   builder.Services
-       .AddGraphQLServer()
-       .AddQueryType()
-       .AddMutationType()
-       .AddSubscriptionType()
-       .AddReplicationServer()
-       .AddReplicatedDocument<Workspace>()
-       .AddInMemorySubscriptions();
-
-   var app = builder.Build();
-
-   app.UseWebSockets();
-   app.MapGraphQL();
-
-   app.Run();
-   ```
-
-4. Use the GraphQL API to interact with your documents:
+8. Use BananaCakePop to interact with your documents:
 
    ```graphql
-   # Push a new workspace (Push Replication)
-   mutation PushWorkspace {
-     pushWorkspace(input: {
-       workspacePushRow: [{
-         newDocumentState: {
-           id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-           name: "New Workspace",
-           updatedAt: "2023-07-18T12:00:00Z",
-           isDeleted: false
-         }
-       }]
-     }) {
-       workspace {
-         id
-         name
-         updatedAt
-         isDeleted
-       }
-       errors {
-         ... on AuthenticationError {
-           message
-         }
-         ... on UnauthorizedAccessError {
-           message
-         }
-         ... on ArgumentNullError {
-           message
-           paramName
-         }
-       }
-     }
-   }
+    # Push a new doc (Push Replication)
+    mutation CreateWorkspace {
+      pushWorkspace(
+        input: {
+          workspacePushRow: [
+            {
+              newDocumentState: {
+                id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                name: "New Workspace"
+                updatedAt: "2023-07-18T12:00:00Z"
+                isDeleted: true
+              }
+            }
+          ]
+        }
+      ) {
+        workspace {
+          id
+          isDeleted
+          name
+          updatedAt
+        }
+      }
+    }
 
-   # Pull workspaces with filtering (Pull Replication)
-   query PullWorkspaces {
-     pullWorkspace(
-       limit: 10
-     ) {
-       documents(where: { name: { eq: "New Workspace" } }) {
-         id
-         name
-         updatedAt
-         isDeleted
-       }
-       checkpoint {
-         updatedAt
-         lastDocumentId
-       }
-     }
-   }
+    # Pull documents with filtering (Pull Replication)
+    query PullWorkspaces {
+      pullWorkspace(limit: 10, where: { name: { eq: "New Workspace" } }) {
+        documents {
+          id
+          name
+          updatedAt
+          isDeleted
+        }
+        checkpoint {
+          updatedAt
+          lastDocumentId
+        }
+      }
+    }
 
    # Subscribe to workspace updates (Event Observation)
    subscription StreamWorkspaces {
-     streamWorkspace(headers: { Authorization: "Bearer your-auth-token" }) {
+     streamWorkspace() {
        documents {
          id
          name
@@ -282,9 +326,55 @@ Here's a step-by-step guide to get you started with RxDBDotNet:
        }
      }
    }
+   
+   # After initiating the subscription above, to see real-time updates, open a new tabe and run the following mutation:
+   mutation CreateWorkspace {
+      pushWorkspace(
+        input: {
+          workspacePushRow: [
+            {
+              newDocumentState: {
+                id: "7732fc9e-cd32-45dc-a991-dce92b8e7183"
+                name: "Another Workspace"
+                updatedAt: "2023-07-19T12:00:00Z"
+                isDeleted: true
+              }
+            }
+          ]
+        }
+      ) {
+        workspace {
+          id
+          isDeleted
+          name
+          updatedAt
+        }
+      }
+    }
+
+    # The StreamWorkspaces Response window should then display the streamed result:
+    {
+      "data": {
+        "streamWorkspace": {
+          "checkpoint": {
+            "lastDocumentId": "7732fc9e-cd32-45dc-a991-dce92b8e7183",
+            "updatedAt": "2023-07-19T12:00:00.000Z"
+          },
+          "documents": [
+            {
+              "id": "7732fc9e-cd32-45dc-a991-dce92b8e7183",
+              "isDeleted": true,
+              "name": "Another Workspace",
+              "topics": null,
+              "updatedAt": "2023-07-19T12:00:00.000Z"
+            }
+          ]
+        }
+      }
+    }
    ```
 
-   These GraphQL operations demonstrate the core components of the RxDB replication protocol: push replication, pull replication with checkpoint management, and event observation through subscriptions.
+These GraphQL operations demonstrate the core components of the RxDB replication protocol: push replication, pull replication with checkpoint management, and event observation through subscriptions.
 
 ## RxDB Replication Protocol Implementation
 

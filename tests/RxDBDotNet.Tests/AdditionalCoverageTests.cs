@@ -6,25 +6,25 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class AdditionalCoverageTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup();
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     [Fact]
     public async Task PushMultipleWorkspacesShouldHandleConflictsCorrectly()
     {
         // Arrange
-        var (workspace1, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var (workspace2, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (workspace1, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var (workspace2, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         // Modify workspace1
         workspace1.Name = Strings.CreateString();
@@ -59,27 +59,34 @@ public class AdditionalCoverageTests : IAsyncLifetime
             WorkspacePushRow = pushRows,
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().HaveCount(1);
-        response.Data.PushWorkspace?.Workspace?.First().Id.Should().Be(workspace1.Id!.Value);
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .HaveCount(1);
+        response.Data.PushWorkspace?.Workspace?.First()
+            .Id.Should()
+            .Be(workspace1.Id!.Value);
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
     }
 
     [Fact]
     public async Task PullWorkspacesWithComplexFiltering()
     {
         // Arrange
-        var workspace1 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspace2 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var filter = new WorkspaceFilterInputGql
         {
@@ -87,7 +94,10 @@ public class AdditionalCoverageTests : IAsyncLifetime
             {
                 new()
                 {
-                    Id = new UuidOperationFilterInputGql { Eq = workspace1.workspaceInputGql.Id?.Value },
+                    Id = new UuidOperationFilterInputGql
+                    {
+                        Eq = workspace1.workspaceInputGql.Id?.Value,
+                    },
                 },
                 new()
                 {
@@ -95,69 +105,87 @@ public class AdditionalCoverageTests : IAsyncLifetime
                     {
                         new()
                         {
-                            Name = new StringOperationFilterInputGql { Contains = workspace2.workspaceInputGql.Name?.Value },
+                            Name = new StringOperationFilterInputGql
+                            {
+                                Contains = workspace2.workspaceInputGql.Name?.Value,
+                            },
                         },
                         new()
                         {
-                            IsDeleted = new BooleanOperationFilterInputGql { Eq = false },
+                            IsDeleted = new BooleanOperationFilterInputGql
+                            {
+                                Eq = false,
+                            },
                         },
                     },
                 },
             },
         };
 
-        var query = new QueryQueryBuilderGql()
-            .WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000, where: filter);
+        var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000, where: filter);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PullWorkspace.Should().NotBeNull();
-        response.Data.PullWorkspace?.Documents.Should().HaveCount(2);
-        response.Data.PullWorkspace?.Documents.Should().Contain(w => w.Id == workspace1.workspaceInputGql.Id);
-        response.Data.PullWorkspace?.Documents.Should().Contain(w => w.Id == workspace2.workspaceInputGql.Id);
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PullWorkspace.Should()
+            .NotBeNull();
+        response.Data.PullWorkspace?.Documents.Should()
+            .HaveCount(2);
+        response.Data.PullWorkspace?.Documents.Should()
+            .Contain(w => w.Id == workspace1.workspaceInputGql.Id);
+        response.Data.PullWorkspace?.Documents.Should()
+            .Contain(w => w.Id == workspace2.workspaceInputGql.Id);
     }
 
     [Fact]
     public async Task SubscriptionShouldHandleMultipleTopics()
     {
         // Arrange
-        var workspace1 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspace2 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
-        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
         var topics = new List<string>
-    {
-        workspace1.workspaceInputGql.Id!.Value.ToString(),
-        workspace2.workspaceInputGql.Id!.Value.ToString(),
-    };
+        {
+            workspace1.workspaceInputGql.Id!.Value.ToString(),
+            workspace2.workspaceInputGql.Id!.Value.ToString(),
+        };
 
-        var subscriptionQuery = new SubscriptionQueryBuilderGql()
-            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
-                new WorkspaceInputHeadersGql { Authorization = "test-auth-token" }, topics)
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
+                new WorkspaceInputHeadersGql
+                {
+                    Authorization = "test-auth-token",
+                }, topics)
             .Build();
 
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, _testContext.CancellationToken, maxResponses: 2);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 2);
 
-        await Task.Delay(1000, _testContext.CancellationToken);
+        await Task.Delay(1000, TestContext.CancellationToken);
 
         // Act
-        await _testContext.HttpClient.UpdateWorkspaceAsync(workspace1.workspaceInputGql, _testContext.CancellationToken);
-        await _testContext.HttpClient.UpdateWorkspaceAsync(workspace2.workspaceInputGql, _testContext.CancellationToken);
+        await TestContext.HttpClient.UpdateWorkspaceAsync(workspace1.workspaceInputGql, TestContext.CancellationToken);
+        await TestContext.HttpClient.UpdateWorkspaceAsync(workspace2.workspaceInputGql, TestContext.CancellationToken);
 
         // Assert
         var subscriptionResponses = await subscriptionTask;
-        subscriptionResponses.Should().HaveCount(2);
+        subscriptionResponses.Should()
+            .HaveCount(2);
 
         foreach (var response in subscriptionResponses)
         {
-            response.Errors.Should().BeNullOrEmpty();
-            response.Data.Should().NotBeNull();
-            response.Data?.StreamWorkspace.Should().NotBeNull();
-            response.Data?.StreamWorkspace?.Documents.Should().HaveCount(1);
+            response.Errors.Should()
+                .BeNullOrEmpty();
+            response.Data.Should()
+                .NotBeNull();
+            response.Data?.StreamWorkspace.Should()
+                .NotBeNull();
+            response.Data?.StreamWorkspace?.Documents.Should()
+                .HaveCount(1);
 
             var streamedWorkspace = response.Data?.StreamWorkspace?.Documents?.First();
             streamedWorkspace.Should()

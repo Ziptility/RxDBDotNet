@@ -6,47 +6,52 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class PushDocumentsTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup();
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     [Fact]
     public async Task PushDocuments_WithNullDocumentList_ShouldReturnEmptyResult()
     {
         // Arrange
+        TestContext = new TestScenarioBuilder().Build();
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
             WorkspacePushRow = null,
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
         // When pushing a null document list, the system should return an empty result without any errors
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
     }
 
     [Fact]
     public async Task PushDocuments_WithListContainingNullDocument_ShouldSkipNullAndProcessValid()
     {
         // Arrange
-        var (existingWorkspace, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var updatedWorkspace = new WorkspaceInputGql
         {
@@ -62,33 +67,44 @@ public class PushDocumentsTests : IAsyncLifetime
             WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
             {
                 null,
-                new() { AssumedMasterState = existingWorkspace, NewDocumentState = updatedWorkspace },
+                new()
+                {
+                    AssumedMasterState = existingWorkspace,
+                    NewDocumentState = updatedWorkspace,
+                },
             },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
         // When pushing a list containing a null document, the system should skip the null entry and process the valid ones
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify the valid document was processed
-        var updatedWorkspaceFromDb = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, _testContext.CancellationToken);
-        updatedWorkspaceFromDb.Should().NotBeNull();
-        updatedWorkspaceFromDb.Name.Should().Be(updatedWorkspace.Name!.Value);
+        var updatedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        updatedWorkspaceFromDb.Should()
+            .NotBeNull();
+        updatedWorkspaceFromDb.Name.Should()
+            .Be(updatedWorkspace.Name.Value);
     }
 
     [Fact]
     public async Task PushDocuments_WithNewDocument_ShouldCreateDocument()
     {
         // Arrange
+        TestContext = new TestScenarioBuilder().Build();
         var workspaceId = Provider.Sql.Create();
         var newWorkspace = new WorkspaceInputGql
         {
@@ -96,7 +112,10 @@ public class PushDocumentsTests : IAsyncLifetime
             Name = Strings.CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
-            Topics = new List<string> { workspaceId.ToString() },
+            Topics = new List<string>
+            {
+                workspaceId.ToString(),
+            },
         };
 
         var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
@@ -107,35 +126,48 @@ public class PushDocumentsTests : IAsyncLifetime
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { workspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify the document was created
-        var createdWorkspace = await _testContext.HttpClient.GetWorkspaceByIdAsync(workspaceId, _testContext.CancellationToken);
-        createdWorkspace.Should().NotBeNull();
-        createdWorkspace.Id.Should().Be(workspaceId);
-        createdWorkspace.Name.Should().Be(newWorkspace.Name!.Value);
-        createdWorkspace.UpdatedAt.Should().BeCloseTo(newWorkspace.UpdatedAt!.Value, TimeSpan.FromSeconds(1));
-        createdWorkspace.IsDeleted.Should().Be(newWorkspace.IsDeleted);
+        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(workspaceId, TestContext.CancellationToken);
+        createdWorkspace.Should()
+            .NotBeNull();
+        createdWorkspace.Id.Should()
+            .Be(workspaceId);
+        createdWorkspace.Name.Should()
+            .Be(newWorkspace.Name.Value);
+        createdWorkspace.UpdatedAt.Should()
+            .BeCloseTo(newWorkspace.UpdatedAt!.Value, TimeSpan.FromSeconds(1));
+        createdWorkspace.IsDeleted.Should()
+            .Be(newWorkspace.IsDeleted);
     }
 
     [Fact]
     public async Task PushDocuments_WithExistingDocument_ShouldUpdateDocument()
     {
         // Arrange
-        var (existingWorkspace, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var updatedWorkspace = new WorkspaceInputGql
         {
@@ -154,38 +186,51 @@ public class PushDocumentsTests : IAsyncLifetime
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { workspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify the document was updated
-        var updatedWorkspaceFromDb = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, _testContext.CancellationToken);
-        updatedWorkspaceFromDb.Should().NotBeNull();
-        updatedWorkspaceFromDb.Id.Should().Be(existingWorkspace.Id);
-        updatedWorkspaceFromDb.Name.Should().Be(updatedWorkspace.Name!.Value);
-        updatedWorkspaceFromDb.UpdatedAt.Should().BeCloseTo(updatedWorkspace.UpdatedAt!.Value, TimeSpan.FromSeconds(1));
-        updatedWorkspaceFromDb.IsDeleted.Should().Be(updatedWorkspace.IsDeleted);
+        var updatedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        updatedWorkspaceFromDb.Should()
+            .NotBeNull();
+        updatedWorkspaceFromDb.Id.Should()
+            .Be(existingWorkspace.Id);
+        updatedWorkspaceFromDb.Name.Should()
+            .Be(updatedWorkspace.Name.Value);
+        updatedWorkspaceFromDb.UpdatedAt.Should()
+            .BeCloseTo(updatedWorkspace.UpdatedAt!.Value, TimeSpan.FromSeconds(1));
+        updatedWorkspaceFromDb.IsDeleted.Should()
+            .Be(updatedWorkspace.IsDeleted);
     }
 
     [Fact]
     public async Task PushDocuments_WithConflict_ShouldReturnConflict()
     {
         // Arrange
-        var (existingWorkspace, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         // Simulate a conflict by changing the workspace on the server
-        var conflictingWorkspace = await _testContext.HttpClient.UpdateWorkspaceAsync(existingWorkspace, _testContext.CancellationToken);
+        var conflictingWorkspace = await TestContext.HttpClient.UpdateWorkspaceAsync(existingWorkspace, TestContext.CancellationToken);
 
         var updatedWorkspace = new WorkspaceInputGql
         {
@@ -204,30 +249,42 @@ public class PushDocumentsTests : IAsyncLifetime
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { workspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().HaveCount(1);
-        response.Data.PushWorkspace?.Workspace?.First().Id.Should().Be(conflictingWorkspace.Id);
-        response.Data.PushWorkspace?.Workspace?.First().Name.Should().Be(conflictingWorkspace.Name);
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .HaveCount(1);
+        response.Data.PushWorkspace?.Workspace?.First()
+            .Id.Should()
+            .Be(conflictingWorkspace.Id);
+        response.Data.PushWorkspace?.Workspace?.First()
+            .Name.Should()
+            .Be(conflictingWorkspace.Name);
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
     }
 
     [Fact]
     public async Task PushDocuments_WithMultipleDocuments_ShouldHandleAllDocuments()
     {
         // Arrange
-        var (existingWorkspace1, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var (existingWorkspace2, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (existingWorkspace1, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var (existingWorkspace2, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var newWorkspace = new WorkspaceInputGql
         {
@@ -235,7 +292,11 @@ public class PushDocumentsTests : IAsyncLifetime
             Name = Strings.CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
-            Topics = new List<string> { Provider.Sql.Create().ToString() },
+            Topics = new List<string>
+            {
+                Provider.Sql.Create()
+                    .ToString(),
+            },
         };
 
         var updatedWorkspace1 = new WorkspaceInputGql
@@ -260,43 +321,66 @@ public class PushDocumentsTests : IAsyncLifetime
         {
             WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
             {
-                new() { AssumedMasterState = null, NewDocumentState = newWorkspace },
-                new() { AssumedMasterState = existingWorkspace1, NewDocumentState = updatedWorkspace1 },
-                new() { AssumedMasterState = existingWorkspace2, NewDocumentState = updatedWorkspace2 },
+                new()
+                {
+                    AssumedMasterState = null,
+                    NewDocumentState = newWorkspace,
+                },
+                new()
+                {
+                    AssumedMasterState = existingWorkspace1,
+                    NewDocumentState = updatedWorkspace1,
+                },
+                new()
+                {
+                    AssumedMasterState = existingWorkspace2,
+                    NewDocumentState = updatedWorkspace2,
+                },
             },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify all documents were created/updated
-        var createdWorkspace = await _testContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id!.Value, _testContext.CancellationToken);
-        createdWorkspace.Should().NotBeNull();
-        createdWorkspace.Name.Should().Be(newWorkspace.Name!.Value);
+        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id!.Value, TestContext.CancellationToken);
+        createdWorkspace.Should()
+            .NotBeNull();
+        createdWorkspace.Name.Should()
+            .Be(newWorkspace.Name.Value);
 
-        var updatedWorkspace1FromDb = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id!.Value, _testContext.CancellationToken);
-        updatedWorkspace1FromDb.Should().NotBeNull();
-        updatedWorkspace1FromDb.Name.Should().Be(updatedWorkspace1.Name!.Value);
+        var updatedWorkspace1FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id!.Value, TestContext.CancellationToken);
+        updatedWorkspace1FromDb.Should()
+            .NotBeNull();
+        updatedWorkspace1FromDb.Name.Should()
+            .Be(updatedWorkspace1.Name.Value);
 
-        var updatedWorkspace2FromDb = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id!.Value, _testContext.CancellationToken);
-        updatedWorkspace2FromDb.Should().NotBeNull();
-        updatedWorkspace2FromDb.Name.Should().Be(updatedWorkspace2.Name!.Value);
+        var updatedWorkspace2FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id!.Value, TestContext.CancellationToken);
+        updatedWorkspace2FromDb.Should()
+            .NotBeNull();
+        updatedWorkspace2FromDb.Name.Should()
+            .Be(updatedWorkspace2.Name.Value);
     }
 
     [Fact]
     public async Task PushDocuments_WithDeletedDocument_ShouldMarkDocumentAsDeleted()
     {
         // Arrange
-        var (existingWorkspace, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var deletedWorkspace = new WorkspaceInputGql
         {
@@ -315,38 +399,52 @@ public class PushDocumentsTests : IAsyncLifetime
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { workspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify the document was marked as deleted
-        var deletedWorkspaceFromDb = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, _testContext.CancellationToken);
-        deletedWorkspaceFromDb.Should().NotBeNull();
-        deletedWorkspaceFromDb.IsDeleted.Should().BeTrue();
+        var deletedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        deletedWorkspaceFromDb.Should()
+            .NotBeNull();
+        deletedWorkspaceFromDb.IsDeleted.Should()
+            .BeTrue();
     }
 
     [Fact]
     public async Task PushDocuments_WithNonExistentAssumedMasterState_ShouldHandleConflict()
     {
         // Arrange
+        TestContext = new TestScenarioBuilder().Build();
         var nonExistentWorkspace = new WorkspaceInputGql
         {
             Id = Provider.Sql.Create(),
             Name = Strings.CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1),
             IsDeleted = false,
-            Topics = new List<string> { Provider.Sql.Create().ToString() },
+            Topics = new List<string>
+            {
+                Provider.Sql.Create()
+                    .ToString(),
+            },
         };
 
         var newWorkspaceState = new WorkspaceInputGql
@@ -366,63 +464,81 @@ public class PushDocumentsTests : IAsyncLifetime
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { workspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
         // When pushing a document with a non-existent assumed master state,
         // the system treats this as a conflict and returns the assumed state
         // without creating a new document
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().NotBeNullOrEmpty();
-        response.Data.PushWorkspace?.Workspace.Should().HaveCount(1);
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .NotBeNullOrEmpty();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .HaveCount(1);
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         var returnedWorkspace = response.Data.PushWorkspace?.Workspace?.First();
-        returnedWorkspace.Should().NotBeNull();
-        returnedWorkspace?.Id.Should().Be(nonExistentWorkspace.Id);
-        returnedWorkspace?.Name.Should().Be(nonExistentWorkspace.Name);
-        returnedWorkspace?.IsDeleted.Should().Be(nonExistentWorkspace.IsDeleted);
+        returnedWorkspace.Should()
+            .NotBeNull();
+        returnedWorkspace?.Id.Should()
+            .Be(nonExistentWorkspace.Id);
+        returnedWorkspace?.Name.Should()
+            .Be(nonExistentWorkspace.Name);
+        returnedWorkspace?.IsDeleted.Should()
+            .Be(nonExistentWorkspace.IsDeleted);
 
         // Verify the document was not created
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await _testContext.HttpClient.GetWorkspaceByIdAsync(nonExistentWorkspace.Id!.Value, _testContext.CancellationToken));
+            await TestContext.HttpClient.GetWorkspaceByIdAsync(nonExistentWorkspace.Id!.Value, TestContext.CancellationToken));
     }
 
     [Fact]
     public async Task PushDocuments_WithEmptyList_ShouldReturnEmptyResult()
     {
         // Arrange
+        TestContext = new TestScenarioBuilder().Build();
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
             WorkspacePushRow = new List<WorkspaceInputPushRowGql?>(),
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
     }
 
     [Fact]
     public async Task PushDocuments_WithMixOfNewAndExistingDocuments_ShouldHandleCorrectly()
     {
         // Arrange
-        var (existingWorkspace, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var newWorkspace = new WorkspaceInputGql
         {
@@ -430,7 +546,11 @@ public class PushDocumentsTests : IAsyncLifetime
             Name = Strings.CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
-            Topics = new List<string> { Provider.Sql.Create().ToString() },
+            Topics = new List<string>
+            {
+                Provider.Sql.Create()
+                    .ToString(),
+            },
         };
 
         var updatedExistingWorkspace = new WorkspaceInputGql
@@ -446,43 +566,60 @@ public class PushDocumentsTests : IAsyncLifetime
         {
             WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
             {
-                new() { AssumedMasterState = null, NewDocumentState = newWorkspace },
-                new() { AssumedMasterState = existingWorkspace, NewDocumentState = updatedExistingWorkspace },
+                new()
+                {
+                    AssumedMasterState = null,
+                    NewDocumentState = newWorkspace,
+                },
+                new()
+                {
+                    AssumedMasterState = existingWorkspace,
+                    NewDocumentState = updatedExistingWorkspace,
+                },
             },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify new document was created
-        var createdWorkspace = await _testContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id!.Value, _testContext.CancellationToken);
-        createdWorkspace.Should().NotBeNull();
-        createdWorkspace.Name.Should().Be(newWorkspace.Name!.Value);
+        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id!.Value, TestContext.CancellationToken);
+        createdWorkspace.Should()
+            .NotBeNull();
+        createdWorkspace.Name.Should()
+            .Be(newWorkspace.Name.Value);
 
         // Verify existing document was updated
-        var updatedWorkspace = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, _testContext.CancellationToken);
-        updatedWorkspace.Should().NotBeNull();
-        updatedWorkspace.Name.Should().Be(updatedExistingWorkspace.Name!.Value);
+        var updatedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        updatedWorkspace.Should()
+            .NotBeNull();
+        updatedWorkspace.Name.Should()
+            .Be(updatedExistingWorkspace.Name.Value);
     }
 
     [Fact]
     public async Task PushDocuments_WithConflictInBatch_ShouldHandleCorrectly()
     {
         // Arrange
-        var (existingWorkspace1, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var (existingWorkspace2, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = new TestScenarioBuilder().Build();
+        var (existingWorkspace1, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var (existingWorkspace2, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         // Simulate a conflict by updating existingWorkspace1
-        var conflictingWorkspace = await _testContext.HttpClient.UpdateWorkspaceAsync(existingWorkspace1, _testContext.CancellationToken);
+        var conflictingWorkspace = await TestContext.HttpClient.UpdateWorkspaceAsync(existingWorkspace1, TestContext.CancellationToken);
 
         var updatedWorkspace1 = new WorkspaceInputGql
         {
@@ -506,34 +643,52 @@ public class PushDocumentsTests : IAsyncLifetime
         {
             WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
             {
-                new() { AssumedMasterState = existingWorkspace1, NewDocumentState = updatedWorkspace1 },
-                new() { AssumedMasterState = existingWorkspace2, NewDocumentState = updatedWorkspace2 },
+                new()
+                {
+                    AssumedMasterState = existingWorkspace1,
+                    NewDocumentState = updatedWorkspace1,
+                },
+                new()
+                {
+                    AssumedMasterState = existingWorkspace2,
+                    NewDocumentState = updatedWorkspace2,
+                },
             },
         };
 
-        var pushWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var pushWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace.Should().NotBeNull();
-        response.Data.PushWorkspace?.Workspace.Should().HaveCount(1);
-        response.Data.PushWorkspace?.Workspace?.First().Id.Should().Be(conflictingWorkspace.Id);
-        response.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace.Should()
+            .NotBeNull();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .HaveCount(1);
+        response.Data.PushWorkspace?.Workspace?.First()
+            .Id.Should()
+            .Be(conflictingWorkspace.Id);
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // When a conflict is detected in a batch, the entire batch is rejected to maintain consistency
 
         // Verify existingWorkspace1 was not updated due to conflict
-        var workspace1FromDb = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id!.Value, _testContext.CancellationToken);
-        workspace1FromDb.Should().NotBeNull();
-        workspace1FromDb.Name.Should().Be(conflictingWorkspace.Name);
+        var workspace1FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id!.Value, TestContext.CancellationToken);
+        workspace1FromDb.Should()
+            .NotBeNull();
+        workspace1FromDb.Name.Should()
+            .Be(conflictingWorkspace.Name);
 
         // Verify existingWorkspace2 was not updated due to the conflict in the batch
-        var workspace2FromDb = await _testContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id!.Value, _testContext.CancellationToken);
-        workspace2FromDb.Should().NotBeNull();
-        workspace2FromDb.Name.Should().Be(existingWorkspace2.Name!.Value);
+        var workspace2FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id!.Value, TestContext.CancellationToken);
+        workspace2FromDb.Should()
+            .NotBeNull();
+        workspace2FromDb.Name.Should()
+            .Be(existingWorkspace2.Name!.Value);
     }
 }

@@ -25,7 +25,11 @@ internal static class TestUtils
         return workspace;
     }
 
-    public static async Task<User> CreateUserAsync(this TestContext context, Workspace workspace, UserRole role, CancellationToken cancellationToken)
+    public static async Task<User> CreateUserAsync(
+        this TestContext context,
+        Workspace workspace,
+        UserRole role,
+        CancellationToken cancellationToken)
     {
         var dbContext = context.ServiceProvider.GetRequiredService<LiveDocsDbContext>();
         var replicatedUser = new ReplicatedUser
@@ -61,7 +65,7 @@ internal static class TestUtils
     }
 
     /// <summary>
-    /// Creates a new user within the specified workspace.
+    ///     Creates a new user within the specified workspace.
     /// </summary>
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="workspace">The workspace in which to create the user.</param>
@@ -99,12 +103,12 @@ internal static class TestUtils
             },
         };
 
-        var createUser = new MutationQueryBuilderGql().WithPushUser(
-            new PushUserPayloadQueryBuilderGql().WithAllFields(), pushUserInputGql);
+        var createUser = new MutationQueryBuilderGql().WithPushUser(new PushUserPayloadQueryBuilderGql().WithAllFields(), pushUserInputGql);
 
         var response = await httpClient.PostGqlMutationAsync(createUser, cancellationToken);
 
-        response.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
 
         return newUser;
     }
@@ -296,7 +300,7 @@ internal static class TestUtils
     }
 
     /// <summary>
-    /// Creates a new LiveDoc within the specified workspace, owned by the specified user.
+    ///     Creates a new LiveDoc within the specified workspace, owned by the specified user.
     /// </summary>
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="workspace">The workspace in which to create the LiveDoc.</param>
@@ -344,7 +348,8 @@ internal static class TestUtils
 
         var response = await httpClient.PostGqlMutationAsync(createLiveDoc, cancellationToken);
 
-        response.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
 
         return newLiveDoc;
     }
@@ -395,7 +400,8 @@ internal static class TestUtils
 
         var response = await httpClient.PostGqlMutationAsync(updateLiveDoc, cancellationToken);
 
-        response.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
 
         return await httpClient.GetLiveDocByIdAsync(liveDoc.Id!.Value, cancellationToken);
     }
@@ -410,7 +416,8 @@ internal static class TestUtils
 
         var response = await httpClient.PostGqlQueryAsync(query, cancellationToken);
 
-        response.Errors.Should().BeNullOrEmpty();
+        response.Errors.Should()
+            .BeNullOrEmpty();
 
         return response.Data.PullLiveDoc?.Documents?.Single(liveDoc => liveDoc.Id == liveDocId)
                ?? throw new InvalidOperationException("The LiveDoc must not be null");

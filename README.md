@@ -17,7 +17,7 @@ RxDBDotNet is a powerful .NET library that implements the RxDB replication proto
 ## Key Features
 
 - 🔄 Full RxDB Protocol Support
-- 🔥 Hot Chocolate GraphQL Integration
+- 🌶️ Hot Chocolate GraphQL Integration
 - 🌐 Real-Time & Offline-First Capabilities
 - ⚡ Quick Setup with Minimal Configuration
 - 🧩 Extensible Design for Custom Types
@@ -73,8 +73,10 @@ Here are the minimial steps to get you up and running with RxDBDotNet in your ex
     // Configure the Hot Chocolate GraphQL server
     builder.Services
         .AddGraphQLServer()
+         // Mutation conventions must be enabled for replication to work
+        .AddMutationConventions()
         // Enable RxDBDotNet replication services
-        .AddReplicationServer()
+        .AddReplication()
         // Register the document to be replicated
         .AddReplicatedDocument<Workspace>()
         .AddInMemorySubscriptions();
@@ -221,8 +223,10 @@ builder.Services
 // Configure the Hot Chocolate GraphQL server
 builder.Services
     .AddGraphQLServer()
+    // Mutation conventions must be enabled for replication to work
+    .AddMutationConventions()
     // Enable RxDBDotNet replication services
-    .AddReplicationServer()
+    .AddReplication()
     // Register a type of document to be replicated
     .AddReplicatedDocument<Workspace>()
     .AddInMemorySubscriptions();
@@ -596,7 +600,9 @@ builder.Services
     .AddQueryType()
     .AddMutationType()
     .AddSubscriptionType()
-    .AddReplicationServer()
+    // Mutation conventions must be enabled for replication to work
+    .AddMutationConventions()
+    .AddReplication()
     .AddReplicatedDocument<User>(options =>
     {
         options.Errors = new List<Type>

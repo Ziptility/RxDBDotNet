@@ -8,13 +8,11 @@ public sealed class Program
     {
         Console.WriteLine("Generating GraphQLTestModel...");
 
-        var factory = WebApplicationFactorySetupUtil.Setup();
-
-        using var client = factory.CreateHttpClient();
+        var testContext = new TestScenarioBuilder().Build();
 
         try
         {
-            await client.GenerateLiveDocsGraphQLClientAsync();
+            await testContext.HttpClient.GenerateLiveDocsGraphQLClientAsync();
 
             Console.WriteLine("GraphQLTestModel generated successfully.");
         }
@@ -26,7 +24,7 @@ public sealed class Program
         }
         finally
         {
-            await factory.DisposeAsync();
+            await testContext.DisposeAsync();
         }
     }
 }

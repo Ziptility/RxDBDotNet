@@ -6,47 +6,54 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class AdditionalAuthorizationTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true);
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     [Fact]
     public async Task UnauthenticatedUser_ShouldNotBeAbleToReadWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToRead("IsWorkspaceAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsWorkspaceAdmin"))
+            .Build();
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
+        await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         // Act
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
-        response.Errors.Should().NotBeNullOrEmpty();
-        response.Errors?.FirstOrDefault()?.Message.Should().Be("The current user is not authorized to access this resource.");
-        response.Data?.PullWorkspace.Should().BeNull();
+        response.Errors.Should()
+            .NotBeNullOrEmpty();
+        response.Errors?.FirstOrDefault()
+            ?.Message.Should()
+            .Be("The current user is not authorized to access this resource.");
+        response.Data?.PullWorkspace.Should()
+            .BeNull();
     }
 
     [Fact]
     public async Task StandardUser_ShouldNotBeAbleToDeleteWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToDelete("IsSystemAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToDelete("IsSystemAdmin"))
+            .Build();
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var standardUser = await _testContext.CreateUserAsync(workspace, UserRole.StandardUser, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var standardUser = await TestContext.CreateUserAsync(workspace, UserRole.StandardUser, TestContext.CancellationToken);
 
         // Act
         var workspaceToDelete = new WorkspaceInputGql
@@ -55,7 +62,8 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
             Name = workspace.Name,
             IsDeleted = true,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Topics = workspace.Topics?.Select(t => t.Name).ToList(),
+            Topics = workspace.Topics?.Select(t => t.Name)
+                .ToList(),
         };
 
         var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
@@ -66,47 +74,60 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
                 Name = workspace.Name,
                 IsDeleted = workspace.IsDeleted,
                 UpdatedAt = workspace.UpdatedAt,
-                Topics = workspace.Topics?.Select(t => t.Name).ToList(),
+                Topics = workspace.Topics?.Select(t => t.Name)
+                    .ToList(),
             },
             NewDocumentState = workspaceToDelete,
         };
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { workspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var deleteWorkspace = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var deleteWorkspace =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(deleteWorkspace, _testContext.CancellationToken, standardUser.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(deleteWorkspace, TestContext.CancellationToken, standardUser.JwtAccessToken);
 
         // Assert
-        response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        response.Data.PushWorkspace?.Errors.Should().HaveCount(1);
-        response.Data.PushWorkspace?.Errors?.Single().Should().BeOfType<UnauthorizedAccessErrorGql>();
+        response.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .HaveCount(1);
+        response.Data.PushWorkspace?.Errors?.Single()
+            .Should()
+            .BeOfType<UnauthorizedAccessErrorGql>();
     }
 
     [Fact]
     public async Task WorkspaceAdmin_ShouldBeAbleToReadAndUpdateWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security
                 .RequirePolicyToRead("IsWorkspaceAdmin")
-                .RequirePolicyToUpdate("IsWorkspaceAdmin"));
+                .RequirePolicyToUpdate("IsWorkspaceAdmin"))
+            .Build();
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspaceAdmin = await _testContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
         // Act - Read
         var readQuery = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
-        var readResponse = await _testContext.HttpClient.PostGqlQueryAsync(readQuery, _testContext.CancellationToken, workspaceAdmin.JwtAccessToken);
+        var readResponse = await TestContext.HttpClient.PostGqlQueryAsync(readQuery, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert - Read
-        readResponse.Errors.Should().BeNullOrEmpty();
-        readResponse.Data.PullWorkspace.Should().NotBeNull();
-        readResponse.Data.PullWorkspace?.Documents.Should().NotBeEmpty();
+        readResponse.Errors.Should()
+            .BeNullOrEmpty();
+        readResponse.Data.PullWorkspace.Should()
+            .NotBeNull();
+        readResponse.Data.PullWorkspace?.Documents.Should()
+            .NotBeEmpty();
 
         // Act - Update
         var updatedWorkspace = new WorkspaceInputGql
@@ -115,7 +136,8 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
             Name = Strings.CreateString(),
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Topics = workspace.Topics?.Select(t => t.Name).ToList(),
+            Topics = workspace.Topics?.Select(t => t.Name)
+                .ToList(),
         };
 
         var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
@@ -126,47 +148,60 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
                 Name = workspace.Name,
                 IsDeleted = workspace.IsDeleted,
                 UpdatedAt = workspace.UpdatedAt,
-                Topics = workspace.Topics?.Select(t => t.Name).ToList(),
+                Topics = workspace.Topics?.Select(t => t.Name)
+                    .ToList(),
             },
             NewDocumentState = updatedWorkspace,
         };
 
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { workspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
         };
 
-        var updateWorkspace = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+        var updateWorkspace =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        var updateResponse = await _testContext.HttpClient.PostGqlMutationAsync(updateWorkspace, _testContext.CancellationToken, workspaceAdmin.JwtAccessToken);
+        var updateResponse =
+            await TestContext.HttpClient.PostGqlMutationAsync(updateWorkspace, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert - Update
-        updateResponse.Errors.Should().BeNullOrEmpty();
-        updateResponse.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        updateResponse.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        updateResponse.Errors.Should()
+            .BeNullOrEmpty();
+        updateResponse.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        updateResponse.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify the update
         var verifyQuery = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
-        var verifyResponse = await _testContext.HttpClient.PostGqlQueryAsync(verifyQuery, _testContext.CancellationToken, workspaceAdmin.JwtAccessToken);
+        var verifyResponse =
+            await TestContext.HttpClient.PostGqlQueryAsync(verifyQuery, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
-        verifyResponse.Errors.Should().BeNullOrEmpty();
-        verifyResponse.Data.PullWorkspace?.Documents.Should().Contain(w => w.Name == updatedWorkspace.Name!.Value);
+        verifyResponse.Errors.Should()
+            .BeNullOrEmpty();
+        verifyResponse.Data.PullWorkspace?.Documents.Should()
+            .Contain(w => w.Name == updatedWorkspace.Name.Value);
     }
 
     [Fact]
     public async Task SystemAdmin_ShouldHaveFullAccessToWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security
                 .RequirePolicyToRead("IsSystemAdmin")
                 .RequirePolicyToCreate("IsSystemAdmin")
                 .RequirePolicyToUpdate("IsSystemAdmin")
-                .RequirePolicyToDelete("IsSystemAdmin"));
+                .RequirePolicyToDelete("IsSystemAdmin"))
+            .Build();
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var systemAdmin = await _testContext.CreateUserAsync(workspace, UserRole.SystemAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var systemAdmin = await TestContext.CreateUserAsync(workspace, UserRole.SystemAdmin, TestContext.CancellationToken);
 
         // Act & Assert - Create
         var newWorkspace = new WorkspaceInputGql
@@ -175,7 +210,11 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
             Name = Strings.CreateString(),
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
-            Topics = new List<string> { Provider.Sql.Create().ToString() },
+            Topics = new List<string>
+            {
+                Provider.Sql.Create()
+                    .ToString(),
+            },
         };
 
         var createWorkspaceInputPushRowGql = new WorkspaceInputPushRowGql
@@ -186,25 +225,35 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
 
         var createWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { createWorkspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                createWorkspaceInputPushRowGql,
+            },
         };
 
-        var createWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), createWorkspaceInputGql);
+        var createWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), createWorkspaceInputGql);
 
-        var createResponse = await _testContext.HttpClient.PostGqlMutationAsync(createWorkspaceMutation, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+        var createResponse =
+            await TestContext.HttpClient.PostGqlMutationAsync(createWorkspaceMutation, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
-        createResponse.Errors.Should().BeNullOrEmpty();
-        createResponse.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        createResponse.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        createResponse.Errors.Should()
+            .BeNullOrEmpty();
+        createResponse.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        createResponse.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Act & Assert - Read
         var readQuery = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
-        var readResponse = await _testContext.HttpClient.PostGqlQueryAsync(readQuery, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+        var readResponse = await TestContext.HttpClient.PostGqlQueryAsync(readQuery, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
-        readResponse.Errors.Should().BeNullOrEmpty();
-        readResponse.Data.PullWorkspace.Should().NotBeNull();
-        readResponse.Data.PullWorkspace?.Documents.Should().Contain(w => w.Name == newWorkspace.Name!.Value);
+        readResponse.Errors.Should()
+            .BeNullOrEmpty();
+        readResponse.Data.PullWorkspace.Should()
+            .NotBeNull();
+        readResponse.Data.PullWorkspace?.Documents.Should()
+            .Contain(w => w.Name == newWorkspace.Name.Value);
 
         // Act & Assert - Update
         var updatedWorkspace = new WorkspaceInputGql
@@ -224,17 +273,24 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
 
         var updateWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { updateWorkspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                updateWorkspaceInputPushRowGql,
+            },
         };
 
-        var updateWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), updateWorkspaceInputGql);
+        var updateWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), updateWorkspaceInputGql);
 
-        var updateResponse = await _testContext.HttpClient.PostGqlMutationAsync(updateWorkspaceMutation, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+        var updateResponse =
+            await TestContext.HttpClient.PostGqlMutationAsync(updateWorkspaceMutation, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
-        updateResponse.Errors.Should().BeNullOrEmpty();
-        updateResponse.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        updateResponse.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        updateResponse.Errors.Should()
+            .BeNullOrEmpty();
+        updateResponse.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        updateResponse.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Act & Assert - Delete
         var deleteWorkspace = new WorkspaceInputGql
@@ -254,23 +310,32 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
 
         var deleteWorkspaceInputGql = new PushWorkspaceInputGql
         {
-            WorkspacePushRow = new List<WorkspaceInputPushRowGql?> { deleteWorkspaceInputPushRowGql },
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                deleteWorkspaceInputPushRowGql,
+            },
         };
 
-        var deleteWorkspaceMutation = new MutationQueryBuilderGql()
-            .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), deleteWorkspaceInputGql);
+        var deleteWorkspaceMutation =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), deleteWorkspaceInputGql);
 
-        var deleteResponse = await _testContext.HttpClient.PostGqlMutationAsync(deleteWorkspaceMutation, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+        var deleteResponse =
+            await TestContext.HttpClient.PostGqlMutationAsync(deleteWorkspaceMutation, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
-        deleteResponse.Errors.Should().BeNullOrEmpty();
-        deleteResponse.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
-        deleteResponse.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        deleteResponse.Errors.Should()
+            .BeNullOrEmpty();
+        deleteResponse.Data.PushWorkspace?.Workspace.Should()
+            .BeNullOrEmpty();
+        deleteResponse.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
 
         // Verify deletion
         var verifyQuery = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
-        var verifyResponse = await _testContext.HttpClient.PostGqlQueryAsync(verifyQuery, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+        var verifyResponse = await TestContext.HttpClient.PostGqlQueryAsync(verifyQuery, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
-        verifyResponse.Errors.Should().BeNullOrEmpty();
-        verifyResponse.Data.PullWorkspace?.Documents.Should().Contain(w => w.Id == deleteWorkspace.Id!.Value && w.IsDeleted);
+        verifyResponse.Errors.Should()
+            .BeNullOrEmpty();
+        verifyResponse.Data.PullWorkspace?.Documents.Should()
+            .Contain(w => w.Id == deleteWorkspace.Id!.Value && w.IsDeleted);
     }
 }

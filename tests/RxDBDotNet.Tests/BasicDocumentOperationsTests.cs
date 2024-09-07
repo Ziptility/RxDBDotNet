@@ -22,7 +22,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     public async Task PushNewRowShouldCreateSingleDocument()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var workspaceId = Provider.Sql.Create();
         var workspaceInput = new WorkspaceInputGql
         {
@@ -71,7 +71,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     public async Task PullBulkByDocumentIdShouldReturnSingleDocument()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
@@ -102,7 +102,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     public async Task PullBulkShouldReturnAllDocuments()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
@@ -126,7 +126,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     public async Task ItShouldHandleMultiplePullsFollowedByAPush()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
 
         // Act
         var response = await PushAndPullDocumentAsync(TestContext);

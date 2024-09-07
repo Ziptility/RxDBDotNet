@@ -22,8 +22,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldBeAbleToCreateAWorkspace()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToCreate("IsWorkspaceAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToCreate("IsWorkspaceAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
@@ -39,8 +41,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task AStandardUserShouldNotBeAbleToCreateAWorkspace()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToCreate("IsWorkspaceAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToCreate("IsWorkspaceAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var standardUser = await TestContext.CreateUserAsync(workspace, UserRole.StandardUser, TestContext.CancellationToken);
@@ -62,8 +66,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task ASystemAdminShouldBeAbleToReadAWorkspace()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToRead("IsSystemAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsSystemAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var systemAdmin = await TestContext.CreateUserAsync(workspace, UserRole.SystemAdmin, TestContext.CancellationToken);
@@ -85,8 +91,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldNotBeAbleToReadAWorkspaceWhenSystemAdminIsRequired()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToRead("IsSystemAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsSystemAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
@@ -109,8 +117,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldBeAbleToUpdateAWorkspace()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToUpdate("IsWorkspaceAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToUpdate("IsWorkspaceAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
@@ -168,8 +178,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task AStandardUserShouldNotBeAbleToUpdateAWorkspace()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToUpdate("IsWorkspaceAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToUpdate("IsWorkspaceAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var standardUser = await TestContext.CreateUserAsync(workspace, UserRole.StandardUser, TestContext.CancellationToken);
@@ -226,8 +238,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task ASystemAdminShouldBeAbleToDeleteAWorkspace()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToDelete("IsSystemAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToDelete("IsSystemAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var systemAdmin = await TestContext.CreateUserAsync(workspace, UserRole.SystemAdmin, TestContext.CancellationToken);
@@ -285,8 +299,10 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldNotBeAbleToDeleteAWorkspaceWhenSystemAdminIsRequired()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
-            configureWorkspaceSecurity: options => options.RequirePolicyToDelete("IsSystemAdmin"));
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToDelete("IsSystemAdmin"))
+            .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
         var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);

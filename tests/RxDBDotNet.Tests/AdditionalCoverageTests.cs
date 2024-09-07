@@ -22,7 +22,7 @@ public class AdditionalCoverageTests : IAsyncLifetime
     public async Task PushMultipleWorkspacesShouldHandleConflictsCorrectly()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace1, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var (workspace2, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
@@ -83,7 +83,7 @@ public class AdditionalCoverageTests : IAsyncLifetime
     public async Task PullWorkspacesWithComplexFiltering()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
@@ -144,7 +144,7 @@ public class AdditionalCoverageTests : IAsyncLifetime
     public async Task SubscriptionShouldHandleMultipleTopics()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 

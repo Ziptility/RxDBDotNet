@@ -1166,6 +1166,69 @@ namespace RxDBDotNet.Tests.Model
     #endregion
 
     #region builder classes
+    public partial class UserPullBulkQueryBuilderGql : GraphQlQueryBuilder<UserPullBulkQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "documents", IsComplex = true, QueryBuilderType = typeof(UserQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "checkpoint", IsComplex = true, QueryBuilderType = typeof(CheckpointQueryBuilderGql) }
+        };
+
+        protected override string TypeName { get; } = "UserPullBulk";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public UserPullBulkQueryBuilderGql WithDocuments(UserQueryBuilderGql userQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("documents", alias, userQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public UserPullBulkQueryBuilderGql ExceptDocuments() => ExceptField("documents");
+
+        public UserPullBulkQueryBuilderGql WithCheckpoint(CheckpointQueryBuilderGql checkpointQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("checkpoint", alias, checkpointQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public UserPullBulkQueryBuilderGql ExceptCheckpoint() => ExceptField("checkpoint");
+    }
+
+    public partial class WorkspacePullBulkQueryBuilderGql : GraphQlQueryBuilder<WorkspacePullBulkQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "documents", IsComplex = true, QueryBuilderType = typeof(WorkspaceQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "checkpoint", IsComplex = true, QueryBuilderType = typeof(CheckpointQueryBuilderGql) }
+        };
+
+        protected override string TypeName { get; } = "WorkspacePullBulk";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public WorkspacePullBulkQueryBuilderGql WithDocuments(WorkspaceQueryBuilderGql workspaceQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("documents", alias, workspaceQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public WorkspacePullBulkQueryBuilderGql ExceptDocuments() => ExceptField("documents");
+
+        public WorkspacePullBulkQueryBuilderGql WithCheckpoint(CheckpointQueryBuilderGql checkpointQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("checkpoint", alias, checkpointQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public WorkspacePullBulkQueryBuilderGql ExceptCheckpoint() => ExceptField("checkpoint");
+    }
+
+    public partial class LiveDocPullBulkQueryBuilderGql : GraphQlQueryBuilder<LiveDocPullBulkQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "documents", IsComplex = true, QueryBuilderType = typeof(LiveDocQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "checkpoint", IsComplex = true, QueryBuilderType = typeof(CheckpointQueryBuilderGql) }
+        };
+
+        protected override string TypeName { get; } = "LiveDocPullBulk";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public LiveDocPullBulkQueryBuilderGql WithDocuments(LiveDocQueryBuilderGql liveDocQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("documents", alias, liveDocQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public LiveDocPullBulkQueryBuilderGql ExceptDocuments() => ExceptField("documents");
+
+        public LiveDocPullBulkQueryBuilderGql WithCheckpoint(CheckpointQueryBuilderGql checkpointQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("checkpoint", alias, checkpointQueryBuilder, new GraphQlDirective?[] { skip, include });
+
+        public LiveDocPullBulkQueryBuilderGql ExceptCheckpoint() => ExceptField("checkpoint");
+    }
+
     public partial class QueryQueryBuilderGql : GraphQlQueryBuilder<QueryQueryBuilderGql>
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
@@ -1338,69 +1401,6 @@ namespace RxDBDotNet.Tests.Model
         }
 
         public SubscriptionQueryBuilderGql ExceptStreamLiveDoc() => ExceptField("streamLiveDoc");
-    }
-
-    public partial class UserPullBulkQueryBuilderGql : GraphQlQueryBuilder<UserPullBulkQueryBuilderGql>
-    {
-        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
-        {
-            new GraphQlFieldMetadata { Name = "documents", IsComplex = true, QueryBuilderType = typeof(UserQueryBuilderGql) },
-            new GraphQlFieldMetadata { Name = "checkpoint", IsComplex = true, QueryBuilderType = typeof(CheckpointQueryBuilderGql) }
-        };
-
-        protected override string TypeName { get; } = "UserPullBulk";
-
-        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
-
-        public UserPullBulkQueryBuilderGql WithDocuments(UserQueryBuilderGql userQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("documents", alias, userQueryBuilder, new GraphQlDirective?[] { skip, include });
-
-        public UserPullBulkQueryBuilderGql ExceptDocuments() => ExceptField("documents");
-
-        public UserPullBulkQueryBuilderGql WithCheckpoint(CheckpointQueryBuilderGql checkpointQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("checkpoint", alias, checkpointQueryBuilder, new GraphQlDirective?[] { skip, include });
-
-        public UserPullBulkQueryBuilderGql ExceptCheckpoint() => ExceptField("checkpoint");
-    }
-
-    public partial class WorkspacePullBulkQueryBuilderGql : GraphQlQueryBuilder<WorkspacePullBulkQueryBuilderGql>
-    {
-        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
-        {
-            new GraphQlFieldMetadata { Name = "documents", IsComplex = true, QueryBuilderType = typeof(WorkspaceQueryBuilderGql) },
-            new GraphQlFieldMetadata { Name = "checkpoint", IsComplex = true, QueryBuilderType = typeof(CheckpointQueryBuilderGql) }
-        };
-
-        protected override string TypeName { get; } = "WorkspacePullBulk";
-
-        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
-
-        public WorkspacePullBulkQueryBuilderGql WithDocuments(WorkspaceQueryBuilderGql workspaceQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("documents", alias, workspaceQueryBuilder, new GraphQlDirective?[] { skip, include });
-
-        public WorkspacePullBulkQueryBuilderGql ExceptDocuments() => ExceptField("documents");
-
-        public WorkspacePullBulkQueryBuilderGql WithCheckpoint(CheckpointQueryBuilderGql checkpointQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("checkpoint", alias, checkpointQueryBuilder, new GraphQlDirective?[] { skip, include });
-
-        public WorkspacePullBulkQueryBuilderGql ExceptCheckpoint() => ExceptField("checkpoint");
-    }
-
-    public partial class LiveDocPullBulkQueryBuilderGql : GraphQlQueryBuilder<LiveDocPullBulkQueryBuilderGql>
-    {
-        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
-        {
-            new GraphQlFieldMetadata { Name = "documents", IsComplex = true, QueryBuilderType = typeof(LiveDocQueryBuilderGql) },
-            new GraphQlFieldMetadata { Name = "checkpoint", IsComplex = true, QueryBuilderType = typeof(CheckpointQueryBuilderGql) }
-        };
-
-        protected override string TypeName { get; } = "LiveDocPullBulk";
-
-        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
-
-        public LiveDocPullBulkQueryBuilderGql WithDocuments(LiveDocQueryBuilderGql liveDocQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("documents", alias, liveDocQueryBuilder, new GraphQlDirective?[] { skip, include });
-
-        public LiveDocPullBulkQueryBuilderGql ExceptDocuments() => ExceptField("documents");
-
-        public LiveDocPullBulkQueryBuilderGql WithCheckpoint(CheckpointQueryBuilderGql checkpointQueryBuilder, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithObjectField("checkpoint", alias, checkpointQueryBuilder, new GraphQlDirective?[] { skip, include });
-
-        public LiveDocPullBulkQueryBuilderGql ExceptCheckpoint() => ExceptField("checkpoint");
     }
 
     public partial class UserQueryBuilderGql : GraphQlQueryBuilder<UserQueryBuilderGql>
@@ -3156,6 +3156,24 @@ namespace RxDBDotNet.Tests.Model
     #endregion
 
     #region data classes
+    public partial class UserPullBulkGql
+    {
+        public ICollection<UserGql>? Documents { get; set; }
+        public CheckpointGql? Checkpoint { get; set; }
+    }
+
+    public partial class WorkspacePullBulkGql
+    {
+        public ICollection<WorkspaceGql>? Documents { get; set; }
+        public CheckpointGql? Checkpoint { get; set; }
+    }
+
+    public partial class LiveDocPullBulkGql
+    {
+        public ICollection<LiveDocGql>? Documents { get; set; }
+        public CheckpointGql? Checkpoint { get; set; }
+    }
+
     public partial class QueryGql
     {
         public UserPullBulkGql? PullUser { get; set; }
@@ -3175,24 +3193,6 @@ namespace RxDBDotNet.Tests.Model
         public UserPullBulkGql? StreamUser { get; set; }
         public WorkspacePullBulkGql? StreamWorkspace { get; set; }
         public LiveDocPullBulkGql? StreamLiveDoc { get; set; }
-    }
-
-    public partial class UserPullBulkGql
-    {
-        public ICollection<UserGql>? Documents { get; set; }
-        public CheckpointGql? Checkpoint { get; set; }
-    }
-
-    public partial class WorkspacePullBulkGql
-    {
-        public ICollection<WorkspaceGql>? Documents { get; set; }
-        public CheckpointGql? Checkpoint { get; set; }
-    }
-
-    public partial class LiveDocPullBulkGql
-    {
-        public ICollection<LiveDocGql>? Documents { get; set; }
-        public CheckpointGql? Checkpoint { get; set; }
     }
 
     public partial class UserGql

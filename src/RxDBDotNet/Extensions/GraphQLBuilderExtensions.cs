@@ -20,23 +20,22 @@ namespace RxDBDotNet.Extensions;
 public static class GraphQLBuilderExtensions
 {
     /// <summary>
-    ///     Adds replication support for RxDBDotNet to the GraphQL schema.
-    ///     This method configures all necessary services and types for the RxDB replication protocol.
+    /// Adds replication support for RxDBDotNet to the GraphQL schema.
+    /// This method configures all necessary services and types for the RxDB replication protocol.
     /// </summary>
-    /// <param name="builder">The IRequestExecutorBuilder to configure.</param>
-    /// <returns>The configured IRequestExecutorBuilder for method chaining.</returns>
+    /// <param name="builder">The <see cref="IRequestExecutorBuilder"/> to configure.</param>
+    /// <returns>The configured <see cref="IRequestExecutorBuilder"/> for method chaining.</returns>
     /// <remarks>
-    ///     This method should be called once before adding support for specific document types.
-    ///     It registers core services like IEventPublisher that are shared across all document types.
+    /// This method should be called once before adding support for specific document types.
+    /// It registers core services like <see cref="IEventPublisher"/> that are shared across all document types.
     /// </remarks>
-    public static IRequestExecutorBuilder AddReplicationServer(this IRequestExecutorBuilder builder)
+    public static IRequestExecutorBuilder AddReplication(this IRequestExecutorBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.Services.AddSingleton<IEventPublisher, DefaultEventPublisher>();
 
-        builder.AddFiltering()
-            .AddMutationConventions(false);
+        builder.AddFiltering();
 
         // Ensure Query, Mutation, and Subscription types exist
         EnsureRootTypesExist(builder);
@@ -65,7 +64,9 @@ public static class GraphQLBuilderExtensions
     ///         Usage example:
     ///         <code>
     /// services.AddGraphQLServer()
-    ///     .AddReplicationServer()
+    ///     // Mutation conventions must be enabled for replication to work
+    ///     .AddMutationConventions()
+    ///     .AddReplication()
     ///     .AddReplicatedDocument&lt;MyDocument&gt;()
     ///     .AddReplicatedDocument&lt;AnotherDocument&gt;();
     /// </code>

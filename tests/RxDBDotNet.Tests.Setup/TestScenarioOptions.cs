@@ -7,11 +7,11 @@ using RxDBDotNet.Security;
 namespace RxDBDotNet.Tests.Setup;
 
 /// <summary>
-/// Provides configuration options for setting up test environments in RxDBDotNet.
+/// Provides configuration options for setting up a test scenario in RxDBDotNet.
 /// This class allows fine-grained control over the application, service, and GraphQL configurations
 /// used in test setups, enabling tests to either use default configurations or provide custom ones.
 /// </summary>
-public class TestSetupOptions
+public class TestScenarioOptions
 {
     /// <summary>
     /// Indicates whether to apply the default application configuration.

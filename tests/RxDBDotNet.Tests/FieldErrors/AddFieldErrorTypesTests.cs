@@ -9,7 +9,7 @@ namespace RxDBDotNet.Tests.FieldErrors;
 [Collection("DockerSetup")]
 public class AddFieldErrorTypesTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
@@ -18,7 +18,7 @@ public class AddFieldErrorTypesTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     [Fact]
@@ -28,7 +28,8 @@ public class AddFieldErrorTypesTests : IAsyncLifetime
         const string customTestExceptionMessage = "This is a custom test error";
         const string customTesExceptionValue = "Custom value";
 
-        _testContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(configureServices: services =>
+        TestContext = new TestScenarioBuilder()
+            .ConfigureServices(services =>
             {
                 // Remove the default replicated workspace document service
                 services.RemoveAll(typeof(IDocumentService<ReplicatedWorkspace>));
@@ -41,9 +42,9 @@ public class AddFieldErrorTypesTests : IAsyncLifetime
                         .ThrowsAsync(new CustomTestException(customTestExceptionMessage, customTesExceptionValue));
                     return mockDocumentService.Object;
                 });
-            },
-            // Now register the CustomTestException as a field error type
-            configureWorkspaceErrors: types => types.Add(typeof(CustomTestException)));
+            })
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Errors.Add(typeof(CustomTestException)))
+            .Build();
 
         var workspaceId = Provider.Sql.Create();
         var newWorkspace = new WorkspaceInputGql
@@ -78,7 +79,7 @@ public class AddFieldErrorTypesTests : IAsyncLifetime
             pushWorkspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(pushWorkspaceMutation, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()

@@ -29,6 +29,8 @@ public sealed class TestContext : IAsyncDisposable
             {
                 disposable.Dispose();
             }
+
+            HttpClient.Dispose();
         }
         catch
         {

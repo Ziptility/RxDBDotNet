@@ -22,7 +22,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithNullDocumentList_ShouldReturnEmptyResult()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
             WorkspacePushRow = null,
@@ -50,7 +50,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithListContainingNullDocument_ShouldSkipNullAndProcessValid()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var updatedWorkspace = new WorkspaceInputGql
@@ -104,7 +104,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithNewDocument_ShouldCreateDocument()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var workspaceId = Provider.Sql.Create();
         var newWorkspace = new WorkspaceInputGql
         {
@@ -166,7 +166,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithExistingDocument_ShouldUpdateDocument()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var updatedWorkspace = new WorkspaceInputGql
@@ -226,7 +226,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithConflict_ShouldReturnConflict()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         // Simulate a conflict by changing the workspace on the server
@@ -282,7 +282,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithMultipleDocuments_ShouldHandleAllDocuments()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (existingWorkspace1, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var (existingWorkspace2, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
@@ -379,7 +379,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithDeletedDocument_ShouldMarkDocumentAsDeleted()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var deletedWorkspace = new WorkspaceInputGql
@@ -433,7 +433,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithNonExistentAssumedMasterState_ShouldHandleConflict()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var nonExistentWorkspace = new WorkspaceInputGql
         {
             Id = Provider.Sql.Create(),
@@ -510,7 +510,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithEmptyList_ShouldReturnEmptyResult()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var pushWorkspaceInputGql = new PushWorkspaceInputGql
         {
             WorkspacePushRow = new List<WorkspaceInputPushRowGql?>(),
@@ -537,7 +537,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithMixOfNewAndExistingDocuments_ShouldHandleCorrectly()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (existingWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var newWorkspace = new WorkspaceInputGql
@@ -614,7 +614,7 @@ public class PushDocumentsTests : IAsyncLifetime
     public async Task PushDocuments_WithConflictInBatch_ShouldHandleCorrectly()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (existingWorkspace1, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var (existingWorkspace2, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 

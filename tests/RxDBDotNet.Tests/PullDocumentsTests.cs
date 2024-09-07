@@ -41,7 +41,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithNoCheckpoint_ShouldReturnAllDocuments()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace, user, liveDoc1) = await CreateLiveDocAsync();
         var liveDoc2 = await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
 
@@ -78,7 +78,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithCheckpoint_ShouldReturnOnlyNewDocuments()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace, user, liveDoc1) = await CreateLiveDocAsync();
 
         // Get initial checkpoint
@@ -118,7 +118,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithLimit_ShouldReturnLimitedDocuments()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace, user, _) = await CreateLiveDocAsync();
         await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
         await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
@@ -143,7 +143,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithFilter_ShouldReturnFilteredDocuments()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace, user, liveDoc1) = await CreateLiveDocAsync();
         var liveDoc2 = await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
 
@@ -181,7 +181,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithNoNewDocuments_ShouldReturnEmptyResultWithSameCheckpoint()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace, _, _) = await CreateLiveDocAsync();
 
         var initialQuery = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
@@ -217,7 +217,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithUpdatedDocuments_ShouldReturnUpdatedVersions()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace, _, liveDoc) = await CreateLiveDocAsync();
         var updatedLiveDoc = await TestContext.HttpClient.UpdateLiveDocAsync(liveDoc, TestContext.CancellationToken);
 
@@ -246,7 +246,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithMultipleOwners_ShouldReturnCorrectOwners()
     {
         // Arrange
-        TestContext = TestSetupUtil.Setup();
+        TestContext = new TestScenarioBuilder().Build();
         var (workspace, user1, liveDoc1) = await CreateLiveDocAsync();
         var user2 = await TestContext.HttpClient.CreateUserAsync(workspace, TestContext.CancellationToken);
         var liveDoc2 = await TestContext.HttpClient.CreateLiveDocAsync(workspace, user2, TestContext.CancellationToken);

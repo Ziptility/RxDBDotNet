@@ -61,7 +61,9 @@ static void ConfigureGraphQL(WebApplicationBuilder builder)
 {
     builder.Services.AddGraphQLServer()
         .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
-        .AddReplicationServer()
+        // Mutation conventions must be enabled for replication to work
+        .AddMutationConventions()
+        .AddReplication()
         .AddSubscriptionDiagnostics()
         .AddReplicatedDocument<Hero>()
         .AddReplicatedDocument<ReplicatedUser>()

@@ -16,7 +16,7 @@ internal static class HttpClientExtensions
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="queryBuilder">The GraphQL string.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    ///  <param name="jwtAccessToken">The JWT access token, if required.</param>
+    /// <param name="jwtAccessToken">The JWT access token, if required.</param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">queryBuilder</exception>
     public static Task<GqlQueryResponse> PostGqlQueryAsync(

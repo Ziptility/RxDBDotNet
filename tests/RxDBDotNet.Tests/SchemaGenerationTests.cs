@@ -22,7 +22,7 @@ public class SchemaGenerationTests : IAsyncLifetime
     public async Task GeneratedSchemaForADocumentShouldReflectTheNameDefinedInTheGraphQLNameAttribute()
     {
         // Arrange
-        TestContext = TestSetupUtil.SetupWithDefaults();
+        TestContext = TestSetupUtil.Setup();
         using var requestContent = new StringContent(JsonConvert.SerializeObject(new
         {
             query = IntrospectionQuery.Text,

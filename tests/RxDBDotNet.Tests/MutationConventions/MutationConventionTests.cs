@@ -26,7 +26,7 @@ public class MutationConventionTests : IAsyncLifetime
         {
             // Simulate a library user who has already configured mutation conventions
             // via the serviceCollection (i.e., outside of RxDBDotNet)
-            graphQLBuilder.AddMutationConventions(applyToAllMutations: false);
+            graphQLBuilder.AddMutationConventions(false);
 
             // And who has also added a mutation to the schema
             graphQLBuilder.AddTypeExtension<BookMutations>();
@@ -42,6 +42,7 @@ public class MutationConventionTests : IAsyncLifetime
 
         // Assert
         var schemaString = await schemaResponse.Content.ReadAsStringAsync();
-        schemaString.Should().Contain("CreateWorkspace");
+        schemaString.Should()
+            .Contain("CreateWorkspace");
     }
 }

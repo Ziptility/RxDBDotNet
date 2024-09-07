@@ -15,11 +15,49 @@ namespace RxDBDotNet.Tests.Setup;
 public static class TestSetupUtil
 {
     /// <summary>
+    /// Sets up a test environment with default configurations.
+    /// </summary>
+    /// <returns>A TestContext containing the configured test environment with default settings.</returns>
+    public static TestContext Setup()
+    {
+        return Setup(new TestSetupOptions());
+    }
+
+    /// <summary>
+    /// Sets up a test environment with custom configurations while applying defaults.
+    /// </summary>
+    /// <param name="configureApp">Optional action to configure the application.</param>
+    /// <param name="configureServices">Optional action to configure services.</param>
+    /// <param name="configureGraphQL">Optional action to configure GraphQL.</param>
+    /// <param name="setupAuthorization">Whether to set up authorization.</param>
+    /// <param name="configureWorkspaceSecurity">Optional action to configure workspace security.</param>
+    /// <param name="configureWorkspaceErrors">Optional action to configure workspace errors.</param>
+    /// <returns>A TestContext containing the configured test environment.</returns>
+    public static TestContext SetupWithDefaultsAndCustomConfig(
+        Action<IApplicationBuilder>? configureApp = null,
+        Action<IServiceCollection>? configureServices = null,
+        Action<IRequestExecutorBuilder>? configureGraphQL = null,
+        bool setupAuthorization = false,
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null,
+        Action<List<Type>>? configureWorkspaceErrors = null)
+    {
+        return Setup(new TestSetupOptions
+        {
+            ConfigureApp = configureApp,
+            ConfigureServices = configureServices,
+            ConfigureGraphQL = configureGraphQL,
+            SetupAuthorization = setupAuthorization,
+            ConfigureWorkspaceSecurity = configureWorkspaceSecurity,
+            ConfigureWorkspaceErrors = configureWorkspaceErrors,
+        });
+    }
+
+    /// <summary>
     /// Sets up a test environment with customizable configurations.
     /// </summary>
     /// <param name="options">The options to configure the test setup.</param>
     /// <returns>A TestContext containing the configured test environment.</returns>
-    public static TestContext Setup(TestSetupOptions options)
+    private static TestContext Setup(TestSetupOptions options)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
@@ -57,44 +95,6 @@ public static class TestSetupUtil
             AsyncDisposables = asyncDisposables,
             Disposables = disposables,
         };
-    }
-
-    /// <summary>
-    /// Sets up a test environment with default configurations.
-    /// </summary>
-    /// <returns>A TestContext containing the configured test environment with default settings.</returns>
-    public static TestContext SetupWithDefaults()
-    {
-        return Setup(new TestSetupOptions());
-    }
-
-    /// <summary>
-    /// Sets up a test environment with custom configurations while applying defaults.
-    /// </summary>
-    /// <param name="configureApp">Optional action to configure the application.</param>
-    /// <param name="configureServices">Optional action to configure services.</param>
-    /// <param name="configureGraphQL">Optional action to configure GraphQL.</param>
-    /// <param name="setupAuthorization">Whether to set up authorization.</param>
-    /// <param name="configureWorkspaceSecurity">Optional action to configure workspace security.</param>
-    /// <param name="configureWorkspaceErrors">Optional action to configure workspace errors.</param>
-    /// <returns>A TestContext containing the configured test environment.</returns>
-    public static TestContext SetupWithDefaultsAndCustomConfig(
-        Action<IApplicationBuilder>? configureApp = null,
-        Action<IServiceCollection>? configureServices = null,
-        Action<IRequestExecutorBuilder>? configureGraphQL = null,
-        bool setupAuthorization = false,
-        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null,
-        Action<List<Type>>? configureWorkspaceErrors = null)
-    {
-        return Setup(new TestSetupOptions
-        {
-            ConfigureApp = configureApp,
-            ConfigureServices = configureServices,
-            ConfigureGraphQL = configureGraphQL,
-            SetupAuthorization = setupAuthorization,
-            ConfigureWorkspaceSecurity = configureWorkspaceSecurity,
-            ConfigureWorkspaceErrors = configureWorkspaceErrors,
-        });
     }
 
     private static WebApplicationFactory<TestProgram> SetupWebApplicationFactory(TestSetupOptions options)

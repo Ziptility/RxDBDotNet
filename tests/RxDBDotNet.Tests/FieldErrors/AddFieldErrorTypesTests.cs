@@ -28,7 +28,7 @@ public class AddFieldErrorTypesTests : IAsyncLifetime
         const string customTestExceptionMessage = "This is a custom test error";
         const string customTesExceptionValue = "Custom value";
 
-        _testContext = TestSetupUtil.Setup(configureServices: services =>
+        _testContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(configureServices: services =>
         {
             // Remove the default replicated workspace document service
             services.RemoveAll(typeof(IDocumentService<ReplicatedWorkspace>));

@@ -6,7 +6,7 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class SecurityTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
@@ -15,38 +15,38 @@ public class SecurityTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     [Fact]
     public async Task AWorkspaceAdminShouldBeAbleToCreateAWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToCreate("IsWorkspaceAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var admin = await _testContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
         // Act
-        var response = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken, admin.JwtAccessToken);
+        var response = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken, admin.JwtAccessToken);
 
         // Assert
-        await _testContext.HttpClient.VerifyWorkspaceAsync(response.workspaceInputGql, _testContext.CancellationToken);
+        await TestContext.HttpClient.VerifyWorkspaceAsync(response.workspaceInputGql, TestContext.CancellationToken);
     }
 
     [Fact]
     public async Task AStandardUserShouldNotBeAbleToCreateAWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToCreate("IsWorkspaceAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var standardUser = await _testContext.CreateUserAsync(workspace, UserRole.StandardUser, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var standardUser = await TestContext.CreateUserAsync(workspace, UserRole.StandardUser, TestContext.CancellationToken);
 
         // Act
-        var (_, response) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken, standardUser.JwtAccessToken);
+        var (_, response) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken, standardUser.JwtAccessToken);
 
         // Assert
         response.Data.PushWorkspace?.Workspace.Should()
@@ -62,15 +62,15 @@ public class SecurityTests : IAsyncLifetime
     public async Task ASystemAdminShouldBeAbleToReadAWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToRead("IsSystemAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var systemAdmin = await _testContext.CreateUserAsync(workspace, UserRole.SystemAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var systemAdmin = await TestContext.CreateUserAsync(workspace, UserRole.SystemAdmin, TestContext.CancellationToken);
 
         // Act
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
         // Assert
         response.Errors.Should()
@@ -85,15 +85,15 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldNotBeAbleToReadAWorkspaceWhenSystemAdminIsRequired()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToRead("IsSystemAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspaceAdmin = await _testContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
         // Act
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken, workspaceAdmin.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert
         response.Errors.Should()
@@ -107,11 +107,11 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldBeAbleToUpdateAWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToUpdate("IsWorkspaceAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var admin = await _testContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
         // Act
         var workspaceToUpdate = new WorkspaceInputGql
@@ -144,14 +144,14 @@ public class SecurityTests : IAsyncLifetime
         var updateWorkspace = new MutationQueryBuilderGql()
             .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(updateWorkspace, _testContext.CancellationToken, admin.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(updateWorkspace, TestContext.CancellationToken, admin.JwtAccessToken);
 
         // Assert
         response.Errors.Should().BeNullOrEmpty();
         response.Data.PushWorkspace?.Workspace.Should()
             .BeNullOrEmpty();
 
-        var updatedWorkspace = await _testContext.HttpClient.GetWorkspaceByIdAsync(workspace.ReplicatedDocumentId, _testContext.CancellationToken);
+        var updatedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(workspace.ReplicatedDocumentId, TestContext.CancellationToken);
         updatedWorkspace.Name.Should()
             .Be(workspaceToUpdate.Name.Value);
     }
@@ -160,11 +160,11 @@ public class SecurityTests : IAsyncLifetime
     public async Task AStandardUserShouldNotBeAbleToUpdateAWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToUpdate("IsWorkspaceAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var standardUser = await _testContext.CreateUserAsync(workspace, UserRole.StandardUser, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var standardUser = await TestContext.CreateUserAsync(workspace, UserRole.StandardUser, TestContext.CancellationToken);
 
         // Act
         var workspaceToUpdate = new WorkspaceInputGql
@@ -197,7 +197,7 @@ public class SecurityTests : IAsyncLifetime
         var updateWorkspace = new MutationQueryBuilderGql()
             .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(updateWorkspace, _testContext.CancellationToken, standardUser.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(updateWorkspace, TestContext.CancellationToken, standardUser.JwtAccessToken);
 
         // Assert
         response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
@@ -209,11 +209,11 @@ public class SecurityTests : IAsyncLifetime
     public async Task ASystemAdminShouldBeAbleToDeleteAWorkspace()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToDelete("IsSystemAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var systemAdmin = await _testContext.CreateUserAsync(workspace, UserRole.SystemAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var systemAdmin = await TestContext.CreateUserAsync(workspace, UserRole.SystemAdmin, TestContext.CancellationToken);
 
         // Act
         var workspaceToDelete = new WorkspaceInputGql
@@ -246,13 +246,13 @@ public class SecurityTests : IAsyncLifetime
         var deleteWorkspace = new MutationQueryBuilderGql()
             .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(deleteWorkspace, _testContext.CancellationToken, systemAdmin.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(deleteWorkspace, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
         // Assert
         response.Errors.Should().BeNullOrEmpty();
         response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
 
-        var deletedWorkspace = await _testContext.HttpClient.GetWorkspaceByIdAsync(workspace.ReplicatedDocumentId, _testContext.CancellationToken);
+        var deletedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(workspace.ReplicatedDocumentId, TestContext.CancellationToken);
         deletedWorkspace.IsDeleted.Should()
             .BeTrue();
     }
@@ -261,11 +261,11 @@ public class SecurityTests : IAsyncLifetime
     public async Task AWorkspaceAdminShouldNotBeAbleToDeleteAWorkspaceWhenSystemAdminIsRequired()
     {
         // Arrange
-        _testContext = TestSetupUtil.Setup(setupAuthorization: true,
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(setupAuthorization: true,
             configureWorkspaceSecurity: options => options.RequirePolicyToDelete("IsSystemAdmin"));
 
-        var workspace = await _testContext.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspaceAdmin = await _testContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, _testContext.CancellationToken);
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
         // Act
         var deletedWorkspace = new WorkspaceInputGql
@@ -298,7 +298,7 @@ public class SecurityTests : IAsyncLifetime
         var deleteWorkspace = new MutationQueryBuilderGql()
             .WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(deleteWorkspace, _testContext.CancellationToken, workspaceAdmin.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(deleteWorkspace, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert
         response.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();

@@ -6,24 +6,23 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class BasicDocumentOperationsTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup();
-
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     [Fact]
     public async Task PushNewRowShouldCreateSingleDocument()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var workspaceId = Provider.Sql.Create();
         var workspaceInput = new WorkspaceInputGql
         {
@@ -55,7 +54,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
             new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), workspaceInputGql);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlMutationAsync(createWorkspace, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(createWorkspace, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -65,15 +64,16 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
         response.Data.PushWorkspace?.Workspace.Should()
             .BeNullOrEmpty();
 
-        await _testContext.HttpClient.VerifyWorkspaceAsync(workspaceInput, _testContext.CancellationToken);
+        await TestContext.HttpClient.VerifyWorkspaceAsync(workspaceInput, TestContext.CancellationToken);
     }
 
     [Fact]
     public async Task PullBulkByDocumentIdShouldReturnSingleDocument()
     {
         // Arrange
-        var workspace1 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = TestSetupUtil.SetupWithDefaults();
+        var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var workspaceById = new WorkspaceFilterInputGql
         {
@@ -86,7 +86,7 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
             .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 1000, where: workspaceById);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -102,14 +102,15 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     public async Task PullBulkShouldReturnAllDocuments()
     {
         // Arrange
-        var workspace1 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspace2 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = TestSetupUtil.SetupWithDefaults();
+        var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields()), 1000);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -125,11 +126,12 @@ public class BasicDocumentOperationsTests : IAsyncLifetime
     public async Task ItShouldHandleMultiplePullsFollowedByAPush()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
 
         // Act
-        var response = await PushAndPullDocumentAsync(_testContext);
-        var response2 = await PushAndPullDocumentAsync(_testContext);
-        var response3 = await PushAndPullDocumentAsync(_testContext);
+        var response = await PushAndPullDocumentAsync(TestContext);
+        var response2 = await PushAndPullDocumentAsync(TestContext);
+        var response3 = await PushAndPullDocumentAsync(TestContext);
 
         // Assert
         response.Errors.Should()

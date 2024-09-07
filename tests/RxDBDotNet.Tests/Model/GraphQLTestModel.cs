@@ -1166,6 +1166,71 @@ namespace RxDBDotNet.Tests.Model
     #endregion
 
     #region builder classes
+    public partial class QueryQueryBuilderGql : GraphQlQueryBuilder<QueryQueryBuilderGql>
+    {
+        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
+        {
+            new GraphQlFieldMetadata { Name = "pullUser", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(UserPullBulkQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "pullWorkspace", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(WorkspacePullBulkQueryBuilderGql) },
+            new GraphQlFieldMetadata { Name = "pullLiveDoc", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(LiveDocPullBulkQueryBuilderGql) }
+        };
+
+        protected override string TypeName { get; } = "Query";
+
+        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
+
+        public QueryQueryBuilderGql(string? operationName = null) : base("query", operationName)
+        {
+        }
+
+        public QueryQueryBuilderGql WithParameter<T>(GraphQlQueryParameter<T> parameter) => WithParameterInternal(parameter);
+
+        public QueryQueryBuilderGql WithPullUser(UserPullBulkQueryBuilderGql userPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<UserInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<UserFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        {
+            var args = new List<QueryBuilderArgumentInfo>();
+            if (checkpoint != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
+
+            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
+            if (where != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
+
+            return WithObjectField("pullUser", alias, userPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
+        }
+
+        public QueryQueryBuilderGql ExceptPullUser() => ExceptField("pullUser");
+
+        public QueryQueryBuilderGql WithPullWorkspace(WorkspacePullBulkQueryBuilderGql workspacePullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<WorkspaceInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<WorkspaceFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        {
+            var args = new List<QueryBuilderArgumentInfo>();
+            if (checkpoint != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
+
+            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
+            if (where != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
+
+            return WithObjectField("pullWorkspace", alias, workspacePullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
+        }
+
+        public QueryQueryBuilderGql ExceptPullWorkspace() => ExceptField("pullWorkspace");
+
+        public QueryQueryBuilderGql WithPullLiveDoc(LiveDocPullBulkQueryBuilderGql liveDocPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<LiveDocInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<LiveDocFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
+        {
+            var args = new List<QueryBuilderArgumentInfo>();
+            if (checkpoint != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
+
+            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
+            if (where != null)
+                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
+
+            return WithObjectField("pullLiveDoc", alias, liveDocPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
+        }
+
+        public QueryQueryBuilderGql ExceptPullLiveDoc() => ExceptField("pullLiveDoc");
+    }
+
     public partial class MutationQueryBuilderGql : GraphQlQueryBuilder<MutationQueryBuilderGql>
     {
         private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
@@ -1577,71 +1642,6 @@ namespace RxDBDotNet.Tests.Model
         public ErrorQueryBuilderGql WithUnauthorizedAccessErrorFragment(UnauthorizedAccessErrorQueryBuilderGql unauthorizedAccessErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(unauthorizedAccessErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
 
         public ErrorQueryBuilderGql WithArgumentNullErrorFragment(ArgumentNullErrorQueryBuilderGql argumentNullErrorQueryBuilder, SkipDirective? skip = null, IncludeDirective? include = null) => WithFragment(argumentNullErrorQueryBuilder, new GraphQlDirective?[] { skip, include });
-    }
-
-    public partial class QueryQueryBuilderGql : GraphQlQueryBuilder<QueryQueryBuilderGql>
-    {
-        private static readonly GraphQlFieldMetadata[] AllFieldMetadata =
-        {
-            new GraphQlFieldMetadata { Name = "pullUser", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(UserPullBulkQueryBuilderGql) },
-            new GraphQlFieldMetadata { Name = "pullWorkspace", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(WorkspacePullBulkQueryBuilderGql) },
-            new GraphQlFieldMetadata { Name = "pullLiveDoc", RequiresParameters = true, IsComplex = true, QueryBuilderType = typeof(LiveDocPullBulkQueryBuilderGql) }
-        };
-
-        protected override string TypeName { get; } = "Query";
-
-        public override IReadOnlyList<GraphQlFieldMetadata> AllFields { get; } = AllFieldMetadata;
-
-        public QueryQueryBuilderGql(string? operationName = null) : base("query", operationName)
-        {
-        }
-
-        public QueryQueryBuilderGql WithParameter<T>(GraphQlQueryParameter<T> parameter) => WithParameterInternal(parameter);
-
-        public QueryQueryBuilderGql WithPullUser(UserPullBulkQueryBuilderGql userPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<UserInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<UserFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
-        {
-            var args = new List<QueryBuilderArgumentInfo>();
-            if (checkpoint != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
-
-            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
-            return WithObjectField("pullUser", alias, userPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
-        }
-
-        public QueryQueryBuilderGql ExceptPullUser() => ExceptField("pullUser");
-
-        public QueryQueryBuilderGql WithPullWorkspace(WorkspacePullBulkQueryBuilderGql workspacePullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<WorkspaceInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<WorkspaceFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
-        {
-            var args = new List<QueryBuilderArgumentInfo>();
-            if (checkpoint != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
-
-            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
-            return WithObjectField("pullWorkspace", alias, workspacePullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
-        }
-
-        public QueryQueryBuilderGql ExceptPullWorkspace() => ExceptField("pullWorkspace");
-
-        public QueryQueryBuilderGql WithPullLiveDoc(LiveDocPullBulkQueryBuilderGql liveDocPullBulkQueryBuilder, QueryBuilderParameter<int> limit, QueryBuilderParameter<LiveDocInputCheckpointGql?>? checkpoint = null, QueryBuilderParameter<LiveDocFilterInputGql?>? where = null, string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null)
-        {
-            var args = new List<QueryBuilderArgumentInfo>();
-            if (checkpoint != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "checkpoint", ArgumentValue = checkpoint} );
-
-            args.Add(new QueryBuilderArgumentInfo { ArgumentName = "limit", ArgumentValue = limit} );
-            if (where != null)
-                args.Add(new QueryBuilderArgumentInfo { ArgumentName = "where", ArgumentValue = where} );
-
-            return WithObjectField("pullLiveDoc", alias, liveDocPullBulkQueryBuilder, new GraphQlDirective?[] { skip, include }, args);
-        }
-
-        public QueryQueryBuilderGql ExceptPullLiveDoc() => ExceptField("pullLiveDoc");
     }
 
     public partial class PushUserErrorQueryBuilderGql : GraphQlQueryBuilder<PushUserErrorQueryBuilderGql>
@@ -3156,6 +3156,13 @@ namespace RxDBDotNet.Tests.Model
     #endregion
 
     #region data classes
+    public partial class QueryGql
+    {
+        public UserPullBulkGql? PullUser { get; set; }
+        public WorkspacePullBulkGql? PullWorkspace { get; set; }
+        public LiveDocPullBulkGql? PullLiveDoc { get; set; }
+    }
+
     public partial class MutationGql
     {
         public PushUserPayloadGql? PushUser { get; set; }
@@ -3250,13 +3257,6 @@ namespace RxDBDotNet.Tests.Model
     public partial interface IErrorGql
     {
         string Message { get; set; }
-    }
-
-    public partial class QueryGql
-    {
-        public UserPullBulkGql? PullUser { get; set; }
-        public WorkspacePullBulkGql? PullWorkspace { get; set; }
-        public LiveDocPullBulkGql? PullLiveDoc { get; set; }
     }
 
     public partial interface IPushUserErrorGql

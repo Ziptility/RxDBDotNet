@@ -1,60 +1,37 @@
 ﻿using System.Diagnostics;
-using System.Net;
 using HotChocolate.Execution.Configuration;
-using LiveDocs.GraphQLApi.Data;
-using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Models.Shared;
-using LiveDocs.GraphQLApi.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using RxDBDotNet.Extensions;
 using RxDBDotNet.Security;
-using RxDBDotNet.Services;
-using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.Setup;
 
+/// <summary>
+/// Provides utility methods for setting up test environments in RxDBDotNet.
+/// </summary>
 public static class TestSetupUtil
 {
-    public static TestContext Setup(
-        Action<IApplicationBuilder>? configureApp = null,
-        Action<IServiceCollection>? configureServices = null,
-        Action<IRequestExecutorBuilder>? configureGraphQL = null,
-        bool setupAuthorization = false,
-        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null,
-        Action<List<Type>>? configureWorkspaceErrors = null)
+    /// <summary>
+    /// Sets up a test environment with customizable configurations.
+    /// </summary>
+    /// <param name="options">The options to configure the test setup.</param>
+    /// <returns>A TestContext containing the configured test environment.</returns>
+    public static TestContext Setup(TestSetupOptions options)
     {
         var asyncDisposables = new List<IAsyncDisposable>();
         var disposables = new List<IDisposable>();
 
-        var testTimeout = GetTestTimeout();
+        var testTimeout = Debugger.IsAttached ? TimeSpan.FromMinutes(5) : TimeSpan.FromSeconds(10);
 
         var timeoutTokenSource = new CancellationTokenSource(testTimeout);
         disposables.Add(timeoutTokenSource);
 
         var timeoutToken = timeoutTokenSource.Token;
 
-        var factory = WebApplicationFactorySetupUtil.Setup(
-            app =>
-            {
-                ConfigureAppDefaults(app, setupAuthorization);
-                configureApp?.Invoke(app);
-            },
-            services =>
-            {
-                ConfigureServiceDefaults(services, setupAuthorization);
-                configureServices?.Invoke(services);
-            },
-            graphQLBuilder =>
-            {
-                ConfigureGraphQL(graphQLBuilder, setupAuthorization, configureWorkspaceSecurity, configureWorkspaceErrors);
-                configureGraphQL?.Invoke(graphQLBuilder);
-            });
+        var factory = SetupWebApplicationFactory(options);
 
         asyncDisposables.Add(factory);
 
@@ -74,7 +51,7 @@ public static class TestSetupUtil
         return new TestContext
         {
             Factory = factory,
-            HttpClient = factory.CreateClient(),
+            HttpClient = factory.CreateHttpClient(),
             ServiceProvider = asyncTestServiceScope.ServiceProvider,
             CancellationToken = linkedToken,
             AsyncDisposables = asyncDisposables,
@@ -82,113 +59,71 @@ public static class TestSetupUtil
         };
     }
 
-    private static void ConfigureAppDefaults(IApplicationBuilder app, bool setupAuthorization)
+    /// <summary>
+    /// Sets up a test environment with default configurations.
+    /// </summary>
+    /// <returns>A TestContext containing the configured test environment with default settings.</returns>
+    public static TestContext SetupWithDefaults()
     {
-        if (setupAuthorization)
-        {
-            app.UseAuthentication();
-        }
-
-        app.UseWebSockets();
-        app.UseRouting();
-
-        if (setupAuthorization)
-        {
-            app.UseAuthorization();
-        }
-
-        app.UseEndpoints(endpoints => endpoints.MapGraphQL());
+        return Setup(new TestSetupOptions());
     }
 
-    private static void ConfigureServiceDefaults(IServiceCollection services, bool setupAuthorization)
+    /// <summary>
+    /// Sets up a test environment with custom configurations while applying defaults.
+    /// </summary>
+    /// <param name="configureApp">Optional action to configure the application.</param>
+    /// <param name="configureServices">Optional action to configure services.</param>
+    /// <param name="configureGraphQL">Optional action to configure GraphQL.</param>
+    /// <param name="setupAuthorization">Whether to set up authorization.</param>
+    /// <param name="configureWorkspaceSecurity">Optional action to configure workspace security.</param>
+    /// <param name="configureWorkspaceErrors">Optional action to configure workspace errors.</param>
+    /// <returns>A TestContext containing the configured test environment.</returns>
+    public static TestContext SetupWithDefaultsAndCustomConfig(
+        Action<IApplicationBuilder>? configureApp = null,
+        Action<IServiceCollection>? configureServices = null,
+        Action<IRequestExecutorBuilder>? configureGraphQL = null,
+        bool setupAuthorization = false,
+        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity = null,
+        Action<List<Type>>? configureWorkspaceErrors = null)
     {
-        services.AddProblemDetails();
-        services.Configure<WebSocketOptions>(options => options.KeepAliveInterval = TimeSpan.FromMinutes(2));
-        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
-        services.AddDbContext<LiveDocsDbContext>(options =>
-            options.UseSqlServer(Environment.GetEnvironmentVariable(ConfigKeys.DbConnectionString)
-                                 ?? throw new InvalidOperationException($"The '{ConfigKeys.DbConnectionString}' env variable must be set")));
-
-        services.AddScoped<IDocumentService<ReplicatedUser>, UserService>()
-            .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
-            .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
-
-        if (setupAuthorization)
+        return Setup(new TestSetupOptions
         {
-            services.AddScoped<AuthorizationHelper>();
-            ConfigureAuthentication(services);
-            ConfigureAuthorization(services);
-        }
+            ConfigureApp = configureApp,
+            ConfigureServices = configureServices,
+            ConfigureGraphQL = configureGraphQL,
+            SetupAuthorization = setupAuthorization,
+            ConfigureWorkspaceSecurity = configureWorkspaceSecurity,
+            ConfigureWorkspaceErrors = configureWorkspaceErrors,
+        });
     }
 
-    private static void ConfigureGraphQL(
-        IRequestExecutorBuilder graphQLBuilder,
-        bool setupAuthorization,
-        Action<SecurityOptions<ReplicatedWorkspace>>? configureWorkspaceSecurity,
-        Action<List<Type>>? configureWorkspaceErrors)
+    private static WebApplicationFactory<TestProgram> SetupWebApplicationFactory(TestSetupOptions options)
     {
-        graphQLBuilder
-            .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
-            .AddReplicationServer()
-            .AddRedisSubscriptions()
-            .AddReplicatedDocument<ReplicatedUser>()
-            .AddReplicatedDocument<ReplicatedWorkspace>(options =>
+        return WebApplicationFactorySetupUtil.Setup(
+            app =>
             {
-                configureWorkspaceSecurity?.Invoke(options.Security);
-                configureWorkspaceErrors?.Invoke(options.Errors);
-            })
-            .AddReplicatedDocument<ReplicatedLiveDoc>();
-
-        if (setupAuthorization)
-        {
-            graphQLBuilder.AddAuthorization();
-        }
-    }
-
-    private static void ConfigureAuthentication(IServiceCollection services)
-    {
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.Audience = JwtUtil.Audience;
-                options.IncludeErrorDetails = true;
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters();
-                ConfigureJwtBearerEvents(options);
-            });
-    }
-
-    private static void ConfigureJwtBearerEvents(JwtBearerOptions options)
-    {
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = _ => Task.CompletedTask,
-            OnAuthenticationFailed = ctx =>
-            {
-                ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                ctx.Fail(ctx.Exception);
-                return Task.CompletedTask;
+                if (options.ApplyDefaultAppConfiguration)
+                {
+                    TestSetupBase.ConfigureAppDefaults(app, options.SetupAuthorization);
+                }
+                options.ConfigureApp?.Invoke(app);
             },
-            OnForbidden = ctx =>
+            services =>
             {
-                ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
-                ctx.Fail(nameof(HttpStatusCode.Forbidden));
-                return Task.CompletedTask;
+                if (options.ApplyDefaultServiceConfiguration)
+                {
+                    TestSetupBase.ConfigureServiceDefaults(services, options.SetupAuthorization);
+                }
+                options.ConfigureServices?.Invoke(services);
             },
-        };
-    }
-
-    private static void ConfigureAuthorization(IServiceCollection services)
-    {
-        services.AddAuthorizationBuilder()
-            .AddPolicy("IsWorkspaceAdmin", policy => policy.RequireRole(nameof(UserRole.WorkspaceAdmin)))
-            .AddPolicy("IsSystemAdmin", policy => policy.RequireRole(nameof(UserRole.SystemAdmin)));
-    }
-
-    private static TimeSpan GetTestTimeout()
-    {
-        return Debugger.IsAttached
-            ? TimeSpan.FromMinutes(5)
-            : TimeSpan.FromSeconds(10);
+            graphQLBuilder =>
+            {
+                if (options.ApplyDefaultGraphQLConfiguration)
+                {
+                    TestSetupBase.ConfigureGraphQLDefaults(graphQLBuilder, options.SetupAuthorization, options.ConfigureWorkspaceSecurity, options.ConfigureWorkspaceErrors);
+                }
+                options.ConfigureGraphQL?.Invoke(graphQLBuilder);
+            }
+        );
     }
 }

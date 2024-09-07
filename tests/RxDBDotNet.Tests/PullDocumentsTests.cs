@@ -6,24 +6,23 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class PullDocumentsTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup();
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     private async Task<(WorkspaceInputGql workspace, UserInputGql user, LiveDocInputGql liveDoc)> CreateLiveDocAsync()
     {
-        var (workspaceInputGql, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var user = await _testContext.HttpClient.CreateUserAsync(workspaceInputGql, _testContext.CancellationToken);
-        var liveDoc = await _testContext.HttpClient.CreateLiveDocAsync(workspaceInputGql, user, _testContext.CancellationToken);
+        var (workspaceInputGql, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var user = await TestContext.HttpClient.CreateUserAsync(workspaceInputGql, TestContext.CancellationToken);
+        var liveDoc = await TestContext.HttpClient.CreateLiveDocAsync(workspaceInputGql, user, TestContext.CancellationToken);
         return (workspaceInputGql, user, liveDoc);
     }
 
@@ -42,15 +41,16 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithNoCheckpoint_ShouldReturnAllDocuments()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var (workspace, user, liveDoc1) = await CreateLiveDocAsync();
-        var liveDoc2 = await _testContext.HttpClient.CreateLiveDocAsync(workspace, user, _testContext.CancellationToken);
+        var liveDoc2 = await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -78,6 +78,7 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithCheckpoint_ShouldReturnOnlyNewDocuments()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var (workspace, user, liveDoc1) = await CreateLiveDocAsync();
 
         // Get initial checkpoint
@@ -85,11 +86,11 @@ public class PullDocumentsTests : IAsyncLifetime
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
 
-        var initialResponse = await _testContext.HttpClient.PostGqlQueryAsync(initialQuery, _testContext.CancellationToken);
+        var initialResponse = await TestContext.HttpClient.PostGqlQueryAsync(initialQuery, TestContext.CancellationToken);
         var checkpoint = initialResponse.Data.PullLiveDoc?.Checkpoint;
 
         // Create a new LiveDoc after the initial checkpoint
-        var liveDoc2 = await _testContext.HttpClient.CreateLiveDocAsync(workspace, user, _testContext.CancellationToken);
+        var liveDoc2 = await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
@@ -100,7 +101,7 @@ public class PullDocumentsTests : IAsyncLifetime
         }, CreateWorkspaceFilter(workspace.Id!.Value));
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -117,16 +118,17 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithLimit_ShouldReturnLimitedDocuments()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var (workspace, user, _) = await CreateLiveDocAsync();
-        await _testContext.HttpClient.CreateLiveDocAsync(workspace, user, _testContext.CancellationToken);
-        await _testContext.HttpClient.CreateLiveDocAsync(workspace, user, _testContext.CancellationToken);
+        await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
+        await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 2, where: CreateWorkspaceFilter(workspace.Id!.Value));
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -141,8 +143,9 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithFilter_ShouldReturnFilteredDocuments()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var (workspace, user, liveDoc1) = await CreateLiveDocAsync();
-        var liveDoc2 = await _testContext.HttpClient.CreateLiveDocAsync(workspace, user, _testContext.CancellationToken);
+        var liveDoc2 = await TestContext.HttpClient.CreateLiveDocAsync(workspace, user, TestContext.CancellationToken);
 
         var filter = new LiveDocFilterInputGql
         {
@@ -161,7 +164,7 @@ public class PullDocumentsTests : IAsyncLifetime
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: filter);
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -178,13 +181,14 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithNoNewDocuments_ShouldReturnEmptyResultWithSameCheckpoint()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var (workspace, _, _) = await CreateLiveDocAsync();
 
         var initialQuery = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
 
-        var initialResponse = await _testContext.HttpClient.PostGqlQueryAsync(initialQuery, _testContext.CancellationToken);
+        var initialResponse = await TestContext.HttpClient.PostGqlQueryAsync(initialQuery, TestContext.CancellationToken);
         var checkpoint = initialResponse.Data.PullLiveDoc?.Checkpoint;
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
@@ -196,7 +200,7 @@ public class PullDocumentsTests : IAsyncLifetime
         }, CreateWorkspaceFilter(workspace.Id!.Value));
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -213,15 +217,16 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithUpdatedDocuments_ShouldReturnUpdatedVersions()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var (workspace, _, liveDoc) = await CreateLiveDocAsync();
-        var updatedLiveDoc = await _testContext.HttpClient.UpdateLiveDocAsync(liveDoc, _testContext.CancellationToken);
+        var updatedLiveDoc = await TestContext.HttpClient.UpdateLiveDocAsync(liveDoc, TestContext.CancellationToken);
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()
@@ -241,16 +246,17 @@ public class PullDocumentsTests : IAsyncLifetime
     public async Task PullDocuments_WithMultipleOwners_ShouldReturnCorrectOwners()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var (workspace, user1, liveDoc1) = await CreateLiveDocAsync();
-        var user2 = await _testContext.HttpClient.CreateUserAsync(workspace, _testContext.CancellationToken);
-        var liveDoc2 = await _testContext.HttpClient.CreateLiveDocAsync(workspace, user2, _testContext.CancellationToken);
+        var user2 = await TestContext.HttpClient.CreateUserAsync(workspace, TestContext.CancellationToken);
+        var liveDoc2 = await TestContext.HttpClient.CreateLiveDocAsync(workspace, user2, TestContext.CancellationToken);
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
 
         // Act
-        var response = await _testContext.HttpClient.PostGqlQueryAsync(query, _testContext.CancellationToken);
+        var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
 
         // Assert
         response.Errors.Should()

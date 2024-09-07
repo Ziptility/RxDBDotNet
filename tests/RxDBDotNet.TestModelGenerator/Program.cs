@@ -8,7 +8,7 @@ public sealed class Program
     {
         Console.WriteLine("Generating GraphQLTestModel...");
 
-        var factory = WebApplicationFactorySetupUtil.Setup();
+        var factory = WebApplicationFactorySetupUtil.SetupWithDefaults();
 
         using var client = factory.CreateHttpClient();
 

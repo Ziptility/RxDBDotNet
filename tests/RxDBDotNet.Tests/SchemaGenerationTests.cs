@@ -6,34 +6,33 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class SchemaGenerationTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup();
-
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     [Fact]
     public async Task GeneratedSchemaForADocumentShouldReflectTheNameDefinedInTheGraphQLNameAttribute()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         using var requestContent = new StringContent(JsonConvert.SerializeObject(new
         {
             query = IntrospectionQuery.Text,
         }), Encoding.UTF8, "application/json");
 
         // Act
-        var schemaResponse = await _testContext.HttpClient.PostAsync("/graphql", requestContent, _testContext.CancellationToken);
+        var schemaResponse = await TestContext.HttpClient.PostAsync("/graphql", requestContent, TestContext.CancellationToken);
 
         // Assert
-        var schemaString = await schemaResponse.Content.ReadAsStringAsync(_testContext.CancellationToken);
+        var schemaString = await schemaResponse.Content.ReadAsStringAsync(TestContext.CancellationToken);
 
         schemaString.Should()
             .NotContain("ReplicatedWorkspace");

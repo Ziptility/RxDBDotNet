@@ -17,7 +17,7 @@ RxDBDotNet is a powerful .NET library that implements the RxDB replication proto
 ## Key Features
 
 - 🔄 Full RxDB Protocol Support
-- 🔥 Hot Chocolate GraphQL Integration
+- 🌶️ Hot Chocolate GraphQL Integration
 - 🌐 Real-Time & Offline-First Capabilities
 - ⚡ Quick Setup with Minimal Configuration
 - 🧩 Extensible Design for Custom Types

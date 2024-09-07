@@ -12,18 +12,16 @@ namespace RxDBDotNet.Tests;
 [Collection("DockerSetup")]
 public class SubscriptionTests : IAsyncLifetime
 {
-    private TestContext _testContext = null!;
+    private TestContext TestContext { get; set; } = null!;
 
     public Task InitializeAsync()
     {
-        _testContext = TestSetupUtil.Setup();
-
         return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
     {
-        await _testContext.DisposeAsync();
+        await TestContext.DisposeAsync();
     }
 
     /// <summary>
@@ -41,6 +39,7 @@ public class SubscriptionTests : IAsyncLifetime
     public async Task DocumentChangedStream_ShouldHandleEmptyDocuments()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var mockSourceStream = new Mock<ISourceStream<DocumentPullBulk<ReplicatedWorkspace>>>();
         var emptyUpdate = new DocumentPullBulk<ReplicatedWorkspace>
         {
@@ -59,20 +58,20 @@ public class SubscriptionTests : IAsyncLifetime
         mockTopicEventReceiver.Setup(x => x.SubscribeAsync<DocumentPullBulk<ReplicatedWorkspace>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSourceStream.Object);
 
-        _testContext = TestSetupUtil.Setup(configureServices: services =>
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(configureServices: services =>
         {
             services.RemoveAll<ITopicEventReceiver>();
             services.AddSingleton(mockTopicEventReceiver.Object);
         });
 
-        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields())
             .Build();
 
         // Act
         var subscriptionResponses =
-            await CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, _testContext.CancellationToken, maxResponses: 1);
+            await CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 1);
 
         // Assert
         // Validate that we received exactly one response, as per the RxDB protocol
@@ -118,9 +117,10 @@ public class SubscriptionTests : IAsyncLifetime
     public async Task DocumentChangedStream_ShouldHandleCancellationAndDisposeStream()
     {
         // Arrange
-        await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = TestSetupUtil.SetupWithDefaults();
+        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
-        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields())
             .Build();
@@ -143,6 +143,7 @@ public class SubscriptionTests : IAsyncLifetime
     public async Task DocumentChangedStream_ShouldHandleExceptionAndDisposeStream()
     {
         // Arrange
+        TestContext = TestSetupUtil.SetupWithDefaults();
         var mockSourceStream = new Mock<ISourceStream<DocumentPullBulk<ReplicatedWorkspace>>>();
         mockSourceStream.Setup(x => x.ReadEventsAsync())
             .Returns(ThrowAfterFirstYield);
@@ -156,11 +157,11 @@ public class SubscriptionTests : IAsyncLifetime
         mockTopicEventReceiver.Setup(x => x.SubscribeAsync<DocumentPullBulk<ReplicatedWorkspace>>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockSourceStream.Object);
 
-        _testContext = TestSetupUtil.Setup(configureServices: services => services.AddSingleton(mockTopicEventReceiver.Object));
+        TestContext = TestSetupUtil.SetupWithDefaultsAndCustomConfig(configureServices: services => services.AddSingleton(mockTopicEventReceiver.Object));
 
-        await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
-        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields())
             .Build();
@@ -170,7 +171,7 @@ public class SubscriptionTests : IAsyncLifetime
         try
         {
             await foreach (var _ in subscriptionClient.SubscribeAndCollectAsync<GqlSubscriptionResponse>(subscriptionQuery,
-                               _testContext.CancellationToken))
+                               TestContext.CancellationToken))
             {
                 // We expect to get here once before the exception is thrown
             }
@@ -196,7 +197,8 @@ public class SubscriptionTests : IAsyncLifetime
     public async Task CreateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscriptionAsync()
     {
         // Arrange
-        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+        TestContext = TestSetupUtil.SetupWithDefaults();
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
@@ -205,13 +207,13 @@ public class SubscriptionTests : IAsyncLifetime
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, _testContext.CancellationToken, maxResponses: 3);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 3);
 
         // Ensure the subscription is established
-        await Task.Delay(1000, _testContext.CancellationToken);
+        await Task.Delay(1000, TestContext.CancellationToken);
 
         // Act
-        var (newWorkspace, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        var (newWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
         // Assert
 
@@ -261,9 +263,10 @@ public class SubscriptionTests : IAsyncLifetime
     public async Task UpdateWorkspaceShouldPropagateNewWorkspaceThroughTheSubscription()
     {
         // Arrange
-        var (workspaceInputGql, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = TestSetupUtil.SetupWithDefaults();
+        var (workspaceInputGql, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
-        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
@@ -272,13 +275,13 @@ public class SubscriptionTests : IAsyncLifetime
 
         // Start the subscription task before creating the workspace
         // so that we do not miss subscription data
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, _testContext.CancellationToken, maxResponses: 3);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 3);
 
         // Ensure the subscription is established
-        await Task.Delay(1000, _testContext.CancellationToken);
+        await Task.Delay(1000, TestContext.CancellationToken);
 
         // Act
-        var updatedWorkspace = await _testContext.HttpClient.UpdateWorkspaceAsync(workspaceInputGql, _testContext.CancellationToken);
+        var updatedWorkspace = await TestContext.HttpClient.UpdateWorkspaceAsync(workspaceInputGql, TestContext.CancellationToken);
 
         // Assert
         var subscriptionResponses = await subscriptionTask;
@@ -323,11 +326,12 @@ public class SubscriptionTests : IAsyncLifetime
     public async Task ASubscriptionCanBeFilteredByTopic()
     {
         // Arrange
-        var (workspaceInputGql, _) = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspace2 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
-        var workspace3 = await _testContext.HttpClient.CreateWorkspaceAsync(_testContext.CancellationToken);
+        TestContext = TestSetupUtil.SetupWithDefaults();
+        var (workspaceInputGql, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var workspace3 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
 
-        await using var subscriptionClient = await _testContext.Factory.CreateGraphQLSubscriptionClientAsync(_testContext.CancellationToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
         Debug.Assert(workspace3.workspaceInputGql.Id != null, "workspace3.Id != null");
 
@@ -342,16 +346,16 @@ public class SubscriptionTests : IAsyncLifetime
         // so that we do not miss subscription data
         // using var collectTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         // var collectTimeoutToken = collectTimeout.Token;
-        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, _testContext.CancellationToken);
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken);
 
         // Ensure the subscription is established
-        await Task.Delay(1000, _testContext.CancellationToken);
+        await Task.Delay(1000, TestContext.CancellationToken);
 
-        await _testContext.HttpClient.UpdateWorkspaceAsync(workspaceInputGql, _testContext.CancellationToken);
-        await _testContext.HttpClient.UpdateWorkspaceAsync(workspace2.workspaceInputGql, _testContext.CancellationToken);
+        await TestContext.HttpClient.UpdateWorkspaceAsync(workspaceInputGql, TestContext.CancellationToken);
+        await TestContext.HttpClient.UpdateWorkspaceAsync(workspace2.workspaceInputGql, TestContext.CancellationToken);
         // Update workspace 3 twice
-        var updatedWorkspace3 = await _testContext.HttpClient.UpdateWorkspaceAsync(workspace3.workspaceInputGql, _testContext.CancellationToken);
-        await _testContext.HttpClient.UpdateWorkspaceAsync(updatedWorkspace3, _testContext.CancellationToken);
+        var updatedWorkspace3 = await TestContext.HttpClient.UpdateWorkspaceAsync(workspace3.workspaceInputGql, TestContext.CancellationToken);
+        await TestContext.HttpClient.UpdateWorkspaceAsync(updatedWorkspace3, TestContext.CancellationToken);
 
         var subscriptionResponses = await subscriptionTask;
         subscriptionResponses.Should()

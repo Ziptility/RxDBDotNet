@@ -54,17 +54,42 @@ public sealed class SecurityOptions<TDocument> where TDocument : class, IReplica
         return RequirePolicy(Operation.Delete, policy);
     }
 
-    private SecurityOptions<TDocument> RequirePolicy(Operation operations, string policy)
+    /// <summary>
+    /// Requires a specified policy to be met for the given operations on the replicated document.
+    /// </summary>
+    /// <param name="operations">The operations to which the policy applies. This can be a combination of Operation flags.</param>
+    /// <param name="policy">The policy that must be met for the specified operations.</param>
+    /// <returns>The current <see cref="SecurityOptions{TDocument}"/> instance for method chaining.</returns>
+    /// <exception cref="ArgumentException">
+    /// Thrown when no operations are specified or when the policy is null or whitespace.
+    /// </exception>
+    public SecurityOptions<TDocument> RequirePolicy(Operation operations, string policy)
     {
-        PolicyRequirements.Add(new PolicyRequirement
+        if (operations == Operation.None)
         {
-            DocumentOperation = new DocumentOperation
+            throw new ArgumentException("At least one operation must be specified.", nameof(operations));
+        }
+
+        if (string.IsNullOrWhiteSpace(policy))
+        {
+            throw new ArgumentException("Policy cannot be null or whitespace.", nameof(policy));
+        }
+
+        foreach (Operation operation in Enum.GetValues(typeof(Operation)))
+        {
+            if (operation != Operation.None && operations.HasFlag(operation))
             {
-                Operation = operations,
-                DocumentType = typeof(TDocument),
-            },
-            Policy = policy,
-        });
+                PolicyRequirements.Add(new PolicyRequirement
+                {
+                    DocumentOperation = new DocumentOperation
+                    {
+                        Operation = operation,
+                        DocumentType = typeof(TDocument),
+                    },
+                    Policy = policy,
+                });
+            }
+        }
 
         return this;
     }

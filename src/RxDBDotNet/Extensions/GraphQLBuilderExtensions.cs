@@ -224,9 +224,6 @@ public static class GraphQLBuilderExtensions
         field.Error<UnauthorizedAccessException>();
         addedErrorTypes.Add(typeof(UnauthorizedAccessException));
 
-        field.Error<ArgumentNullException>();
-        addedErrorTypes.Add(typeof(ArgumentNullException));
-
         // update the foreach code to not add the AuthenticationException error type if it has already been added
         foreach (var errorType in replicationOptions.Errors)
         {

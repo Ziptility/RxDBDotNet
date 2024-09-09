@@ -1,9 +1,7 @@
 using HotChocolate.AspNetCore;
-using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Models.Shared;
 using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
 using RxDBDotNet.Extensions;
@@ -51,7 +49,6 @@ static void ConfigureServices(WebApplicationBuilder builder)
     builder.AddRedisClient("redis");
 
     builder.Services
-        .AddScoped<IDocumentService<Hero>, HeroService>()
         .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
         .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
         .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
@@ -65,14 +62,10 @@ static void ConfigureGraphQL(WebApplicationBuilder builder)
         .AddMutationConventions()
         .AddReplication()
         .AddSubscriptionDiagnostics()
-        .AddReplicatedDocument<Hero>()
-        .AddReplicatedDocument<ReplicatedUser>()
+        .AddReplicatedDocument<ReplicatedUser>(options => options.Security.RequirePolicyToCreate())
         .AddReplicatedDocument<ReplicatedWorkspace>()
         .AddReplicatedDocument<ReplicatedLiveDoc>()
-        .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
-        {
-            TopicPrefix = null,
-        });
+        .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>());
 }
 
 static Task InitializeLiveDocsDbAsync()

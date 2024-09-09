@@ -1,7 +1,6 @@
 ﻿using HotChocolate.Execution.Configuration;
 using System.Security.Claims;
 using LiveDocs.GraphQLApi.Infrastructure;
-using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -24,6 +23,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using RxDBDotNet.Services;
 using RxDBDotNet.Security;
+using LiveDocs.GraphQLApi.Security;
 
 namespace RxDBDotNet.Tests.Setup
 {

@@ -1,7 +1,7 @@
 ﻿using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Models.Shared;
+using LiveDocs.GraphQLApi.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace LiveDocs.GraphQLApi.Infrastructure

@@ -3,10 +3,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.IdentityModel.Tokens;
 
-namespace LiveDocs.GraphQLApi.Infrastructure;
+namespace LiveDocs.GraphQLApi.Security;
 
 /// <summary>
 /// Provides utility methods for generating and validating JWT access tokens.

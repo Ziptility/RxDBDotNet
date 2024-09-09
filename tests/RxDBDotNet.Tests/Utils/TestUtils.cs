@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Security;
 using RxDBDotNet.Tests.Model;
 using static RxDBDotNet.Tests.Setup.Strings;
 

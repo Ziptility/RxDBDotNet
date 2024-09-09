@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import {
   Button,
@@ -15,59 +15,75 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Workspace, User } from '@/lib/schemas';
 
-const LoginPage: React.FC = () => {
+const LoginPage: React.FC = (): JSX.Element => {
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<string>('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { login, fetchWorkspaces, fetchUsers, workspaces, users, isLoggedIn } = useAuth();
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { login, fetchWorkspaces, fetchUsers, workspaces, users, isLoggedIn, isInitialized } = useAuth();
   const router = useRouter();
+  const hasFetchedWorkspaces = useRef<boolean>(false);
 
-  useEffect(() => {
-    const initFetch = async (): Promise<void> => {
+  console.log('LoginPage: Render', { isLoggedIn, isInitialized, isLoading, workspacesCount: workspaces.length });
+
+  const initFetch = useCallback(async (): Promise<void> => {
+    console.log('LoginPage: initFetch called', { hasFetchedWorkspaces: hasFetchedWorkspaces.current });
+    if (isInitialized && !hasFetchedWorkspaces.current) {
       setIsLoading(true);
       await fetchWorkspaces();
+      hasFetchedWorkspaces.current = true;
       setIsLoading(false);
-    };
-    void initFetch();
-  }, [fetchWorkspaces]);
+    }
+  }, [isInitialized, fetchWorkspaces]);
 
   useEffect(() => {
+    console.log('LoginPage: useEffect (initFetch)');
+    void initFetch();
+  }, [initFetch]);
+
+  useEffect(() => {
+    console.log('LoginPage: useEffect (fetchUsers)', { selectedWorkspace });
     if (selectedWorkspace) {
       void fetchUsers(selectedWorkspace);
     }
   }, [selectedWorkspace, fetchUsers]);
 
   useEffect(() => {
-    if (isLoggedIn) {
+    console.log('LoginPage: useEffect (redirect)', { isLoggedIn, isInitialized });
+    if (isLoggedIn && isInitialized) {
       void router.push('/');
     }
-  }, [isLoggedIn, router]);
+  }, [isLoggedIn, isInitialized, router]);
 
   const handleWorkspaceChange = (event: SelectChangeEvent): void => {
+    console.log('LoginPage: handleWorkspaceChange', event.target.value);
     setSelectedWorkspace(event.target.value);
     setSelectedUser('');
   };
 
   const handleUserChange = (event: SelectChangeEvent): void => {
+    console.log('LoginPage: handleUserChange', event.target.value);
     setSelectedUser(event.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    console.log('LoginPage: handleSubmit', { selectedWorkspace, selectedUser });
     setIsLoading(true);
     setError('');
     try {
       await login(selectedUser, selectedWorkspace);
-      // No need to redirect here, the useEffect hook will handle it
+      console.log('LoginPage: Login successful');
     } catch (err) {
+      console.error('LoginPage: Login error', err);
       setError('Invalid user or workspace');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  if (!isInitialized || isLoading) {
+    console.log('LoginPage: Showing loading spinner');
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
@@ -75,6 +91,7 @@ const LoginPage: React.FC = () => {
     );
   }
 
+  console.log('LoginPage: Rendering login form');
   return (
     <Container component="main" maxWidth="xs">
       <Box

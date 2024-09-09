@@ -71,12 +71,17 @@ void ConfigureGraphQL()
         .AddReplication()
         .AddSubscriptionDiagnostics()
         .AddReplicatedDocument<ReplicatedLiveDoc>(options =>
-            options.Security.RequirePolicy(Operation.All, PolicyNames.HasStandardUserAccess))
+            options.Security
+                .RequirePolicy(Operation.All, PolicyNames.HasStandardUserAccess))
+        // All users can read the set of users to support logging in as the user in the example, non-production client app
         .AddReplicatedDocument<ReplicatedUser>(options =>
-            options.Security.RequirePolicy(Operation.All, PolicyNames.HasWorkspaceAdminAccess))
+            options.Security
+                .RequirePolicy(Operation.Create | Operation.Update | Operation.Delete, PolicyNames.HasWorkspaceAdminAccess))
+        // Likewise, all users can read the set of workspaces to support logging in as a user in the example, non-production client app
         .AddReplicatedDocument<ReplicatedWorkspace>(options =>
-            options.Security.RequirePolicy(Operation.Create | Operation.Delete, PolicyNames.HasSystemAdminAccess)
-                .RequirePolicy(Operation.Read | Operation.Update, PolicyNames.HasWorkspaceAdminAccess))
+            options.Security
+                .RequirePolicy(Operation.Create | Operation.Delete, PolicyNames.HasSystemAdminAccess)
+                .RequirePolicy(Operation.Update, PolicyNames.HasWorkspaceAdminAccess))
         .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>());
 }
 

@@ -8,7 +8,7 @@ import {
 } from 'rxdb/plugins/replication-graphql';
 import { RxCollection, GraphQLServerUrl } from 'rxdb';
 import { logError, notifyUser } from './errorHandling';
-import { workspaceSchema, userSchema, liveDocSchema, WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
+import { workspaceSchema, userSchema, liveDocSchema, Workspace, User, LiveDoc } from './schemas';
 import { ReplicationCheckpoint, LiveDocsCollections } from '@/types';
 
 const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
@@ -25,7 +25,7 @@ const getGraphQLServerUrl = (): GraphQLServerUrl => {
   return url;
 };
 
-const setupReplicationForCollection = <T extends WorkspaceDocType | UserDocType | LiveDocDocType>(
+const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   collection: RxCollection<T>,
   schemaName: string,
   schema: typeof workspaceSchema | typeof userSchema | typeof liveDocSchema
@@ -76,16 +76,16 @@ const setupReplicationForCollection = <T extends WorkspaceDocType | UserDocType 
 };
 
 interface ReplicationStates {
-  workspaces: RxGraphQLReplicationState<WorkspaceDocType, ReplicationCheckpoint>;
-  users: RxGraphQLReplicationState<UserDocType, ReplicationCheckpoint>;
-  livedocs: RxGraphQLReplicationState<LiveDocDocType, ReplicationCheckpoint>;
+  workspaces: RxGraphQLReplicationState<Workspace, ReplicationCheckpoint>;
+  users: RxGraphQLReplicationState<User, ReplicationCheckpoint>;
+  livedocs: RxGraphQLReplicationState<LiveDoc, ReplicationCheckpoint>;
 }
 
 export const setupReplication = async (db: LiveDocsDatabase): Promise<ReplicationStates> => {
   const replicationStates: ReplicationStates = {
-    workspaces: setupReplicationForCollection<WorkspaceDocType>(db.workspaces, 'workspace', workspaceSchema),
-    users: setupReplicationForCollection<UserDocType>(db.users, 'user', userSchema),
-    livedocs: setupReplicationForCollection<LiveDocDocType>(db.livedocs, 'liveDoc', liveDocSchema),
+    workspaces: setupReplicationForCollection<Workspace>(db.workspaces, 'workspace', workspaceSchema),
+    users: setupReplicationForCollection<User>(db.users, 'user', userSchema),
+    livedocs: setupReplicationForCollection<LiveDoc>(db.livedocs, 'liveDoc', liveDocSchema),
   };
 
   try {

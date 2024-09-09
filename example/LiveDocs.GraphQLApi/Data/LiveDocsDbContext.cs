@@ -60,6 +60,10 @@ public class LiveDocsDbContext : DbContext
             entity.HasIndex(u => u.Email)
                 .IsUnique();
 
+            entity.Property(e => e.Role)
+                .HasConversion<string>()
+                .HasMaxLength(15);
+
             entity.Property(e => e.UpdatedAt)
                 .IsRequired()
                 .HasColumnType("datetimeoffset(7)"); // Highest precision

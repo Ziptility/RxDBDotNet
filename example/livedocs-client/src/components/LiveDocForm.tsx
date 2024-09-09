@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { LiveDocDocType } from '@/lib/schemas';
+import { LiveDoc } from '@/lib/schemas';
 
 interface LiveDocFormProps {
-  liveDoc?: LiveDocDocType | undefined;
+  liveDoc?: LiveDoc | undefined;
   users: { id: string; name: string }[];
   workspaces: { id: string; name: string }[];
-  onSubmit: (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit: (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }): JSX.Element => {

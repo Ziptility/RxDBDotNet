@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { UserDocType, UserRole } from '@/lib/schemas';
+import { User, UserRole } from '@/lib/schemas';
 
 interface UserFormProps {
-  user?: UserDocType | undefined;
+  user?: User | undefined;
   workspaces: { id: string; name: string }[];
-  onSubmit: (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  onSubmit: (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.Element => {
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
-  const [role, setRole] = useState<UserRole>(UserRole.User);
+  const [role, setRole] = useState<UserRole>(UserRole.StandardUser);
   const [workspaceId, setWorkspaceId] = useState<string>('');
 
   useEffect((): void => {
@@ -27,12 +27,12 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    void onSubmit({ firstName, lastName, email, workspaceId });
+    void onSubmit({ firstName, lastName, email, workspaceId, role });
     if (!user) {
       setFirstName('');
       setLastName('');
       setEmail('');
-      setRole(UserRole.User);
+      setRole(UserRole.StandardUser);
       setWorkspaceId('');
     }
   };

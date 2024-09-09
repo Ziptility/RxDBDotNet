@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using HotChocolate;
 using HotChocolate.Types;
+using LiveDocs.GraphQLApi.Security;
 using LiveDocs.GraphQLApi.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
@@ -54,6 +55,12 @@ public sealed record ReplicatedUser : ReplicatedDocument
     [GraphQLType(typeof(EmailAddressType))]
     [MaxLength(256)]
     public required string Email { get; init; }
+
+    /// <summary>
+    /// The role of the user.
+    /// </summary>
+    [Required]
+    public required UserRole Role { get; init; }
 
     /// <summary>
     /// A JWT access token used to simulate user authentication in a non-production environment.

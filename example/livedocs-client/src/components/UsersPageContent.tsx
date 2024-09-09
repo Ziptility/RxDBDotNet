@@ -5,14 +5,14 @@ import UserList from './UserList';
 import UserForm from './UserForm';
 import { getDatabase } from '../lib/database';
 import { setupReplication } from '../lib/replication';
-import { UserDocType, WorkspaceDocType } from '../lib/schemas';
+import { User, Workspace } from '../lib/schemas';
 import { LiveDocsDatabase } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const UsersPageContent: React.FC = (): JSX.Element => {
   const [db, setDb] = useState<LiveDocsDatabase | null>(null);
-  const [editingUser, setEditingUser] = useState<UserDocType | null>(null);
-  const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
 
   useEffect(() => {
     let workspacesSubscription: Subscription | undefined;
@@ -44,7 +44,7 @@ const UsersPageContent: React.FC = (): JSX.Element => {
     };
   }, []);
 
-  const handleCreate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+  const handleCreate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db) {
       try {
         await db.users.insert({
@@ -59,7 +59,7 @@ const UsersPageContent: React.FC = (): JSX.Element => {
     }
   };
 
-  const handleUpdate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+  const handleUpdate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db && editingUser) {
       try {
         await db.users.upsert({
@@ -74,7 +74,7 @@ const UsersPageContent: React.FC = (): JSX.Element => {
     }
   };
 
-  const handleDelete = async (user: UserDocType): Promise<void> => {
+  const handleDelete = async (user: User): Promise<void> => {
     if (db) {
       try {
         await db.users.upsert({

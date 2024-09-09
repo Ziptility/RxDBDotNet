@@ -3,6 +3,7 @@ import { AppBar, Toolbar, Typography, Container, Box, Button } from '@mui/materi
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NetworkStatus = dynamic(() => import('./NetworkStatus'), { ssr: false });
 
@@ -19,6 +20,12 @@ const navItems = [
 
 const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
   const router = useRouter();
+  const { logout } = useAuth();
+
+  const handleLogout = (): void => {
+    logout();
+    void router.push('/login');
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -47,6 +54,9 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
           <Box ml={2}>
             <NetworkStatus />
           </Box>
+          <Button color="inherit" onClick={handleLogout}>
+            Logout
+          </Button>
         </Toolbar>
       </AppBar>
       <Container component="main" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>

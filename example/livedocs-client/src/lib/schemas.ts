@@ -1,5 +1,11 @@
 import { toTypedRxJsonSchema, RxJsonSchema, ExtractDocumentTypeFromTypedRxJsonSchema } from 'rxdb';
 
+export enum UserRole {
+  StandardUser = 'StandardUser',
+  WorkspaceAdmin = 'WorkspaceAdmin',
+  SystemAdmin = 'SystemAdmin',
+}
+
 // Workspace Schema
 const workspaceSchemaLiteral = {
   version: 0,
@@ -49,6 +55,10 @@ const userSchemaLiteral = {
       format: 'email',
       maxLength: 256,
     },
+    role: {
+      type: 'string',
+      enum: Object.values(UserRole),
+    },
     jwtAccessToken: {
       type: 'string',
       maxLength: 2000,
@@ -66,7 +76,7 @@ const userSchemaLiteral = {
       type: 'boolean',
     },
   },
-  required: ['id', 'firstName', 'lastName', 'email', 'workspaceId', 'updatedAt'],
+  required: ['id', 'firstName', 'lastName', 'email', 'role', 'workspaceId', 'updatedAt'],
 } as const;
 
 // LiveDoc Schema
@@ -115,16 +125,9 @@ const liveDocSchema: RxJsonSchema<ExtractDocumentTypeFromTypedRxJsonSchema<typeo
   toTypedRxJsonSchema(liveDocSchemaLiteral);
 
 // Export types
-export type WorkspaceDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof workspaceSchemaLiteral>;
-export type UserDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof userSchemaLiteral>;
-export type LiveDocDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof liveDocSchemaLiteral>;
+export type Workspace = ExtractDocumentTypeFromTypedRxJsonSchema<typeof workspaceSchemaLiteral>;
+export type User = ExtractDocumentTypeFromTypedRxJsonSchema<typeof userSchemaLiteral>;
+export type LiveDoc = ExtractDocumentTypeFromTypedRxJsonSchema<typeof liveDocSchemaLiteral>;
 
 // Export schemas
 export { workspaceSchema, userSchema, liveDocSchema };
-
-// Define and export enum for User roles
-export enum UserRole {
-  User = 'User',
-  Admin = 'Admin',
-  SuperAdmin = 'SuperAdmin',
-}

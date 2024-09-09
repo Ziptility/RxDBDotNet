@@ -5,15 +5,15 @@ import LiveDocList from './LiveDocList';
 import LiveDocForm from './LiveDocForm';
 import { getDatabase } from '../lib/database';
 import { setupReplication } from '../lib/replication';
-import { LiveDocDocType, UserDocType, WorkspaceDocType } from '@/lib/schemas';
+import { LiveDoc, User, Workspace } from '@/lib/schemas';
 import { LiveDocsDatabase } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const LiveDocsPageContent: React.FC = (): JSX.Element => {
   const [db, setDb] = useState<LiveDocsDatabase | null>(null);
-  const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDocDocType | null>(null);
-  const [users, setUsers] = useState<UserDocType[]>([]);
-  const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
+  const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
 
   useEffect(() => {
     let usersSubscription: Subscription | undefined;
@@ -57,7 +57,7 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
     };
   }, []);
 
-  const handleCreate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+  const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db) {
       try {
         await db.livedocs.insert({
@@ -72,7 +72,7 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
     }
   };
 
-  const handleUpdate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+  const handleUpdate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     if (db && editingLiveDoc) {
       try {
         await db.livedocs.upsert({
@@ -87,7 +87,7 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
     }
   };
 
-  const handleDelete = async (liveDoc: LiveDocDocType): Promise<void> => {
+  const handleDelete = async (liveDoc: LiveDoc): Promise<void> => {
     if (db) {
       try {
         await db.livedocs.upsert({

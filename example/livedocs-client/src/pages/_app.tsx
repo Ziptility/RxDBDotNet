@@ -7,6 +7,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import theme from '../theme';
 import createEmotionCache from '../createEmotionCache';
 import Layout from '../components/Layout';
+import { AuthProvider } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
@@ -14,14 +16,22 @@ interface MyAppProps extends AppProps {
 
 const clientSideEmotionCache = createEmotionCache();
 
-function MyApp({ Component, pageProps, emotionCache = clientSideEmotionCache }: MyAppProps): JSX.Element {
+function MyApp({ Component, pageProps, router, emotionCache = clientSideEmotionCache }: MyAppProps): JSX.Element {
   return (
     <CacheProvider value={emotionCache}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
+        <AuthProvider>
+          {router.pathname === '/login' ? (
+            <Component {...pageProps} />
+          ) : (
+            <ProtectedRoute>
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </ProtectedRoute>
+          )}
+        </AuthProvider>
       </ThemeProvider>
     </CacheProvider>
   );

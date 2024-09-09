@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { LiveDocsDatabase } from '@/types';
-import { LiveDocDocType } from '@/lib/schemas';
+import { LiveDoc } from '@/lib/schemas';
 
 interface LiveDocListProps {
   db: LiveDocsDatabase;
-  onEdit: (liveDoc: LiveDocDocType) => void;
-  onDelete: (liveDoc: LiveDocDocType) => void;
+  onEdit: (liveDoc: LiveDoc) => void;
+  onDelete: (liveDoc: LiveDoc) => void;
 }
 
 const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
-  const [liveDocs, setLiveDocs] = useState<LiveDocDocType[]>([]);
+  const [liveDocs, setLiveDocs] = useState<LiveDoc[]>([]);
 
   useEffect(() => {
     const subscription = db.livedocs

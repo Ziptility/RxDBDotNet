@@ -29,7 +29,7 @@ jobs:
           echo "FILE_VERSION=${{ steps.gitversion.outputs.AssemblySemVer }}" >> $env:GITHUB_ENV
           echo "INFORMATIONAL_VERSION=${{ steps.gitversion.outputs.InformationalVersion }}" >> $env:GITHUB_ENV
       
-    - name: Build NuGet package
+    - name: Build NuGet package with symbols
       run: |
         dotnet pack ./src/RxDBDotNet/RxDBDotNet.csproj `
           --configuration Release `
@@ -37,14 +37,23 @@ jobs:
           /p:Version=$env:NUGET_VERSION `
           /p:AssemblyVersion=$env:ASSEMBLY_VERSION `
           /p:FileVersion=$env:FILE_VERSION `
-          /p:InformationalVersion=$env:INFORMATIONAL_VERSION
+          /p:InformationalVersion=$env:INFORMATIONAL_VERSION `
+          /p:IncludeSource=true `
+          /p:IncludeSymbols=true `
+          /p:SymbolPackageFormat=snupkg
 
     - name: Publish NuGet package to NuGet.org
       run: |
         $package = Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.nupkg | Select-Object -First 1
         dotnet nuget push $package.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
 
+    - name: Publish symbols package to NuGet.org
+      run: |
+        $symbolsPackage = Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.snupkg | Select-Object -First 1
+        dotnet nuget push $symbolsPackage.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+
     - name: Display Package Info
       run: |
-        echo "Package file:"
+        echo "Package files:"
         Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.nupkg | Format-Table Name, FullName
+        Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.snupkg | Format-Table Name, FullName

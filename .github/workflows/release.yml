@@ -47,11 +47,6 @@ jobs:
         $package = Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.nupkg | Select-Object -First 1
         dotnet nuget push $package.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
 
-    - name: Publish symbols package to NuGet.org
-      run: |
-        $symbolsPackage = Get-ChildItem -Path ./nuget -Filter RxDBDotNet*.snupkg | Select-Object -First 1
-        dotnet nuget push $symbolsPackage.FullName --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
-
     - name: Display Package Info
       run: |
         echo "Package files:"

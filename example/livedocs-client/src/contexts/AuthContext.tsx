@@ -28,6 +28,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }): J
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
+  const initializeDatabase = useCallback(async (): Promise<void> => {
+    try {
+      console.log('AuthProvider: Initializing database and starting replication');
+      await getDatabase(); // This will initialize the database and start replication
+      console.log('AuthProvider: Database initialized and replication started');
+    } catch (error) {
+      console.error('AuthProvider: Error initializing database:', error);
+    }
+  }, []);
+
   const login = useCallback(async (userId: string, workspaceId: string): Promise<void> => {
     console.log('AuthProvider: Attempting login with', { userId, workspaceId });
     try {
@@ -72,11 +82,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }): J
       console.error('AuthProvider: Login error:', error);
       throw new Error('Login failed');
     }
-  }, []); // Empty dependency array for login
+  }, []);
 
   useEffect(() => {
     const initializeAuth = async (): Promise<void> => {
       console.log('AuthProvider: Starting initialization');
+      await initializeDatabase();
       const storedUserId = localStorage.getItem('userId');
       const storedWorkspaceId = localStorage.getItem('workspaceId');
       console.log('AuthProvider: Stored IDs:', { storedUserId, storedWorkspaceId });
@@ -100,14 +111,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }): J
     };
 
     void initializeAuth();
-  }, [login]); // Add login to the dependency array
+  }, [login, initializeDatabase]);
 
   const fetchWorkspaces = useCallback(async (): Promise<void> => {
     console.log('AuthProvider: Fetching workspaces');
-    if (workspaces.length > 0) {
-      console.log('AuthProvider: Workspaces already fetched, skipping');
-      return;
-    }
     try {
       const db = await getDatabase();
       const workspacesCollection: RxCollection<Workspace> = db.workspaces;
@@ -118,7 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }): J
       console.error('AuthProvider: Error fetching workspaces:', error);
       throw new Error('Failed to fetch workspaces');
     }
-  }, [workspaces]);
+  }, []);
 
   const fetchUsers = useCallback(async (workspaceId: string): Promise<void> => {
     console.log('AuthProvider: Fetching users for workspace:', workspaceId);

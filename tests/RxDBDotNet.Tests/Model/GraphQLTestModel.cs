@@ -1065,6 +1065,8 @@ namespace RxDBDotNet.Tests.Model
         public const string String = "String";
         public const string Uuid = "UUID";
 
+        public const string UserRole = "UserRole";
+
         public const string AuthenticationError = "AuthenticationError";
         public const string Checkpoint = "Checkpoint";
         public const string LiveDoc = "LiveDoc";
@@ -1098,6 +1100,7 @@ namespace RxDBDotNet.Tests.Model
         public const string UserInputCheckpoint = "UserInputCheckpoint";
         public const string UserInputHeaders = "UserInputHeaders";
         public const string UserInputPushRow = "UserInputPushRow";
+        public const string UserRoleOperationFilterInput = "UserRoleOperationFilterInput";
         public const string UuidOperationFilterInput = "UuidOperationFilterInput";
         public const string WorkspaceFilterInput = "WorkspaceFilterInput";
         public const string WorkspaceInput = "WorkspaceInput";
@@ -1135,6 +1138,7 @@ namespace RxDBDotNet.Tests.Model
                 { typeof(UserInputCheckpointGql), "UserInputCheckpoint" },
                 { typeof(UserInputHeadersGql), "UserInputHeaders" },
                 { typeof(UserInputPushRowGql), "UserInputPushRow" },
+                { typeof(UserRoleOperationFilterInputGql), "UserRoleOperationFilterInput" },
                 { typeof(UuidOperationFilterInputGql), "UuidOperationFilterInput" },
                 { typeof(WorkspaceFilterInputGql), "WorkspaceFilterInput" },
                 { typeof(WorkspaceInputGql), "WorkspaceInput" },
@@ -1143,6 +1147,15 @@ namespace RxDBDotNet.Tests.Model
                 { typeof(WorkspaceInputPushRowGql), "WorkspaceInputPushRow" }
             };
 }
+    #endregion
+
+    #region enums
+    public enum UserRoleGql
+    {
+        StandardUser,
+        WorkspaceAdmin,
+        SystemAdmin
+    }
     #endregion
 
     #nullable enable
@@ -1410,6 +1423,7 @@ namespace RxDBDotNet.Tests.Model
             new GraphQlFieldMetadata { Name = "lastName" },
             new GraphQlFieldMetadata { Name = "fullName" },
             new GraphQlFieldMetadata { Name = "email" },
+            new GraphQlFieldMetadata { Name = "role" },
             new GraphQlFieldMetadata { Name = "jwtAccessToken" },
             new GraphQlFieldMetadata { Name = "workspaceId" },
             new GraphQlFieldMetadata { Name = "id" },
@@ -1437,6 +1451,10 @@ namespace RxDBDotNet.Tests.Model
         public UserQueryBuilderGql WithEmail(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("email", alias, new GraphQlDirective?[] { skip, include });
 
         public UserQueryBuilderGql ExceptEmail() => ExceptField("email");
+
+        public UserQueryBuilderGql WithRole(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("role", alias, new GraphQlDirective?[] { skip, include });
+
+        public UserQueryBuilderGql ExceptRole() => ExceptField("role");
 
         public UserQueryBuilderGql WithJwtAccessToken(string? alias = null, SkipDirective? skip = null, IncludeDirective? include = null) => WithScalarField("jwtAccessToken", alias, new GraphQlDirective?[] { skip, include });
 
@@ -1918,6 +1936,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _lastName;
         private InputPropertyInfo _fullName;
         private InputPropertyInfo _email;
+        private InputPropertyInfo _role;
         private InputPropertyInfo _jwtAccessToken;
         private InputPropertyInfo _workspaceId;
         private InputPropertyInfo _id;
@@ -1977,6 +1996,15 @@ namespace RxDBDotNet.Tests.Model
         {
             get => (QueryBuilderParameter<StringOperationFilterInputGql?>?)_email.Value;
             set => _email = new InputPropertyInfo { Name = "email", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<UserRoleOperationFilterInputGql?>))]
+        #endif
+        public QueryBuilderParameter<UserRoleOperationFilterInputGql?>? Role
+        {
+            get => (QueryBuilderParameter<UserRoleOperationFilterInputGql?>?)_role.Value;
+            set => _role = new InputPropertyInfo { Name = "role", Value = value };
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
@@ -2041,6 +2069,7 @@ namespace RxDBDotNet.Tests.Model
             if (_lastName.Name != null) yield return _lastName;
             if (_fullName.Name != null) yield return _fullName;
             if (_email.Name != null) yield return _email;
+            if (_role.Name != null) yield return _role;
             if (_jwtAccessToken.Name != null) yield return _jwtAccessToken;
             if (_workspaceId.Name != null) yield return _workspaceId;
             if (_id.Name != null) yield return _id;
@@ -2056,6 +2085,7 @@ namespace RxDBDotNet.Tests.Model
         private InputPropertyInfo _lastName;
         private InputPropertyInfo _fullName;
         private InputPropertyInfo _email;
+        private InputPropertyInfo _role;
         private InputPropertyInfo _jwtAccessToken;
         private InputPropertyInfo _workspaceId;
         private InputPropertyInfo _id;
@@ -2097,6 +2127,15 @@ namespace RxDBDotNet.Tests.Model
         {
             get => (QueryBuilderParameter<string?>?)_email.Value;
             set => _email = new InputPropertyInfo { Name = "email", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<LiveDocs.GraphQLApi.Security.UserRole>))]
+        #endif
+        public QueryBuilderParameter<LiveDocs.GraphQLApi.Security.UserRole>? Role
+        {
+            get => (QueryBuilderParameter<LiveDocs.GraphQLApi.Security.UserRole>?)_role.Value;
+            set => _role = new InputPropertyInfo { Name = "role", Value = value };
         }
 
         #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
@@ -2159,6 +2198,7 @@ namespace RxDBDotNet.Tests.Model
             if (_lastName.Name != null) yield return _lastName;
             if (_fullName.Name != null) yield return _fullName;
             if (_email.Name != null) yield return _email;
+            if (_role.Name != null) yield return _role;
             if (_jwtAccessToken.Name != null) yield return _jwtAccessToken;
             if (_workspaceId.Name != null) yield return _workspaceId;
             if (_id.Name != null) yield return _id;
@@ -2705,6 +2745,58 @@ namespace RxDBDotNet.Tests.Model
         }
     }
 
+    public partial class UserRoleOperationFilterInputGql : IGraphQlInputObject
+    {
+        private InputPropertyInfo _eq;
+        private InputPropertyInfo _neq;
+        private InputPropertyInfo _in;
+        private InputPropertyInfo _nin;
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<LiveDocs.GraphQLApi.Security.UserRole?>))]
+        #endif
+        public QueryBuilderParameter<LiveDocs.GraphQLApi.Security.UserRole?>? Eq
+        {
+            get => (QueryBuilderParameter<LiveDocs.GraphQLApi.Security.UserRole?>?)_eq.Value;
+            set => _eq = new InputPropertyInfo { Name = "eq", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<LiveDocs.GraphQLApi.Security.UserRole?>))]
+        #endif
+        public QueryBuilderParameter<LiveDocs.GraphQLApi.Security.UserRole?>? Neq
+        {
+            get => (QueryBuilderParameter<LiveDocs.GraphQLApi.Security.UserRole?>?)_neq.Value;
+            set => _neq = new InputPropertyInfo { Name = "neq", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<LiveDocs.GraphQLApi.Security.UserRole>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<LiveDocs.GraphQLApi.Security.UserRole>?>? In
+        {
+            get => (QueryBuilderParameter<ICollection<LiveDocs.GraphQLApi.Security.UserRole>?>?)_in.Value;
+            set => _in = new InputPropertyInfo { Name = "in", Value = value };
+        }
+
+        #if !GRAPHQL_GENERATOR_DISABLE_NEWTONSOFT_JSON
+        [JsonConverter(typeof(QueryBuilderParameterConverter<ICollection<LiveDocs.GraphQLApi.Security.UserRole>?>))]
+        #endif
+        public QueryBuilderParameter<ICollection<LiveDocs.GraphQLApi.Security.UserRole>?>? Nin
+        {
+            get => (QueryBuilderParameter<ICollection<LiveDocs.GraphQLApi.Security.UserRole>?>?)_nin.Value;
+            set => _nin = new InputPropertyInfo { Name = "nin", Value = value };
+        }
+
+        IEnumerable<InputPropertyInfo> IGraphQlInputObject.GetPropertyValues()
+        {
+            if (_eq.Name != null) yield return _eq;
+            if (_neq.Name != null) yield return _neq;
+            if (_in.Name != null) yield return _in;
+            if (_nin.Name != null) yield return _nin;
+        }
+    }
+
     public partial class UuidOperationFilterInputGql : IGraphQlInputObject
     {
         private InputPropertyInfo _eq;
@@ -3171,6 +3263,7 @@ namespace RxDBDotNet.Tests.Model
         public string LastName { get; set; }
         public string? FullName { get; set; }
         public string? Email { get; set; }
+        public LiveDocs.GraphQLApi.Security.UserRole Role { get; set; }
         public string? JwtAccessToken { get; set; }
         public Guid WorkspaceId { get; set; }
         public Guid Id { get; set; }

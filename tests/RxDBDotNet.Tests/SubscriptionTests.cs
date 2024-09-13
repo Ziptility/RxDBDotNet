@@ -25,6 +25,22 @@ public class SubscriptionTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CreateWorkspaceShouldNotPropagateNewWorkspaceForAnAuthenticatedUserThroughASecuredSubscriptionAsync()
+    {
+        // Arrange
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsSystemAdmin"))
+        .Build();
+
+        await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+
+        Func<Task> act = async () => await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
+
+        await act.Should().ThrowAsync<IOException>();
+    }
+
+    [Fact]
     public async Task CreateWorkspaceShouldNotPropagateNewWorkspaceForAnUnAuthorizedUserThroughASecuredSubscriptionAsync()
     {
         // Arrange

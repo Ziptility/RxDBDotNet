@@ -28,11 +28,11 @@ namespace RxDBDotNet.Security;
 /// </remarks>
 public class SubscriptionAuthMiddleware : DefaultSocketSessionInterceptor
 {
-    private readonly IAuthenticationSchemeProvider _schemeProvider;
+    private readonly IAuthenticationSchemeProvider? _schemeProvider;
     private readonly IOptionsMonitor<JwtBearerOptions> _jwtOptionsMonitor;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RxDBDotNet.Security.SubscriptionAuthMiddleware"/> class.
+    /// Initializes a new instance of the <see cref="SubscriptionAuthMiddleware"/> class.
     /// </summary>
     /// <param name="schemeProvider">The authentication scheme provider.</param>
     /// <param name="jwtOptionsMonitor">The options monitor for JWT bearer token validation.</param>
@@ -43,7 +43,7 @@ public class SubscriptionAuthMiddleware : DefaultSocketSessionInterceptor
     /// This approach allows the middleware to work correctly whether authentication is configured or not.
     /// </remarks>
     public SubscriptionAuthMiddleware(
-        IAuthenticationSchemeProvider schemeProvider,
+        IAuthenticationSchemeProvider? schemeProvider,
         IOptionsMonitor<JwtBearerOptions> jwtOptionsMonitor)
     {
         _schemeProvider = schemeProvider;
@@ -197,9 +197,15 @@ public class SubscriptionAuthMiddleware : DefaultSocketSessionInterceptor
     private async Task<bool> IsJwtBearerConfiguredAsync()
     {
         // Attempt to retrieve the JWT Bearer authentication scheme
-        var scheme = await _schemeProvider.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme).ConfigureAwait(false);
+        if (_schemeProvider != null)
+        {
+            var scheme = await _schemeProvider.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme).ConfigureAwait(false);
 
-        // If the scheme is not null, it means JWT Bearer authentication has been configured
-        return scheme != null;
+            // If the scheme is not null, it means JWT Bearer authentication has been configured
+            return scheme != null;
+        }
+
+        // if _schemeProvider is null, we assume that JWT Bearer authentication is not configured
+        return false;
     }
 }

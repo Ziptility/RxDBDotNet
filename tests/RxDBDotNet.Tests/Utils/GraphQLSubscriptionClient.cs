@@ -11,32 +11,36 @@ namespace RxDBDotNet.Tests.Utils;
 public sealed class GraphQLSubscriptionClient : IAsyncDisposable
 {
     private readonly WebSocket _webSocket;
+    private readonly string? _bearerToken;
     private bool _isDisposed;
 
     /// <summary>
-    ///     Initializes a new instance of the GraphQLSubscriptionClient class for use in test scenarios.
+    /// Initializes a new instance of the <see cref="GraphQLSubscriptionClient"/> class for use in test scenarios.
     /// </summary>
     /// <param name="webSocket">
-    ///     A WebSocket instance created by the test server, already connected to the GraphQL endpoint.
+    /// A <see cref="WebSocket"/> instance created by the test server, already connected to the GraphQL endpoint.
+    /// </param>
+    /// <param name="bearerToken">
+    /// An optional bearer token for authentication.
     /// </param>
     /// <remarks>
-    ///     <para>
-    ///         This constructor initializes a new GraphQLSubscriptionClient with the provided WebSocket connection.
-    ///         The client uses the graphql-transport-ws protocol for communication with a GraphQL server that supports
-    ///         subscriptions.
-    ///     </para>
-    ///     <para>
-    ///         The timeout parameter is particularly useful for testing and debugging scenarios where operations
-    ///         might take longer than usual, allowing for extended debugging sessions without connection timeouts.
-    ///     </para>
-    ///     <para>
-    ///         After creating an instance of GraphQLSubscriptionClient, you must call InitializeAsync()
-    ///         before attempting to use the client for subscriptions.
-    ///     </para>
+    /// <para>
+    /// This constructor initializes a new <see cref="GraphQLSubscriptionClient"/> with the provided WebSocket connection.
+    /// The client uses the graphql-transport-ws protocol for communication with a GraphQL server that supports
+    /// subscriptions.
+    /// </para>
+    /// <para>
+    /// The timeout parameter is particularly useful for testing and debugging scenarios where operations
+    /// might take longer than usual, allowing for extended debugging sessions without connection timeouts.
+    /// </para>
+    /// <para>
+    /// After creating an instance of <see cref="GraphQLSubscriptionClient"/>, you must call <see cref="InitializeAsync"/>
+    /// before attempting to use the client for subscriptions.
+    /// </para>
     /// </remarks>
     /// <example>
-    ///     This example shows how to create and initialize a GraphQLSubscriptionClient in a test context:
-    ///     <code>
+    /// This example shows how to create and initialize a <see cref="GraphQLSubscriptionClient"/> in a test context:
+    /// <code>
     /// // Assuming 'factory' is a WebApplicationFactory&lt;TProgram&gt; instance
     /// var wsClient = factory.Server.CreateWebSocketClient();
     /// var webSocket = await wsClient.ConnectAsync(
@@ -47,10 +51,11 @@ public sealed class GraphQLSubscriptionClient : IAsyncDisposable
     /// // The client is now ready for use in tests
     /// </code>
     /// </example>
-    /// <exception cref="ArgumentNullException">Thrown if the webSocket parameter is null.</exception>
-    public GraphQLSubscriptionClient(WebSocket webSocket)
+    /// <exception cref="ArgumentNullException">Thrown if the <paramref name="webSocket"/> parameter is null.</exception>
+    public GraphQLSubscriptionClient(WebSocket webSocket, string? bearerToken = null)
     {
         _webSocket = webSocket ?? throw new ArgumentNullException(nameof(webSocket));
+        _bearerToken = bearerToken;
     }
 
     /// <summary>
@@ -89,10 +94,26 @@ public sealed class GraphQLSubscriptionClient : IAsyncDisposable
     /// <exception cref="InvalidOperationException">Thrown when the connection initialization fails.</exception>
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        var initMessage = new
+        object initMessage;
+
+        if (!string.IsNullOrEmpty(_bearerToken))
         {
-            type = "connection_init",
-        };
+            initMessage = new
+            {
+                type = "connection_init",
+                payload = new
+                {
+                    Authorization = $"Bearer {_bearerToken}",
+                },
+            };
+        }
+        else
+        {
+            initMessage = new
+            {
+                type = "connection_init",
+            };
+        }
 
         await SendMessageAsync(initMessage, cancellationToken);
 

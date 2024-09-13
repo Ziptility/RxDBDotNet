@@ -1,16 +1,16 @@
+# RxDBDotNet
+
 <p align="left">
   <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
-    <img src="https://img.shields.io/nuget/v/RxDBDotNet.svg" alt="NuGet" style="margin-right: 10px;">
+    <img src="https://img.shields.io/nuget/v/RxDBDotNet.svg" alt="NuGet Version" style="margin-right: 10px;">
+  </a>
+  <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
+    <img src="https://img.shields.io/nuget/dt/RxDBDotNet.svg" alt="NuGet Downloads" style="margin-right: 10px;">
   </a>
   <a href="https://codecov.io/github/Ziptility/RxDBDotNet" style="text-decoration:none;">
     <img src="https://codecov.io/github/Ziptility/RxDBDotNet/graph/badge.svg?token=VvuBJEsIHT" alt="codecov">
   </a>
-  <a href="https://github.com/Ziptility/RxDBDotNet/actions/workflows/main.yml" style="text-decoration:none;">
-    <img src="https://github.com/Ziptility/RxDBDotNet/actions/workflows/main.yml/badge.svg" alt="CI">
-  </a>
 </p>
-
-# RxDBDotNet
 
 RxDBDotNet is a powerful .NET library that implements the RxDB replication protocol, enabling real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate. It extends the standard RxDB replication protocol with .NET-specific enhancements.
 
@@ -426,10 +426,6 @@ mutation PushWorkspace($input: PushWorkspaceInput!) {
       }
       ... on UnauthorizedAccessError {
         message
-      }
-      ... on ArgumentNullError {
-        message
-        paramName
       }
     }
   }

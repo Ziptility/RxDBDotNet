@@ -30,10 +30,11 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.11" />
+        <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.12" />
         <PackageReference Include="HotChocolate.AspNetCore.Subscriptions" Version="10.5.5" />
-        <PackageReference Include="HotChocolate.Data" Version="13.9.11" />
-        <PackageReference Include="HotChocolate.Types" Version="13.9.11" />
+        <PackageReference Include="HotChocolate.Data" Version="13.9.12" />
+        <PackageReference Include="HotChocolate.Types" Version="13.9.12" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.1.34" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="8.0.8" />

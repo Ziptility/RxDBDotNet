@@ -12,7 +12,7 @@
   </a>
 </p>
 
-RxDBDotNet is a powerful .NET library that implements the RxDB replication protocol, enabling real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate. It extends the standard RxDB replication protocol with .NET-specific enhancements.
+RxDBDotNet is a powerful .NET library that implements the [RxDB replication protocol](https://rxdb.info/replication.html), enabling real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate. It extends the standard RxDB replication protocol with .NET-specific enhancements.
 
 ## Key Features
 

@@ -6,10 +6,10 @@
 public class SocketConnectPayload
 {
     /// <summary>
-    /// Gets the authorization token required for establishing a WebSocket connection.
+    /// Gets the headers required for the socket connection, including authorization information.
     /// </summary>
     /// <value>
-    /// A string representing the authorization token, typically in the form of a JWT.
+    /// An instance of the <see cref="Headers"/> class containing the necessary authorization details.
     /// </value>
-    public required string Authorization { get; init; }
+    public required Headers Headers { get; init; }
 }

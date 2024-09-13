@@ -1,6 +1,7 @@
 ﻿using System.Net.WebSockets;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using RxDBDotNet.Security;
 
 namespace RxDBDotNet.Tests.Utils;
 
@@ -101,9 +102,12 @@ public sealed class GraphQLSubscriptionClient : IAsyncDisposable
             initMessage = new
             {
                 type = "connection_init",
-                payload = new
+                payload = new SocketConnectPayload
                 {
-                    Authorization = $"Bearer {_bearerToken}",
+                    Headers = new Headers
+                    {
+                        Authorization = $"Bearer {_bearerToken}",
+                    },
                 },
             };
         }

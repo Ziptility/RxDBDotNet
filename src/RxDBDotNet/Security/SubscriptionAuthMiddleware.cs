@@ -92,7 +92,7 @@ public class SubscriptionAuthMiddleware : DefaultSocketSessionInterceptor
 
             // JWT Bearer is configured, so we proceed with token validation
             var connectPayload = connectionInitMessage.As<SocketConnectPayload>();
-            var authorizationHeader = connectPayload?.Authorization;
+            var authorizationHeader = connectPayload?.Headers.Authorization;
 
             // Ensure the Authorization header is present and in the correct format
             if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))

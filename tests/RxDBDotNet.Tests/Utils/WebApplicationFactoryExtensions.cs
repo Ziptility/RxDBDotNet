@@ -6,7 +6,8 @@ public static class WebApplicationFactoryExtensions
 {
     public static async Task<GraphQLSubscriptionClient> CreateGraphQLSubscriptionClientAsync<TProgram>(
         this WebApplicationFactory<TProgram> factory,
-        CancellationToken cancellationToken) where TProgram : class
+        CancellationToken cancellationToken,
+        string? bearerToken = null) where TProgram : class
     {
         ArgumentNullException.ThrowIfNull(factory);
 
@@ -22,8 +23,7 @@ public static class WebApplicationFactoryExtensions
 
         var webSocket = await wsClient.ConnectAsync(new Uri(factory.Server.BaseAddress, "/graphql"), cancellationToken);
 
-        // Pass the timeout to the GraphQLSubscriptionClient
-        var client = new GraphQLSubscriptionClient(webSocket);
+        var client = new GraphQLSubscriptionClient(webSocket, bearerToken);
         await client.InitializeAsync(cancellationToken);
         return client;
     }

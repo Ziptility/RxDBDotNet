@@ -24,6 +24,119 @@ public class SubscriptionTests : IAsyncLifetime
         await TestContext.DisposeAsync();
     }
 
+    [Fact]
+    public async Task CreateWorkspaceShouldNotPropagateNewWorkspaceForAnUnAuthorizedUserThroughASecuredSubscriptionAsync()
+    {
+        // Arrange
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsSystemAdmin"))
+        .Build();
+
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: admin.JwtAccessToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()))
+            .Build();
+
+        // Start the subscription task before creating the workspace
+        // so that we do not miss subscription data
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 3);
+
+        // Ensure the subscription is established
+        await Task.Delay(1000, TestContext.CancellationToken);
+
+        // Act
+        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+
+        // Assert
+        var subscriptionResponses = await subscriptionTask;
+
+        subscriptionResponses.Should()
+            .HaveCount(1);
+        var subscriptionResponse = subscriptionResponses.Single();
+        subscriptionResponse.Errors.Should().HaveCount(1);
+        subscriptionResponse.Errors.Single()
+            .Message.Should()
+            .Be("The current user is not authorized to access this resource.");
+    }
+
+    [Fact]
+    public async Task CreateWorkspaceShouldPropagateNewWorkspaceForAuthorizedUserThroughASecuredSubscriptionAsync()
+    {
+        // Arrange
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsWorkspaceAdmin"))
+        .Build();
+
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: admin.JwtAccessToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()))
+            .Build();
+
+        // Start the subscription task before creating the workspace
+        // so that we do not miss subscription data
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 3);
+
+        // Ensure the subscription is established
+        await Task.Delay(1000, TestContext.CancellationToken);
+
+        // Act
+        var (newWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+
+        // Assert
+        var subscriptionResponses = await subscriptionTask;
+
+        subscriptionResponses.Should()
+            .HaveCount(1);
+        var subscriptionResponse = subscriptionResponses[0];
+        subscriptionResponse.Should()
+            .NotBeNull("Subscription data should not be null.");
+        subscriptionResponse.Errors.Should()
+            .BeNullOrEmpty();
+        subscriptionResponse.Data.Should()
+            .NotBeNull();
+        subscriptionResponse.Data?.StreamWorkspace.Should()
+            .NotBeNull();
+        subscriptionResponse.Data?.StreamWorkspace?.Documents.Should()
+            .NotBeEmpty();
+
+        var streamedWorkspace = subscriptionResponse.Data?.StreamWorkspace?.Documents?.First();
+        streamedWorkspace.Should()
+            .NotBeNull();
+
+        // Assert that the streamed workspace properties match the newWorkspace properties
+        streamedWorkspace?.Id.Should()
+            .Be(newWorkspace.Id, "The streamed workspace ID should match the created workspace ID");
+        streamedWorkspace?.Name.Should()
+            .Be(newWorkspace.Name?.Value, "The streamed workspace name should match the created workspace name");
+        streamedWorkspace?.IsDeleted.Should()
+            .Be(newWorkspace.IsDeleted, "The streamed workspace IsDeleted status should match the created workspace");
+        streamedWorkspace?.UpdatedAt.Should()
+            .BeCloseTo(newWorkspace.UpdatedAt?.Value ?? DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5),
+                "The streamed workspace UpdatedAt should be close to the created workspace's timestamp");
+
+        // Assert on the checkpoint
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint.Should()
+            .NotBeNull("The checkpoint should be present");
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
+            .Be(newWorkspace.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
+        Debug.Assert(newWorkspace.UpdatedAt != null, "newWorkspace.UpdatedAt != null");
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
+            .BeCloseTo(newWorkspace.UpdatedAt.Value, TimeSpan.FromSeconds(5),
+                "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
+    }
+
     /// <summary>
     ///     Tests the behavior of the SubscriptionResolver when handling empty document updates.
     ///     This test validates that the resolver correctly processes updates with no documents

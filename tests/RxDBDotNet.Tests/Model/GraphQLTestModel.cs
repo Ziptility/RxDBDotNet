@@ -1065,8 +1065,6 @@ namespace RxDBDotNet.Tests.Model
         public const string String = "String";
         public const string Uuid = "UUID";
 
-        public const string UserRole = "UserRole";
-
         public const string AuthenticationError = "AuthenticationError";
         public const string Checkpoint = "Checkpoint";
         public const string LiveDoc = "LiveDoc";
@@ -3279,7 +3277,7 @@ namespace RxDBDotNet.Tests.Model
     }
 
     [GraphQlObjectType("AuthenticationError")]
-    public partial class AuthenticationErrorGql : IPushUserErrorGql, IErrorGql
+    public partial class AuthenticationErrorGql : IPushUserErrorGql, IPushWorkspaceErrorGql, IPushLiveDocErrorGql, IErrorGql
     {
         public string Message { get; set; }
     }
@@ -3288,6 +3286,13 @@ namespace RxDBDotNet.Tests.Model
     public partial class UnauthorizedAccessErrorGql : IPushUserErrorGql, IErrorGql
     {
         public string Message { get; set; }
+    }
+
+    [GraphQlObjectType("ArgumentNullError")]
+    public partial class ArgumentNullErrorGql : IPushUserErrorGql, IErrorGql
+    {
+        public string Message { get; set; }
+        public string? ParamName { get; set; }
     }
 
     public partial class WorkspaceGql
@@ -3354,5 +3359,5 @@ namespace RxDBDotNet.Tests.Model
         public ICollection<IPushLiveDocErrorGql>? Errors { get; set; }
     }
     #endregion
-#nullable restore
+    #nullable restore
 }

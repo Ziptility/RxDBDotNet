@@ -1,7 +1,14 @@
 ﻿using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 using RxDBDotNet.Models;
 using RxDBDotNet.Tests.Model;
@@ -22,6 +29,256 @@ public class SubscriptionTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await TestContext.DisposeAsync();
+    }
+
+    /// <summary>
+    /// Tests the WebSocketJwtAuthInterceptor's ability to handle JWT authentication with OpenID Connect (OIDC) configuration.
+    /// </summary>
+    /// <remarks>
+    /// This test verifies that:
+    /// 1. The interceptor can successfully retrieve and use OIDC configuration for token validation.
+    /// 2. A valid JWT token allows the establishment of a GraphQL subscription.
+    /// 3. The subscription can receive events after successful authentication.
+    /// <para>
+    /// The test is structured as follows:
+    /// - Arrange:
+    ///   a) Create a test RSA key and JWT token.
+    ///   b) Mock the OIDC configuration manager to return a known configuration.
+    ///   c) Configure the test scenario with custom JWT options.
+    ///   d) Set up a GraphQL subscription client with the test token.
+    /// - Act:
+    ///   a) Attempt to establish a subscription.
+    ///   b) Create a workspace to trigger a subscription event.
+    /// - Assert:
+    ///   Verify that the subscription receives the workspace creation event without errors.
+    /// </para>
+    /// This structure allows us to test the entire flow from token validation to subscription handling,
+    /// ensuring that the OIDC configuration retrieval and JWT validation work correctly in the context
+    /// of GraphQL subscriptions over WebSockets.
+    /// </remarks>
+    [Fact]
+    public async Task ReplicationApiShouldSupportOidcConfiguredJwtAuthentication()
+    {
+        // Arrange
+
+        // Create a test RSA key and signing credentials
+        // This simulates the cryptographic material that would be used by an actual OIDC provider
+        using var rsa = RSA.Create(2048);
+        var signingKey = new RsaSecurityKey(rsa);
+        var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.RsaSha256);
+
+        // Create a test JWT token signed with our test key
+        var token = CreateTestToken(signingCredentials);
+
+        // Mock the OIDC configuration manager
+        // This simulates the retrieval of OIDC configuration from a discovery endpoint
+        var mockConfigManager = new Mock<IConfigurationManager<OpenIdConnectConfiguration>>();
+        mockConfigManager.Setup(m => m.GetConfigurationAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new OpenIdConnectConfiguration
+            {
+                SigningKeys = { signingKey },
+            });
+
+        // Set up the test context with custom JWT options
+        // This configuration ensures that our test uses the mocked OIDC configuration
+        // and validates tokens using our test signing key
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureServices(services =>
+            {
+                services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+                {
+                    options.Configuration = null; // Ensure we're not using any pre-configured values
+                    options.ConfigurationManager = mockConfigManager.Object;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+#pragma warning disable CA5404 // we are not testing this aspect
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                    };
+                });
+            })
+            .Build();
+
+        // Create a GraphQL subscription client with our test token
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(
+            TestContext.CancellationToken,
+            bearerToken: token);
+
+        // Prepare a subscription query
+        var subscriptionQuery = new SubscriptionQueryBuilderGql()
+            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields())
+            .Build();
+
+        // Act
+
+        // Attempt to establish a subscription and collect responses
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 1);
+
+        // Ensure the subscription has time to be established
+        await Task.Delay(1000, TestContext.CancellationToken);
+
+        // Create a workspace to trigger a subscription event
+        // This tests that the authenticated subscription is working end-to-end
+        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+
+        // Assert
+
+        // Verify that we received exactly one subscription response (the workspace creation event)
+        var subscriptionResponses = await subscriptionTask;
+        subscriptionResponses.Should().HaveCount(1, "The subscription should have received the workspace creation event");
+
+        // Verify that the subscription response contains no errors
+        subscriptionResponses[0].Errors.Should().BeNullOrEmpty("There should be no errors in the subscription response");
+    }
+
+    private static string CreateTestToken(SigningCredentials signingCredentials)
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Name, "Test User"),
+            new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: "test-issuer",
+            audience: "test-audience",
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: signingCredentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    [Fact]
+    public async Task CreateWorkspaceShouldNotPropagateNewWorkspaceForAnAuthenticatedUserThroughASecuredSubscriptionAsync()
+    {
+        // Arrange
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsSystemAdmin"))
+        .Build();
+
+        await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+
+        Func<Task> act = async () => await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
+
+        await act.Should().ThrowAsync<IOException>();
+    }
+
+    [Fact]
+    public async Task CreateWorkspaceShouldNotPropagateNewWorkspaceForAnUnAuthorizedUserThroughASecuredSubscriptionAsync()
+    {
+        // Arrange
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsSystemAdmin"))
+        .Build();
+
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: admin.JwtAccessToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()))
+            .Build();
+
+        // Start the subscription task before creating the workspace
+        // so that we do not miss subscription data
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 3);
+
+        // Ensure the subscription is established
+        await Task.Delay(1000, TestContext.CancellationToken);
+
+        // Act
+        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+
+        // Assert
+        var subscriptionResponses = await subscriptionTask;
+
+        subscriptionResponses.Should()
+            .HaveCount(1);
+        var subscriptionResponse = subscriptionResponses.Single();
+        subscriptionResponse.Errors.Should().HaveCount(1);
+        subscriptionResponse.Errors.Single()
+            .Message.Should()
+            .Be("The current user is not authorized to access this resource.");
+    }
+
+    [Fact]
+    public async Task CreateWorkspaceShouldPropagateNewWorkspaceForAuthorizedUserThroughASecuredSubscriptionAsync()
+    {
+        // Arrange
+        TestContext = new TestScenarioBuilder()
+            .WithAuthorization()
+            .ConfigureReplicatedDocument<ReplicatedWorkspace>(options => options.Security.RequirePolicyToRead("IsWorkspaceAdmin"))
+        .Build();
+
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: admin.JwtAccessToken);
+
+        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
+                .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
+                .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()))
+            .Build();
+
+        // Start the subscription task before creating the workspace
+        // so that we do not miss subscription data
+        var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 3);
+
+        // Ensure the subscription is established
+        await Task.Delay(1000, TestContext.CancellationToken);
+
+        // Act
+        var (newWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+
+        // Assert
+        var subscriptionResponses = await subscriptionTask;
+
+        subscriptionResponses.Should()
+            .HaveCount(1);
+        var subscriptionResponse = subscriptionResponses[0];
+        subscriptionResponse.Should()
+            .NotBeNull("Subscription data should not be null.");
+        subscriptionResponse.Errors.Should()
+            .BeNullOrEmpty();
+        subscriptionResponse.Data.Should()
+            .NotBeNull();
+        subscriptionResponse.Data?.StreamWorkspace.Should()
+            .NotBeNull();
+        subscriptionResponse.Data?.StreamWorkspace?.Documents.Should()
+            .NotBeEmpty();
+
+        var streamedWorkspace = subscriptionResponse.Data?.StreamWorkspace?.Documents?.First();
+        streamedWorkspace.Should()
+            .NotBeNull();
+
+        // Assert that the streamed workspace properties match the newWorkspace properties
+        streamedWorkspace?.Id.Should()
+            .Be(newWorkspace.Id, "The streamed workspace ID should match the created workspace ID");
+        streamedWorkspace?.Name.Should()
+            .Be(newWorkspace.Name?.Value, "The streamed workspace name should match the created workspace name");
+        streamedWorkspace?.IsDeleted.Should()
+            .Be(newWorkspace.IsDeleted, "The streamed workspace IsDeleted status should match the created workspace");
+        streamedWorkspace?.UpdatedAt.Should()
+            .BeCloseTo(newWorkspace.UpdatedAt?.Value ?? DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5),
+                "The streamed workspace UpdatedAt should be close to the created workspace's timestamp");
+
+        // Assert on the checkpoint
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint.Should()
+            .NotBeNull("The checkpoint should be present");
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
+            .Be(newWorkspace.Id?.Value, "The checkpoint's LastDocumentId should match the new workspace's ID");
+        Debug.Assert(newWorkspace.UpdatedAt != null, "newWorkspace.UpdatedAt != null");
+        subscriptionResponse.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
+            .BeCloseTo(newWorkspace.UpdatedAt.Value, TimeSpan.FromSeconds(5),
+                "The checkpoint's UpdatedAt should be close to the new workspace's timestamp");
     }
 
     /// <summary>

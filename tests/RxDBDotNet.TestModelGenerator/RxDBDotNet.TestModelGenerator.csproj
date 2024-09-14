@@ -23,7 +23,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="GraphQlClientGenerator" Version="0.9.22" />
+        <PackageReference Include="GraphQlClientGenerator" Version="0.9.23" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
     </ItemGroup>
 

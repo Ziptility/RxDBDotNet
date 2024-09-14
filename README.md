@@ -1,18 +1,18 @@
+# RxDBDotNet
+
 <p align="left">
   <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
-    <img src="https://img.shields.io/nuget/v/RxDBDotNet.svg" alt="NuGet" style="margin-right: 10px;">
+    <img src="https://img.shields.io/nuget/v/RxDBDotNet.svg" alt="NuGet Version" style="margin-right: 10px;">
+  </a>
+  <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
+    <img src="https://img.shields.io/nuget/dt/RxDBDotNet.svg" alt="NuGet Downloads" style="margin-right: 10px;">
   </a>
   <a href="https://codecov.io/github/Ziptility/RxDBDotNet" style="text-decoration:none;">
     <img src="https://codecov.io/github/Ziptility/RxDBDotNet/graph/badge.svg?token=VvuBJEsIHT" alt="codecov">
   </a>
-  <a href="https://github.com/Ziptility/RxDBDotNet/actions/workflows/main.yml" style="text-decoration:none;">
-    <img src="https://github.com/Ziptility/RxDBDotNet/actions/workflows/main.yml/badge.svg" alt="CI">
-  </a>
 </p>
 
-# RxDBDotNet
-
-RxDBDotNet is a powerful .NET library that implements the RxDB replication protocol, enabling real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate. It extends the standard RxDB replication protocol with .NET-specific enhancements.
+RxDBDotNet is a powerful .NET library that implements the [RxDB replication protocol](https://rxdb.info/replication.html), enabling real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate. It extends the standard RxDB replication protocol with .NET-specific enhancements.
 
 ## Key Features
 
@@ -427,10 +427,6 @@ mutation PushWorkspace($input: PushWorkspaceInput!) {
       ... on UnauthorizedAccessError {
         message
       }
-      ... on ArgumentNullError {
-        message
-        paramName
-      }
     }
   }
 }
@@ -616,6 +612,36 @@ builder.Services
 
 With this configuration, when these exceptions are thrown in your `UserService` during replication operations, RxDBDotNet will handle them appropriately and include them in the GraphQL response.
 
+### OpenID Connect (OIDC) Support for Subscription Authentication
+
+RxDBDotNet now supports OpenID Connect (OIDC) configuration for JWT validation in GraphQL subscriptions. This enhancement allows for more flexible and secure authentication setups, especially when working with OIDC-compliant identity providers.
+
+#### Key Features:
+
+- Dynamic retrieval of OIDC configuration, including signing keys
+- Support for key rotation without requiring application restarts
+- Seamless integration with existing JWT authentication setups
+
+#### Usage:
+
+1. Ensure your application is configured to use JWT Bearer authentication with OIDC support:
+
+```csharp
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://your-oidc-provider.com";
+        options.Audience = "your-api-audience";
+        // Other JWT options...
+    });
+```
+
+2. The WebSocketJwtAuthInterceptor will automatically use the OIDC configuration when validating tokens for GraphQL subscriptions.
+
+3. No additional configuration is needed in your GraphQL setup. The OIDC support is automatically applied to subscription authentication when available.
+
+This feature allows for more robust and flexible authentication scenarios, particularly in environments where signing keys may change dynamically or where you're integrating with external OIDC providers like IdentityServer.
+
 ## Contributing
 
 We welcome contributions to RxDBDotNet! Here's how you can contribute:
@@ -641,11 +667,12 @@ This project adheres to the Contributor Covenant [Code of Conduct](CODE_OF_CONDU
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Security
+
+Please see our [Security Policy](./SECURITY.md) for information on reporting security vulnerabilities and which versions are supported.
+
 ## Acknowledgments
 
 - Thanks to the RxDB project for inspiring this .NET implementation.
 - Thanks to the Hot Chocolate team for their excellent GraphQL server implementation.
 
-## Contact
-
-If you have any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).

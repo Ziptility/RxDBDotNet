@@ -1,6 +1,6 @@
 # Contributing to RxDBDotNet
 
-We're thrilled that you're interested in contributing to RxDBDotNet! This document provides guidelines for contributing to the project. By participating in this project, you agree to abide by its terms.
+We're thrilled that you're interested in contributing to RxDBDotNet! This document provides guidelines for doing so. By participating in this project, you agree to its terms.
 
 ## Table of Contents
 
@@ -12,6 +12,7 @@ We're thrilled that you're interested in contributing to RxDBDotNet! This docume
 - [Testing](#testing)
 - [Documentation](#documentation)
 - [Community](#community)
+- [Reporting Security Issues](#reporting-security-issues)
 
 ## Code of Conduct
 
@@ -54,13 +55,13 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 - Follow the existing code style in the project.
 - Use meaningful variable and function names.
 - Write clear comments for complex logic.
-- Ensure your code works with nullable reference types enabled.
+- Please make sure your code works with nullable reference types enabled.
 - Use C# 8.0+ features where appropriate.
 
 ## Testing
 
 - Write unit tests for new functionality.
-- Ensure all existing tests pass before submitting your changes.
+- Please make sure all existing tests pass before submitting your changes.
 - Aim for high test coverage, especially for critical paths.
 
 ## Documentation
@@ -74,5 +75,9 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 - Be respectful and constructive in discussions.
 - Help others who have questions.
 - Share your knowledge and experiences.
+
+## Reporting Security Issues
+
+If you discover a security vulnerability, please do not raise it in a public issue. Instead, you can report it privately using the instructions in our [Security Policy](./SECURITY.md). This ensures we can address the issue responsibly before publicly disclosing it.
 
 Thank you for contributing to RxDBDotNet!

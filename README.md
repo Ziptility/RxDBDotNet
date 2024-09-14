@@ -637,6 +637,10 @@ This project adheres to the Contributor Covenant [Code of Conduct](CODE_OF_CONDU
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Security
+
+Please see our [Security Policy](./SECURITY.md) for information on reporting security vulnerabilities and which versions are supported.
+
 ## Acknowledgments
 
 - Thanks to the RxDB project for inspiring this .NET implementation.

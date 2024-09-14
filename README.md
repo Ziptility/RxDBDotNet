@@ -646,6 +646,3 @@ Please see our [Security Policy](./SECURITY.md) for information on reporting sec
 - Thanks to the RxDB project for inspiring this .NET implementation.
 - Thanks to the Hot Chocolate team for their excellent GraphQL server implementation.
 
-## Contact
-
-If you have any questions, concerns, or support requests, please open an issue on our [GitHub repository](https://github.com/Ziptility/RxDBDotNet/issues).

@@ -612,6 +612,36 @@ builder.Services
 
 With this configuration, when these exceptions are thrown in your `UserService` during replication operations, RxDBDotNet will handle them appropriately and include them in the GraphQL response.
 
+### OpenID Connect (OIDC) Support for Subscription Authentication
+
+RxDBDotNet now supports OpenID Connect (OIDC) configuration for JWT validation in GraphQL subscriptions. This enhancement allows for more flexible and secure authentication setups, especially when working with OIDC-compliant identity providers.
+
+#### Key Features:
+
+- Dynamic retrieval of OIDC configuration, including signing keys
+- Support for key rotation without requiring application restarts
+- Seamless integration with existing JWT authentication setups
+
+#### Usage:
+
+1. Ensure your application is configured to use JWT Bearer authentication with OIDC support:
+
+```csharp
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://your-oidc-provider.com";
+        options.Audience = "your-api-audience";
+        // Other JWT options...
+    });
+```
+
+2. The WebSocketJwtAuthInterceptor will automatically use the OIDC configuration when validating tokens for GraphQL subscriptions.
+
+3. No additional configuration is needed in your GraphQL setup. The OIDC support is automatically applied to subscription authentication when available.
+
+This feature allows for more robust and flexible authentication scenarios, particularly in environments where signing keys may change dynamically or where you're integrating with external OIDC providers like IdentityServer.
+
 ## Contributing
 
 We welcome contributions to RxDBDotNet! Here's how you can contribute:

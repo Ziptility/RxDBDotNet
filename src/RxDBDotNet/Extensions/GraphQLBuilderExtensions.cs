@@ -37,7 +37,7 @@ public static class GraphQLBuilderExtensions
 
         builder.AddFiltering();
 
-        builder.AddSocketSessionInterceptor<SubscriptionAuthMiddleware>();
+        builder.AddSocketSessionInterceptor<WebSocketJwtAuthInterceptor>();
 
         // Ensure Query, Mutation, and Subscription types exist
         EnsureRootTypesExist(builder);

@@ -24,6 +24,7 @@
         <Copyright>© $([System.DateTime]::Now.Year) Ziptility and Contributors to the RxDBDotNet Project</Copyright>
         <Description>RxDBDotNet facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate.</Description>
         <PackageTags>rxdb;graphql;replication;offline-first;realtime;dotnet</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageProjectUrl>https://github.com/Ziptility/RxDBDotNet</PackageProjectUrl>
         <ServiceUrl>https://github.com/Ziptility/RxDBDotNet.git</ServiceUrl>
         <ServiceType>git</ServiceType>
@@ -39,6 +40,10 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="8.0.8" />
         <PackageReference Include="System.Text.Json" Version="8.0.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
     <!-- Analyzers-->

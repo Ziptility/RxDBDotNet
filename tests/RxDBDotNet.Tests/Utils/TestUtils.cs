@@ -152,13 +152,27 @@ internal static class TestUtils
 
         var response = await httpClient.PostGqlMutationAsync(createWorkspace, cancellationToken, jwtAccessToken);
 
-        return (newWorkspace, response);
+        // Get the workspace by id here, since the server has set the workspace.UpdatedAt with the current time.
+        // We need to get the latest data so that we have the correct AssumedMasterState for the next update.
+        var workspaceFromServer = await httpClient.GetWorkspaceByIdAsync(workspaceId, cancellationToken, jwtAccessToken);
+
+        var updatedWorkspaceInput = new WorkspaceInputGql
+        {
+            Id = workspaceFromServer.Id,
+            Name = workspaceFromServer.Name,
+            UpdatedAt = workspaceFromServer.UpdatedAt,
+            IsDeleted = workspaceFromServer.IsDeleted,
+            Topics = workspaceFromServer.Topics?.ToList(),
+        };
+
+        return (updatedWorkspaceInput, response);
     }
 
     public static async Task<WorkspaceGql> UpdateWorkspaceAsync(
         this HttpClient httpClient,
         WorkspaceInputGql workspace,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? jwtAccessToken = null)
     {
         var assumedMasterState = new WorkspaceInputGql
         {
@@ -200,13 +214,14 @@ internal static class TestUtils
         response.Errors.Should()
             .BeNullOrEmpty();
 
-        return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken);
+        return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken, jwtAccessToken);
     }
 
     public static async Task<WorkspaceGql> UpdateWorkspaceAsync(
         this HttpClient httpClient,
         WorkspaceGql workspace,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? jwtAccessToken = null)
     {
         var assumedMasterState = new WorkspaceInputGql
         {
@@ -248,7 +263,7 @@ internal static class TestUtils
         response.Errors.Should()
             .BeNullOrEmpty();
 
-        return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken);
+        return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken, jwtAccessToken);
     }
 
     public static async Task VerifyWorkspaceAsync(
@@ -263,40 +278,53 @@ internal static class TestUtils
         response.Errors.Should()
             .BeNullOrEmpty();
 
-        var existingWorkspace = response.Data.PullWorkspace?.Documents?.SingleOrDefault(workspace => workspace.Id == workspaceInput.Id);
+        var pulledWorkspace = response.Data.PullWorkspace?.Documents?.SingleOrDefault(workspace => workspace.Id == workspaceInput.Id);
 
-        if (existingWorkspace == null)
+        if (pulledWorkspace == null)
         {
-            Assert.Fail("The existing workspace must not be null");
+            Assert.Fail("The pulled workspace must not be null");
         }
 
         Debug.Assert(workspaceInput.Id != null, "workspaceInput.Id != null");
-        existingWorkspace.Id.Should()
+        pulledWorkspace.Id.Should()
             .Be(workspaceInput.Id.Value);
-        existingWorkspace.Name.Should()
+        pulledWorkspace.Name.Should()
             .Be(workspaceInput.Name?.Value);
-        existingWorkspace.IsDeleted.Should()
+        pulledWorkspace.IsDeleted.Should()
             .Be(workspaceInput.IsDeleted);
-        existingWorkspace.UpdatedAt.Should()
-            .Be(workspaceInput.UpdatedAt?.Value.StripMicroseconds());
-        existingWorkspace.Topics.Should()
+        pulledWorkspace.UpdatedAt.Should()
+            .BeAfter(workspaceInput.UpdatedAt, "the backend always updates UpdatedAt to the server datetimeoffset");
+        pulledWorkspace.Topics.Should()
             .Equal(workspaceInput.Topics?.Value);
     }
 
     public static async Task<WorkspaceGql> GetWorkspaceByIdAsync(
         this HttpClient httpClient,
         Guid workspaceId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? jwtAccessToken = null)
     {
         var query = new QueryQueryBuilderGql().WithPullWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), 1000);
 
-        var response = await httpClient.PostGqlQueryAsync(query, cancellationToken);
+        var response = await httpClient.PostGqlQueryAsync(query, cancellationToken, jwtAccessToken);
 
         response.Errors.Should()
             .BeNullOrEmpty();
 
         return response.Data.PullWorkspace?.Documents?.Single(workspace => workspace.Id == workspaceId)
                ?? throw new InvalidOperationException("The workspace must not be null");
+    }
+
+    public static WorkspaceInputGql ToWorkspaceInputGql(this WorkspaceGql workspaceGql)
+    {
+        return new WorkspaceInputGql
+        {
+            Name = workspaceGql.Name,
+            Id = workspaceGql.Id,
+            IsDeleted = workspaceGql.IsDeleted,
+            UpdatedAt = workspaceGql.UpdatedAt,
+            Topics = workspaceGql.Topics?.ToList(),
+        };
     }
 
     /// <summary>

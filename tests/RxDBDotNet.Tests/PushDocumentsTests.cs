@@ -19,6 +19,64 @@ public class PushDocumentsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PushDocuments_ShouldOverwriteClientProvidedTimestamp()
+    {
+        // Arrange
+        TestContext = new TestScenarioBuilder().Build();
+        var workspaceId = Provider.Sql.Create();
+        var clientProvidedTimestamp = DateTimeOffset.UtcNow.AddDays(-1); // Simulate an old timestamp
+
+        var newWorkspace = new WorkspaceInputGql
+        {
+            Id = workspaceId,
+            Name = Strings.CreateString(),
+            UpdatedAt = clientProvidedTimestamp, // Use the old timestamp
+            IsDeleted = false,
+            Topics = new List<string>
+            {
+                workspaceId.ToString(),
+            },
+        };
+
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
+        {
+            AssumedMasterState = null,
+            NewDocumentState = newWorkspace,
+        };
+
+        var pushWorkspaceInputGql = new PushWorkspaceInputGql
+        {
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
+        };
+
+        var createWorkspace =
+            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
+
+        // Act
+        var pushResponse = await TestContext.HttpClient.PostGqlMutationAsync(createWorkspace, TestContext.CancellationToken);
+
+        // Assert push response
+        pushResponse.Errors.Should().BeNullOrEmpty();
+        pushResponse.Data.PushWorkspace?.Errors.Should().BeNullOrEmpty();
+        pushResponse.Data.PushWorkspace?.Workspace.Should().BeNullOrEmpty();
+
+        // Verify the created workspace
+        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(workspaceId, TestContext.CancellationToken);
+
+        createdWorkspace.Should().NotBeNull();
+        createdWorkspace.Id.Should().Be(workspaceId);
+        createdWorkspace.Name.Should().Be(newWorkspace.Name.Value);
+        createdWorkspace.IsDeleted.Should().Be(newWorkspace.IsDeleted);
+
+        // Check if the timestamp was overwritten by the server
+        createdWorkspace.UpdatedAt.Should().BeAfter(clientProvidedTimestamp);
+        createdWorkspace.UpdatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task PushDocuments_WithNullDocumentList_ShouldReturnEmptyResult()
     {
         // Arrange

@@ -23,8 +23,9 @@ public interface IReplicatedDocument
     /// <remarks>
     /// This property is crucial for conflict resolution and determining the most recent version of a document.
     /// It should be updated every time the document is modified.
+    /// The server will always overwrite this value with its own timestamp to ensure security and consistency.
     /// </remarks>
-    DateTimeOffset UpdatedAt { get; }
+    DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
     /// A value indicating whether the document has been marked as deleted.

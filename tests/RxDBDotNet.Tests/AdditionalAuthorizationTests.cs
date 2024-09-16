@@ -204,7 +204,7 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
         var systemAdmin = await TestContext.CreateUserAsync(workspace, UserRole.SystemAdmin, TestContext.CancellationToken);
 
         // Act & Assert - Create
-        var newWorkspace = new WorkspaceInputGql
+        var newWorkspaceInput = new WorkspaceInputGql
         {
             Id = Provider.Sql.Create(),
             Name = Strings.CreateString(),
@@ -220,7 +220,7 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
         var createWorkspaceInputPushRowGql = new WorkspaceInputPushRowGql
         {
             AssumedMasterState = null,
-            NewDocumentState = newWorkspace,
+            NewDocumentState = newWorkspaceInput,
         };
 
         var createWorkspaceInputGql = new PushWorkspaceInputGql
@@ -253,22 +253,24 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
         readResponse.Data.PullWorkspace.Should()
             .NotBeNull();
         readResponse.Data.PullWorkspace?.Documents.Should()
-            .Contain(w => w.Name == newWorkspace.Name.Value);
+            .Contain(w => w.Name == newWorkspaceInput.Name.Value);
+
+        var newWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspaceInput.Id, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
 
         // Act & Assert - Update
-        var updatedWorkspace = new WorkspaceInputGql
+        var updatedWorkspaceInput = new WorkspaceInputGql
         {
-            Id = newWorkspace.Id,
+            Id = newWorkspaceInput.Id,
             Name = Strings.CreateString(),
-            IsDeleted = newWorkspace.IsDeleted,
+            IsDeleted = newWorkspaceInput.IsDeleted,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Topics = newWorkspace.Topics,
+            Topics = newWorkspaceInput.Topics,
         };
 
         var updateWorkspaceInputPushRowGql = new WorkspaceInputPushRowGql
         {
-            AssumedMasterState = newWorkspace,
-            NewDocumentState = updatedWorkspace,
+            AssumedMasterState = newWorkspace.ToWorkspaceInputGql(),
+            NewDocumentState = updatedWorkspaceInput,
         };
 
         var updateWorkspaceInputGql = new PushWorkspaceInputGql
@@ -293,18 +295,20 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
             .BeNullOrEmpty();
 
         // Act & Assert - Delete
+        var updatedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspaceInput.Id, TestContext.CancellationToken, systemAdmin.JwtAccessToken);
+
         var deleteWorkspace = new WorkspaceInputGql
         {
-            Id = updatedWorkspace.Id,
-            Name = updatedWorkspace.Name,
+            Id = updatedWorkspaceInput.Id,
+            Name = updatedWorkspaceInput.Name,
             IsDeleted = true,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Topics = updatedWorkspace.Topics,
+            Topics = updatedWorkspaceInput.Topics,
         };
 
         var deleteWorkspaceInputPushRowGql = new WorkspaceInputPushRowGql
         {
-            AssumedMasterState = updatedWorkspace,
+            AssumedMasterState = updatedWorkspace.ToWorkspaceInputGql(),
             NewDocumentState = deleteWorkspace,
         };
 

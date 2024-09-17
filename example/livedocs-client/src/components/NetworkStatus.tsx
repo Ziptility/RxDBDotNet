@@ -1,3 +1,4 @@
+// src\components\NetworkStatus.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';

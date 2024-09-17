@@ -1,4 +1,4 @@
-// src/pages/_document.tsx
+// src\pages\_document.tsx
 
 import React from 'react';
 import Document, { Html, Head, Main, NextScript, DocumentContext, DocumentInitialProps } from 'next/document';

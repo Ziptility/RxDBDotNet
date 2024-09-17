@@ -1,3 +1,4 @@
+// src\lib\errorHandling.ts
 import { Subject } from 'rxjs';
 import { RxError } from 'rxdb';
 

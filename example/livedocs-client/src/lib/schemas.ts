@@ -1,3 +1,4 @@
+// src\lib\schemas.ts
 import { toTypedRxJsonSchema, RxJsonSchema, ExtractDocumentTypeFromTypedRxJsonSchema } from 'rxdb';
 
 export enum UserRole {

@@ -1,3 +1,4 @@
+// src\components\WorkspacesPageContent.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, Button } from '@mui/material';
 import WorkspaceList from './WorkspaceList';

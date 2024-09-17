@@ -1,3 +1,4 @@
+// src\types\index.ts
 import { Workspace, User, LiveDoc } from '@/lib/schemas';
 import { RxCollection, RxDatabase } from 'rxdb';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';

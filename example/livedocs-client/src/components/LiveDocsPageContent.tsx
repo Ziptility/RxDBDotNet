@@ -1,65 +1,22 @@
 // src\components\LiveDocsPageContent.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Box, Button } from '@mui/material';
-import { Subscription } from 'rxjs';
-import LiveDocList from './LiveDocList';
+import LiveDocList, { LiveDocListProps } from './LiveDocList';
 import LiveDocForm from './LiveDocForm';
-import { getDatabase } from '../lib/database';
-import { setupReplication } from '../lib/replication';
 import { LiveDoc, User, Workspace } from '@/lib/schemas';
-import { LiveDocsDatabase } from '@/types';
+import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '@/lib/database';
 
-const LiveDocsPageContent: React.FC = (): JSX.Element => {
-  const [db, setDb] = useState<LiveDocsDatabase | null>(null);
+const LiveDocsPageContent: React.FC = () => {
   const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const { refetch } = useDocuments<LiveDoc>('livedocs');
+  const { documents: users } = useDocuments<User>('users');
+  const { documents: workspaces } = useDocuments<Workspace>('workspaces');
 
-  useEffect(() => {
-    let usersSubscription: Subscription | undefined;
-    let workspacesSubscription: Subscription | undefined;
-
-    const initDb = async (): Promise<void> => {
-      try {
-        const database = await getDatabase();
-        await setupReplication(database);
-        setDb(database);
-
-        usersSubscription = database.users
-          .find({
-            selector: {
-              isDeleted: false,
-            },
-          })
-          .$.subscribe((docs) => {
-            setUsers(docs.map((doc) => doc.toJSON()));
-          });
-
-        workspacesSubscription = database.workspaces
-          .find({
-            selector: {
-              isDeleted: false,
-            },
-          })
-          .$.subscribe((docs) => {
-            setWorkspaces(docs.map((doc) => doc.toJSON()));
-          });
-      } catch (error) {
-        console.error('Error initializing database:', error);
-      }
-    };
-
-    void initDb();
-
-    return () => {
-      usersSubscription?.unsubscribe();
-      workspacesSubscription?.unsubscribe();
-    };
-  }, []);
-
-  const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db) {
+  const handleCreate = useCallback(
+    async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      const db = await getDatabase();
       try {
         await db.livedocs.insert({
           id: uuidv4(),
@@ -67,44 +24,57 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
           updatedAt: new Date().toISOString(),
           isDeleted: false,
         });
+        await refetch();
       } catch (error) {
-        console.error('Error creating LiveDoc:', error);
+        console.error('Error creating live doc:', error);
       }
-    }
-  };
+    },
+    [refetch]
+  );
 
-  const handleUpdate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db && editingLiveDoc) {
-      try {
-        await db.livedocs.upsert({
-          ...editingLiveDoc,
-          ...liveDoc,
-          updatedAt: new Date().toISOString(),
-        });
-        setEditingLiveDoc(null);
-      } catch (error) {
-        console.error('Error updating LiveDoc:', error);
+  const handleUpdate = useCallback(
+    async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingLiveDoc) {
+        const db = await getDatabase();
+        try {
+          await db.livedocs.upsert({
+            ...editingLiveDoc,
+            ...liveDoc,
+            updatedAt: new Date().toISOString(),
+          });
+          setEditingLiveDoc(null);
+          await refetch();
+        } catch (error) {
+          console.error('Error updating live doc:', error);
+        }
       }
-    }
-  };
+    },
+    [editingLiveDoc, refetch]
+  );
 
-  const handleDelete = async (liveDoc: LiveDoc): Promise<void> => {
-    if (db) {
+  const handleDelete = useCallback(
+    async (liveDoc: LiveDoc): Promise<void> => {
+      const db = await getDatabase();
       try {
         await db.livedocs.upsert({
           ...liveDoc,
           isDeleted: true,
           updatedAt: new Date().toISOString(),
         });
+        await refetch();
       } catch (error) {
-        console.error('Error deleting LiveDoc:', error);
+        console.error('Error deleting live doc:', error);
       }
-    }
-  };
+    },
+    [refetch]
+  );
 
-  if (!db) {
-    return <Box>Initializing database...</Box>;
-  }
+  const liveDocListProps: LiveDocListProps = {
+    onEdit: setEditingLiveDoc,
+    onDelete: (liveDoc): void => {
+      void handleDelete(liveDoc);
+    },
+  };
 
   return (
     <Box>
@@ -121,13 +91,7 @@ const LiveDocsPageContent: React.FC = (): JSX.Element => {
           Cancel Editing
         </Button>
       )}
-      <LiveDocList
-        db={db}
-        onEdit={setEditingLiveDoc}
-        onDelete={(liveDoc): void => {
-          void handleDelete(liveDoc);
-        }}
-      />
+      <LiveDocList {...liveDocListProps} />
     </Box>
   );
 };

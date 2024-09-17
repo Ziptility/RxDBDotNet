@@ -1,49 +1,35 @@
 // src\components\WorkspacesPageContent.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Button } from '@mui/material';
-import WorkspaceList from './WorkspaceList';
+import WorkspaceList, { WorkspaceListProps } from './WorkspaceList';
 import WorkspaceForm from './WorkspaceForm';
-import { getDatabase } from '../lib/database';
-import { setupReplication } from '../lib/replication';
-import { Workspace } from '../lib/schemas';
-import { LiveDocsDatabase } from '@/types';
+import { Workspace } from '@/lib/schemas';
+import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '@/lib/database';
 
-const WorkspacesPageContent: React.FC = (): JSX.Element => {
-  const [db, setDb] = useState<LiveDocsDatabase | null>(null);
+const WorkspacesPageContent: React.FC = () => {
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
-
-  useEffect(() => {
-    const initDb = async (): Promise<void> => {
-      try {
-        const database = await getDatabase();
-        await setupReplication(database);
-        setDb(database);
-      } catch (error) {
-        console.error('Error initializing database:', error);
-      }
-    };
-
-    void initDb();
-  }, []);
+  const { documents: workspaces, refetch } = useDocuments<Workspace>('workspaces');
 
   const handleCreate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db) {
-      try {
-        await db.workspaces.insert({
-          id: uuidv4(),
-          ...workspace,
-          updatedAt: new Date().toISOString(),
-          isDeleted: false,
-        });
-      } catch (error) {
-        console.error('Error creating workspace:', error);
-      }
+    const db = await getDatabase();
+    try {
+      await db.workspaces.insert({
+        id: uuidv4(),
+        ...workspace,
+        updatedAt: new Date().toISOString(),
+        isDeleted: false,
+      });
+      await refetch();
+    } catch (error) {
+      console.error('Error creating workspace:', error);
     }
   };
 
   const handleUpdate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db && editingWorkspace) {
+    if (editingWorkspace) {
+      const db = await getDatabase();
       try {
         await db.workspaces.upsert({
           ...editingWorkspace,
@@ -51,6 +37,7 @@ const WorkspacesPageContent: React.FC = (): JSX.Element => {
           updatedAt: new Date().toISOString(),
         });
         setEditingWorkspace(null);
+        await refetch();
       } catch (error) {
         console.error('Error updating workspace:', error);
       }
@@ -58,22 +45,26 @@ const WorkspacesPageContent: React.FC = (): JSX.Element => {
   };
 
   const handleDelete = async (workspace: Workspace): Promise<void> => {
-    if (db) {
-      try {
-        await db.workspaces.upsert({
-          ...workspace,
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error('Error deleting workspace:', error);
-      }
+    const db = await getDatabase();
+    try {
+      await db.workspaces.upsert({
+        ...workspace,
+        isDeleted: true,
+        updatedAt: new Date().toISOString(),
+      });
+      await refetch();
+    } catch (error) {
+      console.error('Error deleting workspace:', error);
     }
   };
 
-  if (!db) {
-    return <Box>Initializing database...</Box>;
-  }
+  const workspaceListProps: WorkspaceListProps = {
+    workspaces,
+    onEdit: setEditingWorkspace,
+    onDelete: (workspace): void => {
+      void handleDelete(workspace);
+    },
+  };
 
   return (
     <Box>
@@ -88,13 +79,7 @@ const WorkspacesPageContent: React.FC = (): JSX.Element => {
           Cancel Editing
         </Button>
       )}
-      <WorkspaceList
-        db={db}
-        onEdit={setEditingWorkspace}
-        onDelete={(workspace): void => {
-          void handleDelete(workspace);
-        }}
-      />
+      <WorkspaceList {...workspaceListProps} />
     </Box>
   );
 };

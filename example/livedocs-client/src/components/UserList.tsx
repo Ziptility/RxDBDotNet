@@ -1,33 +1,35 @@
 // src\components\UserList.tsx
-import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { LiveDocsDatabase } from '@/types';
+import React from 'react';
+import { useDocuments } from '@/hooks/useDocuments';
 import { User } from '@/lib/schemas';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  CircularProgress,
+} from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
-interface UserListProps {
-  db: LiveDocsDatabase;
+export interface UserListProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
 }
 
-const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
-  const [users, setUsers] = useState<User[]>([]);
+const UserList: React.FC<UserListProps> = ({ onEdit, onDelete }) => {
+  const { documents: users, isLoading, error } = useDocuments<User>('users');
 
-  useEffect(() => {
-    const subscription = db.users
-      .find({
-        selector: {
-          isDeleted: false,
-        },
-        sort: [{ updatedAt: 'desc' }],
-      })
-      .$.subscribe((docs) => {
-        setUsers(docs.map((doc) => doc.toJSON()));
-      });
+  if (isLoading) {
+    return <CircularProgress />;
+  }
 
-    return (): void => subscription.unsubscribe();
-  }, [db]);
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <TableContainer component={Paper}>
@@ -47,7 +49,7 @@ const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Elemen
             <TableRow key={user.id}>
               <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
               <TableCell>{user.email}</TableCell>
-              {/* <TableCell>{user.role}</TableCell> */}
+              <TableCell>{user.role}</TableCell>
               <TableCell>{user.workspaceId}</TableCell>
               <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
               <TableCell>

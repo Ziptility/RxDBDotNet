@@ -1,52 +1,21 @@
 // src\components\UsersPageContent.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Box, Button } from '@mui/material';
-import { Subscription } from 'rxjs';
-import UserList from './UserList';
+import UserList, { UserListProps } from './UserList';
 import UserForm from './UserForm';
-import { getDatabase } from '../lib/database';
-import { setupReplication } from '../lib/replication';
-import { User, Workspace } from '../lib/schemas';
-import { LiveDocsDatabase } from '@/types';
+import { User, Workspace } from '@/lib/schemas';
+import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
+import { getDatabase } from '@/lib/database';
 
-const UsersPageContent: React.FC = (): JSX.Element => {
-  const [db, setDb] = useState<LiveDocsDatabase | null>(null);
+const UsersPageContent: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const { refetch } = useDocuments<User>('users');
+  const { documents: workspaces } = useDocuments<Workspace>('workspaces');
 
-  useEffect(() => {
-    let workspacesSubscription: Subscription | undefined;
-
-    const initDb = async (): Promise<void> => {
-      try {
-        const database = await getDatabase();
-        await setupReplication(database);
-        setDb(database);
-
-        workspacesSubscription = database.workspaces
-          .find({
-            selector: {
-              isDeleted: false,
-            },
-          })
-          .$.subscribe((docs) => {
-            setWorkspaces(docs.map((doc) => doc.toJSON()));
-          });
-      } catch (error) {
-        console.error('Error initializing database:', error);
-      }
-    };
-
-    void initDb();
-
-    return () => {
-      workspacesSubscription?.unsubscribe();
-    };
-  }, []);
-
-  const handleCreate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db) {
+  const handleCreate = useCallback(
+    async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      const db = await getDatabase();
       try {
         await db.users.insert({
           id: uuidv4(),
@@ -54,44 +23,57 @@ const UsersPageContent: React.FC = (): JSX.Element => {
           updatedAt: new Date().toISOString(),
           isDeleted: false,
         });
+        await refetch();
       } catch (error) {
         console.error('Error creating user:', error);
       }
-    }
-  };
+    },
+    [refetch]
+  );
 
-  const handleUpdate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db && editingUser) {
-      try {
-        await db.users.upsert({
-          ...editingUser,
-          ...user,
-          updatedAt: new Date().toISOString(),
-        });
-        setEditingUser(null);
-      } catch (error) {
-        console.error('Error updating user:', error);
+  const handleUpdate = useCallback(
+    async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingUser) {
+        const db = await getDatabase();
+        try {
+          await db.users.upsert({
+            ...editingUser,
+            ...user,
+            updatedAt: new Date().toISOString(),
+          });
+          setEditingUser(null);
+          await refetch();
+        } catch (error) {
+          console.error('Error updating user:', error);
+        }
       }
-    }
-  };
+    },
+    [editingUser, refetch]
+  );
 
-  const handleDelete = async (user: User): Promise<void> => {
-    if (db) {
+  const handleDelete = useCallback(
+    async (user: User): Promise<void> => {
+      const db = await getDatabase();
       try {
         await db.users.upsert({
           ...user,
           isDeleted: true,
           updatedAt: new Date().toISOString(),
         });
+        await refetch();
       } catch (error) {
         console.error('Error deleting user:', error);
       }
-    }
-  };
+    },
+    [refetch]
+  );
 
-  if (!db) {
-    return <Box>Initializing database...</Box>;
-  }
+  const userListProps: UserListProps = {
+    onEdit: setEditingUser,
+    onDelete: (user): void => {
+      void handleDelete(user);
+    },
+  };
 
   return (
     <Box>
@@ -107,13 +89,7 @@ const UsersPageContent: React.FC = (): JSX.Element => {
           Cancel Editing
         </Button>
       )}
-      <UserList
-        db={db}
-        onEdit={setEditingUser}
-        onDelete={(user): void => {
-          void handleDelete(user);
-        }}
-      />
+      <UserList {...userListProps} />
     </Box>
   );
 };

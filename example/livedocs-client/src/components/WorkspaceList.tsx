@@ -1,33 +1,36 @@
 // src\components\WorkspaceList.tsx
-import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { LiveDocsDatabase } from '@/types';
+import React from 'react';
+import { useDocuments } from '@/hooks/useDocuments';
 import { Workspace } from '@/lib/schemas';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  CircularProgress,
+} from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
-interface WorkspaceListProps {
-  db: LiveDocsDatabase;
+export interface WorkspaceListProps {
+  workspaces: Workspace[];
   onEdit: (workspace: Workspace) => void;
   onDelete: (workspace: Workspace) => void;
 }
 
-const WorkspaceList: React.FC<WorkspaceListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+const WorkspaceList: React.FC<WorkspaceListProps> = ({ onEdit, onDelete }) => {
+  const { documents: workspaces, isLoading, error } = useDocuments<Workspace>('workspaces');
 
-  useEffect(() => {
-    const subscription = db.workspaces
-      .find({
-        selector: {
-          isDeleted: false,
-        },
-        sort: [{ updatedAt: 'desc' }],
-      })
-      .$.subscribe((docs) => {
-        setWorkspaces(docs.map((doc) => doc.toJSON()));
-      });
+  if (isLoading) {
+    return <CircularProgress />;
+  }
 
-    return (): void => subscription.unsubscribe();
-  }, [db]);
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <TableContainer component={Paper}>

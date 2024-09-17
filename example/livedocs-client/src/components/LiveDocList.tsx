@@ -1,33 +1,35 @@
 // src\components\LiveDocList.tsx
-import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { LiveDocsDatabase } from '@/types';
+import React from 'react';
+import { useDocuments } from '@/hooks/useDocuments';
 import { LiveDoc } from '@/lib/schemas';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  CircularProgress,
+} from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
-interface LiveDocListProps {
-  db: LiveDocsDatabase;
+export interface LiveDocListProps {
   onEdit: (liveDoc: LiveDoc) => void;
   onDelete: (liveDoc: LiveDoc) => void;
 }
 
-const LiveDocList: React.FC<LiveDocListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
-  const [liveDocs, setLiveDocs] = useState<LiveDoc[]>([]);
+const LiveDocList: React.FC<LiveDocListProps> = ({ onEdit, onDelete }) => {
+  const { documents: liveDocs, isLoading, error } = useDocuments<LiveDoc>('livedocs');
 
-  useEffect(() => {
-    const subscription = db.livedocs
-      .find({
-        selector: {
-          isDeleted: false,
-        },
-        sort: [{ updatedAt: 'desc' }],
-      })
-      .$.subscribe((docs) => {
-        setLiveDocs(docs.map((doc) => doc.toJSON()));
-      });
+  if (isLoading) {
+    return <CircularProgress />;
+  }
 
-    return (): void => subscription.unsubscribe();
-  }, [db]);
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <TableContainer component={Paper}>

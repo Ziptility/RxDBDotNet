@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
+using LiveDocs.GraphQLApi.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;

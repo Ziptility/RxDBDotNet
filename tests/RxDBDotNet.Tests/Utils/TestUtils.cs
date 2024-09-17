@@ -90,6 +90,7 @@ internal static class TestUtils
             WorkspaceId = workspace.Id!.Value,
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
+            Role = UserRole.StandardUser,
         };
 
         var userInputPushRowGql = new UserInputPushRowGql

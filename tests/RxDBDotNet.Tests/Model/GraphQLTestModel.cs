@@ -1065,6 +1065,8 @@ namespace RxDBDotNet.Tests.Model
         public const string String = "String";
         public const string Uuid = "UUID";
 
+        public const string UserRole = "UserRole";
+
         public const string AuthenticationError = "AuthenticationError";
         public const string Checkpoint = "Checkpoint";
         public const string LiveDoc = "LiveDoc";
@@ -3283,16 +3285,9 @@ namespace RxDBDotNet.Tests.Model
     }
 
     [GraphQlObjectType("UnauthorizedAccessError")]
-    public partial class UnauthorizedAccessErrorGql : IPushUserErrorGql, IErrorGql
+    public partial class UnauthorizedAccessErrorGql : IPushUserErrorGql, IPushWorkspaceErrorGql, IPushLiveDocErrorGql, IErrorGql
     {
         public string Message { get; set; }
-    }
-
-    [GraphQlObjectType("ArgumentNullError")]
-    public partial class ArgumentNullErrorGql : IPushUserErrorGql, IErrorGql
-    {
-        public string Message { get; set; }
-        public string? ParamName { get; set; }
     }
 
     public partial class WorkspaceGql

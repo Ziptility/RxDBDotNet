@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RxCollection, RxDocument, MangoQuery, MangoQuerySelector, MangoQuerySortPart, DeepReadonly } from 'rxdb';
 import { getDatabase } from '@/lib/database';
-import { handleError } from '@/utils/errorHandling';
+import { handleAsyncError } from '@/utils/errorHandling';
 import { LiveDocsDatabase } from '@/types';
 
 interface UseDocumentsResult<T> {
@@ -22,7 +22,8 @@ export function useDocuments<T extends { id: string; updatedAt: string; isDelete
   const fetchDocuments = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
-    try {
+
+    const result = await handleAsyncError(async () => {
       const db: LiveDocsDatabase = await getDatabase();
       const collection: RxCollection<T> = db[collectionName] as RxCollection<T>;
 
@@ -34,15 +35,15 @@ export function useDocuments<T extends { id: string; updatedAt: string; isDelete
       };
 
       const docs: RxDocument<T>[] = await collection.find(query).exec();
+      return docs.map((doc) => doc.toJSON());
+    }, `Fetching ${collectionName}`);
 
-      setDocuments(docs.map((doc) => doc.toJSON()));
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('An unknown error occurred');
-      handleError(error, `Fetching ${collectionName}`);
-      setError(error);
-    } finally {
-      setIsLoading(false);
+    if (result) {
+      setDocuments(result);
+    } else {
+      setError(new Error(`Failed to fetch ${collectionName}`));
     }
+    setIsLoading(false);
   }, [collectionName]);
 
   useEffect(() => {

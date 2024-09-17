@@ -1,18 +1,7 @@
-// src\components\WorkspaceList.tsx
+// src/components/WorkspaceList.tsx
 import React from 'react';
-import { useDocuments } from '@/hooks/useDocuments';
 import { Workspace } from '@/lib/schemas';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  CircularProgress,
-} from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 export interface WorkspaceListProps {
@@ -21,17 +10,7 @@ export interface WorkspaceListProps {
   onDelete: (workspace: Workspace) => void;
 }
 
-const WorkspaceList: React.FC<WorkspaceListProps> = ({ onEdit, onDelete }) => {
-  const { documents: workspaces, isLoading, error } = useDocuments<Workspace>('workspaces');
-
-  if (isLoading) {
-    return <CircularProgress />;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
+const WorkspaceList: React.FC<WorkspaceListProps> = ({ workspaces, onEdit, onDelete }) => {
   return (
     <TableContainer component={Paper}>
       <Table>

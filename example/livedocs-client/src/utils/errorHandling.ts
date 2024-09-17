@@ -15,8 +15,14 @@ export const handleError = (error: unknown, context: string): void => {
     draggable: true,
   };
 
-  (toast.error as (message: string, options?: ToastOptions) => void)(
-    `An error occurred in ${context}: ${errorMessage}. Please try again.`,
-    toastOptions
-  );
+  toast.error(`An error occurred in ${context}: ${errorMessage}. Please try again.`, toastOptions);
+};
+
+export const handleAsyncError = async <T>(asyncFunction: () => Promise<T>, context: string): Promise<T | undefined> => {
+  try {
+    return await asyncFunction();
+  } catch (error) {
+    handleError(error, context);
+    return undefined;
+  }
 };

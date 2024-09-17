@@ -1,36 +1,16 @@
-// src\components\LiveDocList.tsx
+// src/components/LiveDocList.tsx
 import React from 'react';
-import { useDocuments } from '@/hooks/useDocuments';
 import { LiveDoc } from '@/lib/schemas';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  CircularProgress,
-} from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 export interface LiveDocListProps {
+  liveDocs: LiveDoc[];
   onEdit: (liveDoc: LiveDoc) => void;
   onDelete: (liveDoc: LiveDoc) => void;
 }
 
-const LiveDocList: React.FC<LiveDocListProps> = ({ onEdit, onDelete }) => {
-  const { documents: liveDocs, isLoading, error } = useDocuments<LiveDoc>('livedocs');
-
-  if (isLoading) {
-    return <CircularProgress />;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
+const LiveDocList: React.FC<LiveDocListProps> = ({ liveDocs, onEdit, onDelete }) => {
   return (
     <TableContainer component={Paper}>
       <Table>

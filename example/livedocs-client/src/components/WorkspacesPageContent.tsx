@@ -1,62 +1,66 @@
-// src\components\WorkspacesPageContent.tsx
-import React, { useState } from 'react';
-import { Box, Button } from '@mui/material';
+// src/components/WorkspacesPageContent.tsx
+import React, { useState, useCallback } from 'react';
+import { Box, Button, Alert } from '@mui/material';
 import WorkspaceList, { WorkspaceListProps } from './WorkspaceList';
 import WorkspaceForm from './WorkspaceForm';
 import { Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '@/lib/database';
+import { handleAsyncError } from '@/utils/errorHandling';
 
 const WorkspacesPageContent: React.FC = () => {
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
-  const { documents: workspaces, refetch } = useDocuments<Workspace>('workspaces');
+  const { documents: workspaces, refetch, error } = useDocuments<Workspace>('workspaces');
 
-  const handleCreate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    const db = await getDatabase();
-    try {
-      await db.workspaces.insert({
-        id: uuidv4(),
-        ...workspace,
-        updatedAt: new Date().toISOString(),
-        isDeleted: false,
-      });
-      await refetch();
-    } catch (error) {
-      console.error('Error creating workspace:', error);
-    }
-  };
-
-  const handleUpdate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (editingWorkspace) {
-      const db = await getDatabase();
-      try {
-        await db.workspaces.upsert({
-          ...editingWorkspace,
+  const handleCreate = useCallback(
+    async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      await handleAsyncError(async () => {
+        const db = await getDatabase();
+        await db.workspaces.insert({
+          id: uuidv4(),
           ...workspace,
           updatedAt: new Date().toISOString(),
+          isDeleted: false,
         });
-        setEditingWorkspace(null);
         await refetch();
-      } catch (error) {
-        console.error('Error updating workspace:', error);
-      }
-    }
-  };
+      }, 'Creating workspace');
+    },
+    [refetch]
+  );
 
-  const handleDelete = async (workspace: Workspace): Promise<void> => {
-    const db = await getDatabase();
-    try {
-      await db.workspaces.upsert({
-        ...workspace,
-        isDeleted: true,
-        updatedAt: new Date().toISOString(),
-      });
-      await refetch();
-    } catch (error) {
-      console.error('Error deleting workspace:', error);
-    }
-  };
+  const handleUpdate = useCallback(
+    async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingWorkspace) {
+        await handleAsyncError(async () => {
+          const db = await getDatabase();
+          await db.workspaces.upsert({
+            ...editingWorkspace,
+            ...workspace,
+            updatedAt: new Date().toISOString(),
+          });
+          setEditingWorkspace(null);
+          await refetch();
+        }, 'Updating workspace');
+      }
+    },
+    [editingWorkspace, refetch]
+  );
+
+  const handleDelete = useCallback(
+    async (workspace: Workspace): Promise<void> => {
+      await handleAsyncError(async () => {
+        const db = await getDatabase();
+        await db.workspaces.upsert({
+          ...workspace,
+          isDeleted: true,
+          updatedAt: new Date().toISOString(),
+        });
+        await refetch();
+      }, 'Deleting workspace');
+    },
+    [refetch]
+  );
 
   const workspaceListProps: WorkspaceListProps = {
     workspaces,
@@ -68,6 +72,11 @@ const WorkspacesPageContent: React.FC = () => {
 
   return (
     <Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error.message}
+        </Alert>
+      )}
       <Box sx={{ mb: 4 }}>
         <WorkspaceForm
           workspace={editingWorkspace ?? undefined}

@@ -1,10 +1,10 @@
-// src\contexts\AuthContext.tsx
+// src/contexts/AuthContext.tsx
 import React, { useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, Workspace } from '@/lib/schemas';
 import { getDatabase } from '@/lib/database';
 import { RxDocument, RxCollection } from 'rxdb';
 import { createTypedContext } from '@/utils/createTypedContext';
-import { handleError } from '@/utils/errorHandling';
+import { handleAsyncError, handleError } from '@/utils/errorHandling';
 import { LiveDocsDatabase } from '@/types';
 
 interface AuthContextType {
@@ -37,15 +37,13 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   const [users, setUsers] = useState<User[]>([]);
 
   const initializeDatabase = useCallback(async (): Promise<void> => {
-    try {
+    await handleAsyncError(async () => {
       await getDatabase();
-    } catch (error) {
-      handleError(error, 'Initializing database');
-    }
+    }, 'Initializing database');
   }, []);
 
   const login = useCallback(async (userId: string, workspaceId: string): Promise<void> => {
-    try {
+    const result = await handleAsyncError(async () => {
       const db: LiveDocsDatabase = await getDatabase();
       const usersCollection: RxCollection<User> = db.users;
       const workspacesCollection: RxCollection<Workspace> = db.workspaces;
@@ -67,11 +65,14 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
         setCurrentWorkspace(workspaceJson);
         setJwtAccessToken(userJson.jwtAccessToken ?? null);
         setIsLoggedIn(true);
+
+        return { user: userJson, workspace: workspaceJson };
       } else {
         throw new Error('Invalid user or workspace');
       }
-    } catch (error) {
-      handleError(error, 'Login');
+    }, 'Login');
+
+    if (!result) {
       throw new Error('Login failed');
     }
   }, []);
@@ -88,6 +89,7 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
         } catch (error) {
           localStorage.removeItem('userId');
           localStorage.removeItem('workspaceId');
+          handleError(error, 'Initializing authentication');
         }
       }
 
@@ -98,25 +100,29 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   }, [login, initializeDatabase]);
 
   const fetchWorkspaces = useCallback(async (): Promise<void> => {
-    try {
+    const result = await handleAsyncError(async () => {
       const db: LiveDocsDatabase = await getDatabase();
       const workspacesCollection: RxCollection<Workspace> = db.workspaces;
-      const fetchedWorkspaces: Workspace[] = await workspacesCollection.find().exec();
-      setWorkspaces(fetchedWorkspaces);
-    } catch (error) {
-      handleError(error, 'Fetching workspaces');
+      return await workspacesCollection.find().exec();
+    }, 'Fetching workspaces');
+
+    if (result) {
+      setWorkspaces(result);
+    } else {
       throw new Error('Failed to fetch workspaces');
     }
   }, []);
 
   const fetchUsers = useCallback(async (workspaceId: string): Promise<void> => {
-    try {
+    const result = await handleAsyncError(async () => {
       const db: LiveDocsDatabase = await getDatabase();
       const usersCollection: RxCollection<User> = db.users;
-      const fetchedUsers: User[] = await usersCollection.find({ selector: { workspaceId } }).exec();
-      setUsers(fetchedUsers);
-    } catch (error) {
-      handleError(error, 'Fetching users');
+      return await usersCollection.find({ selector: { workspaceId } }).exec();
+    }, 'Fetching users');
+
+    if (result) {
+      setUsers(result);
+    } else {
       throw new Error('Failed to fetch users');
     }
   }, []);

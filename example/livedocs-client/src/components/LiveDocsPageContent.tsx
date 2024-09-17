@@ -1,23 +1,24 @@
 // src\components\LiveDocsPageContent.tsx
 import React, { useState, useCallback } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Alert } from '@mui/material';
 import LiveDocList, { LiveDocListProps } from './LiveDocList';
 import LiveDocForm from './LiveDocForm';
 import { LiveDoc, User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '@/lib/database';
+import { handleAsyncError } from '@/utils/errorHandling';
 
 const LiveDocsPageContent: React.FC = () => {
   const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
-  const { refetch } = useDocuments<LiveDoc>('livedocs');
+  const { documents: liveDocs, refetch, error } = useDocuments<LiveDoc>('livedocs');
   const { documents: users } = useDocuments<User>('users');
   const { documents: workspaces } = useDocuments<Workspace>('workspaces');
 
   const handleCreate = useCallback(
     async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      const db = await getDatabase();
-      try {
+      await handleAsyncError(async () => {
+        const db = await getDatabase();
         await db.livedocs.insert({
           id: uuidv4(),
           ...liveDoc,
@@ -25,9 +26,7 @@ const LiveDocsPageContent: React.FC = () => {
           isDeleted: false,
         });
         await refetch();
-      } catch (error) {
-        console.error('Error creating live doc:', error);
-      }
+      }, 'Creating live doc');
     },
     [refetch]
   );
@@ -35,8 +34,8 @@ const LiveDocsPageContent: React.FC = () => {
   const handleUpdate = useCallback(
     async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
       if (editingLiveDoc) {
-        const db = await getDatabase();
-        try {
+        await handleAsyncError(async () => {
+          const db = await getDatabase();
           await db.livedocs.upsert({
             ...editingLiveDoc,
             ...liveDoc,
@@ -44,9 +43,7 @@ const LiveDocsPageContent: React.FC = () => {
           });
           setEditingLiveDoc(null);
           await refetch();
-        } catch (error) {
-          console.error('Error updating live doc:', error);
-        }
+        }, 'Updating live doc');
       }
     },
     [editingLiveDoc, refetch]
@@ -54,22 +51,21 @@ const LiveDocsPageContent: React.FC = () => {
 
   const handleDelete = useCallback(
     async (liveDoc: LiveDoc): Promise<void> => {
-      const db = await getDatabase();
-      try {
+      await handleAsyncError(async () => {
+        const db = await getDatabase();
         await db.livedocs.upsert({
           ...liveDoc,
           isDeleted: true,
           updatedAt: new Date().toISOString(),
         });
         await refetch();
-      } catch (error) {
-        console.error('Error deleting live doc:', error);
-      }
+      }, 'Deleting live doc');
     },
     [refetch]
   );
 
   const liveDocListProps: LiveDocListProps = {
+    liveDocs,
     onEdit: setEditingLiveDoc,
     onDelete: (liveDoc): void => {
       void handleDelete(liveDoc);
@@ -78,6 +74,11 @@ const LiveDocsPageContent: React.FC = () => {
 
   return (
     <Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error.message}
+        </Alert>
+      )}
       <Box sx={{ mb: 4 }}>
         <LiveDocForm
           liveDoc={editingLiveDoc ?? undefined}

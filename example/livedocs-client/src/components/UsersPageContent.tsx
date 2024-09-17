@@ -1,22 +1,23 @@
 // src\components\UsersPageContent.tsx
 import React, { useState, useCallback } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Alert } from '@mui/material';
 import UserList, { UserListProps } from './UserList';
 import UserForm from './UserForm';
 import { User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '@/lib/database';
+import { handleAsyncError } from '@/utils/errorHandling';
 
 const UsersPageContent: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const { refetch } = useDocuments<User>('users');
+  const { documents: users, refetch, error } = useDocuments<User>('users');
   const { documents: workspaces } = useDocuments<Workspace>('workspaces');
 
   const handleCreate = useCallback(
     async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      const db = await getDatabase();
-      try {
+      await handleAsyncError(async () => {
+        const db = await getDatabase();
         await db.users.insert({
           id: uuidv4(),
           ...user,
@@ -24,9 +25,7 @@ const UsersPageContent: React.FC = () => {
           isDeleted: false,
         });
         await refetch();
-      } catch (error) {
-        console.error('Error creating user:', error);
-      }
+      }, 'Creating user');
     },
     [refetch]
   );
@@ -34,8 +33,8 @@ const UsersPageContent: React.FC = () => {
   const handleUpdate = useCallback(
     async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
       if (editingUser) {
-        const db = await getDatabase();
-        try {
+        await handleAsyncError(async () => {
+          const db = await getDatabase();
           await db.users.upsert({
             ...editingUser,
             ...user,
@@ -43,9 +42,7 @@ const UsersPageContent: React.FC = () => {
           });
           setEditingUser(null);
           await refetch();
-        } catch (error) {
-          console.error('Error updating user:', error);
-        }
+        }, 'Updating user');
       }
     },
     [editingUser, refetch]
@@ -53,22 +50,21 @@ const UsersPageContent: React.FC = () => {
 
   const handleDelete = useCallback(
     async (user: User): Promise<void> => {
-      const db = await getDatabase();
-      try {
+      await handleAsyncError(async () => {
+        const db = await getDatabase();
         await db.users.upsert({
           ...user,
           isDeleted: true,
           updatedAt: new Date().toISOString(),
         });
         await refetch();
-      } catch (error) {
-        console.error('Error deleting user:', error);
-      }
+      }, 'Deleting user');
     },
     [refetch]
   );
 
   const userListProps: UserListProps = {
+    users, // This is now correctly typed
     onEdit: setEditingUser,
     onDelete: (user): void => {
       void handleDelete(user);
@@ -77,6 +73,11 @@ const UsersPageContent: React.FC = () => {
 
   return (
     <Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error.message}
+        </Alert>
+      )}
       <Box sx={{ mb: 4 }}>
         <UserForm
           user={editingUser ?? undefined}

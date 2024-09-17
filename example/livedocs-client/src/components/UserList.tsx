@@ -1,36 +1,16 @@
 // src\components\UserList.tsx
 import React from 'react';
-import { useDocuments } from '@/hooks/useDocuments';
 import { User } from '@/lib/schemas';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  CircularProgress,
-} from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 export interface UserListProps {
+  users: User[]; // Add this line to include the users property
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
 }
 
-const UserList: React.FC<UserListProps> = ({ onEdit, onDelete }) => {
-  const { documents: users, isLoading, error } = useDocuments<User>('users');
-
-  if (isLoading) {
-    return <CircularProgress />;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
+const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
   return (
     <TableContainer component={Paper}>
       <Table>

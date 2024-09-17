@@ -7,8 +7,8 @@ import {
   replicateGraphQL,
   RxGraphQLReplicationState,
 } from 'rxdb/plugins/replication-graphql';
-import { RxCollection, GraphQLServerUrl } from 'rxdb';
-import { logError, notifyUser } from './errorHandling';
+import { RxCollection, GraphQLServerUrl, RxJsonSchema } from 'rxdb';
+import { handleAsyncError, handleError } from '@/utils/errorHandling';
 import { workspaceSchema, userSchema, liveDocSchema, Workspace, User, LiveDoc } from './schemas';
 import { ReplicationCheckpoint, LiveDocsCollections } from '@/types';
 
@@ -20,16 +20,17 @@ const JWT_TOKEN =
 const BATCH_SIZE = 50;
 
 const getGraphQLServerUrl = (): GraphQLServerUrl => {
-  const url: GraphQLServerUrl = {};
-  url.http = GRAPHQL_ENDPOINT;
-  url.ws = WS_ENDPOINT;
+  const url: GraphQLServerUrl = {
+    http: GRAPHQL_ENDPOINT,
+    ws: WS_ENDPOINT,
+  };
   return url;
 };
 
 const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   collection: RxCollection<T>,
   schemaName: string,
-  schema: typeof workspaceSchema | typeof userSchema | typeof liveDocSchema
+  schema: RxJsonSchema<T>
 ): RxGraphQLReplicationState<T, ReplicationCheckpoint> => {
   const pullQueryBuilder = pullQueryBuilderFromRxSchema(schemaName, {
     schema,
@@ -69,8 +70,7 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   });
 
   replicationState.error$.subscribe((error) => {
-    logError(error, `Replication error in ${collection.name}`);
-    notifyUser(`Error in ${collection.name} synchronization. Please try again later.`, 'error');
+    handleError(error, `Replication error in ${collection.name}`);
   });
 
   return replicationState;
@@ -82,29 +82,54 @@ interface ReplicationStates {
   livedocs: RxGraphQLReplicationState<LiveDoc, ReplicationCheckpoint>;
 }
 
-export const setupReplication = async (db: LiveDocsDatabase): Promise<ReplicationStates> => {
-  const replicationStates: ReplicationStates = {
-    workspaces: setupReplicationForCollection<Workspace>(db.workspaces, 'workspace', workspaceSchema),
-    users: setupReplicationForCollection<User>(db.users, 'user', userSchema),
-    livedocs: setupReplicationForCollection<LiveDoc>(db.livedocs, 'liveDoc', liveDocSchema),
-  };
+/**
+ * Type guard to check if a given object is an instance of RxGraphQLReplicationState
+ *
+ * @param state - The object to check
+ * @returns True if the object is an RxGraphQLReplicationState, false otherwise
+ */
+function isRxGraphQLReplicationState(state: unknown): state is RxGraphQLReplicationState<unknown, unknown> {
+  return (
+    typeof state === 'object' &&
+    state !== null &&
+    'cancel' in state &&
+    'start' in state &&
+    typeof (state as RxGraphQLReplicationState<unknown, unknown>).cancel === 'function' &&
+    typeof (state as RxGraphQLReplicationState<unknown, unknown>).start === 'function'
+  );
+}
 
-  try {
-    await Promise.all(
-      Object.values(replicationStates).map((state) =>
-        (state as RxGraphQLReplicationState<unknown, unknown>).awaitInitialReplication()
-      )
-    );
-    console.log('Initial replication completed successfully');
-  } catch (error) {
-    logError(
-      error instanceof Error ? error : new Error('Unknown error during initial replication'),
-      'Initial replication'
-    );
-    notifyUser('Failed to complete initial data sync. Some data may be outdated.');
+export const setupReplication = async (db: LiveDocsDatabase): Promise<ReplicationStates> => {
+  const result = await handleAsyncError(async () => {
+    const replicationStates: ReplicationStates = {
+      workspaces: setupReplicationForCollection<Workspace>(db.workspaces, 'workspace', workspaceSchema),
+      users: setupReplicationForCollection<User>(db.users, 'user', userSchema),
+      livedocs: setupReplicationForCollection<LiveDoc>(db.livedocs, 'liveDoc', liveDocSchema),
+    };
+
+    try {
+      await Promise.all(
+        Object.values(replicationStates).map((state) => {
+          if (isRxGraphQLReplicationState(state)) {
+            return state.awaitInitialReplication();
+          }
+          throw new Error('Invalid replication state');
+        })
+      );
+      console.log('Initial replication completed successfully');
+    } catch (error) {
+      handleError(error, 'Initial replication');
+      // Even if initial replication fails, we still return the replication states
+    }
+
+    return replicationStates;
+  }, 'Setting up replication');
+
+  if (!result) {
+    throw new Error('Failed to set up replication');
   }
 
-  return replicationStates;
+  return result;
 };
 
 export const subscribeToCollectionChanges = <K extends keyof LiveDocsCollections>(
@@ -114,4 +139,61 @@ export const subscribeToCollectionChanges = <K extends keyof LiveDocsCollections
   collection.find().$.subscribe((docs) => {
     onChange(docs);
   });
+};
+
+export const cancelReplication = async (replicationStates: ReplicationStates): Promise<void> => {
+  await handleAsyncError(async () => {
+    await Promise.all(
+      Object.values(replicationStates).map((state) => {
+        if (isRxGraphQLReplicationState(state)) {
+          return state.cancel();
+        }
+        return Promise.resolve();
+      })
+    );
+    console.log('Replication cancelled successfully');
+  }, 'Cancelling replication');
+};
+
+/**
+ * Restarts the replication for all collections in the ReplicationStates object.
+ * This function will first cancel any ongoing replication, then start it again.
+ *
+ * @param replicationStates - An object containing the replication states for each collection
+ * @returns A promise that resolves when all replications have been restarted
+ */
+export const restartReplication = async (replicationStates: ReplicationStates): Promise<void> => {
+  await handleAsyncError(async () => {
+    for (const [collectionName, state] of Object.entries(replicationStates)) {
+      if (isRxGraphQLReplicationState(state)) {
+        try {
+          // First, cancel the current replication
+          await state.cancel();
+          console.log(`Cancelled replication for ${collectionName}`);
+
+          // Then, start the replication again
+          await state.start();
+          console.log(`Restarted replication for ${collectionName}`);
+        } catch (error) {
+          handleError(error, `Restarting replication for ${collectionName}`);
+          // Continue with other collections even if one fails
+        }
+      } else {
+        console.warn(`Invalid replication state for ${collectionName}`);
+      }
+    }
+    console.log('Replication restarted successfully for all collections');
+  }, 'Restarting replication');
+};
+
+export const checkReplicationStatus = (
+  replicationStates: ReplicationStates
+): { [K in keyof ReplicationStates]: boolean } => {
+  return Object.entries(replicationStates).reduce<{ [K in keyof ReplicationStates]: boolean }>(
+    (acc, [key, state]) => {
+      acc[key as keyof ReplicationStates] = isRxGraphQLReplicationState(state) && !state.isStopped();
+      return acc;
+    },
+    { workspaces: false, users: false, livedocs: false }
+  );
 };

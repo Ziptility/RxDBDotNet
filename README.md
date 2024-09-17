@@ -1,16 +1,8 @@
 # RxDBDotNet
 
-<p align="left">
-  <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
-    <img src="https://img.shields.io/nuget/v/RxDBDotNet.svg" alt="NuGet Version" style="margin-right: 10px;">
-  </a>
-  <a href="https://www.nuget.org/packages/RxDBDotNet/" style="text-decoration:none;">
-    <img src="https://img.shields.io/nuget/dt/RxDBDotNet.svg" alt="NuGet Downloads" style="margin-right: 10px;">
-  </a>
-  <a href="https://codecov.io/github/Ziptility/RxDBDotNet" style="text-decoration:none;">
-    <img src="https://codecov.io/github/Ziptility/RxDBDotNet/graph/badge.svg?token=VvuBJEsIHT" alt="codecov">
-  </a>
-</p>
+[![NuGet Version](https://img.shields.io/nuget/v/RxDBDotNet.svg)](https://www.nuget.org/packages/RxDBDotNet/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/RxDBDotNet.svg)](https://www.nuget.org/packages/RxDBDotNet/)
+[![codecov](https://codecov.io/github/Ziptility/RxDBDotNet/graph/badge.svg?token=VvuBJEsIHT)](https://codecov.io/github/Ziptility/RxDBDotNet)
 
 RxDBDotNet is a powerful .NET library that implements the [RxDB replication protocol](https://rxdb.info/replication.html), enabling real-time data synchronization between RxDB clients and .NET servers using GraphQL and Hot Chocolate. It extends the standard RxDB replication protocol with .NET-specific enhancements.
 
@@ -37,6 +29,7 @@ Ready to dive in? [Get started](#getting-started) or [contribute](#contributing)
 - [Sample Implementation](#sample-implementation)
 - [RxDB Replication Protocol Details](#rxdb-replication-protocol-details)
 - [Advanced Features](#advanced-features)
+- [Security Considerations](#security-considerations)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [License](#license)
@@ -641,6 +634,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 3. No additional configuration is needed in your GraphQL setup. The OIDC support is automatically applied to subscription authentication when available.
 
 This feature allows for more robust and flexible authentication scenarios, particularly in environments where signing keys may change dynamically or where you're integrating with external OIDC providers like IdentityServer.
+
+## Security Considerations
+
+### Server-Side Timestamp Overwriting
+
+RxDBDotNet implements a [crucial security measure](https://rxdb.info/replication.html#security) to prevent potential issues with untrusted client-side clocks. When the server receives a document creation or update request, it always overwrites the `UpdatedAt` timestamp with its own server-side timestamp. This approach ensures that:
+
+1. The integrity of the document's timeline is maintained.
+2. Potential time-based attacks or inconsistencies due to client clock discrepancies are mitigated.
+3. The server maintains authoritative control over the timestamp for all document changes.
+
+This security measure is implemented in the `MutationResolver<TDocument>` class, which handles document push operations. Developers using RxDBDotNet should be aware that any client-provided `UpdatedAt` value will be ignored and replaced with the server's timestamp.
+
+Important: While the `IReplicatedDocument` interface defines `UpdatedAt` with both a getter and a setter, developers should not manually set this property in their application code. Always rely on the server to set the correct `UpdatedAt` value during replication operations. The setter is present solely to allow the server to overwrite the timestamp as a security measure.
 
 ## Contributing
 

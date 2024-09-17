@@ -25,6 +25,15 @@ categories:
   - title: '🧪 Tests'
     labels:
       - 'test'
+  - title: '🏗️ Build'
+    labels:
+      - 'build'
+  - title: '🔄 CI'
+    labels:
+      - 'ci'
+  - title: '↩️ Revert'
+    labels:
+      - 'revert'
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 version-resolver:
@@ -39,7 +48,7 @@ version-resolver:
       - 'patch'
   default: patch
 template: |
-  ## What’s Changed
+  ## What's Changed
 
   $CHANGES
 autolabeler:
@@ -67,3 +76,12 @@ autolabeler:
   - label: 'test'
     title:
       - '/^test(\([^)]+\))?:/i'
+  - label: 'build'
+    title:
+      - '/^build(\([^)]+\))?:/i'
+  - label: 'ci'
+    title:
+      - '/^ci(\([^)]+\))?:/i'
+  - label: 'revert'
+    title:
+      - '/^revert(\([^)]+\))?:/i'

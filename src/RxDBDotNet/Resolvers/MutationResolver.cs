@@ -198,6 +198,10 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
             await AuthorizeOperationAsync(authorizationHelper, currentUser, securityOptions, Operation.Create)
                 .ConfigureAwait(false);
 
+            // Set the server timestamp to ensure data integrity and security
+            // This overrides any client-provided timestamp, as client-side clocks cannot be trusted
+            // It's crucial for maintaining a reliable timeline of document changes and preventing potential exploits
+            create.UpdatedAt = DateTimeOffset.UtcNow;
             await documentService.CreateDocumentAsync(create, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -236,6 +240,13 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         SecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
     {
+        // Set the server timestamp for updates
+        // This is a critical security measure that ensures:
+        // 1. The integrity of the document's timeline is maintained
+        // 2. Potential time-based attacks or inconsistencies due to client clock discrepancies are mitigated
+        // 3. The server has the authoritative timestamp for all document changes
+        update.UpdatedAt = DateTimeOffset.UtcNow;
+
         if (update.IsDeleted)
         {
             await AuthorizeOperationAsync(authorizationHelper, currentUser, securityOptions, Operation.Delete)

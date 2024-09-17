@@ -13,6 +13,7 @@ using Moq;
 using RxDBDotNet.Models;
 using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
+using static RxDBDotNet.Tests.Setup.Strings;
 
 namespace RxDBDotNet.Tests;
 
@@ -178,9 +179,9 @@ public class SubscriptionTests : IAsyncLifetime
         .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
-        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+        var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
-        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: admin.JwtAccessToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: workspaceAdmin.JwtAccessToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
@@ -194,8 +195,40 @@ public class SubscriptionTests : IAsyncLifetime
         // Ensure the subscription is established
         await Task.Delay(1000, TestContext.CancellationToken);
 
+        var workspaceId = Provider.Sql.Create();
+
+        var newWorkspace = new WorkspaceInputGql
+        {
+            Id = workspaceId,
+            Name = CreateString(),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false,
+            Topics = new List<string>
+            {
+                workspaceId.ToString(),
+            },
+        };
+
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
+        {
+            AssumedMasterState = null,
+            NewDocumentState = newWorkspace,
+        };
+
+        var pushWorkspaceInputGql = new PushWorkspaceInputGql
+        {
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
+        };
+
+        var createWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields()
+            .WithErrors(new PushWorkspaceErrorQueryBuilderGql().WithAuthenticationErrorFragment(
+                new AuthenticationErrorQueryBuilderGql().WithAllFields())), pushWorkspaceInputGql);
+
         // Act
-        await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        await TestContext.HttpClient.PostGqlMutationAsync(createWorkspace, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert
         var subscriptionResponses = await subscriptionTask;
@@ -219,9 +252,9 @@ public class SubscriptionTests : IAsyncLifetime
         .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
-        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+        var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
-        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: admin.JwtAccessToken);
+        await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken, bearerToken: workspaceAdmin.JwtAccessToken);
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql()
                 .WithDocuments(new WorkspaceQueryBuilderGql().WithAllFields())
@@ -236,7 +269,7 @@ public class SubscriptionTests : IAsyncLifetime
         await Task.Delay(1000, TestContext.CancellationToken);
 
         // Act
-        var (newWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var (newWorkspace, _) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert
         var subscriptionResponses = await subscriptionTask;

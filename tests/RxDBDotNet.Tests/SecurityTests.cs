@@ -1,6 +1,7 @@
 ﻿using LiveDocs.GraphQLApi.Security;
 using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
+using static RxDBDotNet.Tests.Setup.Strings;
 
 namespace RxDBDotNet.Tests;
 
@@ -29,13 +30,45 @@ public class SecurityTests : IAsyncLifetime
             .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
-        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+        var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+
+        var workspaceId = Provider.Sql.Create();
+
+        var workspaceInputGql = new WorkspaceInputGql
+        {
+            Id = workspaceId,
+            Name = CreateString(),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false,
+            Topics = new List<string>
+            {
+                workspaceId.ToString(),
+            },
+        };
+
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
+        {
+            AssumedMasterState = null,
+            NewDocumentState = workspaceInputGql,
+        };
+
+        var pushWorkspaceInputGql = new PushWorkspaceInputGql
+        {
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
+        };
+
+        var createWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields()
+            .WithErrors(new PushWorkspaceErrorQueryBuilderGql().WithAuthenticationErrorFragment(
+                new AuthenticationErrorQueryBuilderGql().WithAllFields())), pushWorkspaceInputGql);
 
         // Act
-        var response = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken, admin.JwtAccessToken);
+        await TestContext.HttpClient.PostGqlMutationAsync(createWorkspace, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert
-        await TestContext.HttpClient.VerifyWorkspaceAsync(response.workspaceInputGql, TestContext.CancellationToken);
+        await TestContext.HttpClient.VerifyWorkspaceAsync(workspaceInputGql, TestContext.CancellationToken);
     }
 
     [Fact]
@@ -48,10 +81,46 @@ public class SecurityTests : IAsyncLifetime
             .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+
         var standardUser = await TestContext.CreateUserAsync(workspace, UserRole.StandardUser, TestContext.CancellationToken);
 
+        var workspaceId = Provider.Sql.Create();
+
+        var newWorkspace = new WorkspaceInputGql
+        {
+            Id = workspaceId,
+            Name = CreateString(),
+            UpdatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false,
+            Topics = new List<string>
+            {
+                workspaceId.ToString(),
+            },
+        };
+
+        var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
+        {
+            AssumedMasterState = null,
+            NewDocumentState = newWorkspace,
+        };
+
+        var pushWorkspaceInputGql = new PushWorkspaceInputGql
+        {
+            WorkspacePushRow = new List<WorkspaceInputPushRowGql?>
+            {
+                workspaceInputPushRowGql,
+            },
+        };
+
+        var createWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields()
+            .WithErrors(new PushWorkspaceErrorQueryBuilderGql().WithAuthenticationErrorFragment(
+                new AuthenticationErrorQueryBuilderGql().WithAllFields())), pushWorkspaceInputGql);
+
         // Act
-        var (_, response) = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken, standardUser.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(
+            createWorkspace,
+            TestContext.CancellationToken,
+            standardUser.JwtAccessToken);
 
         // Assert
         response.Data.PushWorkspace?.Workspace.Should()
@@ -124,7 +193,7 @@ public class SecurityTests : IAsyncLifetime
             .Build();
 
         var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
-        var admin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+        var workspaceAdmin = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
 
         // Act
         var workspaceToUpdate = new WorkspaceInputGql
@@ -162,7 +231,7 @@ public class SecurityTests : IAsyncLifetime
         var updateWorkspace =
             new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), pushWorkspaceInputGql);
 
-        var response = await TestContext.HttpClient.PostGqlMutationAsync(updateWorkspace, TestContext.CancellationToken, admin.JwtAccessToken);
+        var response = await TestContext.HttpClient.PostGqlMutationAsync(updateWorkspace, TestContext.CancellationToken, workspaceAdmin.JwtAccessToken);
 
         // Assert
         response.Errors.Should()
@@ -170,7 +239,11 @@ public class SecurityTests : IAsyncLifetime
         response.Data.PushWorkspace?.Workspace.Should()
             .BeNullOrEmpty();
 
-        var updatedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(workspace.ReplicatedDocumentId, TestContext.CancellationToken);
+        var updatedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(
+            workspace.ReplicatedDocumentId,
+            TestContext.CancellationToken,
+            workspaceAdmin.JwtAccessToken);
+
         updatedWorkspace.Name.Should()
             .Be(workspaceToUpdate.Name.Value);
     }
@@ -291,7 +364,11 @@ public class SecurityTests : IAsyncLifetime
         response.Data.PushWorkspace?.Workspace.Should()
             .BeNullOrEmpty();
 
-        var deletedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(workspace.ReplicatedDocumentId, TestContext.CancellationToken);
+        var deletedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(
+            workspace.ReplicatedDocumentId,
+            TestContext.CancellationToken,
+            systemAdmin.JwtAccessToken);
+
         deletedWorkspace.IsDeleted.Should()
             .BeTrue();
     }

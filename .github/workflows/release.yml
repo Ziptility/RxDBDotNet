@@ -1,9 +1,7 @@
-name: Deploy NuGet Package after Release
+name: Deploy NuGet Package before Release
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
 
 jobs:
   deploy-nuget-package:

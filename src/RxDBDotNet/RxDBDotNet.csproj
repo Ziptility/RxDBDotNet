@@ -24,6 +24,7 @@
         <Copyright>© $([System.DateTime]::Now.Year) Ziptility and Contributors to the RxDBDotNet Project</Copyright>
         <Description>RxDBDotNet facilitates real-time data replication and synchronization between RxDB clients and .NET backends using GraphQL and Hot Chocolate.</Description>
         <PackageTags>rxdb;graphql;replication;offline-first;realtime;dotnet</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageProjectUrl>https://github.com/Ziptility/RxDBDotNet</PackageProjectUrl>
         <ServiceUrl>https://github.com/Ziptility/RxDBDotNet.git</ServiceUrl>
         <ServiceType>git</ServiceType>
@@ -41,6 +42,10 @@
         <PackageReference Include="System.Text.Json" Version="8.0.4" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
     <!-- Analyzers-->
     <ItemGroup>
         <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.1.0-beta" />
@@ -52,11 +57,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Roslynator.Analyzers" Version="4.12.4">
+        <PackageReference Include="Roslynator.Analyzers" Version="4.12.5">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="4.12.4">
+        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="4.12.5">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

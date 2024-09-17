@@ -18,11 +18,11 @@ export const handleError = (error: unknown, context: string): void => {
   toast.error(`An error occurred in ${context}: ${errorMessage}. Please try again.`, toastOptions);
 };
 
-export const handleAsyncError = async <T>(asyncFunction: () => Promise<T>, context: string): Promise<T | undefined> => {
+export async function handleAsyncError<T>(fn: () => Promise<T>, errorMessage: string): Promise<T | null> {
   try {
-    return await asyncFunction();
+    return await fn();
   } catch (error) {
-    handleError(error, context);
-    return undefined;
+    console.error(`${errorMessage}:`, error);
+    return null;
   }
-};
+}

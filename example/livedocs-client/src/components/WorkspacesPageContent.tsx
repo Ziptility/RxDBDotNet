@@ -1,4 +1,4 @@
-// src/components/WorkspacesPageContent.tsx
+// src\components\WorkspacesPageContent.tsx
 import React, { useState, useCallback } from 'react';
 import { Box, Button, Alert } from '@mui/material';
 import WorkspaceList, { WorkspaceListProps } from './WorkspaceList';

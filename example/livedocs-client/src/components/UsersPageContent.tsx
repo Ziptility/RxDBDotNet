@@ -64,7 +64,7 @@ const UsersPageContent: React.FC = () => {
   );
 
   const userListProps: UserListProps = {
-    users, // This is now correctly typed
+    users,
     onEdit: setEditingUser,
     onDelete: (user): void => {
       void handleDelete(user);

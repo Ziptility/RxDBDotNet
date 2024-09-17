@@ -1,4 +1,5 @@
-// src\pages\_app.tsx
+// src/pages/_app.tsx
+
 import React from 'react';
 import { AppProps } from 'next/app';
 import { EmotionCache } from '@emotion/cache';
@@ -10,6 +11,7 @@ import createEmotionCache from '../createEmotionCache';
 import Layout from '../components/Layout';
 import { AuthProvider } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
@@ -22,17 +24,19 @@ function MyApp({ Component, pageProps, router, emotionCache = clientSideEmotionC
     <CacheProvider value={emotionCache}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthProvider>
-          {router.pathname === '/login' ? (
-            <Component {...pageProps} />
-          ) : (
-            <ProtectedRoute>
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
-            </ProtectedRoute>
-          )}
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            {router.pathname === '/login' ? (
+              <Component {...pageProps} />
+            ) : (
+              <ProtectedRoute>
+                <Layout>
+                  <Component {...pageProps} />
+                </Layout>
+              </ProtectedRoute>
+            )}
+          </AuthProvider>
+        </ErrorBoundary>
       </ThemeProvider>
     </CacheProvider>
   );

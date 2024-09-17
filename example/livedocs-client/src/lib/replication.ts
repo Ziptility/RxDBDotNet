@@ -82,12 +82,6 @@ interface ReplicationStates {
   livedocs: RxGraphQLReplicationState<LiveDoc, ReplicationCheckpoint>;
 }
 
-/**
- * Type guard to check if a given object is an instance of RxGraphQLReplicationState
- *
- * @param state - The object to check
- * @returns True if the object is an RxGraphQLReplicationState, false otherwise
- */
 function isRxGraphQLReplicationState(state: unknown): state is RxGraphQLReplicationState<unknown, unknown> {
   return (
     typeof state === 'object' &&
@@ -155,28 +149,17 @@ export const cancelReplication = async (replicationStates: ReplicationStates): P
   }, 'Cancelling replication');
 };
 
-/**
- * Restarts the replication for all collections in the ReplicationStates object.
- * This function will first cancel any ongoing replication, then start it again.
- *
- * @param replicationStates - An object containing the replication states for each collection
- * @returns A promise that resolves when all replications have been restarted
- */
 export const restartReplication = async (replicationStates: ReplicationStates): Promise<void> => {
   await handleAsyncError(async () => {
     for (const [collectionName, state] of Object.entries(replicationStates)) {
       if (isRxGraphQLReplicationState(state)) {
         try {
-          // First, cancel the current replication
           await state.cancel();
           console.log(`Cancelled replication for ${collectionName}`);
-
-          // Then, start the replication again
           await state.start();
           console.log(`Restarted replication for ${collectionName}`);
         } catch (error) {
           handleError(error, `Restarting replication for ${collectionName}`);
-          // Continue with other collections even if one fails
         }
       } else {
         console.warn(`Invalid replication state for ${collectionName}`);

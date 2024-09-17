@@ -1,10 +1,11 @@
-// src\lib\database.ts
+// src/lib/database.ts
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
 import { LiveDocsDatabase, LiveDocsCollections } from '@/types';
 import { setupReplication } from './replication';
+import { handleAsyncError } from '@/utils/errorHandling';
 
 addRxPlugin(RxDBDevModePlugin);
 
@@ -13,26 +14,31 @@ let dbPromise: Promise<LiveDocsDatabase> | null = null;
 export const getDatabase = async (): Promise<LiveDocsDatabase> => {
   if (dbPromise) return dbPromise;
 
-  dbPromise = createRxDatabase<LiveDocsCollections>({
-    name: 'livedocsdb',
-    storage: getRxStorageDexie(),
-  }).then(async (db) => {
-    await db.addCollections({
-      workspaces: {
-        schema: workspaceSchema,
-      },
-      users: {
-        schema: userSchema,
-      },
-      livedocs: {
-        schema: liveDocSchema,
-      },
-    });
+  dbPromise = new Promise((resolve, reject) => {
+    handleAsyncError<LiveDocsDatabase>(async () => {
+      const db = await createRxDatabase<LiveDocsCollections>({
+        name: 'livedocsdb',
+        storage: getRxStorageDexie(),
+      });
 
-    // Set up replication for all collections
-    await setupReplication(db);
+      await db.addCollections({
+        workspaces: {
+          schema: workspaceSchema,
+        },
+        users: {
+          schema: userSchema,
+        },
+        livedocs: {
+          schema: liveDocSchema,
+        },
+      });
 
-    return db;
+      // Set up replication for all collections
+      await setupReplication(db);
+
+      resolve(db);
+      return db;
+    }, 'Creating and setting up database').catch(reject);
   });
 
   return dbPromise;

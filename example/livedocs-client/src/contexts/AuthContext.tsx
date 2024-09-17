@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.tsx
+// src\contexts\AuthContext.tsx
 import React, { useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, Workspace } from '@/lib/schemas';
 import { getDatabase } from '@/lib/database';

@@ -1,9 +1,10 @@
+// src\components\NetworkStatus.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Chip, Tooltip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getDatabase } from '@/lib/database';
-import { LiveDocsReplicationState } from '@/types';
+import { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
 import { combineLatest, map } from 'rxjs';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
@@ -33,8 +34,9 @@ const NetworkStatus: React.FC = () => {
     if (!replicationStates) return;
 
     const subscription = combineLatest(
-      Object.entries(replicationStates).map(([name, state]: [string, RxGraphQLReplicationState<unknown, unknown>]) =>
-        state.active$.pipe(map((active) => ({ [name]: active })))
+      Object.entries(replicationStates).map(
+        ([name, state]: [string, RxGraphQLReplicationState<unknown, ReplicationCheckpoint>]) =>
+          state.active$.pipe(map((active) => ({ [name]: active })))
       )
     ).subscribe((activeStates: Record<string, boolean>[]) => {
       const mergedStatus = activeStates.reduce((acc, curr) => ({ ...acc, ...curr }), {});

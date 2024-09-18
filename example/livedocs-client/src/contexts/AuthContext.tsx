@@ -33,8 +33,8 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-  const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspaces');
-  const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('users');
+  const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
+  const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('user');
 
   const loginRef = useRef<AuthContextType['login']>();
   const logoutRef = useRef<AuthContextType['logout']>();

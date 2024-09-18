@@ -15,7 +15,7 @@ const WorkspacesPageContent: React.FC = () => {
     error,
     upsertDocument,
     deleteDocument,
-  } = useDocuments<Workspace>('workspaces');
+  } = useDocuments<Workspace>('workspace');
 
   const handleCreate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     const newWorkspace: Workspace = {

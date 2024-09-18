@@ -1,4 +1,4 @@
-// src/lib/database.ts
+// src\lib\database.ts
 import { createRxDatabase, addRxPlugin, RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';

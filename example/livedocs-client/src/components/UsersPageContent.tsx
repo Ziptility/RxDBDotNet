@@ -15,13 +15,13 @@ const UsersPageContent: React.FC = () => {
     error: userError,
     upsertDocument,
     deleteDocument,
-  } = useDocuments<User>('users');
+  } = useDocuments<User>('user');
 
   const {
     documents: workspaces,
     isLoading: isLoadingWorkspaces,
     error: workspaceError,
-  } = useDocuments<Workspace>('workspaces');
+  } = useDocuments<Workspace>('workspace');
 
   const handleCreate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     const newUser: User = {

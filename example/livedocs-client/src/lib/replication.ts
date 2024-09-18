@@ -10,7 +10,7 @@ import {
 } from 'rxdb/plugins/replication-graphql';
 import { workspaceSchema, userSchema, liveDocSchema, Workspace, User, LiveDoc } from './schemas';
 import { RxCollection, RxJsonSchema, RxError } from 'rxdb';
-import { LiveDocsReplicationState } from '@/types';
+import { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
 
 const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
 const WS_ENDPOINT = 'ws://localhost:5414/graphql';
@@ -19,12 +19,12 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   db: LiveDocsDatabase,
   collectionName: keyof LiveDocsDatabase,
   schema: RxJsonSchema<T>
-): RxGraphQLReplicationState<T, unknown> => {
+): RxGraphQLReplicationState<T, ReplicationCheckpoint> => {
   const collection = db[collectionName] as RxCollection<T>;
 
   const schemaInput: GraphQLSchemaFromRxSchemaInputSingleCollection = {
     schema,
-    checkpointFields: ['id', 'updatedAt'],
+    checkpointFields: ['lastDocumentId', 'updatedAt'],
     deletedField: 'isDeleted',
   };
 
@@ -32,7 +32,7 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   const pushQueryBuilder = pushQueryBuilderFromRxSchema(collectionName, schemaInput);
   const pullStreamBuilder = pullStreamBuilderFromRxSchema(collectionName, schemaInput);
 
-  return replicateGraphQL<T, unknown>({
+  return replicateGraphQL<T, ReplicationCheckpoint>({
     collection,
     url: {
       http: GRAPHQL_ENDPOINT,
@@ -56,15 +56,15 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
 
 export const setupReplication = async (db: LiveDocsDatabase): Promise<LiveDocsReplicationState> => {
   const replicationStates: LiveDocsReplicationState = {
-    workspaces: setupReplicationForCollection(db, 'workspaces', workspaceSchema),
-    users: setupReplicationForCollection(db, 'users', userSchema),
-    livedocs: setupReplicationForCollection(db, 'livedocs', liveDocSchema),
+    workspaces: setupReplicationForCollection(db, 'workspace', workspaceSchema),
+    users: setupReplicationForCollection(db, 'user', userSchema),
+    livedocs: setupReplicationForCollection(db, 'livedoc', liveDocSchema),
   };
 
   // Handle replication errors
   await Promise.all(
     Object.entries(replicationStates).map(([name, state]) => {
-      (state as RxGraphQLReplicationState<unknown, unknown>).error$.subscribe((error: RxError) => {
+      (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).error$.subscribe((error: RxError) => {
         console.error(`Replication error in ${name}:`, error);
       });
     })
@@ -76,14 +76,16 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<LiveDocsRe
 export const restartReplication = async (replicationStates: LiveDocsReplicationState): Promise<void> => {
   await Promise.all(
     Object.entries(replicationStates).map(async ([, state]) => {
-      await (state as RxGraphQLReplicationState<unknown, unknown>).cancel();
-      await (state as RxGraphQLReplicationState<unknown, unknown>).start();
+      await (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).cancel();
+      await (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).start();
     })
   );
 };
 
 export const cancelReplication = async (replicationStates: LiveDocsReplicationState): Promise<void> => {
   await Promise.all(
-    Object.values(replicationStates).map((state) => (state as RxGraphQLReplicationState<unknown, unknown>).cancel())
+    Object.values(replicationStates).map((state) =>
+      (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).cancel()
+    )
   );
 };

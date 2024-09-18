@@ -15,15 +15,15 @@ const LiveDocsPageContent: React.FC = () => {
     error: liveDocError,
     upsertDocument,
     deleteDocument,
-  } = useDocuments<LiveDoc>('livedocs');
+  } = useDocuments<LiveDoc>('livedoc');
 
-  const { documents: users, isLoading: isLoadingUsers, error: userError } = useDocuments<User>('users');
+  const { documents: users, isLoading: isLoadingUsers, error: userError } = useDocuments<User>('user');
 
   const {
     documents: workspaces,
     isLoading: isLoadingWorkspaces,
     error: workspaceError,
-  } = useDocuments<Workspace>('workspaces');
+  } = useDocuments<Workspace>('workspace');
 
   const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     const newLiveDoc: LiveDoc = {

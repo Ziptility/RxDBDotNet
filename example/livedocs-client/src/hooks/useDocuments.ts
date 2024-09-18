@@ -20,15 +20,15 @@ function hasUpdatedAt(doc: Document): doc is Document & { updatedAt: string } {
   return 'updatedAt' in doc;
 }
 
-export function useDocuments<T extends Document>(
-  collectionName: keyof LiveDocsDatabase
-): {
+interface UseDocumentsResult<T extends Document> {
   documents: T[];
   isLoading: boolean;
   error: Error | null;
   upsertDocument: (doc: T) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
-} {
+}
+
+export function useDocuments<T extends Document>(collectionName: keyof LiveDocsDatabase): UseDocumentsResult<T> {
   const [documents, setDocuments] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);

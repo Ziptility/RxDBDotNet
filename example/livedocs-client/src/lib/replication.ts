@@ -58,9 +58,9 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
 
 export const setupReplication = async (db: LiveDocsDatabase): Promise<LiveDocsReplicationStates> => {
   const replicationStates: LiveDocsReplicationStates = {
-    workspaces: setupReplicationForCollection(db, 'workspace', workspaceSchema),
-    users: setupReplicationForCollection(db, 'user', userSchema),
-    livedocs: setupReplicationForCollection(db, 'livedoc', liveDocSchema),
+    workspaces: setupReplicationForCollection<Workspace>(db, 'workspace', workspaceSchema),
+    users: setupReplicationForCollection<User>(db, 'user', userSchema),
+    livedocs: setupReplicationForCollection<LiveDoc>(db, 'livedoc', liveDocSchema),
   };
 
   // Handle replication errors

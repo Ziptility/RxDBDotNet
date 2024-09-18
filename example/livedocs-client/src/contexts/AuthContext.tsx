@@ -1,11 +1,8 @@
-// src\contexts\AuthContext.tsx
-import React, { useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { User, Workspace } from '@/lib/schemas';
-import { getDatabase } from '@/lib/database';
-import { RxDocument, RxCollection } from 'rxdb';
+import { useDocuments } from '@/hooks/useDocuments';
 import { createTypedContext } from '@/utils/createTypedContext';
-import { handleAsyncError, handleError } from '@/utils/errorHandling';
-import { LiveDocsDatabase } from '@/types';
+import { handleAsyncError } from '@/utils/errorHandling';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -17,8 +14,6 @@ interface AuthContextType {
   logout: () => void;
   workspaces: Workspace[];
   users: User[];
-  fetchWorkspaces: () => Promise<void>;
-  fetchUsers: (workspaceId: string) => Promise<void>;
 }
 
 const [useAuth, AuthProvider] = createTypedContext<AuthContextType>();
@@ -33,109 +28,71 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   const [jwtAccessToken, setJwtAccessToken] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
 
-  const initializeDatabase = useCallback(async (): Promise<void> => {
-    await handleAsyncError(async () => {
-      await getDatabase();
-    }, 'Initializing database');
-  }, []);
+  const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspaces');
 
-  const login = useCallback(async (userId: string, workspaceId: string): Promise<void> => {
-    const result = await handleAsyncError(async () => {
-      const db: LiveDocsDatabase = await getDatabase();
-      const usersCollection: RxCollection<User> = db.users;
-      const workspacesCollection: RxCollection<Workspace> = db.workspaces;
+  const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('users');
 
-      const user: RxDocument<User> | null = await usersCollection.findOne({ selector: { id: userId } }).exec();
-      const workspace: RxDocument<Workspace> | null = await workspacesCollection
-        .findOne({ selector: { id: workspaceId } })
-        .exec();
+  const loginRef = useRef<AuthContextType['login']>();
+  const logoutRef = useRef<AuthContextType['logout']>();
 
-      if (user && workspace) {
-        const userJson: User = user.toJSON();
-        const workspaceJson: Workspace = workspace.toJSON();
+  loginRef.current = useCallback(
+    async (userId: string, workspaceId: string): Promise<void> => {
+      await handleAsyncError(async () => {
+        const user = users.find((u) => u.id === userId);
+        const workspace = workspaces.find((w) => w.id === workspaceId);
+
+        if (!user || !workspace) {
+          throw new Error('Invalid user or workspace');
+        }
+
+        setCurrentUser(user);
+        setCurrentWorkspace(workspace);
+        setJwtAccessToken(user.jwtAccessToken ?? null);
+        setIsLoggedIn(true);
 
         localStorage.setItem('userId', userId);
         localStorage.setItem('workspaceId', workspaceId);
-        localStorage.setItem('jwtAccessToken', userJson.jwtAccessToken ?? '');
+        localStorage.setItem('jwtAccessToken', user.jwtAccessToken ?? '');
+        return Promise.resolve();
+      }, 'Login');
+    },
+    [users, workspaces]
+  );
 
-        setCurrentUser(userJson);
-        setCurrentWorkspace(workspaceJson);
-        setJwtAccessToken(userJson.jwtAccessToken ?? null);
-        setIsLoggedIn(true);
-
-        return { user: userJson, workspace: workspaceJson };
-      } else {
-        throw new Error('Invalid user or workspace');
-      }
-    }, 'Login');
-
-    if (!result) {
-      throw new Error('Login failed');
-    }
-  }, []);
-
-  useEffect((): void => {
-    const initializeAuth = async (): Promise<void> => {
-      await initializeDatabase();
-      const storedUserId = localStorage.getItem('userId');
-      const storedWorkspaceId = localStorage.getItem('workspaceId');
-
-      if (storedUserId && storedWorkspaceId) {
-        try {
-          await login(storedUserId, storedWorkspaceId);
-        } catch (error) {
-          localStorage.removeItem('userId');
-          localStorage.removeItem('workspaceId');
-          handleError(error, 'Initializing authentication');
-        }
-      }
-
-      setIsInitialized(true);
-    };
-
-    void initializeAuth();
-  }, [login, initializeDatabase]);
-
-  const fetchWorkspaces = useCallback(async (): Promise<void> => {
-    const result = await handleAsyncError(async () => {
-      const db: LiveDocsDatabase = await getDatabase();
-      const workspacesCollection: RxCollection<Workspace> = db.workspaces;
-      return await workspacesCollection.find().exec();
-    }, 'Fetching workspaces');
-
-    if (result) {
-      setWorkspaces(result);
-    } else {
-      throw new Error('Failed to fetch workspaces');
-    }
-  }, []);
-
-  const fetchUsers = useCallback(async (workspaceId: string): Promise<void> => {
-    const result = await handleAsyncError(async () => {
-      const db: LiveDocsDatabase = await getDatabase();
-      const usersCollection: RxCollection<User> = db.users;
-      return await usersCollection.find({ selector: { workspaceId } }).exec();
-    }, 'Fetching users');
-
-    if (result) {
-      setUsers(result);
-    } else {
-      throw new Error('Failed to fetch users');
-    }
-  }, []);
-
-  const logout = useCallback((): void => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('workspaceId');
-    localStorage.removeItem('jwtAccessToken');
+  logoutRef.current = useCallback(() => {
     setCurrentUser(null);
     setCurrentWorkspace(null);
     setJwtAccessToken(null);
     setIsLoggedIn(false);
+
+    localStorage.removeItem('userId');
+    localStorage.removeItem('workspaceId');
+    localStorage.removeItem('jwtAccessToken');
   }, []);
+
+  const initializeAuth = useCallback(async (): Promise<void> => {
+    const storedUserId = localStorage.getItem('userId');
+    const storedWorkspaceId = localStorage.getItem('workspaceId');
+    const storedJwtToken = localStorage.getItem('jwtAccessToken');
+
+    if (storedUserId && storedWorkspaceId && storedJwtToken && loginRef.current) {
+      try {
+        await loginRef.current(storedUserId, storedWorkspaceId);
+      } catch (error) {
+        console.error('Failed to initialize authentication:', error);
+        if (logoutRef.current) {
+          logoutRef.current();
+        }
+      }
+    }
+
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    void initializeAuth();
+  }, [initializeAuth]);
 
   const contextValue: AuthContextType = {
     currentUser,
@@ -143,13 +100,24 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     jwtAccessToken,
     isLoggedIn,
     isInitialized,
-    login,
-    logout,
+    login: useCallback((userId: string, workspaceId: string) => {
+      if (loginRef.current) {
+        return loginRef.current(userId, workspaceId);
+      }
+      return Promise.resolve();
+    }, []),
+    logout: useCallback(() => {
+      if (logoutRef.current) {
+        logoutRef.current();
+      }
+    }, []),
     workspaces,
     users,
-    fetchWorkspaces,
-    fetchUsers,
   };
+
+  if (isLoadingWorkspaces || isLoadingUsers) {
+    return <div>Loading...</div>;
+  }
 
   return <AuthProvider value={contextValue}>{children}</AuthProvider>;
 };

@@ -1,4 +1,3 @@
-// src\components\WorkspacesPageContent.tsx
 import React, { useState, useCallback } from 'react';
 import { Box, Button, Alert } from '@mui/material';
 import WorkspaceList, { WorkspaceListProps } from './WorkspaceList';
@@ -6,60 +5,50 @@ import WorkspaceForm from './WorkspaceForm';
 import { Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '@/lib/database';
-import { handleAsyncError } from '@/utils/errorHandling';
 
 const WorkspacesPageContent: React.FC = () => {
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
-  const { documents: workspaces, refetch, error } = useDocuments<Workspace>('workspaces');
+  const {
+    documents: workspaces,
+    isLoading,
+    error,
+    upsertDocument,
+    deleteDocument,
+  } = useDocuments<Workspace>('workspaces');
 
   const handleCreate = useCallback(
     async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      await handleAsyncError(async () => {
-        const db = await getDatabase();
-        await db.workspaces.insert({
-          id: uuidv4(),
-          ...workspace,
-          updatedAt: new Date().toISOString(),
-          isDeleted: false,
-        });
-        await refetch();
-      }, 'Creating workspace');
+      const newWorkspace: Workspace = {
+        id: uuidv4(),
+        ...workspace,
+        updatedAt: new Date().toISOString(),
+        isDeleted: false,
+      };
+      await upsertDocument(newWorkspace);
     },
-    [refetch]
+    [upsertDocument]
   );
 
   const handleUpdate = useCallback(
     async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
       if (editingWorkspace) {
-        await handleAsyncError(async () => {
-          const db = await getDatabase();
-          await db.workspaces.upsert({
-            ...editingWorkspace,
-            ...workspace,
-            updatedAt: new Date().toISOString(),
-          });
-          setEditingWorkspace(null);
-          await refetch();
-        }, 'Updating workspace');
+        const updatedWorkspace: Workspace = {
+          ...editingWorkspace,
+          ...workspace,
+          updatedAt: new Date().toISOString(),
+        };
+        await upsertDocument(updatedWorkspace);
+        setEditingWorkspace(null);
       }
     },
-    [editingWorkspace, refetch]
+    [editingWorkspace, upsertDocument]
   );
 
   const handleDelete = useCallback(
     async (workspace: Workspace): Promise<void> => {
-      await handleAsyncError(async () => {
-        const db = await getDatabase();
-        await db.workspaces.upsert({
-          ...workspace,
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        });
-        await refetch();
-      }, 'Deleting workspace');
+      await deleteDocument(workspace.id);
     },
-    [refetch]
+    [deleteDocument]
   );
 
   const workspaceListProps: WorkspaceListProps = {
@@ -69,6 +58,10 @@ const WorkspacesPageContent: React.FC = () => {
       void handleDelete(workspace);
     },
   };
+
+  if (isLoading) {
+    return <Box>Loading...</Box>;
+  }
 
   return (
     <Box>

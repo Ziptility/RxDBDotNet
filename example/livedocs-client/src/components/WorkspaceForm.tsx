@@ -1,26 +1,29 @@
-// src\components\WorkspaceForm.tsx
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box } from '@mui/material';
 import { Workspace } from '@/lib/schemas';
 
 interface WorkspaceFormProps {
-  workspace?: Workspace | undefined;
+  workspace: Workspace | undefined;
   onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
-const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }): JSX.Element => {
+const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) => {
   const [name, setName] = useState<string>('');
 
-  useEffect((): void => {
+  useEffect(() => {
     if (workspace) {
       setName(workspace.name);
+    } else {
+      setName('');
     }
   }, [workspace]);
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     void onSubmit({ name });
-    setName('');
+    if (!workspace) {
+      setName('');
+    }
   };
 
   return (

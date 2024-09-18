@@ -1,4 +1,4 @@
-// src/components/ErrorBoundary.tsx
+// src\components\ErrorBoundary.tsx
 
 import React, { ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button } from '@mui/material';

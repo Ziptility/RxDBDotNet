@@ -1,4 +1,3 @@
-// src\components\LiveDocsPageContent.tsx
 import React, { useState, useCallback } from 'react';
 import { Box, Button, Alert } from '@mui/material';
 import LiveDocList, { LiveDocListProps } from './LiveDocList';
@@ -6,62 +5,58 @@ import LiveDocForm from './LiveDocForm';
 import { LiveDoc, User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '@/lib/database';
-import { handleAsyncError } from '@/utils/errorHandling';
 
 const LiveDocsPageContent: React.FC = () => {
   const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
-  const { documents: liveDocs, refetch, error } = useDocuments<LiveDoc>('livedocs');
-  const { documents: users } = useDocuments<User>('users');
-  const { documents: workspaces } = useDocuments<Workspace>('workspaces');
+  const {
+    documents: liveDocs,
+    isLoading: isLoadingLiveDocs,
+    error: liveDocError,
+    upsertDocument,
+    deleteDocument,
+  } = useDocuments<LiveDoc>('livedocs');
+
+  const { documents: users, isLoading: isLoadingUsers, error: userError } = useDocuments<User>('users');
+
+  const {
+    documents: workspaces,
+    isLoading: isLoadingWorkspaces,
+    error: workspaceError,
+  } = useDocuments<Workspace>('workspaces');
 
   const handleCreate = useCallback(
     async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      await handleAsyncError(async () => {
-        const db = await getDatabase();
-        await db.livedocs.insert({
-          id: uuidv4(),
-          ...liveDoc,
-          updatedAt: new Date().toISOString(),
-          isDeleted: false,
-        });
-        await refetch();
-      }, 'Creating live doc');
+      const newLiveDoc: LiveDoc = {
+        id: uuidv4(),
+        ...liveDoc,
+        updatedAt: new Date().toISOString(),
+        isDeleted: false,
+      };
+      await upsertDocument(newLiveDoc);
     },
-    [refetch]
+    [upsertDocument]
   );
 
   const handleUpdate = useCallback(
     async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
       if (editingLiveDoc) {
-        await handleAsyncError(async () => {
-          const db = await getDatabase();
-          await db.livedocs.upsert({
-            ...editingLiveDoc,
-            ...liveDoc,
-            updatedAt: new Date().toISOString(),
-          });
-          setEditingLiveDoc(null);
-          await refetch();
-        }, 'Updating live doc');
+        const updatedLiveDoc: LiveDoc = {
+          ...editingLiveDoc,
+          ...liveDoc,
+          updatedAt: new Date().toISOString(),
+        };
+        await upsertDocument(updatedLiveDoc);
+        setEditingLiveDoc(null);
       }
     },
-    [editingLiveDoc, refetch]
+    [editingLiveDoc, upsertDocument]
   );
 
   const handleDelete = useCallback(
     async (liveDoc: LiveDoc): Promise<void> => {
-      await handleAsyncError(async () => {
-        const db = await getDatabase();
-        await db.livedocs.upsert({
-          ...liveDoc,
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        });
-        await refetch();
-      }, 'Deleting live doc');
+      await deleteDocument(liveDoc.id);
     },
-    [refetch]
+    [deleteDocument]
   );
 
   const liveDocListProps: LiveDocListProps = {
@@ -71,6 +66,12 @@ const LiveDocsPageContent: React.FC = () => {
       void handleDelete(liveDoc);
     },
   };
+
+  if (isLoadingLiveDocs || isLoadingUsers || isLoadingWorkspaces) {
+    return <Box>Loading...</Box>;
+  }
+
+  const error = liveDocError ?? userError ?? workspaceError;
 
   return (
     <Box>
@@ -82,8 +83,8 @@ const LiveDocsPageContent: React.FC = () => {
       <Box sx={{ mb: 4 }}>
         <LiveDocForm
           liveDoc={editingLiveDoc ?? undefined}
-          users={users.map((u) => ({ id: u.id, name: `${u.firstName} ${u.lastName}` }))}
-          workspaces={workspaces.map((w) => ({ id: w.id, name: w.name }))}
+          users={users}
+          workspaces={workspaces}
           onSubmit={editingLiveDoc ? handleUpdate : handleCreate}
         />
       </Box>

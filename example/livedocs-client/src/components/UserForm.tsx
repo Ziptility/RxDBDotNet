@@ -1,35 +1,42 @@
-// src\components\UserForm.tsx
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { User, UserRole } from '@/lib/schemas';
+import { User, UserRole, Workspace } from '@/lib/schemas';
 
 interface UserFormProps {
-  user?: User | undefined;
-  workspaces: { id: string; name: string }[];
+  user: User | undefined;
+  workspaces: Workspace[];
   onSubmit: (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }): JSX.Element => {
+const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [role, setRole] = useState<UserRole>(UserRole.StandardUser);
   const [workspaceId, setWorkspaceId] = useState<string>('');
 
-  useEffect((): void => {
+  useEffect(() => {
     if (user) {
       setFirstName(user.firstName);
       setLastName(user.lastName);
       setEmail(user.email);
-      // setRole(user.role as UserRole);
+      setRole(user.role);
       setWorkspaceId(user.workspaceId);
+    } else {
+      // Reset form when user is undefined (creating a new user)
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setRole(UserRole.StandardUser);
+      setWorkspaceId('');
     }
   }, [user]);
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    void onSubmit({ firstName, lastName, email, workspaceId, role });
+    void onSubmit({ firstName, lastName, email, role, workspaceId });
     if (!user) {
+      // Reset form after submission when creating a new user
       setFirstName('');
       setLastName('');
       setEmail('');

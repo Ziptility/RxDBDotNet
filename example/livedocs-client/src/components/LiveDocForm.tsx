@@ -1,25 +1,28 @@
-// src\components\LiveDocForm.tsx
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { LiveDoc } from '@/lib/schemas';
+import { LiveDoc, User, Workspace } from '@/lib/schemas';
 
 interface LiveDocFormProps {
-  liveDoc?: LiveDoc | undefined;
-  users: { id: string; name: string }[];
-  workspaces: { id: string; name: string }[];
+  liveDoc: LiveDoc | undefined;
+  users: User[];
+  workspaces: Workspace[];
   onSubmit: (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
-const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }): JSX.Element => {
+const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }) => {
   const [content, setContent] = useState<string>('');
   const [ownerId, setOwnerId] = useState<string>('');
   const [workspaceId, setWorkspaceId] = useState<string>('');
 
-  useEffect((): void => {
+  useEffect(() => {
     if (liveDoc) {
       setContent(liveDoc.content);
       setOwnerId(liveDoc.ownerId);
       setWorkspaceId(liveDoc.workspaceId);
+    } else {
+      setContent('');
+      setOwnerId('');
+      setWorkspaceId('');
     }
   }, [liveDoc]);
 
@@ -49,7 +52,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
           <Select value={ownerId} onChange={(e): void => setOwnerId(e.target.value)} required>
             {users.map((user) => (
               <MenuItem key={user.id} value={user.id}>
-                {user.name}
+                {`${user.firstName} ${user.lastName}`}
               </MenuItem>
             ))}
           </Select>

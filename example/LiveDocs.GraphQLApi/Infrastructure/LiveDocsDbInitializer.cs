@@ -14,16 +14,14 @@ namespace LiveDocs.GraphQLApi.Infrastructure
 
             await dbContext.Database.EnsureCreatedAsync();
 
-            await SeedDataAsync(dbContext);
+            if (!await dbContext.Workspaces.AnyAsync())
+            {
+                await SeedDataAsync(dbContext);
+            }
         }
 
         private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
         {
-            if (await dbContext.Workspaces.AnyAsync())
-            {
-                return; // Data has already been seeded
-            }
-
             var rootWorkspace = new Workspace
             {
                 Id = RT.Comb.Provider.Sql.Create(),

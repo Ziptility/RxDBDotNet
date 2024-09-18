@@ -1,5 +1,5 @@
 // src\pages\login.tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
   Button,
@@ -21,33 +21,17 @@ const LoginPage: React.FC = (): JSX.Element => {
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { login, fetchWorkspaces, fetchUsers, workspaces, users, isLoggedIn, isInitialized } = useAuth();
+  const { login, workspaces, users, isLoggedIn, isInitialized } = useAuth();
   const router = useRouter();
-  const hasFetchedWorkspaces = useRef<boolean>(false);
 
   console.log('LoginPage: Render', { isLoggedIn, isInitialized, isLoading, workspacesCount: workspaces.length });
 
-  const initFetch = useCallback(async (): Promise<void> => {
-    console.log('LoginPage: initFetch called', { hasFetchedWorkspaces: hasFetchedWorkspaces.current });
-    if (isInitialized && !hasFetchedWorkspaces.current) {
-      setIsLoading(true);
-      await fetchWorkspaces();
-      hasFetchedWorkspaces.current = true;
+  useEffect(() => {
+    console.log('LoginPage: useEffect (initialization)');
+    if (isInitialized) {
       setIsLoading(false);
     }
-  }, [isInitialized, fetchWorkspaces]);
-
-  useEffect(() => {
-    console.log('LoginPage: useEffect (initFetch)');
-    void initFetch();
-  }, [initFetch]);
-
-  useEffect(() => {
-    console.log('LoginPage: useEffect (fetchUsers)', { selectedWorkspace });
-    if (selectedWorkspace) {
-      void fetchUsers(selectedWorkspace);
-    }
-  }, [selectedWorkspace, fetchUsers]);
+  }, [isInitialized]);
 
   useEffect(() => {
     console.log('LoginPage: useEffect (redirect)', { isLoggedIn, isInitialized });
@@ -140,9 +124,14 @@ const LoginPage: React.FC = (): JSX.Element => {
               onChange={handleUserChange}
               disabled={!selectedWorkspace}
             >
-              {users.map((user: User) => (
-                <MenuItem key={user.id} value={user.id}>{`${user.firstName} ${user.lastName} (${user.role})`}</MenuItem>
-              ))}
+              {users
+                .filter((user: User) => user.workspaceId === selectedWorkspace)
+                .map((user: User) => (
+                  <MenuItem
+                    key={user.id}
+                    value={user.id}
+                  >{`${user.firstName} ${user.lastName} (${user.role})`}</MenuItem>
+                ))}
             </Select>
           </FormControl>
           <Button

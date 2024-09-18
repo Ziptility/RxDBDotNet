@@ -8,6 +8,7 @@ var redis = builder.AddRedis("redis", 6379)
 // Add SQL Server
 var password = builder.AddParameter("sqlpassword", secret: true);
 var sqlDb = builder.AddSqlServer("sql", password: password, port: 1433)
+    .WithVolume("livedocs-sql-data", "/var/opt/mssql")
     .WithEndpoint(port: 1146, targetPort: 1433, name: "sql-endpoint")
     .AddDatabase("sqldata", databaseName: "LiveDocsDb");
 

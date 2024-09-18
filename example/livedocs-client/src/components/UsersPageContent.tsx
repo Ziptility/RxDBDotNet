@@ -6,70 +6,71 @@ import UserForm from './UserForm';
 import { User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '@/lib/database';
-import { handleAsyncError } from '@/utils/errorHandling';
 
 const UsersPageContent: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const { documents: users, refetch, error } = useDocuments<User>('users');
-  const { documents: workspaces } = useDocuments<Workspace>('workspaces');
+  const {
+    documents: users,
+    isLoading: isLoadingUsers,
+    error: userError,
+    upsertDocument,
+    deleteDocument,
+  } = useDocuments<User>('users');
+
+  const {
+    documents: workspaces,
+    isLoading: isLoadingWorkspaces,
+    error: workspaceError,
+  } = useDocuments<Workspace>('workspaces');
 
   const handleCreate = useCallback(
     async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      await handleAsyncError(async () => {
-        const db = await getDatabase();
-        await db.users.insert({
-          id: uuidv4(),
-          ...user,
-          updatedAt: new Date().toISOString(),
-          isDeleted: false,
-        });
-        await refetch();
-      }, 'Creating user');
+      const newUser: User = {
+        id: uuidv4(),
+        ...user,
+        updatedAt: new Date().toISOString(),
+        isDeleted: false,
+      };
+      await upsertDocument(newUser);
     },
-    [refetch]
+    [upsertDocument]
   );
 
   const handleUpdate = useCallback(
     async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
       if (editingUser) {
-        await handleAsyncError(async () => {
-          const db = await getDatabase();
-          await db.users.upsert({
-            ...editingUser,
-            ...user,
-            updatedAt: new Date().toISOString(),
-          });
-          setEditingUser(null);
-          await refetch();
-        }, 'Updating user');
+        const updatedUser: User = {
+          ...editingUser,
+          ...user,
+          updatedAt: new Date().toISOString(),
+        };
+        await upsertDocument(updatedUser);
+        setEditingUser(null);
       }
     },
-    [editingUser, refetch]
+    [editingUser, upsertDocument]
   );
 
   const handleDelete = useCallback(
     async (user: User): Promise<void> => {
-      await handleAsyncError(async () => {
-        const db = await getDatabase();
-        await db.users.upsert({
-          ...user,
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        });
-        await refetch();
-      }, 'Deleting user');
+      await deleteDocument(user.id);
     },
-    [refetch]
+    [deleteDocument]
   );
 
   const userListProps: UserListProps = {
     users,
     onEdit: setEditingUser,
-    onDelete: (user): void => {
+    onDelete: (user: User): void => {
       void handleDelete(user);
     },
   };
+
+  if (isLoadingUsers || isLoadingWorkspaces) {
+    return <Box>Loading...</Box>;
+  }
+
+  const error = userError ?? workspaceError;
 
   return (
     <Box>
@@ -81,7 +82,7 @@ const UsersPageContent: React.FC = () => {
       <Box sx={{ mb: 4 }}>
         <UserForm
           user={editingUser ?? undefined}
-          workspaces={workspaces.map((w) => ({ id: w.id, name: w.name }))}
+          workspaces={workspaces}
           onSubmit={editingUser ? handleUpdate : handleCreate}
         />
       </Box>

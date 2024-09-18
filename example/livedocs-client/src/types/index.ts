@@ -1,6 +1,6 @@
 // src\types\index.ts
 import { Workspace, User, LiveDoc } from '@/lib/schemas';
-import { RxCollection, RxDatabase } from 'rxdb';
+import { RxCollection, RxDatabase, SyncOptionsGraphQL } from 'rxdb';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
 export interface LiveDocsCollections {
@@ -10,16 +10,20 @@ export interface LiveDocsCollections {
 }
 
 export interface LiveDocsDatabase extends RxDatabase<LiveDocsCollections> {
-  replicationStates?: LiveDocsReplicationState;
+  replicationStates?: LiveDocsReplicationStates;
 }
 
-export interface LiveDocsReplicationState {
-  workspaces: RxGraphQLReplicationState<Workspace, ReplicationCheckpoint>;
-  users: RxGraphQLReplicationState<User, ReplicationCheckpoint>;
-  livedocs: RxGraphQLReplicationState<LiveDoc, ReplicationCheckpoint>;
+export type LiveDocsReplicationState<T> = RxGraphQLReplicationState<T, ReplicationCheckpoint>;
+
+export interface LiveDocsReplicationStates {
+  workspaces: LiveDocsReplicationState<Workspace>;
+  users: LiveDocsReplicationState<User>;
+  livedocs: LiveDocsReplicationState<LiveDoc>;
 }
 
 export interface ReplicationCheckpoint {
   lastDocumentId: string | null;
   updatedAt: string | null;
 }
+
+export type LiveDocsReplicationOptions<T> = SyncOptionsGraphQL<T, ReplicationCheckpoint>;

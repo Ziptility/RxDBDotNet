@@ -23,9 +23,9 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
   const router = useRouter();
   const { logout } = useAuth();
 
-  const handleLogout = (): void => {
-    logout();
-    void router.push('/login');
+  const handleLogout = async (): Promise<void> => {
+    await logout();
+    await router.push('/login');
   };
 
   return (
@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
           <Box ml={2}>
             <NetworkStatus />
           </Box>
-          <Button color="inherit" onClick={handleLogout}>
+          <Button color="inherit" onClick={(): void => void handleLogout()}>
             Logout
           </Button>
         </Toolbar>

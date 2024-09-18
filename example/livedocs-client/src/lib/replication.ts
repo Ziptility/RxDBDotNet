@@ -10,7 +10,7 @@ import {
 } from 'rxdb/plugins/replication-graphql';
 import { workspaceSchema, userSchema, liveDocSchema, Workspace, User, LiveDoc } from './schemas';
 import { RxCollection, RxJsonSchema, RxError } from 'rxdb';
-import { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
+import { LiveDocsReplicationStates, LiveDocsReplicationOptions, ReplicationCheckpoint } from '@/types';
 
 const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
 const WS_ENDPOINT = 'ws://localhost:5414/graphql';
@@ -32,7 +32,7 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   const pushQueryBuilder = pushQueryBuilderFromRxSchema(collectionName, schemaInput);
   const pullStreamBuilder = pullStreamBuilderFromRxSchema(collectionName, schemaInput);
 
-  return replicateGraphQL<T, ReplicationCheckpoint>({
+  const replicationOptions: LiveDocsReplicationOptions<T> = {
     collection,
     url: {
       http: GRAPHQL_ENDPOINT,
@@ -51,11 +51,13 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
     deletedField: 'isDeleted',
     retryTime: 1000 * 30, // 30 seconds
     replicationIdentifier: `livedocs-${collectionName}-replication`,
-  });
+  };
+
+  return replicateGraphQL(replicationOptions);
 };
 
-export const setupReplication = async (db: LiveDocsDatabase): Promise<LiveDocsReplicationState> => {
-  const replicationStates: LiveDocsReplicationState = {
+export const setupReplication = async (db: LiveDocsDatabase): Promise<LiveDocsReplicationStates> => {
+  const replicationStates: LiveDocsReplicationStates = {
     workspaces: setupReplicationForCollection(db, 'workspace', workspaceSchema),
     users: setupReplicationForCollection(db, 'user', userSchema),
     livedocs: setupReplicationForCollection(db, 'livedoc', liveDocSchema),
@@ -73,7 +75,7 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<LiveDocsRe
   return replicationStates;
 };
 
-export const restartReplication = async (replicationStates: LiveDocsReplicationState): Promise<void> => {
+export const restartReplication = async (replicationStates: LiveDocsReplicationStates): Promise<void> => {
   await Promise.all(
     Object.entries(replicationStates).map(async ([, state]) => {
       await (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).cancel();
@@ -82,7 +84,7 @@ export const restartReplication = async (replicationStates: LiveDocsReplicationS
   );
 };
 
-export const cancelReplication = async (replicationStates: LiveDocsReplicationState): Promise<void> => {
+export const cancelReplication = async (replicationStates: LiveDocsReplicationStates): Promise<void> => {
   await Promise.all(
     Object.values(replicationStates).map((state) =>
       (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).cancel()

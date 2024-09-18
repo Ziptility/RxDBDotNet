@@ -21,6 +21,9 @@
     "@typescript-eslint/no-unsafe-member-access": "error",
     "@typescript-eslint/no-unsafe-return": "error",
     "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/ban-types": "error",
+    "@typescript-eslint/prefer-as-const": "error",
+    "@typescript-eslint/no-unnecessary-type-assertion": "error",
     "no-console": "off"
   },
   "ignorePatterns": ["node_modules/", ".next/", "out/", "next.config.js"],

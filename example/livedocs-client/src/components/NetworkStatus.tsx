@@ -4,14 +4,14 @@ import { Box, Typography, Chip, Tooltip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getDatabase } from '@/lib/database';
-import { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
+import { LiveDocsReplicationStates, ReplicationCheckpoint } from '@/types';
 import { combineLatest, map } from 'rxjs';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
 const NetworkStatus: React.FC = () => {
   const isOnline = useOnlineStatus();
   const [syncStatus, setSyncStatus] = useState<Record<string, boolean>>({});
-  const [replicationStates, setReplicationStates] = useState<LiveDocsReplicationState | null>(null);
+  const [replicationStates, setReplicationStates] = useState<LiveDocsReplicationStates | null>(null);
 
   useEffect(() => {
     const initReplication = async (): Promise<void> => {

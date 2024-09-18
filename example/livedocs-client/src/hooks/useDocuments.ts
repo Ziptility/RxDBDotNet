@@ -41,7 +41,6 @@ export function useDocuments<T extends Document>(collectionName: keyof LiveDocsD
       try {
         const db = await getDatabase();
         collection = db[collectionName] as RxCollection<T>;
-
         const selector: MangoQuerySelector<T> = {};
         if (hasIsDeleted({} as T)) {
           (selector as MangoQuerySelector<DocumentWithIsDeleted>).isDeleted = { $ne: true };

@@ -18,13 +18,13 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
     storage: getRxStorageDexie(),
   }).then(async (db: RxDatabase<LiveDocsCollections>): Promise<LiveDocsDatabase> => {
     await db.addCollections({
-      workspaces: {
+      workspace: {
         schema: workspaceSchema,
       },
-      users: {
+      user: {
         schema: userSchema,
       },
-      livedocs: {
+      livedoc: {
         schema: liveDocSchema,
       },
     });

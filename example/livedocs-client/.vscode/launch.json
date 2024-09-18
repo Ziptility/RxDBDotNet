@@ -38,7 +38,7 @@
       "console": "integratedTerminal",
       "serverReadyAction": {
         "pattern": "started server on .+, url: (https?://.+)",
-        "action": "debugWithChrome"
+        "action": "openExternally"
       }
     }
   ],

@@ -8,9 +8,13 @@ const nextConfig = {
       bufferutil: 'commonjs bufferutil',
     });
 
-    // Enable source maps in development mode
-    if (dev && !isServer) {
+    // Enable source maps in both development and production
+    if (dev) {
+      // Source maps for development
       config.devtool = 'eval-source-map';
+    } else {
+      // Source maps for production
+      config.devtool = 'source-map';
     }
 
     return config;

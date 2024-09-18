@@ -1,100 +1,106 @@
-// src\hooks\useDocuments.ts
-import { useState, useEffect, useCallback } from 'react';
-import { RxCollection, RxDocument, MangoQuery, MangoQuerySelector, MangoQuerySortPart, DeepReadonly } from 'rxdb';
+// src/hooks/useDocuments.ts
+import { useState, useEffect } from 'react';
+import { RxCollection, RxDocument, MangoQuerySelector, MangoQuerySortPart } from 'rxdb';
 import { getDatabase } from '@/lib/database';
 import { LiveDocsDatabase } from '@/types';
+import { Subscription } from 'rxjs';
 
-interface UseDocumentsResult<T> {
-  documents: DeepReadonly<T>[];
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-  upsertDocument: (doc: T) => Promise<void>;
-  deleteDocument: (id: string) => Promise<void>;
+interface Document {
+  id: string;
+  updatedAt: string;
 }
 
-export function useDocuments<T extends { id: string; updatedAt: string; isDeleted?: boolean }>(
+type DocumentWithIsDeleted = Document & { isDeleted?: boolean };
+
+function hasIsDeleted(doc: Document): doc is DocumentWithIsDeleted {
+  return 'isDeleted' in doc;
+}
+
+function hasUpdatedAt(doc: Document): doc is Document & { updatedAt: string } {
+  return 'updatedAt' in doc;
+}
+
+export function useDocuments<T extends Document>(
   collectionName: keyof LiveDocsDatabase
-): UseDocumentsResult<T> {
-  const [documents, setDocuments] = useState<DeepReadonly<T>[]>([]);
+): {
+  documents: T[];
+  isLoading: boolean;
+  error: Error | null;
+  upsertDocument: (doc: T) => Promise<void>;
+  deleteDocument: (id: string) => Promise<void>;
+} {
+  const [documents, setDocuments] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [collection, setCollection] = useState<RxCollection<T> | null>(null);
 
   useEffect(() => {
-    const initCollection = async (): Promise<void> => {
-      const db = await getDatabase();
-      setCollection(db[collectionName] as RxCollection<T>);
-    };
-    void initCollection();
-  }, [collectionName]);
+    let collection: RxCollection<T> | null = null;
+    let subscription: Subscription | null = null;
 
-  const fetchDocuments = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (!collection) {
-        throw new Error('Collection is not initialized');
-      }
-
-      const query: MangoQuery<T> = {
-        selector: {
-          isDeleted: { $eq: false },
-        } as unknown as MangoQuerySelector<T>,
-        sort: [{ updatedAt: 'desc' } as MangoQuerySortPart<T>],
-      };
-
-      const docs: RxDocument<T>[] = await collection.find(query).exec();
-      setDocuments(docs.map((doc) => doc.toJSON()));
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch documents'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [collection]);
-
-  useEffect(() => {
-    void fetchDocuments();
-  }, [fetchDocuments]);
-
-  const upsertDocument = useCallback(
-    async (doc: T): Promise<void> => {
-      if (!collection) return;
+    const setupSubscription = async (): Promise<void> => {
       try {
-        await collection.upsert(doc);
-        await fetchDocuments();
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to upsert document'));
-      }
-    },
-    [collection, fetchDocuments]
-  );
+        const db = await getDatabase();
+        collection = db[collectionName] as RxCollection<T>;
 
-  const deleteDocument = useCallback(
-    async (id: string): Promise<void> => {
-      if (!collection) return;
-      try {
-        const doc = await collection.findOne(id).exec();
-        if (doc) {
-          await doc.update({
-            $set: {
-              isDeleted: true,
-              updatedAt: new Date().toISOString(),
+        const selector: MangoQuerySelector<T> = {};
+        if (hasIsDeleted({} as T)) {
+          (selector as MangoQuerySelector<DocumentWithIsDeleted>).isDeleted = { $ne: true };
+        }
+
+        const sort: MangoQuerySortPart<T>[] = [];
+        if (hasUpdatedAt({} as T)) {
+          sort.push({ updatedAt: 'desc' } as MangoQuerySortPart<T>);
+        }
+
+        subscription = collection
+          .find({
+            selector,
+            sort,
+          })
+          .$.subscribe({
+            next: (docs: RxDocument<T>[]) => {
+              setDocuments(docs.map((doc) => doc.toJSON() as T));
+              setIsLoading(false);
+            },
+            error: (err: Error) => {
+              setError(err);
+              setIsLoading(false);
             },
           });
-        }
-        await fetchDocuments();
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to delete document'));
+        setError(err instanceof Error ? err : new Error('Failed to setup subscription'));
+        setIsLoading(false);
       }
-    },
-    [collection, fetchDocuments]
-  );
+    };
 
-  const refetch = useCallback(async (): Promise<void> => {
-    await fetchDocuments();
-  }, [fetchDocuments]);
+    void setupSubscription();
 
-  return { documents, isLoading, error, refetch, upsertDocument, deleteDocument };
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, [collectionName]);
+
+  const upsertDocument = async (doc: T): Promise<void> => {
+    const db = await getDatabase();
+    const collection = db[collectionName] as RxCollection<T>;
+    await collection.upsert(doc);
+  };
+
+  const deleteDocument = async (id: string): Promise<void> => {
+    const db = await getDatabase();
+    const collection = db[collectionName] as RxCollection<T>;
+    const docToUpdate = await collection.findOne(id).exec();
+    if (docToUpdate && hasIsDeleted(docToUpdate)) {
+      await docToUpdate.update({
+        $set: {
+          isDeleted: true,
+          updatedAt: new Date().toISOString(),
+        },
+      });
+    }
+  };
+
+  return { documents, isLoading, error, upsertDocument, deleteDocument };
 }

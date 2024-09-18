@@ -64,7 +64,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
           await restartReplication(db.replicationStates);
         } else {
           console.warn('Replication states not available. Skipping replication restart.');
-          // Optionally, you could try to re-initialize replication here
         }
       }, 'Login');
     },

@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+// src\components\WorkspacesPageContent.tsx
+import React, { useState } from 'react';
 import { Box, Button, Alert } from '@mui/material';
-import WorkspaceList, { WorkspaceListProps } from './WorkspaceList';
+import WorkspaceList from './WorkspaceList';
 import WorkspaceForm from './WorkspaceForm';
 import { Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -16,47 +17,26 @@ const WorkspacesPageContent: React.FC = () => {
     deleteDocument,
   } = useDocuments<Workspace>('workspaces');
 
-  const handleCreate = useCallback(
-    async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      const newWorkspace: Workspace = {
-        id: uuidv4(),
+  const handleCreate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+    const newWorkspace: Workspace = {
+      id: uuidv4(),
+      ...workspace,
+      updatedAt: new Date().toISOString(),
+      isDeleted: false,
+    };
+    await upsertDocument(newWorkspace);
+  };
+
+  const handleUpdate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+    if (editingWorkspace) {
+      const updatedWorkspace: Workspace = {
+        ...editingWorkspace,
         ...workspace,
         updatedAt: new Date().toISOString(),
-        isDeleted: false,
       };
-      await upsertDocument(newWorkspace);
-    },
-    [upsertDocument]
-  );
-
-  const handleUpdate = useCallback(
-    async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      if (editingWorkspace) {
-        const updatedWorkspace: Workspace = {
-          ...editingWorkspace,
-          ...workspace,
-          updatedAt: new Date().toISOString(),
-        };
-        await upsertDocument(updatedWorkspace);
-        setEditingWorkspace(null);
-      }
-    },
-    [editingWorkspace, upsertDocument]
-  );
-
-  const handleDelete = useCallback(
-    async (workspace: Workspace): Promise<void> => {
-      await deleteDocument(workspace.id);
-    },
-    [deleteDocument]
-  );
-
-  const workspaceListProps: WorkspaceListProps = {
-    workspaces,
-    onEdit: setEditingWorkspace,
-    onDelete: (workspace): void => {
-      void handleDelete(workspace);
-    },
+      await upsertDocument(updatedWorkspace);
+      setEditingWorkspace(null);
+    }
   };
 
   if (isLoading) {
@@ -81,7 +61,13 @@ const WorkspacesPageContent: React.FC = () => {
           Cancel Editing
         </Button>
       )}
-      <WorkspaceList {...workspaceListProps} />
+      <WorkspaceList
+        workspaces={workspaces}
+        onEdit={setEditingWorkspace}
+        onDelete={(workspace): void => {
+          void deleteDocument(workspace.id);
+        }}
+      />
     </Box>
   );
 };

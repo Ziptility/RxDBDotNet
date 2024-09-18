@@ -1,4 +1,4 @@
-// src/pages/_app.tsx
+// src\pages\_app.tsx
 import React from 'react';
 import { AppProps } from 'next/app';
 import { EmotionCache } from '@emotion/cache';

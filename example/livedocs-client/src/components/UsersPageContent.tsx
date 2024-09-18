@@ -1,7 +1,7 @@
 // src\components\UsersPageContent.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Box, Button, Alert } from '@mui/material';
-import UserList, { UserListProps } from './UserList';
+import UserList from './UserList';
 import UserForm from './UserForm';
 import { User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -23,47 +23,26 @@ const UsersPageContent: React.FC = () => {
     error: workspaceError,
   } = useDocuments<Workspace>('workspaces');
 
-  const handleCreate = useCallback(
-    async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      const newUser: User = {
-        id: uuidv4(),
+  const handleCreate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+    const newUser: User = {
+      id: uuidv4(),
+      ...user,
+      updatedAt: new Date().toISOString(),
+      isDeleted: false,
+    };
+    await upsertDocument(newUser);
+  };
+
+  const handleUpdate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+    if (editingUser) {
+      const updatedUser: User = {
+        ...editingUser,
         ...user,
         updatedAt: new Date().toISOString(),
-        isDeleted: false,
       };
-      await upsertDocument(newUser);
-    },
-    [upsertDocument]
-  );
-
-  const handleUpdate = useCallback(
-    async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      if (editingUser) {
-        const updatedUser: User = {
-          ...editingUser,
-          ...user,
-          updatedAt: new Date().toISOString(),
-        };
-        await upsertDocument(updatedUser);
-        setEditingUser(null);
-      }
-    },
-    [editingUser, upsertDocument]
-  );
-
-  const handleDelete = useCallback(
-    async (user: User): Promise<void> => {
-      await deleteDocument(user.id);
-    },
-    [deleteDocument]
-  );
-
-  const userListProps: UserListProps = {
-    users,
-    onEdit: setEditingUser,
-    onDelete: (user: User): void => {
-      void handleDelete(user);
-    },
+      await upsertDocument(updatedUser);
+      setEditingUser(null);
+    }
   };
 
   if (isLoadingUsers || isLoadingWorkspaces) {
@@ -91,7 +70,13 @@ const UsersPageContent: React.FC = () => {
           Cancel Editing
         </Button>
       )}
-      <UserList {...userListProps} />
+      <UserList
+        users={users}
+        onEdit={setEditingUser}
+        onDelete={(user): void => {
+          void deleteDocument(user.id);
+        }}
+      />
     </Box>
   );
 };

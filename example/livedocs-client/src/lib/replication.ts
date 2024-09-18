@@ -1,4 +1,4 @@
-// src/lib/replication.ts
+// src\lib\replication.ts
 import { LiveDocsDatabase } from '@/lib/database';
 import {
   pullQueryBuilderFromRxSchema,

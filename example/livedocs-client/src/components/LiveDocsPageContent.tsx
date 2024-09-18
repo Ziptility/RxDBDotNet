@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+// src\components\LiveDocsPageContent.tsx
+import React, { useState } from 'react';
 import { Box, Button, Alert } from '@mui/material';
-import LiveDocList, { LiveDocListProps } from './LiveDocList';
+import LiveDocList from './LiveDocList';
 import LiveDocForm from './LiveDocForm';
 import { LiveDoc, User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -24,47 +25,26 @@ const LiveDocsPageContent: React.FC = () => {
     error: workspaceError,
   } = useDocuments<Workspace>('workspaces');
 
-  const handleCreate = useCallback(
-    async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      const newLiveDoc: LiveDoc = {
-        id: uuidv4(),
+  const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+    const newLiveDoc: LiveDoc = {
+      id: uuidv4(),
+      ...liveDoc,
+      updatedAt: new Date().toISOString(),
+      isDeleted: false,
+    };
+    await upsertDocument(newLiveDoc);
+  };
+
+  const handleUpdate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+    if (editingLiveDoc) {
+      const updatedLiveDoc: LiveDoc = {
+        ...editingLiveDoc,
         ...liveDoc,
         updatedAt: new Date().toISOString(),
-        isDeleted: false,
       };
-      await upsertDocument(newLiveDoc);
-    },
-    [upsertDocument]
-  );
-
-  const handleUpdate = useCallback(
-    async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      if (editingLiveDoc) {
-        const updatedLiveDoc: LiveDoc = {
-          ...editingLiveDoc,
-          ...liveDoc,
-          updatedAt: new Date().toISOString(),
-        };
-        await upsertDocument(updatedLiveDoc);
-        setEditingLiveDoc(null);
-      }
-    },
-    [editingLiveDoc, upsertDocument]
-  );
-
-  const handleDelete = useCallback(
-    async (liveDoc: LiveDoc): Promise<void> => {
-      await deleteDocument(liveDoc.id);
-    },
-    [deleteDocument]
-  );
-
-  const liveDocListProps: LiveDocListProps = {
-    liveDocs,
-    onEdit: setEditingLiveDoc,
-    onDelete: (liveDoc): void => {
-      void handleDelete(liveDoc);
-    },
+      await upsertDocument(updatedLiveDoc);
+      setEditingLiveDoc(null);
+    }
   };
 
   if (isLoadingLiveDocs || isLoadingUsers || isLoadingWorkspaces) {
@@ -93,7 +73,13 @@ const LiveDocsPageContent: React.FC = () => {
           Cancel Editing
         </Button>
       )}
-      <LiveDocList {...liveDocListProps} />
+      <LiveDocList
+        liveDocs={liveDocs}
+        onEdit={setEditingLiveDoc}
+        onDelete={(liveDoc): void => {
+          void deleteDocument(liveDoc.id);
+        }}
+      />
     </Box>
   );
 };

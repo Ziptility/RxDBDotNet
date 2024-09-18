@@ -1,15 +1,10 @@
-using System.Net;
-using System.Security.Claims;
 using HotChocolate.AspNetCore;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Security;
 using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using RxDBDotNet.Extensions;
-using RxDBDotNet.Security;
 using RxDBDotNet.Services;
 using StackExchange.Redis;
 
@@ -33,7 +28,7 @@ void ConfigureServices()
 {
     builder.AddServiceDefaults();
 
-    ConfigureAuthorization();
+    // ConfigureAuthorization();
 
     builder.Services.AddProblemDetails();
 
@@ -69,79 +64,69 @@ void ConfigureGraphQL()
         // Mutation conventions must be enabled for replication to work
         .AddMutationConventions()
         .AddReplication()
-        .AddSubscriptionDiagnostics()
-        .AddReplicatedDocument<ReplicatedLiveDoc>(options =>
-            options.Security
-                .RequirePolicy(Operation.All, PolicyNames.HasStandardUserAccess))
-        // All users can read the set of users to support logging in as the user in the example, non-production client app
-        .AddReplicatedDocument<ReplicatedUser>(options =>
-            options.Security
-                .RequirePolicy(Operation.Create | Operation.Update | Operation.Delete, PolicyNames.HasWorkspaceAdminAccess))
-        // Likewise, all users can read the set of workspaces to support logging in as a user in the example, non-production client app
-        .AddReplicatedDocument<ReplicatedWorkspace>(options =>
-            options.Security
-                .RequirePolicy(Operation.Create | Operation.Delete, PolicyNames.HasSystemAdminAccess)
-                .RequirePolicy(Operation.Update, PolicyNames.HasWorkspaceAdminAccess))
+        .AddReplicatedDocument<ReplicatedLiveDoc>()
+        .AddReplicatedDocument<ReplicatedUser>()
+        .AddReplicatedDocument<ReplicatedWorkspace>()
         .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>());
 }
 
-void ConfigureAuthorization()
-{
-    builder.Services.AddScoped<AuthorizationHelper>();
+// void ConfigureAuthorization()
+// {
+//     builder.Services.AddScoped<AuthorizationHelper>();
+//
+//     ConfigurePolicies();
+//
+//     ConfigureAuthentication();
+// }
 
-    ConfigurePolicies();
+// void ConfigurePolicies()
+// {
+//     builder.Services.AddAuthorizationBuilder()
+//         // The roles are hierarchical
+//         .AddPolicy(PolicyNames.HasStandardUserAccess,
+//             policy => policy.RequireClaim(
+//                 ClaimTypes.Role,
+//                 nameof(UserRole.StandardUser),
+//                 nameof(UserRole.WorkspaceAdmin),
+//                 nameof(UserRole.SystemAdmin)))
+//         .AddPolicy(PolicyNames.HasWorkspaceAdminAccess,
+//             policy => policy.RequireClaim(
+//                 ClaimTypes.Role,
+//                 nameof(UserRole.WorkspaceAdmin),
+//                 nameof(UserRole.SystemAdmin)))
+//         .AddPolicy(PolicyNames.HasSystemAdminAccess,
+//             policy => policy.RequireClaim(
+//                 ClaimTypes.Role,
+//                 nameof(UserRole.SystemAdmin)));
+// }
 
-    ConfigureAuthentication();
-}
-
-void ConfigurePolicies()
-{
-    builder.Services.AddAuthorizationBuilder()
-        // The roles are hierarchical
-        .AddPolicy(PolicyNames.HasStandardUserAccess,
-            policy => policy.RequireClaim(
-                ClaimTypes.Role,
-                nameof(UserRole.StandardUser),
-                nameof(UserRole.WorkspaceAdmin),
-                nameof(UserRole.SystemAdmin)))
-        .AddPolicy(PolicyNames.HasWorkspaceAdminAccess,
-            policy => policy.RequireClaim(
-                ClaimTypes.Role,
-                nameof(UserRole.WorkspaceAdmin),
-                nameof(UserRole.SystemAdmin)))
-        .AddPolicy(PolicyNames.HasSystemAdminAccess,
-            policy => policy.RequireClaim(
-                ClaimTypes.Role,
-                nameof(UserRole.SystemAdmin)));
-}
-
-void ConfigureAuthentication()
-{
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
-        {
-            options.Audience = JwtUtil.Audience;
-            options.IncludeErrorDetails = true;
-            options.RequireHttpsMetadata = false;
-            options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters();
-            options.Events = new JwtBearerEvents
-            {
-                OnMessageReceived = _ => Task.CompletedTask,
-                OnAuthenticationFailed = ctx =>
-                {
-                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    ctx.Fail(ctx.Exception);
-                    return Task.CompletedTask;
-                },
-                OnForbidden = ctx =>
-                {
-                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    ctx.Fail(nameof(HttpStatusCode.Forbidden));
-                    return Task.CompletedTask;
-                },
-            };
-        });
-}
+// void ConfigureAuthentication()
+// {
+//     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//         .AddJwtBearer(options =>
+//         {
+//             options.Audience = JwtUtil.Audience;
+//             options.IncludeErrorDetails = true;
+//             options.RequireHttpsMetadata = false;
+//             options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters();
+//             options.Events = new JwtBearerEvents
+//             {
+//                 OnMessageReceived = _ => Task.CompletedTask,
+//                 OnAuthenticationFailed = ctx =>
+//                 {
+//                     ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+//                     ctx.Fail(ctx.Exception);
+//                     return Task.CompletedTask;
+//                 },
+//                 OnForbidden = ctx =>
+//                 {
+//                     ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+//                     ctx.Fail(nameof(HttpStatusCode.Forbidden));
+//                     return Task.CompletedTask;
+//                 },
+//             };
+//         });
+// }
 
 static Task InitializeLiveDocsDbAsync()
 {
@@ -160,9 +145,9 @@ void ConfigureApp()
 
     app.UseCors();
 
-    app.UseAuthentication();
-
-    app.UseAuthorization();
+    // app.UseAuthentication();
+    //
+    // app.UseAuthorization();
 
     app.UseWebSockets();
 

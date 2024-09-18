@@ -1,8 +1,12 @@
+// src\contexts\AuthContext.tsx
 import React, { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { createTypedContext } from '@/utils/createTypedContext';
 import { handleAsyncError } from '@/utils/errorHandling';
+import { getDatabase } from '@/lib/database';
+import { restartReplication, cancelReplication } from '@/lib/replication';
+import { LiveDocsDatabase } from '@/types';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -11,7 +15,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isInitialized: boolean;
   login: (userId: string, workspaceId: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   workspaces: Workspace[];
   users: User[];
 }
@@ -30,7 +34,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspaces');
-
   const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('users');
 
   const loginRef = useRef<AuthContextType['login']>();
@@ -54,13 +57,21 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
         localStorage.setItem('userId', userId);
         localStorage.setItem('workspaceId', workspaceId);
         localStorage.setItem('jwtAccessToken', user.jwtAccessToken ?? '');
-        return Promise.resolve();
+
+        // Restart replication with the new user's token
+        const db: LiveDocsDatabase = await getDatabase();
+        if (db.replicationStates) {
+          await restartReplication(db.replicationStates);
+        } else {
+          console.warn('Replication states not available. Skipping replication restart.');
+          // Optionally, you could try to re-initialize replication here
+        }
       }, 'Login');
     },
     [users, workspaces]
   );
 
-  logoutRef.current = useCallback(() => {
+  logoutRef.current = useCallback(async (): Promise<void> => {
     setCurrentUser(null);
     setCurrentWorkspace(null);
     setJwtAccessToken(null);
@@ -69,6 +80,14 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     localStorage.removeItem('userId');
     localStorage.removeItem('workspaceId');
     localStorage.removeItem('jwtAccessToken');
+
+    // Cancel replication on logout
+    const db: LiveDocsDatabase = await getDatabase();
+    if (db.replicationStates) {
+      await cancelReplication(db.replicationStates);
+    } else {
+      console.warn('Replication states not available. Skipping replication cancellation.');
+    }
   }, []);
 
   const initializeAuth = useCallback(async (): Promise<void> => {
@@ -82,7 +101,7 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
       } catch (error) {
         console.error('Failed to initialize authentication:', error);
         if (logoutRef.current) {
-          logoutRef.current();
+          await logoutRef.current();
         }
       }
     }
@@ -106,9 +125,9 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
       }
       return Promise.resolve();
     }, []),
-    logout: useCallback(() => {
+    logout: useCallback(async () => {
       if (logoutRef.current) {
-        logoutRef.current();
+        await logoutRef.current();
       }
     }, []),
     workspaces,

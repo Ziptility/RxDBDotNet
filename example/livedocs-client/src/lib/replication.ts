@@ -14,18 +14,14 @@ import { ReplicationCheckpoint, LiveDocsCollections } from '@/types';
 
 const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
 const WS_ENDPOINT = 'ws://localhost:5414/graphql';
-const JWT_TOKEN =
-  'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJMaXZlRG9jcyIsImV4cCI6MTcyMjk1MTc2NCwiaWF0IjoxNzIyOTUxNzY0fQ.VP3WRdWB6R-lrHfsNM4o2AA95SgE2_PrJQSOoZTyYkg';
+const JWT_TOKEN = 'your-default-jwt-token';
 
 const BATCH_SIZE = 50;
 
-const getGraphQLServerUrl = (): GraphQLServerUrl => {
-  const url: GraphQLServerUrl = {
-    http: GRAPHQL_ENDPOINT,
-    ws: WS_ENDPOINT,
-  };
-  return url;
-};
+const getGraphQLServerUrl = (): GraphQLServerUrl => ({
+  http: GRAPHQL_ENDPOINT,
+  ws: WS_ENDPOINT,
+});
 
 const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   collection: RxCollection<T>,
@@ -55,6 +51,7 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
       queryBuilder: pullQueryBuilder,
       streamQueryBuilder: pullStreamBuilder,
       batchSize: BATCH_SIZE,
+      initialCheckpoint: null, // Set initial checkpoint to null
     },
     push: {
       queryBuilder: pushQueryBuilder,

@@ -1,11 +1,12 @@
 // src/pages/_app.tsx
-
 import React from 'react';
 import { AppProps } from 'next/app';
 import { EmotionCache } from '@emotion/cache';
 import { ThemeProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import theme from '../theme';
 import createEmotionCache from '../createEmotionCache';
 import Layout from '../components/Layout';
@@ -26,6 +27,7 @@ function MyApp({ Component, pageProps, router, emotionCache = clientSideEmotionC
         <CssBaseline />
         <ErrorBoundary>
           <AuthProvider>
+            <ToastContainer />
             {router.pathname === '/login' ? (
               <Component {...pageProps} />
             ) : (

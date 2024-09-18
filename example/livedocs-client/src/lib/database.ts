@@ -1,4 +1,4 @@
-// src/lib/database.ts
+// src\lib\database.ts
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
@@ -34,7 +34,10 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
       });
 
       // Set up replication for all collections
-      await setupReplication(db);
+      const replicationStates = await setupReplication(db);
+
+      // Attach replication states to the database instance for later use
+      (db as LiveDocsDatabase).replicationStates = replicationStates;
 
       resolve(db);
       return db;

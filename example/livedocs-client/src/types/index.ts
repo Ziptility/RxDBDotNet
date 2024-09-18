@@ -9,7 +9,9 @@ export interface LiveDocsCollections {
   livedocs: RxCollection<LiveDoc>;
 }
 
-export type LiveDocsDatabase = RxDatabase<LiveDocsCollections>;
+export interface LiveDocsDatabase extends RxDatabase<LiveDocsCollections> {
+  replicationStates?: LiveDocsReplicationState;
+}
 
 export interface ReplicationCheckpoint {
   id: string | null;

@@ -1,10 +1,9 @@
-// src\components\NetworkStatus.tsx
+// src/components/NetworkStatus.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getDatabase } from '@/lib/database';
-import { setupReplication } from '@/lib/replication';
 import { LiveDocsReplicationState } from '@/types';
 import { combineLatest } from 'rxjs';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
@@ -18,8 +17,11 @@ const NetworkStatus: React.FC = (): JSX.Element => {
     const initReplication = async (): Promise<void> => {
       try {
         const db = await getDatabase();
-        const states = await setupReplication(db);
-        setReplicationStates(states);
+        if (db.replicationStates) {
+          setReplicationStates(db.replicationStates);
+        } else {
+          console.warn('Replication states not available');
+        }
       } catch (error) {
         console.error('Error initializing replication:', error);
         // Handle the error appropriately, e.g., show an error message to the user

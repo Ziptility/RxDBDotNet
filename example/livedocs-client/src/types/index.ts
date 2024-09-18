@@ -1,12 +1,24 @@
 // src\types\index.ts
 import { Workspace, User, LiveDoc } from '@/lib/schemas';
-import { RxCollection, RxDatabase, SyncOptionsGraphQL } from 'rxdb';
+import { RxCollection, RxDatabase, SyncOptionsGraphQL, RxJsonSchema } from 'rxdb';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
 export interface LiveDocsCollections {
   workspace: RxCollection<Workspace>;
   user: RxCollection<User>;
   livedoc: RxCollection<LiveDoc>;
+}
+
+export interface LiveDocsCollectionConfig {
+  workspace: {
+    schema: RxJsonSchema<Workspace>;
+  };
+  user: {
+    schema: RxJsonSchema<User>;
+  };
+  livedoc: {
+    schema: RxJsonSchema<LiveDoc>;
+  };
 }
 
 export interface LiveDocsDatabase extends RxDatabase<LiveDocsCollections> {

@@ -1,6 +1,6 @@
-// src/components/WorkspaceList.tsx
+// src\components\WorkspaceList.tsx
 import React from 'react';
-import { Workspace } from '@/lib/schemas';
+import type { Workspace } from '@/lib/schemas';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 

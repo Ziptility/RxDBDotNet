@@ -1,6 +1,9 @@
 // src\errors\customErrors.ts
 export class LiveDocsError extends Error {
-  constructor(message: string, public code: string) {
+  constructor(
+    message: string,
+    public code: string
+  ) {
     super(message);
     this.name = 'LiveDocsError';
   }

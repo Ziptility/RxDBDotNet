@@ -1,6 +1,8 @@
+// src\components\UserForm.tsx
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { User, UserRole, Workspace } from '@/lib/schemas';
+import type { User, Workspace } from '@/lib/schemas';
+import { UserRole } from '@/lib/schemas';
 
 interface UserFormProps {
   user: User | undefined;

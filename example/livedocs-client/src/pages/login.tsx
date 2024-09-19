@@ -10,11 +10,11 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  SelectChangeEvent,
+  type SelectChangeEvent,
   CircularProgress,
 } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext';
-import { Workspace, User } from '@/lib/schemas';
+import type { Workspace, User } from '@/lib/schemas';
 
 const LoginPage: React.FC = (): JSX.Element => {
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');

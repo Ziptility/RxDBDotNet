@@ -1,16 +1,16 @@
 // src\lib\replication.ts
-import { LiveDocsDatabase } from '@/lib/database';
+import type { LiveDocsDatabase } from '@/lib/database';
 import {
   pullQueryBuilderFromRxSchema,
   pushQueryBuilderFromRxSchema,
   pullStreamBuilderFromRxSchema,
   replicateGraphQL,
   RxGraphQLReplicationState,
-  GraphQLSchemaFromRxSchemaInputSingleCollection,
+  type GraphQLSchemaFromRxSchemaInputSingleCollection,
 } from 'rxdb/plugins/replication-graphql';
-import { workspaceSchema, userSchema, liveDocSchema, Workspace, User, LiveDoc } from './schemas';
-import { RxCollection, RxJsonSchema, RxError } from 'rxdb';
-import { LiveDocsReplicationStates, LiveDocsReplicationOptions, ReplicationCheckpoint } from '@/types';
+import { workspaceSchema, userSchema, liveDocSchema, type Workspace, type User, type LiveDoc } from './schemas';
+import { type RxCollection, type RxJsonSchema, RxError } from 'rxdb';
+import type { LiveDocsReplicationStates, LiveDocsReplicationOptions, ReplicationCheckpoint } from '@/types';
 
 export const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
 export const WS_ENDPOINT = 'ws://localhost:5414/graphql';

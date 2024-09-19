@@ -1,12 +1,13 @@
 // src\pages\_document.tsx
 
 import React from 'react';
-import Document, { Html, Head, Main, NextScript, DocumentContext, DocumentInitialProps } from 'next/document';
+import Document, { Html, Head, Main, NextScript, type DocumentContext } from 'next/document';
 import createEmotionServer from '@emotion/server/create-instance';
 import theme from '../theme';
 import createEmotionCache from '../createEmotionCache';
-import { EmotionCache } from '@emotion/cache';
-import { AppProps } from 'next/app';
+import type { EmotionCache } from '@emotion/cache';
+import type { AppProps } from 'next/app';
+import type { DocumentInitialProps } from 'next/document';
 
 interface MyDocumentProps extends DocumentInitialProps {
   emotionStyleTags: JSX.Element[];
@@ -52,7 +53,6 @@ class MyDocument extends Document<MyDocumentProps> {
       <style
         data-emotion={`${style.key} ${style.ids.join(' ')}`}
         key={style.key}
-        // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: style.css }}
       />
     ));

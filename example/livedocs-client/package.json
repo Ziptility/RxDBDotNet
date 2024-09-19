@@ -11,7 +11,7 @@
     "lint:strict": "eslint --max-warnings=0 .",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,html,yml,yaml}\"",
     "lint-staged": "lint-staged"
   },
   "dependencies": {
@@ -31,19 +31,23 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
+    "@typescript-eslint/eslint-plugin": "^8",
+    "@typescript-eslint/parser": "^8",
     "eslint": "^8",
     "eslint-config-next": "^14.2.12",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.30.0",
     "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-next": "^0.0.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-promise": "^7.1.0",
     "eslint-plugin-react": "^7.36.1",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "lint-staged": "^13.3.0",
+    "lint-staged": "^15",
     "prettier": "^3",
     "tsc-files": "^1.1.4",
     "typescript": "^5"

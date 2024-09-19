@@ -1,9 +1,9 @@
 // src\lib\database.ts
-import { createRxDatabase, addRxPlugin, RxDatabase } from 'rxdb';
+import { createRxDatabase, addRxPlugin, type RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
-import { LiveDocsDatabase, LiveDocsCollections, LiveDocsCollectionConfig } from '@/types';
+import type { LiveDocsDatabase, LiveDocsCollections, LiveDocsCollectionConfig } from '@/types';
 import { setupReplication } from './replication';
 
 addRxPlugin(RxDBDevModePlugin);

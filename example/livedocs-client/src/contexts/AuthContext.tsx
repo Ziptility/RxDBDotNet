@@ -1,12 +1,13 @@
 // src\contexts\AuthContext.tsx
-import React, { useState, useEffect, useCallback, ReactNode, useRef } from 'react';
-import { User, Workspace } from '@/lib/schemas';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { ReactNode } from 'react';
+import type { User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { createTypedContext } from '@/utils/createTypedContext';
 import { handleAsyncError } from '@/utils/errorHandling';
 import { getDatabase } from '@/lib/database';
 import { restartReplication, cancelReplication } from '@/lib/replication';
-import { LiveDocsDatabase } from '@/types';
+import type { LiveDocsDatabase } from '@/types';
 
 interface AuthContextType {
   currentUser: User | null;

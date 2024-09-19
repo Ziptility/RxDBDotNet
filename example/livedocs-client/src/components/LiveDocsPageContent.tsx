@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Box, Button, Alert } from '@mui/material';
 import LiveDocList from './LiveDocList';
 import LiveDocForm from './LiveDocForm';
-import { LiveDoc, User, Workspace } from '@/lib/schemas';
+import type { LiveDoc, User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
 

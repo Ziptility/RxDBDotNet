@@ -4,7 +4,7 @@ import { Box, Typography, Chip, Tooltip } from '@mui/material';
 import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getDatabase } from '@/lib/database';
-import { LiveDocsReplicationStates, ReplicationCheckpoint } from '@/types';
+import type { LiveDocsReplicationStates, ReplicationCheckpoint } from '@/types';
 import { combineLatest, map } from 'rxjs';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 

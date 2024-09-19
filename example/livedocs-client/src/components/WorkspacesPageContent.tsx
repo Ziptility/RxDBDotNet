@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Box, Button, Alert } from '@mui/material';
 import WorkspaceList from './WorkspaceList';
 import WorkspaceForm from './WorkspaceForm';
-import { Workspace } from '@/lib/schemas';
+import type { Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
 

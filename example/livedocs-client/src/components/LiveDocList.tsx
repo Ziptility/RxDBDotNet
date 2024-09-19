@@ -1,6 +1,6 @@
-// src/components/LiveDocList.tsx
+// src\components\LiveDocList.tsx
 import React from 'react';
-import { LiveDoc } from '@/lib/schemas';
+import type { LiveDoc } from '@/lib/schemas';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 

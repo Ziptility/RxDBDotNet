@@ -1,7 +1,7 @@
 // src\pages\_app.tsx
 import React from 'react';
-import { AppProps } from 'next/app';
-import { EmotionCache } from '@emotion/cache';
+import type { AppProps } from 'next/app';
+import type { EmotionCache } from '@emotion/cache';
 import { ThemeProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
 import CssBaseline from '@mui/material/CssBaseline';

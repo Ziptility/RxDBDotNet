@@ -1,8 +1,8 @@
 // src\hooks\useDocuments.ts
 import { useState, useEffect } from 'react';
-import { RxCollection, RxDocument, MangoQuerySelector, MangoQuerySortPart } from 'rxdb';
+import type { RxCollection, RxDocument, MangoQuerySelector, MangoQuerySortPart } from 'rxdb';
 import { getDatabase } from '@/lib/database';
-import { LiveDocsDatabase } from '@/types';
+import type { LiveDocsDatabase } from '@/types';
 import { Subscription } from 'rxjs';
 
 interface Document {

@@ -1,11 +1,11 @@
 // src\components\UserList.tsx
 import React from 'react';
-import { User } from '@/lib/schemas';
+import type { User } from '@/lib/schemas';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 export interface UserListProps {
-  users: User[]; // Add this line to include the users property
+  users: User[];
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
 }

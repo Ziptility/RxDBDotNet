@@ -1,6 +1,6 @@
 // src\components\ErrorBoundary.tsx
-
-import React, { ErrorInfo, ReactNode } from 'react';
+import React from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 
 interface ErrorBoundaryProps {

@@ -1,6 +1,7 @@
+// src\components\LiveDocForm.tsx
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import { LiveDoc, User, Workspace } from '@/lib/schemas';
+import type { LiveDoc, User, Workspace } from '@/lib/schemas';
 
 interface LiveDocFormProps {
   liveDoc: LiveDoc | undefined;

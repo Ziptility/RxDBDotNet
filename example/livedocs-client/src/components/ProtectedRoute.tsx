@@ -1,5 +1,6 @@
 // src\components\ProtectedRoute.tsx
-import React, { ReactNode, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { CircularProgress, Box } from '@mui/material';

@@ -1,3 +1,4 @@
+// src\lib\database.ts
 import { createRxDatabase, addRxPlugin, RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
@@ -7,10 +8,10 @@ import { setupReplication } from './replication';
 
 addRxPlugin(RxDBDevModePlugin);
 
-let dbPromise: Promise<LiveDocsDatabase> | null = null;
+let db: Promise<LiveDocsDatabase> | null = null;
 
 export const getDatabase = async (): Promise<LiveDocsDatabase> => {
-  if (dbPromise) return dbPromise;
+  if (db) return db;
 
   const collections: LiveDocsCollectionConfig = {
     workspace: {
@@ -24,19 +25,19 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
     },
   };
 
-  dbPromise = createRxDatabase<LiveDocsCollections>({
+  db = createRxDatabase<LiveDocsCollections>({
     name: 'livedocsdb',
     storage: getRxStorageDexie(),
-  }).then(async (db: RxDatabase<LiveDocsCollections>): Promise<LiveDocsDatabase> => {
-    await db.addCollections(collections);
+  }).then(async (database: RxDatabase<LiveDocsCollections>): Promise<LiveDocsDatabase> => {
+    await database.addCollections(collections);
 
     // Set up replication for all collections
-    await setupReplication(db);
+    await setupReplication(database);
 
-    return db as LiveDocsDatabase;
+    return database as LiveDocsDatabase;
   });
 
-  return dbPromise;
+  return db;
 };
 
 export type { LiveDocsDatabase };

@@ -12,8 +12,8 @@ import { workspaceSchema, userSchema, liveDocSchema, Workspace, User, LiveDoc } 
 import { RxCollection, RxJsonSchema, RxError } from 'rxdb';
 import { LiveDocsReplicationStates, LiveDocsReplicationOptions, ReplicationCheckpoint } from '@/types';
 
-const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
-const WS_ENDPOINT = 'ws://localhost:5414/graphql';
+export const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
+export const WS_ENDPOINT = 'ws://localhost:5414/graphql';
 
 const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   db: LiveDocsDatabase,
@@ -26,6 +26,7 @@ const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
     schema,
     checkpointFields: ['lastDocumentId', 'updatedAt'],
     deletedField: 'isDeleted',
+    headerFields: ['Authorization'],
   };
 
   const pullQueryBuilder = pullQueryBuilderFromRxSchema(collectionName, schemaInput);

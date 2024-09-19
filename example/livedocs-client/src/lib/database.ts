@@ -1,7 +1,7 @@
-// src\lib\database.ts
 import { createRxDatabase, addRxPlugin, type RxDatabase } from 'rxdb';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
+import { API_CONFIG } from '@/config';
 import type { LiveDocsDatabase, LiveDocsCollections, LiveDocsCollectionConfig } from '@/types';
 import { setupReplication } from './replication';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
@@ -11,7 +11,7 @@ addRxPlugin(RxDBDevModePlugin);
 let db: Promise<LiveDocsDatabase> | null = null;
 
 export const getDatabase = async (): Promise<LiveDocsDatabase> => {
-  if (db) return db;
+  if (db !== null) return db;
 
   const collections: LiveDocsCollectionConfig = {
     workspace: {
@@ -32,7 +32,13 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
 
   const database: RxDatabase<LiveDocsCollections> = await db;
   await database.addCollections(collections);
-  await setupReplication(database);
+
+  // Use the default JWT token for initial setup
+  const defaultToken = API_CONFIG.DEFAULT_JWT_TOKEN;
+  const replicationStates = await setupReplication(database, defaultToken);
+
+  // Add replicationStates to the database object
+  (database as LiveDocsDatabase).replicationStates = replicationStates;
 
   return database as LiveDocsDatabase;
 };

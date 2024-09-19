@@ -38,12 +38,13 @@ public static class JwtUtil
     /// <param name="user">The <see cref="ReplicatedUser"/> for whom the token is being generated. This parameter cannot be null.</param>
     /// <param name="role">The role of the user, represented as a <see cref="UserRole"/>.</param>
     /// <param name="additionalClaims">Optional. A list of additional <see cref="Claim"/> objects to include in the token.</param>
+    /// <param name="expires">Optional. The expiration time of the token. If not provided, the token will expire in 120 minutes.</param>
     /// <returns>A JWT token as a <see cref="string"/> that contains the user's claims.</returns>
     /// <remarks>
     /// This token is valid for 120 minutes and is signed using the HMAC SHA256 algorithm.
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown if the <paramref name="user"/> parameter is null.</exception>
-    public static string GenerateJwtToken(ReplicatedUser user, UserRole role, List<Claim>? additionalClaims = null)
+    public static string GenerateJwtToken(ReplicatedUser user, UserRole role, List<Claim>? additionalClaims = null, DateTime? expires = null)
     {
         ArgumentNullException.ThrowIfNull(user);
 
@@ -71,27 +72,10 @@ public static class JwtUtil
             issuer: Issuer,
             audience: Audience,
             claims: claims,
-            expires: now.AddMinutes(120).UtcDateTime,
+            expires: expires ?? DateTime.UtcNow.AddMinutes(120),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    /// <summary>
-    /// Validates a JWT token and returns the principal (user) associated with the token.
-    /// </summary>
-    /// <param name="token">The JWT token to validate.</param>
-    /// <returns>A <see cref="ClaimsPrincipal"/> representing the user associated with the validated token.</returns>
-    /// <exception cref="SecurityTokenException">Thrown if the token is invalid or has expired.</exception>
-    /// <remarks>
-    /// This method validates the token using the configured validation parameters, including checking the issuer, audience,
-    /// lifetime, and signing key. It is intended for use in testing and non-production scenarios.
-    /// </remarks>
-    public static ClaimsPrincipal ValidateAndGetPrincipal(string token)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-
-        return tokenHandler.ValidateToken(token, GetTokenValidationParameters(), out _);
     }
 
     /// <summary>

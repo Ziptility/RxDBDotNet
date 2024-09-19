@@ -46,7 +46,10 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 IsDeleted = false,
             };
 
-            var jwtAccessToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, UserRole.SystemAdmin);
+            // Generate a non-expiring JWT token for the system admin user
+            // We'll use this in the client app to bootstrap the "logged in" state
+            // since we are not supporting username and password login in this example application
+            var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, UserRole.SystemAdmin, expires: DateTime.MaxValue);
 
             var systemAdminUser = new User
             {
@@ -55,7 +58,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 LastName = systemAdminReplicatedUser.LastName,
                 Email = systemAdminReplicatedUser.Email,
                 Role = systemAdminReplicatedUser.Role,
-                JwtAccessToken = jwtAccessToken,
+                JwtAccessToken = nonExpiringToken,
                 WorkspaceId = rootWorkspace.Id,
                 UpdatedAt = systemAdminReplicatedUser.UpdatedAt,
                 IsDeleted = systemAdminReplicatedUser.IsDeleted,

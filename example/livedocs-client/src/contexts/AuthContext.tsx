@@ -1,24 +1,24 @@
-// src\contexts\AuthContext.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { API_CONFIG } from '@/config';
 import { useDocuments } from '@/hooks/useDocuments';
 import { getDatabase } from '@/lib/database';
-import { restartReplication, cancelReplication } from '@/lib/replication';
+import { setupReplication, restartReplication, cancelReplication } from '@/lib/replication';
 import type { User, Workspace } from '@/lib/schemas';
 import type { LiveDocsDatabase } from '@/types';
 import { createTypedContext } from '@/utils/createTypedContext';
 import { handleAsyncError } from '@/utils/errorHandling';
 
 interface AuthContextType {
-  readonly currentUser: User | null;
-  readonly currentWorkspace: Workspace | null;
-  readonly jwtAccessToken: string | null;
-  readonly isLoggedIn: boolean;
-  readonly isInitialized: boolean;
-  readonly login: (userId: string, workspaceId: string) => Promise<void>;
-  readonly logout: () => Promise<void>;
-  readonly workspaces: Workspace[];
-  readonly users: User[];
+  currentUser: User | null;
+  currentWorkspace: Workspace | null;
+  jwtAccessToken: string | null;
+  isLoggedIn: boolean;
+  isInitialized: boolean;
+  login: (userId: string, workspaceId: string) => Promise<void>;
+  logout: () => Promise<void>;
+  workspaces: Workspace[];
+  users: User[];
 }
 
 const [useAuth, AuthProvider] = createTypedContext<AuthContextType>();
@@ -40,6 +40,19 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   const loginRef = useRef<AuthContextType['login']>();
   const logoutRef = useRef<AuthContextType['logout']>();
 
+  const setToken = useCallback((token: string) => {
+    setJwtAccessToken(token);
+    localStorage.setItem('jwtAccessToken', token);
+  }, []);
+
+  const setupOrRestartReplication = useCallback(async (db: LiveDocsDatabase, token: string) => {
+    if (db.replicationStates) {
+      await restartReplication(db.replicationStates);
+    } else {
+      db.replicationStates = await setupReplication(db, token);
+    }
+  }, []);
+
   loginRef.current = useCallback(
     async (userId: string, workspaceId: string): Promise<void> => {
       await handleAsyncError(async () => {
@@ -52,48 +65,45 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
 
         setCurrentUser(user);
         setCurrentWorkspace(workspace);
-        setJwtAccessToken(user.jwtAccessToken ?? null);
+        const token = user.jwtAccessToken ?? '';
+        setToken(token);
         setIsLoggedIn(true);
 
         localStorage.setItem('userId', userId);
         localStorage.setItem('workspaceId', workspaceId);
-        localStorage.setItem('jwtAccessToken', user.jwtAccessToken ?? '');
 
-        // Restart replication with the new user's token
         const db: LiveDocsDatabase = await getDatabase();
-        if (db.replicationStates) {
-          await restartReplication(db.replicationStates);
-        } else {
-          console.warn('Replication states not available. Skipping replication restart.');
-        }
+        await setupOrRestartReplication(db, token);
       }, 'Login');
     },
-    [users, workspaces]
+    [users, workspaces, setToken, setupOrRestartReplication]
   );
 
   logoutRef.current = useCallback(async (): Promise<void> => {
     setCurrentUser(null);
     setCurrentWorkspace(null);
-    setJwtAccessToken(null);
     setIsLoggedIn(false);
 
     localStorage.removeItem('userId');
     localStorage.removeItem('workspaceId');
     localStorage.removeItem('jwtAccessToken');
 
-    // Cancel replication on logout
     const db: LiveDocsDatabase = await getDatabase();
     if (db.replicationStates) {
       await cancelReplication(db.replicationStates);
-    } else {
-      console.warn('Replication states not available. Skipping replication cancellation.');
     }
-  }, []);
+
+    const defaultToken = API_CONFIG.DEFAULT_JWT_TOKEN;
+    setToken(defaultToken);
+    await setupOrRestartReplication(db, defaultToken);
+  }, [setToken, setupOrRestartReplication]);
 
   const initializeAuth = useCallback(async (): Promise<void> => {
     const storedUserId = localStorage.getItem('userId');
     const storedWorkspaceId = localStorage.getItem('workspaceId');
     const storedJwtToken = localStorage.getItem('jwtAccessToken');
+
+    const db: LiveDocsDatabase = await getDatabase();
 
     if (
       typeof storedUserId === 'string' &&
@@ -113,14 +123,14 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
         }
       }
     } else {
-      console.log('No valid stored authentication data found. User is not logged in.');
-      if (logoutRef.current) {
-        await logoutRef.current();
-      }
+      console.log('No valid stored authentication data found. Using default token.');
+      const defaultToken = API_CONFIG.DEFAULT_JWT_TOKEN;
+      setToken(defaultToken);
+      await setupOrRestartReplication(db, defaultToken);
     }
 
     setIsInitialized(true);
-  }, []);
+  }, [setToken, setupOrRestartReplication]);
 
   useEffect(() => {
     void initializeAuth();

@@ -36,8 +36,8 @@ const NetworkStatus: React.FC = () => {
     const subscription = combineLatest(
       Object.entries(replicationStates).map(
         ([name, state]: [string, RxGraphQLReplicationState<unknown, ReplicationCheckpoint>]) =>
-          state.active$.pipe(map((active) => ({ [name]: active }))),
-      ),
+          state.active$.pipe(map((active) => ({ [name]: active })))
+      )
     ).subscribe((activeStates: Record<string, boolean>[]) => {
       const mergedStatus = activeStates.reduce((acc, curr) => ({ ...acc, ...curr }), {});
       setSyncStatus(mergedStatus);

@@ -1,11 +1,11 @@
 // src\components\UsersPageContent.tsx
 import React, { useState } from 'react';
 import { Box, Button, Alert } from '@mui/material';
-import UserList from './UserList';
-import UserForm from './UserForm';
-import type { User, Workspace } from '@/lib/schemas';
-import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
+import { useDocuments } from '@/hooks/useDocuments';
+import type { User, Workspace } from '@/lib/schemas';
+import UserForm from './UserForm';
+import UserList from './UserList';
 
 const UsersPageContent: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);

@@ -1,11 +1,11 @@
 // src\components\WorkspacesPageContent.tsx
 import React, { useState } from 'react';
 import { Box, Button, Alert } from '@mui/material';
-import WorkspaceList from './WorkspaceList';
-import WorkspaceForm from './WorkspaceForm';
-import type { Workspace } from '@/lib/schemas';
-import { useDocuments } from '@/hooks/useDocuments';
 import { v4 as uuidv4 } from 'uuid';
+import { useDocuments } from '@/hooks/useDocuments';
+import type { Workspace } from '@/lib/schemas';
+import WorkspaceForm from './WorkspaceForm';
+import WorkspaceList from './WorkspaceList';
 
 const WorkspacesPageContent: React.FC = () => {
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);

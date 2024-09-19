@@ -1,6 +1,6 @@
 // src\lib\errorHandling.ts
-import { Subject } from 'rxjs';
 import { RxError } from 'rxdb';
+import { Subject } from 'rxjs';
 
 export const errorSubject = new Subject<{
   message: string;

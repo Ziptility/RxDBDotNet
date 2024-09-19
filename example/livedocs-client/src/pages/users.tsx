@@ -1,7 +1,7 @@
 // src\pages\users.tsx
-import dynamic from 'next/dynamic';
 import React from 'react';
 import { Typography, Box, CircularProgress } from '@mui/material';
+import dynamic from 'next/dynamic';
 
 const UsersPageContent = dynamic(() => import('../components/UsersPageContent'), {
   ssr: false,

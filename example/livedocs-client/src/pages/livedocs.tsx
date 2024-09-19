@@ -1,7 +1,7 @@
 // src\pages\livedocs.tsx
 import React from 'react';
-import dynamic from 'next/dynamic';
 import { Typography, Box, CircularProgress } from '@mui/material';
+import dynamic from 'next/dynamic';
 
 const LiveDocsPageContent = dynamic(() => import('../components/LiveDocsPageContent'), {
   ssr: false,

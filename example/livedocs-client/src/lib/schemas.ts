@@ -1,6 +1,5 @@
 // src\lib\schemas.ts
-import { toTypedRxJsonSchema, type RxJsonSchema } from 'rxdb';
-import type { ExtractDocumentTypeFromTypedRxJsonSchema } from 'rxdb';
+import { toTypedRxJsonSchema, type RxJsonSchema, type ExtractDocumentTypeFromTypedRxJsonSchema } from 'rxdb';
 
 export enum UserRole {
   StandardUser = 'StandardUser',

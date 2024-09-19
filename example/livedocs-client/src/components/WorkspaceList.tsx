@@ -1,8 +1,8 @@
 // src\components\WorkspaceList.tsx
 import React from 'react';
-import type { Workspace } from '@/lib/schemas';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+import type { Workspace } from '@/lib/schemas';
 
 export interface WorkspaceListProps {
   workspaces: Workspace[];

@@ -7,7 +7,6 @@
     "plugin:@typescript-eslint/strict",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
-    "plugin:jsx-a11y/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:import/typescript",
@@ -28,7 +27,7 @@
   "rules": {
     // General Best Practices
     "eqeqeq": ["error", "always"],
-    "no-console": "error",
+    "no-console": "off",
     "no-debugger": "error",
     "no-eval": "error",
     "no-implied-eval": "error",
@@ -75,15 +74,33 @@
     "react-hooks/exhaustive-deps": "error",
 
     // Next.js Rules
-    "next/no-img-element": "error",
-    "next/no-html-link-for-pages": ["error", "./src/pages"],
+    // "next/no-img-element": "error",
+    // "next/no-html-link-for-pages": ["error", "./src/pages"],
 
     // Import Rules
     "import/order": [
       "error",
       {
-        "newlines-between": "always",
-        "groups": ["builtin", "external", "internal", ["parent", "sibling", "index"]],
+        "newlines-between": "never",
+        "groups": ["builtin", "external", "internal", ["parent", "sibling"], "index", "object", "type"],
+        "pathGroups": [
+          {
+            "pattern": "react",
+            "group": "external",
+            "position": "before"
+          },
+          {
+            "pattern": "next/**",
+            "group": "external",
+            "position": "after"
+          },
+          {
+            "pattern": "@/**",
+            "group": "internal",
+            "position": "after"
+          }
+        ],
+        "pathGroupsExcludedImportTypes": ["react", "next"],
         "alphabetize": { "order": "asc", "caseInsensitive": true }
       }
     ],

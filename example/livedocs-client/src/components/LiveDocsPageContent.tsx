@@ -1,11 +1,10 @@
-// src\components\LiveDocsPageContent.tsx
-import React, { useState } from 'react';
-import { Box, Button, Alert } from '@mui/material';
-import LiveDocList from './LiveDocList';
-import LiveDocForm from './LiveDocForm';
-import type { LiveDoc, User, Workspace } from '@/lib/schemas';
-import { useDocuments } from '@/hooks/useDocuments';
+import { useState } from 'react';
+import { Alert, Box, Button } from '@mui/material';
 import { v4 as uuidv4 } from 'uuid';
+import { useDocuments } from '@/hooks/useDocuments';
+import type { LiveDoc, User, Workspace } from '@/lib/schemas';
+import LiveDocForm from './LiveDocForm';
+import LiveDocList from './LiveDocList';
 
 const LiveDocsPageContent: React.FC = () => {
   const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);

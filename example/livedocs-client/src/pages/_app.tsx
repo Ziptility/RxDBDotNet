@@ -1,18 +1,18 @@
 // src\pages\_app.tsx
 import React from 'react';
-import type { AppProps } from 'next/app';
-import type { EmotionCache } from '@emotion/cache';
-import { ThemeProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider } from '@mui/material/styles';
 import { ToastContainer } from 'react-toastify';
+import type { AppProps } from 'next/app';
 import 'react-toastify/dist/ReactToastify.css';
-import theme from '../theme';
-import createEmotionCache from '../createEmotionCache';
-import Layout from '../components/Layout';
-import { AuthProvider } from '@/contexts/AuthContext';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { AuthProvider } from '@/contexts/AuthContext';
+import Layout from '../components/Layout';
+import createEmotionCache from '../createEmotionCache';
+import theme from '../theme';
+import type { EmotionCache } from '@emotion/cache';
 
 interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;

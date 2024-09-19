@@ -1,8 +1,8 @@
 // src\components\UserList.tsx
 import React from 'react';
-import type { User } from '@/lib/schemas';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+import type { User } from '@/lib/schemas';
 
 export interface UserListProps {
   users: User[];

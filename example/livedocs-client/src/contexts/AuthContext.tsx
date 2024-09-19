@@ -1,13 +1,13 @@
 // src\contexts\AuthContext.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
-import type { User, Workspace } from '@/lib/schemas';
 import { useDocuments } from '@/hooks/useDocuments';
-import { createTypedContext } from '@/utils/createTypedContext';
-import { handleAsyncError } from '@/utils/errorHandling';
 import { getDatabase } from '@/lib/database';
 import { restartReplication, cancelReplication } from '@/lib/replication';
+import type { User, Workspace } from '@/lib/schemas';
 import type { LiveDocsDatabase } from '@/types';
+import { createTypedContext } from '@/utils/createTypedContext';
+import { handleAsyncError } from '@/utils/errorHandling';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -95,7 +95,15 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     const storedWorkspaceId = localStorage.getItem('workspaceId');
     const storedJwtToken = localStorage.getItem('jwtAccessToken');
 
-    if (storedUserId && storedWorkspaceId && storedJwtToken && loginRef.current) {
+    if (
+      typeof storedUserId === 'string' &&
+      storedUserId.length > 0 &&
+      typeof storedWorkspaceId === 'string' &&
+      storedWorkspaceId.length > 0 &&
+      typeof storedJwtToken === 'string' &&
+      storedJwtToken.length > 0 &&
+      loginRef.current
+    ) {
       try {
         await loginRef.current(storedUserId, storedWorkspaceId);
       } catch (error) {
@@ -103,6 +111,11 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
         if (logoutRef.current) {
           await logoutRef.current();
         }
+      }
+    } else {
+      console.log('No valid stored authentication data found. User is not logged in.');
+      if (logoutRef.current) {
+        await logoutRef.current();
       }
     }
 

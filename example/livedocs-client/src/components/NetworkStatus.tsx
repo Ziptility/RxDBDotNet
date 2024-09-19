@@ -1,12 +1,12 @@
 // src\components\NetworkStatus.tsx
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Chip, Tooltip } from '@mui/material';
-import { Wifi as WifiIcon, WifiOff as WifiOffIcon, Sync as SyncIcon } from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
+import { Sync as SyncIcon, Wifi as WifiIcon, WifiOff as WifiOffIcon } from '@mui/icons-material';
+import { Box, Chip, Tooltip, Typography } from '@mui/material';
+import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
+import { combineLatest, map } from 'rxjs';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getDatabase } from '@/lib/database';
 import type { LiveDocsReplicationStates, ReplicationCheckpoint } from '@/types';
-import { combineLatest, map } from 'rxjs';
-import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
 const NetworkStatus: React.FC = () => {
   const isOnline = useOnlineStatus();

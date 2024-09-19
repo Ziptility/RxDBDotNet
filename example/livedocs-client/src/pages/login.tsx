@@ -1,6 +1,5 @@
 // src\pages\login.tsx
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import {
   Button,
   Typography,
@@ -13,6 +12,7 @@ import {
   type SelectChangeEvent,
   CircularProgress,
 } from '@mui/material';
+import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Workspace, User } from '@/lib/schemas';
 

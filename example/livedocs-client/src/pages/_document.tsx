@@ -1,13 +1,12 @@
 // src\pages\_document.tsx
 
 import React from 'react';
-import Document, { Html, Head, Main, NextScript, type DocumentContext } from 'next/document';
 import createEmotionServer from '@emotion/server/create-instance';
-import theme from '../theme';
+import { type AppProps } from 'next/app';
+import Document, { Html, Head, Main, NextScript, type DocumentContext, type DocumentInitialProps } from 'next/document';
 import createEmotionCache from '../createEmotionCache';
+import theme from '../theme';
 import type { EmotionCache } from '@emotion/cache';
-import type { AppProps } from 'next/app';
-import type { DocumentInitialProps } from 'next/document';
 
 interface MyDocumentProps extends DocumentInitialProps {
   emotionStyleTags: JSX.Element[];

@@ -54,11 +54,11 @@ const LiveDocsPageContent: React.FC = () => {
 
   return (
     <Box>
-      {error && (
+      {error ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error.message}
         </Alert>
-      )}
+      ) : null}
       <Box sx={{ mb: 4 }}>
         <LiveDocForm
           liveDoc={editingLiveDoc ?? undefined}
@@ -67,11 +67,11 @@ const LiveDocsPageContent: React.FC = () => {
           onSubmit={editingLiveDoc ? handleUpdate : handleCreate}
         />
       </Box>
-      {editingLiveDoc && (
+      {editingLiveDoc ? (
         <Button onClick={(): void => setEditingLiveDoc(null)} sx={{ mb: 2 }}>
           Cancel Editing
         </Button>
-      )}
+      ) : null}
       <LiveDocList
         liveDocs={liveDocs}
         onEdit={setEditingLiveDoc}

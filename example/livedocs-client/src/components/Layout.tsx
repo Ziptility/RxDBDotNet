@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const NetworkStatus = dynamic(() => import('./NetworkStatus'), { ssr: false });
 
 interface LayoutProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 const navItems = [
@@ -26,6 +26,10 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
   const handleLogout = async (): Promise<void> => {
     await logout();
     await router.push('/login');
+  };
+
+  const onLogoutClick = (): void => {
+    void handleLogout();
   };
 
   return (
@@ -55,7 +59,7 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
           <Box ml={2}>
             <NetworkStatus />
           </Box>
-          <Button color="inherit" onClick={(): void => void handleLogout()}>
+          <Button color="inherit" onClick={onLogoutClick}>
             Logout
           </Button>
         </Toolbar>

@@ -4,10 +4,10 @@ import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } fro
 import type { LiveDoc, User, Workspace } from '@/lib/schemas';
 
 interface LiveDocFormProps {
-  liveDoc: LiveDoc | undefined;
-  users: User[];
-  workspaces: Workspace[];
-  onSubmit: (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  readonly liveDoc: LiveDoc | undefined;
+  readonly users: User[];
+  readonly workspaces: Workspace[];
+  readonly onSubmit: (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }) => {

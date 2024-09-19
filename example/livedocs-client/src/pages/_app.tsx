@@ -1,5 +1,4 @@
 // src\pages\_app.tsx
-import React from 'react';
 import { CacheProvider } from '@emotion/react';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
@@ -10,17 +9,17 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/contexts/AuthContext';
 import Layout from '../components/Layout';
-import createEmotionCache from '../createEmotionCache';
-import theme from '../theme';
+import { createEmotionCache } from '../createEmotionCache';
+import { theme } from '../theme';
 import type { EmotionCache } from '@emotion/cache';
 
 interface MyAppProps extends AppProps {
-  emotionCache?: EmotionCache;
+  readonly emotionCache: EmotionCache;
 }
 
 const clientSideEmotionCache = createEmotionCache();
 
-function MyApp({ Component, pageProps, router, emotionCache = clientSideEmotionCache }: MyAppProps): JSX.Element {
+const MyApp = ({ Component, router, emotionCache = clientSideEmotionCache }: MyAppProps): JSX.Element => {
   return (
     <CacheProvider value={emotionCache}>
       <ThemeProvider theme={theme}>
@@ -29,11 +28,11 @@ function MyApp({ Component, pageProps, router, emotionCache = clientSideEmotionC
           <AuthProvider>
             <ToastContainer />
             {router.pathname === '/login' ? (
-              <Component {...pageProps} />
+              <Component key={router.route} />
             ) : (
               <ProtectedRoute>
                 <Layout>
-                  <Component {...pageProps} />
+                  <Component key={router.route} />
                 </Layout>
               </ProtectedRoute>
             )}
@@ -42,6 +41,6 @@ function MyApp({ Component, pageProps, router, emotionCache = clientSideEmotionC
       </ThemeProvider>
     </CacheProvider>
   );
-}
+};
 
 export default MyApp;

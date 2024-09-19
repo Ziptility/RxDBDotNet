@@ -5,9 +5,9 @@ import type { User, Workspace } from '@/lib/schemas';
 import { UserRole } from '@/lib/schemas';
 
 interface UserFormProps {
-  user: User | undefined;
-  workspaces: Workspace[];
-  onSubmit: (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  readonly user: User | undefined;
+  readonly workspaces: Workspace[];
+  readonly onSubmit: (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {

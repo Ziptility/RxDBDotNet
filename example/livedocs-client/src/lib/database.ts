@@ -28,16 +28,13 @@ export const getDatabase = async (): Promise<LiveDocsDatabase> => {
   db = createRxDatabase<LiveDocsCollections>({
     name: 'livedocsdb',
     storage: getRxStorageDexie(),
-  }).then(async (database: RxDatabase<LiveDocsCollections>): Promise<LiveDocsDatabase> => {
-    await database.addCollections(collections);
-
-    // Set up replication for all collections
-    await setupReplication(database);
-
-    return database as LiveDocsDatabase;
   });
 
-  return db;
+  const database: RxDatabase<LiveDocsCollections> = await db;
+  await database.addCollections(collections);
+  await setupReplication(database);
+
+  return database as LiveDocsDatabase;
 };
 
 export type { LiveDocsDatabase };

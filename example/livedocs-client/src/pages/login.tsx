@@ -24,7 +24,12 @@ const LoginPage: React.FC = (): JSX.Element => {
   const { login, workspaces, users, isLoggedIn, isInitialized } = useAuth();
   const router = useRouter();
 
-  console.log('LoginPage: Render', { isLoggedIn, isInitialized, isLoading, workspacesCount: workspaces.length });
+  console.log('LoginPage: Render', {
+    isLoggedIn,
+    isInitialized,
+    isLoading,
+    workspacesCount: workspaces.length,
+  });
 
   useEffect(() => {
     console.log('LoginPage: useEffect (initialization)');
@@ -143,11 +148,11 @@ const LoginPage: React.FC = (): JSX.Element => {
           >
             Sign In
           </Button>
-          {error && (
+          {error ? (
             <Typography color="error" align="center">
               {error}
             </Typography>
-          )}
+          ) : null}
         </Box>
       </Box>
     </Container>

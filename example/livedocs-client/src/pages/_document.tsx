@@ -1,11 +1,10 @@
 // src\pages\_document.tsx
-
-import React from 'react';
 import createEmotionServer from '@emotion/server/create-instance';
 import { type AppProps } from 'next/app';
+import type { AppPropsType } from 'next/dist/shared/lib/utils';
 import Document, { Html, Head, Main, NextScript, type DocumentContext, type DocumentInitialProps } from 'next/document';
-import createEmotionCache from '../createEmotionCache';
-import theme from '../theme';
+import { createEmotionCache } from '../createEmotionCache';
+import { theme } from '../theme';
 import type { EmotionCache } from '@emotion/cache';
 
 interface MyDocumentProps extends DocumentInitialProps {
@@ -15,6 +14,8 @@ interface MyDocumentProps extends DocumentInitialProps {
 interface EnhancedAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
+
+type PageProps = AppPropsType['pageProps'];
 
 class MyDocument extends Document<MyDocumentProps> {
   override render = (): JSX.Element => {
@@ -42,18 +43,23 @@ class MyDocument extends Document<MyDocumentProps> {
       originalRenderPage({
         enhanceApp: (App: React.ComponentType<EnhancedAppProps>) =>
           function EnhanceApp(props: EnhancedAppProps): JSX.Element {
-            return <App emotionCache={cache} {...props} />;
+            return (
+              <App
+                Component={props.Component}
+                pageProps={props.pageProps as PageProps}
+                router={props.router}
+                emotionCache={cache}
+              />
+            );
           },
       });
 
     const initialProps = await Document.getInitialProps(ctx);
     const emotionStyles = emotionServer.extractCriticalToChunks(initialProps.html);
     const emotionStyleTags = emotionStyles.styles.map((style) => (
-      <style
-        data-emotion={`${style.key} ${style.ids.join(' ')}`}
-        key={style.key}
-        dangerouslySetInnerHTML={{ __html: style.css }}
-      />
+      <style data-emotion={`${style.key} ${style.ids.join(' ')}`} key={style.key} suppressHydrationWarning>
+        {style.css}
+      </style>
     ));
 
     return {

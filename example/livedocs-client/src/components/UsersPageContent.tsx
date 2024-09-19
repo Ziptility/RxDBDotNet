@@ -53,11 +53,11 @@ const UsersPageContent: React.FC = () => {
 
   return (
     <Box>
-      {error && (
+      {error ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error.message}
         </Alert>
-      )}
+      ) : null}
       <Box sx={{ mb: 4 }}>
         <UserForm
           user={editingUser ?? undefined}
@@ -65,11 +65,11 @@ const UsersPageContent: React.FC = () => {
           onSubmit={editingUser ? handleUpdate : handleCreate}
         />
       </Box>
-      {editingUser && (
+      {editingUser ? (
         <Button onClick={(): void => setEditingUser(null)} sx={{ mb: 2 }}>
           Cancel Editing
         </Button>
-      )}
+      ) : null}
       <UserList
         users={users}
         onEdit={setEditingUser}

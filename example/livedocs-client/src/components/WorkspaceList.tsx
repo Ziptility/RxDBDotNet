@@ -5,9 +5,9 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 import type { Workspace } from '@/lib/schemas';
 
 export interface WorkspaceListProps {
-  workspaces: Workspace[];
-  onEdit: (workspace: Workspace) => void;
-  onDelete: (workspace: Workspace) => void;
+  readonly workspaces: Workspace[];
+  readonly onEdit: (workspace: Workspace) => void;
+  readonly onDelete: (workspace: Workspace) => void;
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({ workspaces, onEdit, onDelete }) => {

@@ -21,7 +21,7 @@ export function notifyUser(message: string, severity: 'error' | 'warning' | 'inf
 export class ReplicationError extends Error {
   constructor(
     message: string,
-    public originalError: RxError | Error
+    public originalError: RxError | Error,
   ) {
     super(message);
     this.name = 'ReplicationError';

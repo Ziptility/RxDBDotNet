@@ -4,8 +4,8 @@ import { TextField, Button, Box } from '@mui/material';
 import type { Workspace } from '@/lib/schemas';
 
 interface WorkspaceFormProps {
-  workspace: Workspace | undefined;
-  onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  readonly workspace: Workspace | undefined;
+  readonly onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
 }
 
 const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) => {

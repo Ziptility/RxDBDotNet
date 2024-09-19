@@ -5,9 +5,9 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 import type { User } from '@/lib/schemas';
 
 export interface UserListProps {
-  users: User[];
-  onEdit: (user: User) => void;
-  onDelete: (user: User) => void;
+  readonly users: User[];
+  readonly onEdit: (user: User) => void;
+  readonly onDelete: (user: User) => void;
 }
 
 const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {

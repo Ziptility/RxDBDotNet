@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
@@ -16,7 +16,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   console.log('ProtectedRoute: Render', { isLoggedIn, isInitialized, pathname: router.pathname });
 
   useEffect(() => {
-    console.log('ProtectedRoute: useEffect', { isLoggedIn, isInitialized, pathname: router.pathname });
+    console.log('ProtectedRoute: useEffect', {
+      isLoggedIn,
+      isInitialized,
+      pathname: router.pathname,
+    });
     if (isInitialized && !isLoggedIn && router.pathname !== '/login') {
       console.log('ProtectedRoute: Redirecting to login');
       void router.push('/login');
@@ -42,7 +46,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   console.log('ProtectedRoute: Rendering children');
-  return <>{children}</>;
+  return children;
 };
 
 export default ProtectedRoute;

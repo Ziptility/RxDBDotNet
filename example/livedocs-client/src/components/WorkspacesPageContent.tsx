@@ -45,22 +45,22 @@ const WorkspacesPageContent: React.FC = () => {
 
   return (
     <Box>
-      {error && (
+      {error ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error.message}
         </Alert>
-      )}
+      ) : null}
       <Box sx={{ mb: 4 }}>
         <WorkspaceForm
           workspace={editingWorkspace ?? undefined}
           onSubmit={editingWorkspace ? handleUpdate : handleCreate}
         />
       </Box>
-      {editingWorkspace && (
+      {editingWorkspace ? (
         <Button onClick={(): void => setEditingWorkspace(null)} sx={{ mb: 2 }}>
           Cancel Editing
         </Button>
-      )}
+      ) : null}
       <WorkspaceList
         workspaces={workspaces}
         onEdit={setEditingWorkspace}

@@ -18,7 +18,7 @@ export const WS_ENDPOINT = 'ws://localhost:5414/graphql';
 const setupReplicationForCollection = <T extends Workspace | User | LiveDoc>(
   db: LiveDocsDatabase,
   collectionName: keyof LiveDocsDatabase,
-  schema: RxJsonSchema<T>
+  schema: RxJsonSchema<T>,
 ): RxGraphQLReplicationState<T, ReplicationCheckpoint> => {
   const collection = db[collectionName] as RxCollection<T>;
 
@@ -70,7 +70,7 @@ export const setupReplication = async (db: LiveDocsDatabase): Promise<LiveDocsRe
       (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).error$.subscribe((error: RxError) => {
         console.error(`Replication error in ${name}:`, error);
       });
-    })
+    }),
   );
 
   return replicationStates;
@@ -81,14 +81,14 @@ export const restartReplication = async (replicationStates: LiveDocsReplicationS
     Object.entries(replicationStates).map(async ([, state]) => {
       await (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).cancel();
       await (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).start();
-    })
+    }),
   );
 };
 
 export const cancelReplication = async (replicationStates: LiveDocsReplicationStates): Promise<void> => {
   await Promise.all(
     Object.values(replicationStates).map((state) =>
-      (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).cancel()
-    )
+      (state as RxGraphQLReplicationState<unknown, ReplicationCheckpoint>).cancel(),
+    ),
   );
 };

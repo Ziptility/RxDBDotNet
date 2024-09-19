@@ -10,21 +10,21 @@ import { createTypedContext } from '@/utils/createTypedContext';
 import { handleAsyncError } from '@/utils/errorHandling';
 
 interface AuthContextType {
-  currentUser: User | null;
-  currentWorkspace: Workspace | null;
-  jwtAccessToken: string | null;
-  isLoggedIn: boolean;
-  isInitialized: boolean;
-  login: (userId: string, workspaceId: string) => Promise<void>;
-  logout: () => Promise<void>;
-  workspaces: Workspace[];
-  users: User[];
+  readonly currentUser: User | null;
+  readonly currentWorkspace: Workspace | null;
+  readonly jwtAccessToken: string | null;
+  readonly isLoggedIn: boolean;
+  readonly isInitialized: boolean;
+  readonly login: (userId: string, workspaceId: string) => Promise<void>;
+  readonly logout: () => Promise<void>;
+  readonly workspaces: Workspace[];
+  readonly users: User[];
 }
 
 const [useAuth, AuthProvider] = createTypedContext<AuthContextType>();
 
 interface AuthProviderComponentProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children }): JSX.Element => {

@@ -29,7 +29,7 @@ const pullQueryBuilder = (
             isDeleted
           }
           checkpoint {
-            id
+            lastDocumentId
             updatedAt
           }
         }
@@ -95,7 +95,7 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
             isDeleted
           }
           checkpoint {
-            id
+            lastDocumentId
             updatedAt
           }
         }

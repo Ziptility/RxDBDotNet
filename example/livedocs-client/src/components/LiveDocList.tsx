@@ -1,12 +1,22 @@
-// src\components\LiveDocList.tsx
+import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import type { LiveDoc } from '@/lib/schemas';
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
+  StyledTableCell,
+  StyledTableRow,
+  Paper,
+  IconButton,
+} from '@/styles/StyledComponents';
 
 export interface LiveDocListProps {
-  liveDocs: LiveDoc[];
-  onEdit: (liveDoc: LiveDoc) => void;
-  onDelete: (liveDoc: LiveDoc) => void;
+  readonly liveDocs: LiveDoc[];
+  readonly onEdit: (liveDoc: LiveDoc) => void;
+  readonly onDelete: (liveDoc: LiveDoc) => void;
 }
 
 const LiveDocList: React.FC<LiveDocListProps> = ({ liveDocs, onEdit, onDelete }) => {
@@ -15,29 +25,29 @@ const LiveDocList: React.FC<LiveDocListProps> = ({ liveDocs, onEdit, onDelete })
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Content</TableCell>
-            <TableCell>Owner ID</TableCell>
-            <TableCell>Workspace ID</TableCell>
-            <TableCell>Updated At</TableCell>
-            <TableCell>Actions</TableCell>
+            <StyledTableCell>Content</StyledTableCell>
+            <StyledTableCell>Owner ID</StyledTableCell>
+            <StyledTableCell>Workspace ID</StyledTableCell>
+            <StyledTableCell>Updated At</StyledTableCell>
+            <StyledTableCell>Actions</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {liveDocs.map((liveDoc) => (
-            <TableRow key={liveDoc.id}>
-              <TableCell>{liveDoc.content.substring(0, 50)}...</TableCell>
-              <TableCell>{liveDoc.ownerId}</TableCell>
-              <TableCell>{liveDoc.workspaceId}</TableCell>
-              <TableCell>{new Date(liveDoc.updatedAt).toLocaleString()}</TableCell>
-              <TableCell>
-                <IconButton onClick={(): void => onEdit(liveDoc)}>
+            <StyledTableRow key={liveDoc.id}>
+              <StyledTableCell>{liveDoc.content.substring(0, 50)}...</StyledTableCell>
+              <StyledTableCell>{liveDoc.ownerId}</StyledTableCell>
+              <StyledTableCell>{liveDoc.workspaceId}</StyledTableCell>
+              <StyledTableCell>{new Date(liveDoc.updatedAt).toLocaleString()}</StyledTableCell>
+              <StyledTableCell>
+                <IconButton onClick={(): void => onEdit(liveDoc)} color="primary">
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={(): void => onDelete(liveDoc)}>
+                <IconButton onClick={(): void => onDelete(liveDoc)} color="error">
                   <DeleteIcon />
                 </IconButton>
-              </TableCell>
-            </TableRow>
+              </StyledTableCell>
+            </StyledTableRow>
           ))}
         </TableBody>
       </Table>

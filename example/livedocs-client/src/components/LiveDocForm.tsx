@@ -1,7 +1,15 @@
-// src\components\LiveDocForm.tsx
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { MenuItem } from '@mui/material';
 import type { LiveDoc, User, Workspace } from '@/lib/schemas';
+import {
+  FormContainer,
+  PrimaryButton,
+  StyledForm,
+  StyledFormControl,
+  StyledInputLabel,
+  StyledSelect,
+  StyledTextField,
+} from '@/styles/StyledComponents';
 
 interface LiveDocFormProps {
   readonly liveDoc: LiveDoc | undefined;
@@ -38,41 +46,54 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField
+    <StyledForm onSubmit={handleSubmit}>
+      <FormContainer>
+        <StyledTextField
           label="Content"
           multiline
           rows={4}
           value={content}
           onChange={(e): void => setContent(e.target.value)}
           required
+          fullWidth
         />
-        <FormControl fullWidth>
-          <InputLabel>Owner</InputLabel>
-          <Select value={ownerId} onChange={(e): void => setOwnerId(e.target.value)} required>
+        <StyledFormControl>
+          <StyledInputLabel id="owner-select-label">Owner</StyledInputLabel>
+          <StyledSelect
+            labelId="owner-select-label"
+            value={ownerId}
+            onChange={(e): void => setOwnerId(e.target.value)}
+            label="Owner"
+            required
+          >
             {users.map((user) => (
               <MenuItem key={user.id} value={user.id}>
                 {`${user.firstName} ${user.lastName}`}
               </MenuItem>
             ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth>
-          <InputLabel>Workspace</InputLabel>
-          <Select value={workspaceId} onChange={(e): void => setWorkspaceId(e.target.value)} required>
+          </StyledSelect>
+        </StyledFormControl>
+        <StyledFormControl>
+          <StyledInputLabel id="workspace-select-label">Workspace</StyledInputLabel>
+          <StyledSelect
+            labelId="workspace-select-label"
+            value={workspaceId}
+            onChange={(e): void => setWorkspaceId(e.target.value)}
+            label="Workspace"
+            required
+          >
             {workspaces.map((workspace) => (
               <MenuItem key={workspace.id} value={workspace.id}>
                 {workspace.name}
               </MenuItem>
             ))}
-          </Select>
-        </FormControl>
-        <Button type="submit" variant="contained">
+          </StyledSelect>
+        </StyledFormControl>
+        <PrimaryButton type="submit" variant="contained">
           {liveDoc ? 'Update' : 'Create'} LiveDoc
-        </Button>
-      </Box>
-    </form>
+        </PrimaryButton>
+      </FormContainer>
+    </StyledForm>
   );
 };
 

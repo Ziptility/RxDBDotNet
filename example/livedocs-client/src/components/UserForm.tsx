@@ -24,6 +24,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
   const [email, setEmail] = useState<string>('');
   const [role, setRole] = useState<UserRole>(UserRole.StandardUser);
   const [workspaceId, setWorkspaceId] = useState<string>('');
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -41,15 +42,21 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    setIsFormValid(firstName.trim() !== '' && lastName.trim() !== '' && email.trim() !== '' && workspaceId !== '');
+  }, [firstName, lastName, email, workspaceId]);
+
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    void onSubmit({ firstName, lastName, email, role, workspaceId });
-    if (!user) {
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setRole(UserRole.StandardUser);
-      setWorkspaceId('');
+    if (isFormValid) {
+      void onSubmit({ firstName, lastName, email, role, workspaceId });
+      if (!user) {
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setRole(UserRole.StandardUser);
+        setWorkspaceId('');
+      }
     }
   };
 
@@ -110,7 +117,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
             ))}
           </StyledSelect>
         </StyledFormControl>
-        <PrimaryButton type="submit" variant="contained">
+        <PrimaryButton type="submit" variant="contained" disabled={!isFormValid}>
           {user ? 'Update' : 'Create'} User
         </PrimaryButton>
       </FormContainer>

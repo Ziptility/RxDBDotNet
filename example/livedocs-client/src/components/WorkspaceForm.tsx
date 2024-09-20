@@ -9,6 +9,7 @@ interface WorkspaceFormProps {
 
 const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) => {
   const [name, setName] = useState<string>('');
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   useEffect(() => {
     if (workspace) {
@@ -18,11 +19,17 @@ const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) =>
     }
   }, [workspace]);
 
+  useEffect(() => {
+    setIsFormValid(name.trim() !== '');
+  }, [name]);
+
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    void onSubmit({ name });
-    if (!workspace) {
-      setName('');
+    if (isFormValid) {
+      void onSubmit({ name });
+      if (!workspace) {
+        setName('');
+      }
     }
   };
 
@@ -36,7 +43,7 @@ const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) =>
           required
           fullWidth
         />
-        <PrimaryButton type="submit" variant="contained">
+        <PrimaryButton type="submit" variant="contained" disabled={!isFormValid}>
           {workspace ? 'Update' : 'Create'} Workspace
         </PrimaryButton>
       </FormContainer>

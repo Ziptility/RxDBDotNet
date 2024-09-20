@@ -18,16 +18,19 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
+    <AppBar
+      position="static"
+      sx={{ bgcolor: 'background.paper', boxShadow: 'none', borderBottom: 1, borderColor: 'divider' }}
+    >
       <Toolbar>
-        <Typography variant="h6" component="div">
+        <Typography variant="h6" component="div" sx={{ color: 'primary.main' }}>
           LiveDocs
         </Typography>
         <SpaceBetweenBox sx={{ ml: 2, flexGrow: 1 }}>
           <NavButtons />
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <NetworkStatus />
-            <SecondaryButton variant="outlined" onClick={(): void => void handleLogout()} sx={{ ml: 2 }}>
+            <SecondaryButton onClick={(): void => void handleLogout()} sx={{ ml: 2 }}>
               Logout
             </SecondaryButton>
           </Box>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Workspace } from '@/lib/schemas';
-import { FormContainer, TextField, PrimaryButton, StyledForm } from '@/styles/StyledComponents';
+import { FormContainer, StyledTextField, PrimaryButton, StyledForm } from '@/styles/StyledComponents';
 
 interface WorkspaceFormProps {
   readonly workspace: Workspace | undefined;
@@ -29,7 +29,7 @@ const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) =>
   return (
     <StyledForm onSubmit={handleSubmit}>
       <FormContainer>
-        <TextField
+        <StyledTextField
           label="Workspace Name"
           value={name}
           onChange={(e): void => setName(e.target.value)}

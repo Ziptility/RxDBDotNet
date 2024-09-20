@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
     >
       <Header />
       <Box component="main" sx={{ flexGrow: 1 }}>
-        <PageContainer sx={{ py: 3 }}>{children}</PageContainer>
+        <PageContainer>{children}</PageContainer>
       </Box>
       <Footer />
     </Box>

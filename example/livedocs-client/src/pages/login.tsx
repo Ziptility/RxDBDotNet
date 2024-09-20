@@ -9,10 +9,10 @@ import {
   PageTitle,
   FormContainer,
   PrimaryButton,
-  CircularProgress,
+  StyledCircularProgress,
   CenteredBox,
   ErrorText,
-  Select,
+  StyledSelect,
 } from '@/styles/StyledComponents';
 
 const LoginPage: React.FC = () => {
@@ -60,7 +60,7 @@ const LoginPage: React.FC = () => {
   if (!isInitialized || isLoading) {
     return (
       <CenteredBox sx={{ height: '100vh' }}>
-        <CircularProgress />
+        <StyledCircularProgress />
       </CenteredBox>
     );
   }
@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
         >
           <FormControl fullWidth>
             <InputLabel id="workspace-select-label">Workspace</InputLabel>
-            <Select
+            <StyledSelect
               labelId="workspace-select-label"
               id="workspace-select"
               value={selectedWorkspace}
@@ -92,11 +92,11 @@ const LoginPage: React.FC = () => {
                   {workspace.name}
                 </MenuItem>
               ))}
-            </Select>
+            </StyledSelect>
           </FormControl>
           <FormControl fullWidth>
             <InputLabel id="user-select-label">User</InputLabel>
-            <Select
+            <StyledSelect
               labelId="user-select-label"
               id="user-select"
               value={selectedUser}
@@ -111,9 +111,9 @@ const LoginPage: React.FC = () => {
                     {`${user.firstName} ${user.lastName} (${user.role})`}
                   </MenuItem>
                 ))}
-            </Select>
+            </StyledSelect>
           </FormControl>
-          <PrimaryButton type="submit" fullWidth variant="contained" disabled={!selectedWorkspace || !selectedUser}>
+          <PrimaryButton type="submit" fullWidth disabled={!selectedWorkspace || !selectedUser}>
             Sign In
           </PrimaryButton>
           {error ? <ErrorText sx={{ mt: 2, textAlign: 'center' }}>{error}</ErrorText> : null}

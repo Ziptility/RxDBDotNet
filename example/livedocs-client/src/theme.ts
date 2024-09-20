@@ -1,3 +1,4 @@
+// src/theme.ts
 import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
@@ -10,10 +11,10 @@ export const theme = createTheme({
       contrastText: '#000000',
     },
     secondary: {
-      main: '#90caf9',
-      light: '#b3e5fc',
-      dark: '#42a5f5',
-      contrastText: '#000000',
+      main: '#9c27b0',
+      light: '#ba68c8',
+      dark: '#7b1fa2',
+      contrastText: '#ffffff',
     },
     background: {
       default: '#121212',
@@ -26,14 +27,14 @@ export const theme = createTheme({
     error: {
       main: '#f44336',
     },
+    success: {
+      main: '#66bb6a',
+    },
     warning: {
       main: '#ffa726',
     },
     info: {
       main: '#29b6f6',
-    },
-    success: {
-      main: '#66bb6a',
     },
     action: {
       disabledBackground: 'rgba(206, 147, 216, 0.12)',

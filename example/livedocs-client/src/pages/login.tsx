@@ -79,7 +79,7 @@ const LoginPage: React.FC = () => {
           }}
         >
           <FormContainer>
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth>
               <InputLabel id="workspace-select-label">Workspace</InputLabel>
               <StyledSelect
                 labelId="workspace-select-label"
@@ -95,7 +95,7 @@ const LoginPage: React.FC = () => {
                 ))}
               </StyledSelect>
             </FormControl>
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth>
               <InputLabel id="user-select-label">User</InputLabel>
               <StyledSelect
                 labelId="user-select-label"
@@ -114,7 +114,7 @@ const LoginPage: React.FC = () => {
                   ))}
               </StyledSelect>
             </FormControl>
-            <PrimaryButton type="submit" disabled={!selectedWorkspace || !selectedUser} fullWidth variant="contained">
+            <PrimaryButton type="submit" disabled={!selectedWorkspace || !selectedUser} fullWidth>
               Sign In
             </PrimaryButton>
             {error ? <ErrorText>{error}</ErrorText> : null}

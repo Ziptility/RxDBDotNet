@@ -1,4 +1,3 @@
-// src\components\UserForm.tsx
 import React, { useState, useEffect } from 'react';
 import { MenuItem } from '@mui/material';
 import type { User, Workspace } from '@/lib/schemas';
@@ -34,7 +33,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
       setRole(user.role);
       setWorkspaceId(user.workspaceId);
     } else {
-      // Reset form when user is undefined (creating a new user)
       setFirstName('');
       setLastName('');
       setEmail('');
@@ -47,7 +45,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
     e.preventDefault();
     void onSubmit({ firstName, lastName, email, role, workspaceId });
     if (!user) {
-      // Reset form after submission when creating a new user
       setFirstName('');
       setLastName('');
       setEmail('');

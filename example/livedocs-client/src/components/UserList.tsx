@@ -1,8 +1,17 @@
-// src\components\UserList.tsx
 import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import type { User } from '@/lib/schemas';
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
+  StyledTableCell,
+  StyledTableRow,
+  Paper,
+  IconButton,
+} from '@/styles/StyledComponents';
 
 export interface UserListProps {
   readonly users: User[];
@@ -16,31 +25,31 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Role</TableCell>
-            <TableCell>Workspace ID</TableCell>
-            <TableCell>Updated At</TableCell>
-            <TableCell>Actions</TableCell>
+            <StyledTableCell>Name</StyledTableCell>
+            <StyledTableCell>Email</StyledTableCell>
+            <StyledTableCell>Role</StyledTableCell>
+            <StyledTableCell>Workspace ID</StyledTableCell>
+            <StyledTableCell>Updated At</StyledTableCell>
+            <StyledTableCell>Actions</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>{user.role}</TableCell>
-              <TableCell>{user.workspaceId}</TableCell>
-              <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
-              <TableCell>
-                <IconButton onClick={(): void => onEdit(user)}>
+            <StyledTableRow key={user.id}>
+              <StyledTableCell>{`${user.firstName} ${user.lastName}`}</StyledTableCell>
+              <StyledTableCell>{user.email}</StyledTableCell>
+              <StyledTableCell>{user.role}</StyledTableCell>
+              <StyledTableCell>{user.workspaceId}</StyledTableCell>
+              <StyledTableCell>{new Date(user.updatedAt).toLocaleString()}</StyledTableCell>
+              <StyledTableCell>
+                <IconButton onClick={(): void => onEdit(user)} color="primary">
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={(): void => onDelete(user)}>
+                <IconButton onClick={(): void => onDelete(user)} color="error">
                   <DeleteIcon />
                 </IconButton>
-              </TableCell>
-            </TableRow>
+              </StyledTableCell>
+            </StyledTableRow>
           ))}
         </TableBody>
       </Table>

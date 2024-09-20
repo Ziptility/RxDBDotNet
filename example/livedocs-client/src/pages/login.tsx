@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-max-depth */
 import React, { useState, useEffect } from 'react';
 import { FormControl, InputLabel, MenuItem, type SelectChangeEvent } from '@mui/material';
 import { useRouter } from 'next/router';
@@ -13,6 +14,7 @@ import {
   CenteredBox,
   ErrorText,
   StyledSelect,
+  StyledForm,
 } from '@/styles/StyledComponents';
 
 const LoginPage: React.FC = () => {
@@ -66,58 +68,58 @@ const LoginPage: React.FC = () => {
   }
 
   return (
-    <PageContainer>
-      <ContentPaper sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
-        <PageTitle variant="h5" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
+    <PageContainer maxWidth="sm">
+      <ContentPaper elevation={0}>
+        <PageTitle variant="h4" align="center" gutterBottom>
           Sign in to LiveDocs
         </PageTitle>
-        <FormContainer
-          as="form"
+        <StyledForm
           onSubmit={(e: React.FormEvent): void => {
             void handleSubmit(e);
           }}
-          sx={{ width: '100%' }}
         >
-          <FormControl fullWidth>
-            <InputLabel id="workspace-select-label">Workspace</InputLabel>
-            <StyledSelect
-              labelId="workspace-select-label"
-              id="workspace-select"
-              value={selectedWorkspace}
-              label="Workspace"
-              onChange={handleWorkspaceChange}
-            >
-              {workspaces.map((workspace: Workspace) => (
-                <MenuItem key={workspace.id} value={workspace.id}>
-                  {workspace.name}
-                </MenuItem>
-              ))}
-            </StyledSelect>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="user-select-label">User</InputLabel>
-            <StyledSelect
-              labelId="user-select-label"
-              id="user-select"
-              value={selectedUser}
-              label="User"
-              onChange={handleUserChange}
-              disabled={!selectedWorkspace}
-            >
-              {users
-                .filter((user: User) => user.workspaceId === selectedWorkspace)
-                .map((user: User) => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {`${user.firstName} ${user.lastName} (${user.role})`}
+          <FormContainer>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="workspace-select-label">Workspace</InputLabel>
+              <StyledSelect
+                labelId="workspace-select-label"
+                id="workspace-select"
+                value={selectedWorkspace}
+                label="Workspace"
+                onChange={handleWorkspaceChange}
+              >
+                {workspaces.map((workspace: Workspace) => (
+                  <MenuItem key={workspace.id} value={workspace.id}>
+                    {workspace.name}
                   </MenuItem>
                 ))}
-            </StyledSelect>
-          </FormControl>
-          <PrimaryButton type="submit" fullWidth disabled={!selectedWorkspace || !selectedUser}>
-            Sign In
-          </PrimaryButton>
-          {error ? <ErrorText sx={{ mt: 2, textAlign: 'center' }}>{error}</ErrorText> : null}
-        </FormContainer>
+              </StyledSelect>
+            </FormControl>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="user-select-label">User</InputLabel>
+              <StyledSelect
+                labelId="user-select-label"
+                id="user-select"
+                value={selectedUser}
+                label="User"
+                onChange={handleUserChange}
+                disabled={!selectedWorkspace}
+              >
+                {users
+                  .filter((user: User) => user.workspaceId === selectedWorkspace)
+                  .map((user: User) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {`${user.firstName} ${user.lastName} (${user.role})`}
+                    </MenuItem>
+                  ))}
+              </StyledSelect>
+            </FormControl>
+            <PrimaryButton type="submit" disabled={!selectedWorkspace || !selectedUser} fullWidth variant="contained">
+              Sign In
+            </PrimaryButton>
+            {error ? <ErrorText>{error}</ErrorText> : null}
+          </FormContainer>
+        </StyledForm>
       </ContentPaper>
     </PageContainer>
   );

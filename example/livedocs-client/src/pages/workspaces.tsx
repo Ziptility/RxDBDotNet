@@ -1,6 +1,6 @@
 // src\pages\workspaces.tsx
 import React from 'react';
-import { Typography, Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import dynamic from 'next/dynamic';
 
 const WorkspacesPageContent = dynamic(() => import('../components/WorkspacesPageContent'), {
@@ -13,14 +13,7 @@ const WorkspacesPageContent = dynamic(() => import('../components/WorkspacesPage
 });
 
 const WorkspacesPage: React.FC = () => {
-  return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Workspaces
-      </Typography>
-      <WorkspacesPageContent />
-    </>
-  );
+  return <WorkspacesPageContent />;
 };
 
 export default WorkspacesPage;

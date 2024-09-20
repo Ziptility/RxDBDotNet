@@ -5,7 +5,6 @@ import type { Workspace } from '@/lib/schemas';
 import {
   PageContainer,
   ContentPaper,
-  PageTitle,
   SectionTitle,
   PrimaryButton,
   ListContainer,
@@ -58,7 +57,6 @@ const WorkspacesPageContent: React.FC = () => {
 
   return (
     <PageContainer>
-      <PageTitle variant="h4">Workspaces</PageTitle>
       {error ? (
         <StyledAlert severity="error" sx={{ mb: 2 }}>
           {error.message}

@@ -5,7 +5,7 @@ export const theme = createTheme({
     mode: 'dark',
     primary: {
       main: '#90caf9',
-      light: '#e3f2fd',
+      light: '#b3e5fc',
       dark: '#42a5f5',
       contrastText: '#000000',
     },
@@ -14,6 +14,14 @@ export const theme = createTheme({
       light: '#f3e5f5',
       dark: '#ab47bc',
       contrastText: '#000000',
+    },
+    background: {
+      default: '#121212',
+      paper: '#1e1e1e',
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: '#b0bec5',
     },
     error: {
       main: '#f44336',
@@ -27,84 +35,57 @@ export const theme = createTheme({
     success: {
       main: '#66bb6a',
     },
-    background: {
-      default: '#121212',
-      paper: '#1e1e1e',
-    },
-    text: {
-      primary: '#ffffff',
-      secondary: '#b0bec5',
+    action: {
+      disabledBackground: 'rgba(144, 202, 249, 0.12)',
+      disabled: 'rgba(255, 255, 255, 0.3)',
     },
   },
   typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(','),
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     h1: {
-      fontSize: '2.5rem',
-      fontWeight: 500,
-      lineHeight: 1.2,
-      marginBottom: '16px',
+      fontSize: '2rem',
+      fontWeight: 600,
     },
     h2: {
-      fontSize: '2rem',
-      fontWeight: 500,
-      lineHeight: 1.2,
-      marginBottom: '16px',
+      fontSize: '1.75rem',
+      fontWeight: 600,
     },
     h3: {
-      fontSize: '1.75rem',
-      fontWeight: 500,
-      lineHeight: 1.2,
-      marginBottom: '16px',
+      fontSize: '1.5rem',
+      fontWeight: 600,
     },
     h4: {
-      fontSize: '1.5rem',
-      fontWeight: 500,
-      lineHeight: 1.2,
-      marginBottom: '16px',
+      fontSize: '1.25rem',
+      fontWeight: 600,
     },
     h5: {
-      fontSize: '1.25rem',
-      fontWeight: 500,
-      lineHeight: 1.2,
-      marginBottom: '16px',
+      fontSize: '1.1rem',
+      fontWeight: 600,
     },
     h6: {
       fontSize: '1rem',
-      fontWeight: 500,
-      lineHeight: 1.2,
-      marginBottom: '16px',
+      fontWeight: 600,
     },
     body1: {
       fontSize: '1rem',
-      lineHeight: 1.5,
     },
     body2: {
       fontSize: '0.875rem',
-      lineHeight: 1.5,
     },
   },
   shape: {
     borderRadius: 8,
   },
-  spacing: 4,
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: 'none',
-          borderRadius: 8,
-          padding: '8px 16px',
+          fontWeight: 500,
+          '&.Mui-disabled': {
+            color: 'rgba(255, 255, 255, 0.3)',
+            backgroundColor: 'rgba(144, 202, 249, 0.12)',
+          },
         },
       },
     },
@@ -113,7 +94,7 @@ export const theme = createTheme({
         root: {
           '& .MuiOutlinedInput-root': {
             '& fieldset': {
-              borderColor: '#b0bec5',
+              borderColor: 'rgba(255, 255, 255, 0.23)',
             },
             '&:hover fieldset': {
               borderColor: '#90caf9',
@@ -128,8 +109,7 @@ export const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1e1e1e',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)',
+          backgroundImage: 'none',
         },
       },
     },

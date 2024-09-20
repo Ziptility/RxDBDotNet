@@ -2,38 +2,38 @@ import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
-    mode: 'light',
+    mode: 'dark',
     primary: {
-      main: '#212121',
-      light: '#484848',
-      dark: '#000000',
-      contrastText: '#ffffff',
+      main: '#90caf9',
+      light: '#e3f2fd',
+      dark: '#42a5f5',
+      contrastText: '#000000',
     },
     secondary: {
-      main: '#757575',
-      light: '#a4a4a4',
-      dark: '#494949',
-      contrastText: '#ffffff',
+      main: '#ce93d8',
+      light: '#f3e5f5',
+      dark: '#ab47bc',
+      contrastText: '#000000',
     },
     error: {
-      main: '#d32f2f',
+      main: '#f44336',
     },
     warning: {
-      main: '#f57c00',
+      main: '#ffa726',
     },
     info: {
-      main: '#1976d2',
+      main: '#29b6f6',
     },
     success: {
-      main: '#388e3c',
+      main: '#66bb6a',
     },
     background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
+      default: '#121212',
+      paper: '#1e1e1e',
     },
     text: {
-      primary: '#212121',
-      secondary: '#757575',
+      primary: '#ffffff',
+      secondary: '#b0bec5',
     },
   },
   typography: {
@@ -113,13 +113,13 @@ export const theme = createTheme({
         root: {
           '& .MuiOutlinedInput-root': {
             '& fieldset': {
-              borderColor: '#757575',
+              borderColor: '#b0bec5',
             },
             '&:hover fieldset': {
-              borderColor: '#212121',
+              borderColor: '#90caf9',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#212121',
+              borderColor: '#90caf9',
             },
           },
         },
@@ -128,6 +128,7 @@ export const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
+          backgroundColor: '#1e1e1e',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)',
         },
       },

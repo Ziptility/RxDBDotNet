@@ -14,17 +14,17 @@
 
 ## Color Palette
 
-1. Use the monochromatic color scheme defined in `theme.ts`.
-2. Primary color: #212121
-3. Secondary color: #757575
-4. Background color: #f5f5f5
-5. Surface color: #ffffff
-6. Text colors: Primary #212121, Secondary #757575
+1. Use the dark mode color scheme defined in `theme.ts`.
+2. Primary color: #90caf9
+3. Secondary color: #ce93d8
+4. Background color: #121212
+5. Surface color: #1e1e1e
+6. Text colors: Primary #ffffff, Secondary #b0bec5
 7. Accent colors (use sparingly):
-   - Error: #d32f2f
-   - Success: #388e3c
-   - Warning: #f57c00
-   - Info: #1976d2
+   - Error: #f44336
+   - Success: #66bb6a
+   - Warning: #ffa726
+   - Info: #29b6f6
 
 ## Typography
 
@@ -71,7 +71,7 @@
 ## Accessibility
 
 1. Maintain WCAG 2.1 AA compliance.
-2. Ensure sufficient color contrast within the monochromatic scheme.
+2. Ensure sufficient color contrast within the dark color scheme.
 3. Provide clear focus indicators for keyboard navigation.
 
 ## Code Organization
@@ -79,11 +79,18 @@
 1. Maintain styled components in `StyledComponents.tsx`.
 2. Use `globals.css` for baseline styles and utility classes.
 
+## Dark Mode Implementation
+
+1. The application now uses a dark mode theme by default.
+2. Ensure all new components and styles are designed with dark mode in mind.
+3. Use the color variables defined in `globals.css` for consistency.
+4. When adding new colors, consider their appearance in dark mode.
+
 ## Continuous Improvement
 
 1. Regularly refactor components for simplicity and reusability.
 2. Incorporate Material-UI best practices when relevant.
-3. Seek opportunities to enhance the monochromatic, minimalist design.
+3. Seek opportunities to enhance the dark mode, minimalist design.
 
 ## AI-Specific Instructions
 
@@ -91,7 +98,7 @@
 2. Prioritize simplicity in all design suggestions or code generation.
 3. Before adding new elements, evaluate if existing components can fulfill the requirement.
 4. When suggesting changes, provide rationale based on the core design principle.
-5. Generate code that adheres to the established color palette and typography.
+5. Generate code that adheres to the established dark mode color palette and typography.
 6. Recommend removal of unnecessary elements to align with the minimalist aesthetic.
 7. Ensure all generated code and suggestions maintain accessibility standards.
 8. When in doubt, err on the side of simplicity and minimalism.
@@ -101,9 +108,10 @@
 When assessing design decisions or generated code, consider:
 
 1. Does it adhere to the core design principle of simplicity?
-2. Does it utilize the established theme and styled components?
+2. Does it utilize the established dark mode theme and styled components?
 3. Does it maintain consistency with existing design patterns?
 4. Does it enhance or detract from the user's ability to complete their task?
 5. Can any element be removed without compromising functionality?
+6. Does it maintain good contrast and readability in dark mode?
 
-Apply these guidelines in all interactions related to the LiveDocs application's design and development. Constantly evaluate against the core principle of simplicity and minimalism.
+Apply these guidelines in all interactions related to the LiveDocs application's design and development. Constantly evaluate against the core principle of simplicity and minimalism, while ensuring a comfortable dark mode experience.

@@ -1,5 +1,3 @@
-// src/theme.ts
-
 import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
@@ -53,55 +51,60 @@ export const theme = createTheme({
     ].join(','),
     h1: {
       fontSize: '2.5rem',
-      marginBottom: '16px',
       fontWeight: 500,
       lineHeight: 1.2,
+      marginBottom: '16px',
     },
     h2: {
       fontSize: '2rem',
-      marginBottom: '16px',
       fontWeight: 500,
       lineHeight: 1.2,
+      marginBottom: '16px',
     },
     h3: {
       fontSize: '1.75rem',
-      marginBottom: '16px',
       fontWeight: 500,
       lineHeight: 1.2,
+      marginBottom: '16px',
     },
     h4: {
       fontSize: '1.5rem',
-      marginBottom: '16px',
       fontWeight: 500,
       lineHeight: 1.2,
+      marginBottom: '16px',
     },
     h5: {
       fontSize: '1.25rem',
-      marginBottom: '16px',
       fontWeight: 500,
       lineHeight: 1.2,
+      marginBottom: '16px',
     },
     h6: {
       fontSize: '1rem',
-      marginBottom: '16px',
       fontWeight: 500,
       lineHeight: 1.2,
+      marginBottom: '16px',
+    },
+    body1: {
+      fontSize: '1rem',
+      lineHeight: 1.5,
+    },
+    body2: {
+      fontSize: '0.875rem',
+      lineHeight: 1.5,
     },
   },
-  spacing: 4, // Base spacing unit set to 4px
+  shape: {
+    borderRadius: 8,
+  },
+  spacing: 4,
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: 'none',
           borderRadius: 8,
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#212121',
+          padding: '8px 16px',
         },
       },
     },
@@ -124,14 +127,8 @@ export const theme = createTheme({
     },
     MuiPaper: {
       styleOverrides: {
-        elevation1: {
+        root: {
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)',
-        },
-        elevation2: {
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)',
-        },
-        elevation3: {
-          boxShadow: '0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)',
         },
       },
     },

@@ -10,10 +10,10 @@ import {
   PageTitle,
   FormContainer,
   PrimaryButton,
-  StyledCircularProgress,
+  CircularProgress,
   CenteredBox,
   ErrorText,
-  StyledSelect,
+  Select,
 } from '@/styles/StyledComponents';
 
 const LoginPage: React.FC = (): JSX.Element => {
@@ -76,7 +76,7 @@ const LoginPage: React.FC = (): JSX.Element => {
     console.log('LoginPage: Showing loading spinner');
     return (
       <CenteredBox sx={{ height: '100vh' }}>
-        <StyledCircularProgress />
+        <CircularProgress />
       </CenteredBox>
     );
   }
@@ -97,7 +97,7 @@ const LoginPage: React.FC = (): JSX.Element => {
         >
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="workspace-select-label">Workspace</InputLabel>
-            <StyledSelect
+            <Select
               labelId="workspace-select-label"
               id="workspace-select"
               value={selectedWorkspace}
@@ -109,11 +109,11 @@ const LoginPage: React.FC = (): JSX.Element => {
                   {workspace.name}
                 </MenuItem>
               ))}
-            </StyledSelect>
+            </Select>
           </FormControl>
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="user-select-label">User</InputLabel>
-            <StyledSelect
+            <Select
               labelId="user-select-label"
               id="user-select"
               value={selectedUser}
@@ -129,7 +129,7 @@ const LoginPage: React.FC = (): JSX.Element => {
                     value={user.id}
                   >{`${user.firstName} ${user.lastName} (${user.role})`}</MenuItem>
                 ))}
-            </StyledSelect>
+            </Select>
           </FormControl>
           <PrimaryButton
             type="submit"

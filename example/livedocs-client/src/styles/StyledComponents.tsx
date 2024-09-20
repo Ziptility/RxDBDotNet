@@ -1,92 +1,49 @@
-import { Box, Paper, Typography, Button, TextField, Alert, CircularProgress, Select } from '@mui/material';
+import { Box, Paper, Typography, Alert, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import type {
-  BoxProps,
-  PaperProps,
-  TypographyProps,
-  ButtonProps,
-  TextFieldProps,
-  AlertProps,
-  CircularProgressProps,
-  SelectProps,
-} from '@mui/material';
+import type { BoxProps, PaperProps, TypographyProps, AlertProps, ButtonProps } from '@mui/material';
 
 export const PageContainer = styled(Box)<BoxProps>(({ theme }) => ({
-  padding: theme.spacing(3),
+  padding: theme.spacing(6),
   maxWidth: '1200px',
   margin: '0 auto',
   backgroundColor: theme.palette.background.default,
 }));
 
 export const ContentPaper = styled(Paper)<PaperProps>(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+  padding: theme.spacing(6),
+  marginBottom: theme.spacing(6),
   backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[1],
 }));
 
 export const PageTitle = styled(Typography)<TypographyProps>(({ theme }) => ({
   color: theme.palette.text.primary,
-  fontWeight: 'bold',
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(4),
 }));
 
 export const SectionTitle = styled(Typography)<TypographyProps>(({ theme }) => ({
   color: theme.palette.text.secondary,
-  fontWeight: 'bold',
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(3),
 }));
 
 export const FormContainer = styled(Box)<BoxProps>(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  gap: theme.spacing(2),
-}));
-
-export const StyledTextField = styled(TextField)<TextFieldProps>(({ theme }) => ({
-  '& .MuiOutlinedInput-root': {
-    '& fieldset': {
-      borderColor: theme.palette.secondary.light,
-    },
-    '&:hover fieldset': {
-      borderColor: theme.palette.secondary.main,
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: theme.palette.primary.main,
-    },
-  },
-}));
-
-export const PrimaryButton = styled(Button)<ButtonProps>(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  '&:hover': {
-    backgroundColor: theme.palette.primary.dark,
-  },
-}));
-
-export const SecondaryButton = styled(Button)<ButtonProps>(({ theme }) => ({
-  backgroundColor: theme.palette.secondary.main,
-  color: theme.palette.secondary.contrastText,
-  '&:hover': {
-    backgroundColor: theme.palette.secondary.dark,
-  },
+  gap: theme.spacing(4),
 }));
 
 export const ListContainer = styled(Box)<BoxProps>(({ theme }) => ({
-  marginTop: theme.spacing(3),
+  marginTop: theme.spacing(6),
 }));
 
 export const FlexBox = styled(Box)<BoxProps>({
   display: 'flex',
 });
 
-export const CenteredBox = styled(Box)<BoxProps & { height?: string }>(({ height }) => ({
+export const CenteredBox = styled(Box)<BoxProps>({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  height: height ?? 'auto',
-}));
+});
 
 export const SpaceBetweenBox = styled(Box)<BoxProps>({
   display: 'flex',
@@ -110,31 +67,40 @@ export const InfoText = styled(Typography)<TypographyProps>(({ theme }) => ({
   color: theme.palette.info.main,
 }));
 
-export const RoundedBox = styled(Box)<BoxProps>(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius,
-}));
-
 export const StyledForm = styled('form')(({ theme }) => ({
   width: '100%',
-  marginTop: theme.spacing(1),
+  marginTop: theme.spacing(3),
 }));
 
 export const StyledAlert = styled(Alert)<AlertProps>(({ theme }) => ({
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(4),
 }));
 
-export const StyledCircularProgress = styled(CircularProgress)<CircularProgressProps>(({ theme }) => ({
-  color: theme.palette.primary.main,
+export const PrimaryButton = styled(Button)<ButtonProps>(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  padding: theme.spacing(2, 4),
+  '&:hover': {
+    backgroundColor: theme.palette.primary.main,
+  },
+  '&:disabled': {
+    backgroundColor: theme.palette.action.disabledBackground,
+    color: theme.palette.action.disabled,
+  },
 }));
 
-export const StyledSelect = styled(Select<string>)<SelectProps<string>>((props) => ({
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: props.theme.palette.secondary.light,
+export const SecondaryButton = styled(Button)<ButtonProps>(({ theme }) => ({
+  backgroundColor: theme.palette.secondary.main,
+  color: theme.palette.secondary.contrastText,
+  padding: theme.spacing(2, 4),
+  '&:hover': {
+    backgroundColor: theme.palette.secondary.main,
   },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: props.theme.palette.secondary.main,
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: props.theme.palette.primary.main,
+  '&:disabled': {
+    backgroundColor: theme.palette.action.disabledBackground,
+    color: theme.palette.action.disabled,
   },
 }));
+
+// Re-export Material-UI components that don't need custom styling
+export { TextField, CircularProgress, Select } from '@mui/material';

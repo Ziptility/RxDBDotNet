@@ -11,7 +11,7 @@ import {
   ListContainer,
   SpaceBetweenBox,
   StyledAlert,
-  StyledCircularProgress,
+  CircularProgress,
 } from '@/styles/StyledComponents';
 import WorkspaceForm from './WorkspaceForm';
 import WorkspaceList from './WorkspaceList';
@@ -51,7 +51,7 @@ const WorkspacesPageContent: React.FC = () => {
   if (isLoading) {
     return (
       <PageContainer>
-        <StyledCircularProgress />
+        <CircularProgress />
       </PageContainer>
     );
   }

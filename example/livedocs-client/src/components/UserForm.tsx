@@ -1,8 +1,17 @@
 // src\components\UserForm.tsx
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { MenuItem } from '@mui/material';
 import type { User, Workspace } from '@/lib/schemas';
 import { UserRole } from '@/lib/schemas';
+import {
+  FormContainer,
+  PrimaryButton,
+  StyledForm,
+  StyledFormControl,
+  StyledInputLabel,
+  StyledSelect,
+  StyledTextField,
+} from '@/styles/StyledComponents';
 
 interface UserFormProps {
   readonly user: User | undefined;
@@ -48,36 +57,67 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField label="First Name" value={firstName} onChange={(e): void => setFirstName(e.target.value)} required />
-        <TextField label="Last Name" value={lastName} onChange={(e): void => setLastName(e.target.value)} required />
-        <TextField label="Email" type="email" value={email} onChange={(e): void => setEmail(e.target.value)} required />
-        <FormControl fullWidth>
-          <InputLabel>Role</InputLabel>
-          <Select value={role} onChange={(e): void => setRole(e.target.value as UserRole)} required>
+    <StyledForm onSubmit={handleSubmit}>
+      <FormContainer>
+        <StyledTextField
+          label="First Name"
+          value={firstName}
+          onChange={(e): void => setFirstName(e.target.value)}
+          required
+          fullWidth
+        />
+        <StyledTextField
+          label="Last Name"
+          value={lastName}
+          onChange={(e): void => setLastName(e.target.value)}
+          required
+          fullWidth
+        />
+        <StyledTextField
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e): void => setEmail(e.target.value)}
+          required
+          fullWidth
+        />
+        <StyledFormControl>
+          <StyledInputLabel id="role-select-label">Role</StyledInputLabel>
+          <StyledSelect
+            labelId="role-select-label"
+            value={role}
+            onChange={(e): void => setRole(e.target.value as UserRole)}
+            label="Role"
+            required
+          >
             {Object.values(UserRole).map((roleValue) => (
               <MenuItem key={roleValue} value={roleValue}>
                 {roleValue}
               </MenuItem>
             ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth>
-          <InputLabel>Workspace</InputLabel>
-          <Select value={workspaceId} onChange={(e): void => setWorkspaceId(e.target.value)} required>
+          </StyledSelect>
+        </StyledFormControl>
+        <StyledFormControl>
+          <StyledInputLabel id="workspace-select-label">Workspace</StyledInputLabel>
+          <StyledSelect
+            labelId="workspace-select-label"
+            value={workspaceId}
+            onChange={(e): void => setWorkspaceId(e.target.value)}
+            label="Workspace"
+            required
+          >
             {workspaces.map((workspace) => (
               <MenuItem key={workspace.id} value={workspace.id}>
                 {workspace.name}
               </MenuItem>
             ))}
-          </Select>
-        </FormControl>
-        <Button type="submit" variant="contained">
+          </StyledSelect>
+        </StyledFormControl>
+        <PrimaryButton type="submit" variant="contained">
           {user ? 'Update' : 'Create'} User
-        </Button>
-      </Box>
-    </form>
+        </PrimaryButton>
+      </FormContainer>
+    </StyledForm>
   );
 };
 

@@ -1,4 +1,16 @@
-import { Box, Button, CircularProgress, Container, Paper, TextField, Typography, Alert, Select } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Paper,
+  FormControl,
+  InputLabel,
+  Typography,
+  Alert,
+  Select,
+  TextField,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 export const PageContainer = styled(Container)(({ theme }) => ({
@@ -50,6 +62,7 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
 }));
 
 export const StyledTextField = styled(TextField)(({ theme }) => ({
+  marginBottom: theme.spacing(2),
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
       borderColor: theme.palette.text.secondary,
@@ -60,6 +73,27 @@ export const StyledTextField = styled(TextField)(({ theme }) => ({
     '&.Mui-focused fieldset': {
       borderColor: theme.palette.primary.main,
     },
+  },
+  '& .MuiInputLabel-root': {
+    color: theme.palette.text.secondary,
+    '&.Mui-focused': {
+      color: theme.palette.primary.main,
+    },
+  },
+  '& .MuiInputBase-input': {
+    color: theme.palette.text.primary,
+  },
+}));
+
+export const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  width: '100%',
+  marginBottom: theme.spacing(2),
+}));
+
+export const StyledInputLabel = styled(InputLabel)(({ theme }) => ({
+  color: theme.palette.text.secondary,
+  '&.Mui-focused': {
+    color: theme.palette.primary.main,
   },
 }));
 
@@ -106,3 +140,6 @@ export const StyledAlert = styled(Alert)(({ theme }) => ({
 export const StyledForm = styled('form')({
   width: '100%',
 });
+
+// Re-export Material-UI components that don't need custom styling
+export { TextField } from '@mui/material';

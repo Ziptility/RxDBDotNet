@@ -1,7 +1,6 @@
-// src\components\WorkspaceForm.tsx
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box } from '@mui/material';
 import type { Workspace } from '@/lib/schemas';
+import { FormContainer, StyledTextField, PrimaryButton, StyledForm } from '@/styles/StyledComponents';
 
 interface WorkspaceFormProps {
   readonly workspace: Workspace | undefined;
@@ -28,14 +27,20 @@ const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) =>
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField label="Workspace Name" value={name} onChange={(e): void => setName(e.target.value)} required />
-        <Button type="submit" variant="contained">
+    <StyledForm onSubmit={handleSubmit}>
+      <FormContainer>
+        <StyledTextField
+          label="Workspace Name"
+          value={name}
+          onChange={(e): void => setName(e.target.value)}
+          required
+          fullWidth
+        />
+        <PrimaryButton type="submit" variant="contained">
           {workspace ? 'Update' : 'Create'} Workspace
-        </Button>
-      </Box>
-    </form>
+        </PrimaryButton>
+      </FormContainer>
+    </StyledForm>
   );
 };
 

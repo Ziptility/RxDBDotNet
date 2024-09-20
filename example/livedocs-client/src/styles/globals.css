@@ -1,28 +1,53 @@
-/* src\styles\globals.css */
-:root {
-  /* Define CSS variables for colors */
-  --color-primary: #1976d2;
-  --color-secondary: #dc004e;
-  --color-background: #f5f5f5;
-  --color-text: #333333;
-  --color-text-light: #666666;
-  --color-border: #e0e0e0;
+/* src/styles/globals.css */
 
-  /* Define CSS variables for spacing */
+:root {
+  /* Color Palette */
+  --color-primary: #212121;
+  --color-primary-light: #484848;
+  --color-primary-dark: #000000;
+  --color-secondary: #757575;
+  --color-secondary-light: #a4a4a4;
+  --color-secondary-dark: #494949;
+  --color-background: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-error: #d32f2f;
+  --color-success: #388e3c;
+  --color-warning: #f57c00;
+  --color-info: #1976d2;
+
+  /* Text Colors */
+  --color-text-primary: #212121;
+  --color-text-secondary: #757575;
+  --color-text-disabled: #9e9e9e;
+
+  /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
 
-  /* Define CSS variables for font sizes */
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+    'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
 
-  /* Define CSS variables for transitions */
+  /* Transitions */
   --transition-speed: 0.3s;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
 }
 
 /* Reset and base styles */
@@ -34,43 +59,98 @@
 
 html,
 body {
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    Segoe UI,
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    Fira Sans,
-    Droid Sans,
-    Helvetica Neue,
-    sans-serif;
+  font-family: var(--font-family);
   font-size: 16px;
   line-height: 1.5;
-  color: var(--color-text);
+  color: var(--color-text-primary);
   background-color: var(--color-background);
 }
 
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-bottom: var(--spacing-md);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+h2 {
+  font-size: 2rem;
+}
+h3 {
+  font-size: 1.75rem;
+}
+h4 {
+  font-size: 1.5rem;
+}
+h5 {
+  font-size: 1.25rem;
+}
+h6 {
+  font-size: 1rem;
+}
+
+p {
+  margin-bottom: var(--spacing-md);
+}
+
 a {
-  color: inherit;
+  color: var(--color-primary);
   text-decoration: none;
   transition: color var(--transition-speed) ease;
 }
 
 a:hover {
-  color: var(--color-primary);
+  color: var(--color-primary-dark);
 }
 
 /* Utility classes */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-md);
+
+/* Flexbox */
+.flex {
+  display: flex;
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.flex-wrap {
+  flex-wrap: wrap;
 }
 
-.text-center {
-  text-align: center;
+/* Spacing */
+.m-0 {
+  margin: 0;
+}
+.m-1 {
+  margin: var(--spacing-xs);
+}
+.m-2 {
+  margin: var(--spacing-sm);
+}
+.m-3 {
+  margin: var(--spacing-md);
+}
+.m-4 {
+  margin: var(--spacing-lg);
+}
+.m-5 {
+  margin: var(--spacing-xl);
 }
 
 .mt-1 {
@@ -105,30 +185,124 @@ a:hover {
   margin-bottom: var(--spacing-xl);
 }
 
-/* Custom scrollbar styles */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--color-background);
+.p-0 {
+  padding: 0;
+}
+.p-1 {
+  padding: var(--spacing-xs);
+}
+.p-2 {
+  padding: var(--spacing-sm);
+}
+.p-3 {
+  padding: var(--spacing-md);
+}
+.p-4 {
+  padding: var(--spacing-lg);
+}
+.p-5 {
+  padding: var(--spacing-xl);
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 4px;
+/* Text alignment */
+.text-left {
+  text-align: left;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-secondary);
+/* Text colors */
+.text-primary {
+  color: var(--color-primary);
+}
+.text-secondary {
+  color: var(--color-secondary);
+}
+.text-error {
+  color: var(--color-error);
+}
+.text-success {
+  color: var(--color-success);
+}
+.text-warning {
+  color: var(--color-warning);
+}
+.text-info {
+  color: var(--color-info);
 }
 
-/* Responsive typography */
-@media (max-width: 768px) {
-  html,
-  body {
-    font-size: 14px;
+/* Background colors */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+/* Shadows */
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Border radius */
+.rounded-sm {
+  border-radius: var(--border-radius-sm);
+}
+.rounded-md {
+  border-radius: var(--border-radius-md);
+}
+.rounded-lg {
+  border-radius: var(--border-radius-lg);
+}
+
+/* Responsive containers */
+.container {
+  width: 100%;
+  padding-right: var(--spacing-md);
+  padding-left: var(--spacing-md);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
   }
 }
 
@@ -144,4 +318,52 @@ a:hover {
 
 .fade-in {
   animation: fadeIn var(--transition-speed) ease-in;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Accessibility */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Print styles */
+@media print {
+  body {
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  .no-print {
+    display: none;
+  }
 }

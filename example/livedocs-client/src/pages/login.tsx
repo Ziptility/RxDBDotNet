@@ -1,20 +1,20 @@
 // src\pages\login.tsx
 import React, { useState, useEffect } from 'react';
-import {
-  Button,
-  Typography,
-  Box,
-  Container,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  type SelectChangeEvent,
-  CircularProgress,
-} from '@mui/material';
+import { MenuItem, FormControl, InputLabel, type SelectChangeEvent } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Workspace, User } from '@/lib/schemas';
+import {
+  PageContainer,
+  ContentPaper,
+  PageTitle,
+  FormContainer,
+  PrimaryButton,
+  StyledCircularProgress,
+  CenteredBox,
+  ErrorText,
+  StyledSelect,
+} from '@/styles/StyledComponents';
 
 const LoginPage: React.FC = (): JSX.Element => {
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
@@ -75,37 +75,29 @@ const LoginPage: React.FC = (): JSX.Element => {
   if (!isInitialized || isLoading) {
     console.log('LoginPage: Showing loading spinner');
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <CenteredBox sx={{ height: '100vh' }}>
+        <StyledCircularProgress />
+      </CenteredBox>
     );
   }
 
   console.log('LoginPage: Rendering login form');
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Typography component="h1" variant="h5">
+    <PageContainer>
+      <ContentPaper sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
+        <PageTitle variant="h5" component="h1" sx={{ mb: 3, textAlign: 'center' }}>
           Sign in to LiveDocs
-        </Typography>
-        <Box
-          component="form"
+        </PageTitle>
+        <FormContainer
+          as="form"
           onSubmit={(e: React.FormEvent): void => {
             void handleSubmit(e);
           }}
-          noValidate
-          sx={{ mt: 1, width: '100%' }}
+          sx={{ width: '100%' }}
         >
-          <FormControl fullWidth margin="normal">
+          <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="workspace-select-label">Workspace</InputLabel>
-            <Select
+            <StyledSelect
               labelId="workspace-select-label"
               id="workspace-select"
               value={selectedWorkspace}
@@ -117,11 +109,11 @@ const LoginPage: React.FC = (): JSX.Element => {
                   {workspace.name}
                 </MenuItem>
               ))}
-            </Select>
+            </StyledSelect>
           </FormControl>
-          <FormControl fullWidth margin="normal">
+          <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel id="user-select-label">User</InputLabel>
-            <Select
+            <StyledSelect
               labelId="user-select-label"
               id="user-select"
               value={selectedUser}
@@ -137,25 +129,21 @@ const LoginPage: React.FC = (): JSX.Element => {
                     value={user.id}
                   >{`${user.firstName} ${user.lastName} (${user.role})`}</MenuItem>
                 ))}
-            </Select>
+            </StyledSelect>
           </FormControl>
-          <Button
+          <PrimaryButton
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: 2, mb: 2 }}
             disabled={!selectedWorkspace || !selectedUser}
           >
             Sign In
-          </Button>
-          {error ? (
-            <Typography color="error" align="center">
-              {error}
-            </Typography>
-          ) : null}
-        </Box>
-      </Box>
-    </Container>
+          </PrimaryButton>
+          {error ? <ErrorText sx={{ textAlign: 'center' }}>{error}</ErrorText> : null}
+        </FormContainer>
+      </ContentPaper>
+    </PageContainer>
   );
 };
 

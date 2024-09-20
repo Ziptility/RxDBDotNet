@@ -1,9 +1,18 @@
-// src\components\WorkspacesPageContent.tsx
 import React, { useState } from 'react';
-import { Box, Button, Alert } from '@mui/material';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { Workspace } from '@/lib/schemas';
+import {
+  PageContainer,
+  ContentPaper,
+  PageTitle,
+  SectionTitle,
+  PrimaryButton,
+  ListContainer,
+  SpaceBetweenBox,
+  StyledAlert,
+  StyledCircularProgress,
+} from '@/styles/StyledComponents';
 import WorkspaceForm from './WorkspaceForm';
 import WorkspaceList from './WorkspaceList';
 
@@ -40,35 +49,44 @@ const WorkspacesPageContent: React.FC = () => {
   };
 
   if (isLoading) {
-    return <Box>Loading...</Box>;
+    return (
+      <PageContainer>
+        <StyledCircularProgress />
+      </PageContainer>
+    );
   }
 
   return (
-    <Box>
+    <PageContainer>
+      <PageTitle variant="h4">Workspaces</PageTitle>
       {error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <StyledAlert severity="error" sx={{ mb: 2 }}>
           {error.message}
-        </Alert>
+        </StyledAlert>
       ) : null}
-      <Box sx={{ mb: 4 }}>
+      <ContentPaper>
+        <SectionTitle variant="h6">{editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}</SectionTitle>
         <WorkspaceForm
           workspace={editingWorkspace ?? undefined}
           onSubmit={editingWorkspace ? handleUpdate : handleCreate}
         />
-      </Box>
-      {editingWorkspace ? (
-        <Button onClick={(): void => setEditingWorkspace(null)} sx={{ mb: 2 }}>
-          Cancel Editing
-        </Button>
-      ) : null}
-      <WorkspaceList
-        workspaces={workspaces}
-        onEdit={setEditingWorkspace}
-        onDelete={(workspace): void => {
-          void deleteDocument(workspace.id);
-        }}
-      />
-    </Box>
+        {editingWorkspace ? (
+          <SpaceBetweenBox sx={{ mt: 2 }}>
+            <PrimaryButton onClick={(): void => setEditingWorkspace(null)}>Cancel Editing</PrimaryButton>
+          </SpaceBetweenBox>
+        ) : null}
+      </ContentPaper>
+      <ListContainer>
+        <SectionTitle variant="h6">Workspace List</SectionTitle>
+        <WorkspaceList
+          workspaces={workspaces}
+          onEdit={setEditingWorkspace}
+          onDelete={(workspace): void => {
+            void deleteDocument(workspace.id);
+          }}
+        />
+      </ListContainer>
+    </PageContainer>
   );
 };
 

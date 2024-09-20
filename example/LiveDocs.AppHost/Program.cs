@@ -18,7 +18,7 @@ builder.AddProject<LiveDocs_GraphQLApi>("replicationApi", "http")
     .WithEnvironment("SQL_PASSWORD", password);
 
 builder.AddNpmApp("livedocs-client", "../livedocs-client", "run")
-    .WithHttpEndpoint(port: 1337, env: "PORT")
+    .WithHttpEndpoint(port: 3001, targetPort: 3000, env: "PORT")
     .WithEnvironment("NODE_ENV", "production")
     .WithExternalHttpEndpoints();
 

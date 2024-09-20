@@ -4,15 +4,15 @@ export const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#90caf9',
-      light: '#b3e5fc',
-      dark: '#42a5f5',
+      main: '#ce93d8',
+      light: '#e1bee7',
+      dark: '#ab47bc',
       contrastText: '#000000',
     },
     secondary: {
-      main: '#ce93d8',
-      light: '#f3e5f5',
-      dark: '#ab47bc',
+      main: '#90caf9',
+      light: '#b3e5fc',
+      dark: '#42a5f5',
       contrastText: '#000000',
     },
     background: {
@@ -36,7 +36,7 @@ export const theme = createTheme({
       main: '#66bb6a',
     },
     action: {
-      disabledBackground: 'rgba(144, 202, 249, 0.12)',
+      disabledBackground: 'rgba(206, 147, 216, 0.12)',
       disabled: 'rgba(255, 255, 255, 0.3)',
     },
   },
@@ -84,7 +84,7 @@ export const theme = createTheme({
           fontWeight: 500,
           '&.Mui-disabled': {
             color: 'rgba(255, 255, 255, 0.3)',
-            backgroundColor: 'rgba(144, 202, 249, 0.12)',
+            backgroundColor: 'rgba(206, 147, 216, 0.12)',
           },
         },
       },
@@ -97,10 +97,10 @@ export const theme = createTheme({
               borderColor: 'rgba(255, 255, 255, 0.23)',
             },
             '&:hover fieldset': {
-              borderColor: '#90caf9',
+              borderColor: '#ce93d8',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#90caf9',
+              borderColor: '#ce93d8',
             },
           },
         },

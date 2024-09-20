@@ -1,8 +1,17 @@
-import { useState } from 'react';
-import { Alert, Box, Button } from '@mui/material';
+import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { LiveDoc, User, Workspace } from '@/lib/schemas';
+import {
+  ContentPaper,
+  SectionTitle,
+  PrimaryButton,
+  ListContainer,
+  SpaceBetweenBox,
+  StyledAlert,
+  StyledCircularProgress,
+  CenteredBox,
+} from '@/styles/StyledComponents';
 import LiveDocForm from './LiveDocForm';
 import LiveDocList from './LiveDocList';
 
@@ -16,13 +25,8 @@ const LiveDocsPageContent: React.FC = () => {
     deleteDocument,
   } = useDocuments<LiveDoc>('livedoc');
 
-  const { documents: users, isLoading: isLoadingUsers, error: userError } = useDocuments<User>('user');
-
-  const {
-    documents: workspaces,
-    isLoading: isLoadingWorkspaces,
-    error: workspaceError,
-  } = useDocuments<Workspace>('workspace');
+  const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('user');
+  const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
 
   const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     const newLiveDoc: LiveDoc = {
@@ -47,39 +51,45 @@ const LiveDocsPageContent: React.FC = () => {
   };
 
   if (isLoadingLiveDocs || isLoadingUsers || isLoadingWorkspaces) {
-    return <Box>Loading...</Box>;
+    return (
+      <CenteredBox sx={{ height: '50vh' }}>
+        <StyledCircularProgress />
+      </CenteredBox>
+    );
   }
 
-  const error = liveDocError ?? userError ?? workspaceError;
-
   return (
-    <Box>
-      {error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error.message}
-        </Alert>
+    <>
+      {liveDocError ? (
+        <StyledAlert severity="error" sx={{ mb: 2 }}>
+          {liveDocError.message}
+        </StyledAlert>
       ) : null}
-      <Box sx={{ mb: 4 }}>
+      <ContentPaper>
+        <SectionTitle variant="h6">{editingLiveDoc ? 'Edit LiveDoc' : 'Create LiveDoc'}</SectionTitle>
         <LiveDocForm
           liveDoc={editingLiveDoc ?? undefined}
           users={users}
           workspaces={workspaces}
           onSubmit={editingLiveDoc ? handleUpdate : handleCreate}
         />
-      </Box>
-      {editingLiveDoc ? (
-        <Button onClick={(): void => setEditingLiveDoc(null)} sx={{ mb: 2 }}>
-          Cancel Editing
-        </Button>
-      ) : null}
-      <LiveDocList
-        liveDocs={liveDocs}
-        onEdit={setEditingLiveDoc}
-        onDelete={(liveDoc): void => {
-          void deleteDocument(liveDoc.id);
-        }}
-      />
-    </Box>
+        {editingLiveDoc ? (
+          <SpaceBetweenBox sx={{ mt: 2 }}>
+            <PrimaryButton onClick={(): void => setEditingLiveDoc(null)}>Cancel Editing</PrimaryButton>
+          </SpaceBetweenBox>
+        ) : null}
+      </ContentPaper>
+      <ListContainer>
+        <SectionTitle variant="h6">LiveDoc List</SectionTitle>
+        <LiveDocList
+          liveDocs={liveDocs}
+          onEdit={setEditingLiveDoc}
+          onDelete={(liveDoc): void => {
+            void deleteDocument(liveDoc.id);
+          }}
+        />
+      </ListContainer>
+    </>
   );
 };
 

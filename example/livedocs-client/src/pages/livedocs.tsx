@@ -1,25 +1,21 @@
-// src\pages\livedocs.tsx
 import React from 'react';
-import { Typography, Box, CircularProgress } from '@mui/material';
 import dynamic from 'next/dynamic';
+import { PageContainer, StyledCircularProgress, CenteredBox } from '@/styles/StyledComponents';
 
 const LiveDocsPageContent = dynamic(() => import('../components/LiveDocsPageContent'), {
   ssr: false,
   loading: () => (
-    <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-      <CircularProgress />
-    </Box>
+    <CenteredBox sx={{ height: '50vh' }}>
+      <StyledCircularProgress />
+    </CenteredBox>
   ),
 });
 
 const LiveDocsPage: React.FC = () => {
   return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Live Documents
-      </Typography>
+    <PageContainer>
       <LiveDocsPageContent />
-    </>
+    </PageContainer>
   );
 };
 

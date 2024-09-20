@@ -1,9 +1,17 @@
-// src\components\UsersPageContent.tsx
 import React, { useState } from 'react';
-import { Box, Button, Alert } from '@mui/material';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { User, Workspace } from '@/lib/schemas';
+import {
+  ContentPaper,
+  SectionTitle,
+  PrimaryButton,
+  ListContainer,
+  SpaceBetweenBox,
+  StyledAlert,
+  StyledCircularProgress,
+  CenteredBox,
+} from '@/styles/StyledComponents';
 import UserForm from './UserForm';
 import UserList from './UserList';
 
@@ -17,11 +25,7 @@ const UsersPageContent: React.FC = () => {
     deleteDocument,
   } = useDocuments<User>('user');
 
-  const {
-    documents: workspaces,
-    isLoading: isLoadingWorkspaces,
-    error: workspaceError,
-  } = useDocuments<Workspace>('workspace');
+  const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
 
   const handleCreate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
     const newUser: User = {
@@ -46,38 +50,44 @@ const UsersPageContent: React.FC = () => {
   };
 
   if (isLoadingUsers || isLoadingWorkspaces) {
-    return <Box>Loading...</Box>;
+    return (
+      <CenteredBox sx={{ height: '50vh' }}>
+        <StyledCircularProgress />
+      </CenteredBox>
+    );
   }
 
-  const error = userError ?? workspaceError;
-
   return (
-    <Box>
-      {error ? (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error.message}
-        </Alert>
+    <>
+      {userError ? (
+        <StyledAlert severity="error" sx={{ mb: 2 }}>
+          {userError.message}
+        </StyledAlert>
       ) : null}
-      <Box sx={{ mb: 4 }}>
+      <ContentPaper>
+        <SectionTitle variant="h6">{editingUser ? 'Edit User' : 'Create User'}</SectionTitle>
         <UserForm
           user={editingUser ?? undefined}
           workspaces={workspaces}
           onSubmit={editingUser ? handleUpdate : handleCreate}
         />
-      </Box>
-      {editingUser ? (
-        <Button onClick={(): void => setEditingUser(null)} sx={{ mb: 2 }}>
-          Cancel Editing
-        </Button>
-      ) : null}
-      <UserList
-        users={users}
-        onEdit={setEditingUser}
-        onDelete={(user): void => {
-          void deleteDocument(user.id);
-        }}
-      />
-    </Box>
+        {editingUser ? (
+          <SpaceBetweenBox sx={{ mt: 2 }}>
+            <PrimaryButton onClick={(): void => setEditingUser(null)}>Cancel Editing</PrimaryButton>
+          </SpaceBetweenBox>
+        ) : null}
+      </ContentPaper>
+      <ListContainer>
+        <SectionTitle variant="h6">User List</SectionTitle>
+        <UserList
+          users={users}
+          onEdit={setEditingUser}
+          onDelete={(user): void => {
+            void deleteDocument(user.id);
+          }}
+        />
+      </ListContainer>
+    </>
   );
 };
 

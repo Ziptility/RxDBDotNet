@@ -1,25 +1,21 @@
-// src\pages\users.tsx
 import React from 'react';
-import { Typography, Box, CircularProgress } from '@mui/material';
 import dynamic from 'next/dynamic';
+import { PageContainer, StyledCircularProgress, CenteredBox } from '@/styles/StyledComponents';
 
 const UsersPageContent = dynamic(() => import('../components/UsersPageContent'), {
   ssr: false,
   loading: () => (
-    <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-      <CircularProgress />
-    </Box>
+    <CenteredBox sx={{ height: '50vh' }}>
+      <StyledCircularProgress />
+    </CenteredBox>
   ),
 });
 
 const UsersPage: React.FC = () => {
   return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Users
-      </Typography>
+    <PageContainer>
       <UsersPageContent />
-    </>
+    </PageContainer>
   );
 };
 

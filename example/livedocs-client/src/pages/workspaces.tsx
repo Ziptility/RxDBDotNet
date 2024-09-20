@@ -1,19 +1,22 @@
-// src\pages\workspaces.tsx
 import React from 'react';
-import { Box, CircularProgress } from '@mui/material';
 import dynamic from 'next/dynamic';
+import { PageContainer, StyledCircularProgress, CenteredBox } from '@/styles/StyledComponents';
 
 const WorkspacesPageContent = dynamic(() => import('../components/WorkspacesPageContent'), {
   ssr: false,
   loading: () => (
-    <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-      <CircularProgress />
-    </Box>
+    <CenteredBox sx={{ height: '50vh' }}>
+      <StyledCircularProgress />
+    </CenteredBox>
   ),
 });
 
 const WorkspacesPage: React.FC = () => {
-  return <WorkspacesPageContent />;
+  return (
+    <PageContainer>
+      <WorkspacesPageContent />
+    </PageContainer>
+  );
 };
 
 export default WorkspacesPage;

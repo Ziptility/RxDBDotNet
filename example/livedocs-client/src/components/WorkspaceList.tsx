@@ -1,8 +1,17 @@
-// src\components\WorkspaceList.tsx
 import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import type { Workspace } from '@/lib/schemas';
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
+  StyledTableCell,
+  StyledTableRow,
+  Paper,
+  IconButton,
+} from '@/styles/StyledComponents';
 
 export interface WorkspaceListProps {
   readonly workspaces: Workspace[];
@@ -16,25 +25,25 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({ workspaces, onEdit, onDel
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Updated At</TableCell>
-            <TableCell>Actions</TableCell>
+            <StyledTableCell>Name</StyledTableCell>
+            <StyledTableCell>Updated At</StyledTableCell>
+            <StyledTableCell>Actions</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {workspaces.map((workspace) => (
-            <TableRow key={workspace.id}>
-              <TableCell>{workspace.name}</TableCell>
-              <TableCell>{new Date(workspace.updatedAt).toLocaleString()}</TableCell>
-              <TableCell>
-                <IconButton onClick={(): void => onEdit(workspace)}>
+            <StyledTableRow key={workspace.id}>
+              <StyledTableCell>{workspace.name}</StyledTableCell>
+              <StyledTableCell>{new Date(workspace.updatedAt).toLocaleString()}</StyledTableCell>
+              <StyledTableCell>
+                <IconButton onClick={(): void => onEdit(workspace)} color="primary">
                   <EditIcon />
                 </IconButton>
-                <IconButton onClick={(): void => onDelete(workspace)}>
+                <IconButton onClick={(): void => onDelete(workspace)} color="error">
                   <DeleteIcon />
                 </IconButton>
-              </TableCell>
-            </TableRow>
+              </StyledTableCell>
+            </StyledTableRow>
           ))}
         </TableBody>
       </Table>

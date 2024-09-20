@@ -10,6 +10,8 @@ import {
   Alert,
   Select,
   TextField,
+  TableCell,
+  TableRow,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
@@ -141,5 +143,15 @@ export const StyledForm = styled('form')({
   width: '100%',
 });
 
+export const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  color: theme.palette.text.primary,
+}));
+
+export const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
 // Re-export Material-UI components that don't need custom styling
-export { TextField } from '@mui/material';
+export { Table, TableBody, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';

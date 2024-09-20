@@ -24,6 +24,7 @@ export const ContentPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.divider}`,
 }));
 
 export const PageTitle = styled(Typography)(({ theme }) => ({
@@ -48,10 +49,6 @@ export const PrimaryButton = styled(Button)(({ theme }) => ({
   '&:hover': {
     backgroundColor: theme.palette.primary.dark,
   },
-  '&.Mui-disabled': {
-    backgroundColor: theme.palette.action.disabledBackground,
-    color: theme.palette.action.disabled,
-  },
 }));
 
 export const SecondaryButton = styled(Button)(({ theme }) => ({
@@ -64,7 +61,6 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
 }));
 
 export const StyledTextField = styled(TextField)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
   '& .MuiOutlinedInput-root': {
     '& fieldset': {
       borderColor: theme.palette.text.secondary,
@@ -78,9 +74,6 @@ export const StyledTextField = styled(TextField)(({ theme }) => ({
   },
   '& .MuiInputLabel-root': {
     color: theme.palette.text.secondary,
-    '&.Mui-focused': {
-      color: theme.palette.primary.main,
-    },
   },
   '& .MuiInputBase-input': {
     color: theme.palette.text.primary,
@@ -144,6 +137,7 @@ export const StyledForm = styled('form')({
 });
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  borderBottom: `1px solid ${theme.palette.divider}`,
   color: theme.palette.text.primary,
 }));
 

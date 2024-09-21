@@ -1,10 +1,10 @@
-// src\components\Header.tsx
+// src/components/Header.tsx
 import React from 'react';
-import { AppBar, Toolbar, Typography, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, Button } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import { SecondaryButton, SpaceBetweenBox } from '@/styles/StyledComponents';
+import { SpaceBetweenBox } from '@/styles/StyledComponents';
 import { NavButtons } from './NavButtons';
 
 const NetworkStatus = dynamic(() => import('./NetworkStatus'), { ssr: false });
@@ -31,9 +31,9 @@ export const Header: React.FC = () => {
           <NavButtons />
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <NetworkStatus />
-            <SecondaryButton onClick={(): void => void handleLogout()} sx={{ ml: 2 }}>
+            <Button variant="outlined" onClick={(): void => void handleLogout()} sx={{ ml: 2 }}>
               Logout
-            </SecondaryButton>
+            </Button>
           </Box>
         </SpaceBetweenBox>
       </Toolbar>

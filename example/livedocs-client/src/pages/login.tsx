@@ -14,7 +14,7 @@ import {
   StyledCircularProgress,
   CenteredBox,
   ErrorText,
-  StyledSelect,
+  Select,
   StyledForm,
 } from '@/styles/StyledComponents';
 import { motionProps, staggeredChildren } from '@/utils/motionSystem';
@@ -88,7 +88,7 @@ const LoginPage: React.FC = () => {
                 <motion.div {...motionProps['slideInFromBottom']}>
                   <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                     <InputLabel id="workspace-select-label">Workspace</InputLabel>
-                    <StyledSelect
+                    <Select
                       labelId="workspace-select-label"
                       id="workspace-select"
                       value={selectedWorkspace}
@@ -100,13 +100,13 @@ const LoginPage: React.FC = () => {
                           <Typography variant="body1">{workspace.name}</Typography>
                         </MenuItem>
                       ))}
-                    </StyledSelect>
+                    </Select>
                   </FormControl>
                 </motion.div>
                 <motion.div {...motionProps['slideInFromBottom']}>
                   <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
                     <InputLabel id="user-select-label">User</InputLabel>
-                    <StyledSelect
+                    <Select
                       labelId="user-select-label"
                       id="user-select"
                       value={selectedUser}
@@ -126,7 +126,7 @@ const LoginPage: React.FC = () => {
                             </Typography>
                           </MenuItem>
                         ))}
-                    </StyledSelect>
+                    </Select>
                   </FormControl>
                 </motion.div>
                 <motion.div {...motionProps['slideInFromBottom']}>

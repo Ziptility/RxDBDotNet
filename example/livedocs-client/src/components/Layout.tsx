@@ -12,7 +12,7 @@ interface LayoutProps {
   readonly children: ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
 
   return (
@@ -28,18 +28,26 @@ const Layout: React.FC<LayoutProps> = ({ children }): JSX.Element => {
         component="main"
         sx={{
           flexGrow: 1,
-          ml: '80px', // Adjust to match the width of the NavigationRail
           display: 'flex',
           flexDirection: 'column',
+          minHeight: '100vh',
+          ml: '80px', // Width of the collapsed NavigationRail
+          transition: (theme) =>
+            theme.transitions.create('margin', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
+            }),
         }}
       >
-        <Box sx={{ flexGrow: 1 }}>
-          <AnimatePresence mode="wait">
-            <motion.div key={router.pathname} {...motionProps['fadeIn']}>
-              <PageContainer>{children}</PageContainer>
-            </motion.div>
-          </AnimatePresence>
-        </Box>
+        <PageContainer sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ flexGrow: 1 }}>
+            <AnimatePresence mode="wait">
+              <motion.div key={router.pathname} {...motionProps['fadeIn']}>
+                {children}
+              </motion.div>
+            </AnimatePresence>
+          </Box>
+        </PageContainer>
         <Footer />
       </Box>
     </Box>

@@ -5,17 +5,11 @@ import {
   CircularProgress,
   Container,
   Paper,
-  FormControl,
-  InputLabel,
   Typography,
   Alert,
-  Select,
   TextField,
   TableCell,
   TableRow,
-  Fab,
-  AppBar,
-  Toolbar,
   Card,
   CardContent,
   Chip,
@@ -25,37 +19,29 @@ import { styled, alpha } from '@mui/material/styles';
 export const PageContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(4),
+  paddingLeft: `calc(80px + ${theme.spacing(3)})`, // 80px for NavigationRail + some extra padding
+  paddingRight: theme.spacing(3),
   [theme.breakpoints.up('sm')]: {
     paddingTop: theme.spacing(6),
     paddingBottom: theme.spacing(6),
-  },
-  marginLeft: '80px', // Adjust to match the width of the NavigationRail
-  transition: theme.transitions.create('margin', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  '@media (hover: hover)': {
-    '&:hover': {
-      marginLeft: '240px', // Expanded width of the NavigationRail
-    },
   },
 }));
 
 export const ContentPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius * 2, // More pronounced rounding
-  boxShadow: theme.shadows[3], // Increased elevation
+  borderRadius: theme.shape.borderRadius * 2,
+  boxShadow: theme.shadows[1],
   transition: theme.transitions.create(['box-shadow']),
   '&:hover': {
-    boxShadow: theme.shadows[6], // Increased elevation on hover
+    boxShadow: theme.shadows[2],
   },
 }));
 
 export const PageTitle = styled(Typography)(({ theme }) => ({
   marginBottom: theme.spacing(4),
   color: theme.palette.primary.main,
-  fontWeight: 700, // Bolder weight for emphasis
+  fontWeight: 700,
 }));
 
 export const SectionTitle = styled(Typography)(({ theme }) => ({
@@ -71,8 +57,6 @@ export const FormContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const PrimaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
   borderRadius: theme.shape.borderRadius * 4,
   padding: theme.spacing(1.5, 3),
   textTransform: 'none',
@@ -80,86 +64,8 @@ export const PrimaryButton = styled(Button)(({ theme }) => ({
   fontSize: '1rem',
   lineHeight: 1.75,
   letterSpacing: '0.02857em',
-  transition: theme.transitions.create(['background-color', 'box-shadow', 'transform'], {
-    duration: theme.transitions.duration.short,
-  }),
-  '&:hover': {
-    backgroundColor: theme.palette.primary.dark,
-    transform: 'translateY(-1px)',
-    boxShadow: `0px 4px 8px ${alpha(theme.palette.common.black, 0.2)}`,
-  },
-  '&:active': {
-    backgroundColor: theme.palette.primary.dark,
-    transform: 'translateY(0)',
-    boxShadow: `0px 2px 4px ${alpha(theme.palette.common.black, 0.2)}`,
-  },
-  '&:disabled': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.12),
-    color: alpha(theme.palette.primary.contrastText, 0.38),
-    boxShadow: 'none',
-  },
 }));
 
-export const SecondaryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: 'transparent',
-  color: theme.palette.primary.main,
-  borderRadius: theme.shape.borderRadius * 4, // Pill-shaped button
-  padding: theme.spacing(1.5, 3),
-  textTransform: 'none',
-  fontWeight: 500,
-  border: `1px solid ${theme.palette.primary.main}`,
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.04),
-  },
-}));
-
-export const StyledTextField = styled(TextField)(({ theme }) => ({
-  '& .MuiOutlinedInput-root': {
-    borderRadius: theme.shape.borderRadius * 1.5, // Slightly rounded corners
-    '& fieldset': {
-      borderColor: alpha(theme.palette.text.primary, 0.23),
-    },
-    '&:hover fieldset': {
-      borderColor: theme.palette.text.primary,
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: theme.palette.primary.main,
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: theme.palette.text.secondary,
-  },
-  '& .MuiInputBase-input': {
-    color: theme.palette.text.primary,
-  },
-}));
-
-export const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  width: '100%',
-  marginBottom: theme.spacing(2),
-}));
-
-export const StyledInputLabel = styled(InputLabel)(({ theme }) => ({
-  color: theme.palette.text.secondary,
-  '&.Mui-focused': {
-    color: theme.palette.primary.main,
-  },
-}));
-
-export const StyledSelect = styled(Select<string>)(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius * 1.5, // Slightly rounded corners
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: alpha(theme.palette.text.primary, 0.23),
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: theme.palette.text.primary,
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: theme.palette.primary.main,
-  },
-}));
-
-// Layout components
 export const ListContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
@@ -176,30 +82,24 @@ export const CenteredBox = styled(Box)({
   alignItems: 'center',
 });
 
-// Progress indicator
 export const StyledCircularProgress = styled(CircularProgress)(({ theme }) => ({
   color: theme.palette.primary.main,
 }));
 
-// Error text
 export const ErrorText = styled(Typography)(({ theme }) => ({
-  ...theme.typography.body2,
   color: theme.palette.error.main,
   fontWeight: 500,
 }));
 
-// Alert component
 export const StyledAlert = styled(Alert)(({ theme }) => ({
   marginBottom: theme.spacing(2),
-  borderRadius: '12px',
+  borderRadius: theme.shape.borderRadius * 2,
 }));
 
-// Form
 export const StyledForm = styled('form')({
   width: '100%',
 });
 
-// Table components
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
   color: theme.palette.text.primary,
@@ -215,34 +115,8 @@ export const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-// Floating Action Button (FAB)
-export const StyledFab = styled(Fab)(({ theme }) => ({
-  position: 'fixed',
-  bottom: theme.spacing(4),
-  right: theme.spacing(4),
-  borderRadius: '16px',
-}));
-
-// App Bar
-export const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  backgroundColor: alpha(theme.palette.background.paper, 0.8),
-  backdropFilter: 'blur(20px)',
-  color: theme.palette.text.primary,
-  boxShadow: 'none',
-  borderBottom: `1px solid ${theme.palette.divider}`,
-}));
-
-export const StyledToolbar = styled(Toolbar)(({ theme }) => ({
-  justifyContent: 'space-between',
-  padding: theme.spacing(0, 2),
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(0, 3),
-  },
-}));
-
-// Card component for list items
 export const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: '24px',
+  borderRadius: theme.shape.borderRadius * 3,
   transition: theme.transitions.create(['box-shadow', 'transform']),
   '&:hover': {
     boxShadow: theme.shadows[4],
@@ -255,7 +129,7 @@ export const StyledCardContent = styled(CardContent)(({ theme }) => ({
 }));
 
 export const StyledChip = styled(Chip)(({ theme }) => ({
-  borderRadius: '8px',
+  borderRadius: theme.shape.borderRadius,
   height: '32px',
   '& .MuiChip-label': {
     paddingLeft: theme.spacing(1.5),
@@ -263,21 +137,14 @@ export const StyledChip = styled(Chip)(({ theme }) => ({
     fontSize: '0.875rem',
     fontWeight: 500,
   },
-  '& .MuiChip-deleteIcon': {
-    fontSize: '1.25rem',
-    color: theme.palette.text.secondary,
-    '&:hover': {
-      color: theme.palette.text.primary,
-    },
-  },
 }));
 
 export const SearchBar = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     borderRadius: '28px',
-    backgroundColor: alpha(theme.palette.common.white, 0.15),
+    backgroundColor: alpha(theme.palette.background.paper, 0.15),
     '&:hover': {
-      backgroundColor: alpha(theme.palette.common.white, 0.25),
+      backgroundColor: alpha(theme.palette.background.paper, 0.25),
     },
     '& fieldset': {
       borderColor: 'transparent',
@@ -291,10 +158,6 @@ export const SearchBar = styled(TextField)(({ theme }) => ({
   },
 }));
 
-export const StyledDialogContent = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(3),
-}));
-
 export const ResponsiveGrid = styled(Box)(({ theme }) => ({
   display: 'grid',
   gap: theme.spacing(3),
@@ -302,4 +165,14 @@ export const ResponsiveGrid = styled(Box)(({ theme }) => ({
 }));
 
 // Re-export Material-UI components that don't need custom styling
-export { Table, TableBody, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+export {
+  Table,
+  TableBody,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  TextField,
+  Select,
+} from '@mui/material';

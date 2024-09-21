@@ -6,65 +6,79 @@ import {
   Work as WorkIcon,
   Description as DescriptionIcon,
 } from '@mui/icons-material';
-import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Paper, styled } from '@mui/material';
+import { List, ListItemButton, ListItemIcon, ListItemText, Paper, styled } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  height: '100vh',
-  width: '80px',
   position: 'fixed',
   top: 0,
   left: 0,
-  zIndex: theme.zIndex.appBar,
+  height: '100vh',
+  width: '80px',
   transition: theme.transitions.create('width', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  overflowX: 'hidden',
   '&:hover': {
     width: '240px',
+    overflowX: 'visible',
   },
+  zIndex: theme.zIndex.appBar,
 }));
 
-const StyledListItem = styled(ListItem)<{ active?: boolean }>(({ theme, active }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  padding: theme.spacing(2, 1),
-  color: (active ?? false) ? theme.palette.primary.main : theme.palette.text.primary,
+const StyledListItemButton = styled(ListItemButton)<{ active: boolean }>(({ theme, active }) => ({
+  minHeight: 48,
+  justifyContent: 'initial',
+  px: 2.5,
+  color: active ? theme.palette.primary.main : theme.palette.text.primary,
   '& .MuiListItemIcon-root': {
-    minWidth: 'auto',
-    marginBottom: theme.spacing(0.5),
+    minWidth: 0,
+    marginRight: theme.spacing(3),
+    justifyContent: 'center',
+    color: 'inherit',
   },
-  '& .MuiListItemText-root': {
-    display: 'none',
+  '& .MuiListItemText-primary': {
+    opacity: 0,
+    transition: theme.transitions.create('opacity', {
+      duration: theme.transitions.duration.shorter,
+    }),
   },
-  '&:hover .MuiListItemText-root': {
-    display: 'block',
+  '&:hover .MuiListItemText-primary': {
+    opacity: 1,
   },
 }));
 
 const navItems = [
-  { label: 'Home', path: '/', icon: <HomeIcon /> },
-  { label: 'Workspaces', path: '/workspaces', icon: <WorkIcon /> },
-  { label: 'Users', path: '/users', icon: <GroupIcon /> },
-  { label: 'LiveDocs', path: '/livedocs', icon: <DescriptionIcon /> },
+  { label: 'Home', path: '/', icon: <HomeIcon />, ariaLabel: 'Go to Home' },
+  { label: 'Workspaces', path: '/workspaces', icon: <WorkIcon />, ariaLabel: 'Go to Workspaces' },
+  { label: 'Users', path: '/users', icon: <GroupIcon />, ariaLabel: 'Go to Users' },
+  { label: 'LiveDocs', path: '/livedocs', icon: <DescriptionIcon />, ariaLabel: 'Go to LiveDocs' },
 ];
 
 const NavigationRail: React.FC = () => {
   const router = useRouter();
 
   return (
-    <StyledPaper elevation={3}>
+    <StyledPaper elevation={3} role="navigation" aria-label="Main Navigation">
       <List>
-        {navItems.map((item) => (
-          <StyledListItem key={item.path} active={router.pathname === item.path}>
-            <ListItemButton component={Link} href={item.path}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </StyledListItem>
-        ))}
+        {navItems.map((item) => {
+          const isActive = router.pathname === item.path;
+          return (
+            <Link key={item.path} href={item.path} passHref legacyBehavior>
+              <StyledListItemButton
+                active={isActive}
+                LinkComponent="a"
+                aria-label={item.ariaLabel}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </StyledListItemButton>
+            </Link>
+          );
+        })}
       </List>
     </StyledPaper>
   );

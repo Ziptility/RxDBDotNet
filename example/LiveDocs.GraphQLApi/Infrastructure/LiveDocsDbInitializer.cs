@@ -12,7 +12,14 @@ namespace LiveDocs.GraphQLApi.Infrastructure
         {
             await using var dbContext = new LiveDocsDbContext();
 
-            await dbContext.Database.EnsureCreatedAsync();
+            try
+            {
+                await dbContext.Database.EnsureCreatedAsync();
+            }
+            catch
+            {
+                // ignore this error; the db exists
+            }
 
             if (!await dbContext.Workspaces.AnyAsync())
             {

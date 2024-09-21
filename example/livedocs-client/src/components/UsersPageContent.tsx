@@ -1,4 +1,6 @@
+// src/components/UsersPageContent.tsx
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { User, Workspace } from '@/lib/schemas';
@@ -12,6 +14,7 @@ import {
   StyledCircularProgress,
   CenteredBox,
 } from '@/styles/StyledComponents';
+import { motionProps, staggeredChildren } from '@/utils/motionSystem';
 import UserForm from './UserForm';
 import UserList from './UserList';
 
@@ -58,36 +61,42 @@ const UsersPageContent: React.FC = () => {
   }
 
   return (
-    <>
+    <motion.div {...staggeredChildren}>
       {userError ? (
-        <StyledAlert severity="error" sx={{ mb: 2 }}>
-          {userError.message}
-        </StyledAlert>
+        <motion.div {...motionProps['fadeIn']}>
+          <StyledAlert severity="error" sx={{ mb: 2 }}>
+            {userError.message}
+          </StyledAlert>
+        </motion.div>
       ) : null}
-      <ContentPaper>
-        <SectionTitle variant="h6">{editingUser ? 'Edit User' : 'Create User'}</SectionTitle>
-        <UserForm
-          user={editingUser ?? undefined}
-          workspaces={workspaces}
-          onSubmit={editingUser ? handleUpdate : handleCreate}
-        />
-        {editingUser ? (
-          <SpaceBetweenBox sx={{ mt: 2 }}>
-            <PrimaryButton onClick={(): void => setEditingUser(null)}>Cancel Editing</PrimaryButton>
-          </SpaceBetweenBox>
-        ) : null}
-      </ContentPaper>
-      <ListContainer>
-        <SectionTitle variant="h6">User List</SectionTitle>
-        <UserList
-          users={users}
-          onEdit={setEditingUser}
-          onDelete={(user): void => {
-            void deleteDocument(user.id);
-          }}
-        />
-      </ListContainer>
-    </>
+      <motion.div {...motionProps['slideInFromBottom']}>
+        <ContentPaper>
+          <SectionTitle variant="h6">{editingUser ? 'Edit User' : 'Create User'}</SectionTitle>
+          <UserForm
+            user={editingUser ?? undefined}
+            workspaces={workspaces}
+            onSubmit={editingUser ? handleUpdate : handleCreate}
+          />
+          {editingUser ? (
+            <SpaceBetweenBox sx={{ mt: 2 }}>
+              <PrimaryButton onClick={(): void => setEditingUser(null)}>Cancel Editing</PrimaryButton>
+            </SpaceBetweenBox>
+          ) : null}
+        </ContentPaper>
+      </motion.div>
+      <motion.div {...motionProps['slideInFromBottom']}>
+        <ListContainer>
+          <SectionTitle variant="h6">User List</SectionTitle>
+          <UserList
+            users={users}
+            onEdit={setEditingUser}
+            onDelete={(user): void => {
+              void deleteDocument(user.id);
+            }}
+          />
+        </ListContainer>
+      </motion.div>
+    </motion.div>
   );
 };
 

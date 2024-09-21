@@ -115,7 +115,6 @@
     "react/jsx-fragments": ["error", "syntax"],
     "react/jsx-handler-names": "error",
     "react/jsx-key": ["error", { "checkFragmentShorthand": true }],
-    "react/jsx-max-depth": ["error", { "max": 4 }],
     "react/jsx-no-bind": [
       "error",
       {

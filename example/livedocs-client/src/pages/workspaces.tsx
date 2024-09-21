@@ -1,6 +1,9 @@
+// src/pages/workspaces.tsx
 import React from 'react';
+import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { PageContainer, StyledCircularProgress, CenteredBox } from '@/styles/StyledComponents';
+import { motionProps } from '@/utils/motionSystem';
 
 const WorkspacesPageContent = dynamic(() => import('../components/WorkspacesPageContent'), {
   ssr: false,
@@ -14,7 +17,9 @@ const WorkspacesPageContent = dynamic(() => import('../components/WorkspacesPage
 const WorkspacesPage: React.FC = () => {
   return (
     <PageContainer>
-      <WorkspacesPageContent />
+      <motion.div {...motionProps['fadeIn']}>
+        <WorkspacesPageContent />
+      </motion.div>
     </PageContainer>
   );
 };

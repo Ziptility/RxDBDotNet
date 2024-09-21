@@ -22,7 +22,6 @@ import {
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 
-// Enhanced PageContainer with responsive padding
 export const PageContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
   paddingBottom: theme.spacing(4),
@@ -30,9 +29,18 @@ export const PageContainer = styled(Container)(({ theme }) => ({
     paddingTop: theme.spacing(6),
     paddingBottom: theme.spacing(6),
   },
+  marginLeft: '80px', // Adjust to match the width of the NavigationRail
+  transition: theme.transitions.create('margin', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  '@media (hover: hover)': {
+    '&:hover': {
+      marginLeft: '240px', // Expanded width of the NavigationRail
+    },
+  },
 }));
 
-// Updated ContentPaper with Material 3 elevation
 export const ContentPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   backgroundColor: theme.palette.background.paper,
@@ -44,7 +52,6 @@ export const ContentPaper = styled(Paper)(({ theme }) => ({
   },
 }));
 
-// Enhanced typography components
 export const PageTitle = styled(Typography)(({ theme }) => ({
   marginBottom: theme.spacing(4),
   color: theme.palette.primary.main,
@@ -57,14 +64,12 @@ export const SectionTitle = styled(Typography)(({ theme }) => ({
   fontWeight: 600,
 }));
 
-// Form components with Material 3 styling
 export const FormContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  gap: theme.spacing(3), // Increased spacing between form elements
+  gap: theme.spacing(3),
 }));
 
-// Enhanced button components
 export const PrimaryButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   color: theme.palette.primary.contrastText,
@@ -108,7 +113,6 @@ export const SecondaryButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-// Enhanced text field with Material 3 styling
 export const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     borderRadius: theme.shape.borderRadius * 1.5, // Slightly rounded corners
@@ -130,7 +134,6 @@ export const StyledTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-// Updated form control and select components
 export const StyledFormControl = styled(FormControl)(({ theme }) => ({
   width: '100%',
   marginBottom: theme.spacing(2),
@@ -251,9 +254,6 @@ export const StyledCardContent = styled(CardContent)(({ theme }) => ({
   padding: theme.spacing(3),
 }));
 
-// New components aligned with Material Design 3
-
-// Chip component
 export const StyledChip = styled(Chip)(({ theme }) => ({
   borderRadius: '8px',
   height: '32px',
@@ -272,7 +272,6 @@ export const StyledChip = styled(Chip)(({ theme }) => ({
   },
 }));
 
-// Search bar
 export const SearchBar = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     borderRadius: '28px',
@@ -292,12 +291,10 @@ export const SearchBar = styled(TextField)(({ theme }) => ({
   },
 }));
 
-// Dialog content
 export const StyledDialogContent = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
 }));
 
-// Responsive grid
 export const ResponsiveGrid = styled(Box)(({ theme }) => ({
   display: 'grid',
   gap: theme.spacing(3),

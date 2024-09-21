@@ -1,9 +1,9 @@
-// src/components/UserForm.tsx
+// src\components\UserForm.tsx
 import React, { useState, useEffect } from 'react';
-import { TextField, Box, MenuItem, FormControl, InputLabel, Select } from '@mui/material';
+import { Grid, MenuItem, FormControl, InputLabel, Select } from '@mui/material';
 import type { User, Workspace } from '@/lib/schemas';
 import { UserRole } from '@/lib/schemas';
-import { FormContainer, PrimaryButton } from '@/styles/StyledComponents';
+import { FormContainer, PrimaryButton, TextField } from '@/styles/StyledComponents';
 
 interface UserFormProps {
   readonly user: User | undefined;
@@ -49,65 +49,77 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit }) => {
   return (
     <form onSubmit={handleSubmit}>
       <FormContainer>
-        <TextField
-          label="First Name"
-          value={firstName}
-          onChange={(e): void => setFirstName(e.target.value)}
-          required
-          fullWidth
-        />
-        <TextField
-          label="Last Name"
-          value={lastName}
-          onChange={(e): void => setLastName(e.target.value)}
-          required
-          fullWidth
-        />
-        <TextField
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e): void => setEmail(e.target.value)}
-          required
-          fullWidth
-        />
-        <FormControl fullWidth>
-          <InputLabel id="role-select-label">Role</InputLabel>
-          <Select
-            labelId="role-select-label"
-            value={role}
-            onChange={(e): void => setRole(e.target.value as UserRole)}
-            label="Role"
-            required
-          >
-            {Object.values(UserRole).map((roleValue) => (
-              <MenuItem key={roleValue} value={roleValue}>
-                {roleValue}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth>
-          <InputLabel id="workspace-select-label">Workspace</InputLabel>
-          <Select
-            labelId="workspace-select-label"
-            value={workspaceId}
-            onChange={(e): void => setWorkspaceId(e.target.value)}
-            label="Workspace"
-            required
-          >
-            {workspaces.map((workspace) => (
-              <MenuItem key={workspace.id} value={workspace.id}>
-                {workspace.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <PrimaryButton type="submit" variant="contained" disabled={!isFormValid}>
-            {user ? 'Update' : 'Create'} User
-          </PrimaryButton>
-        </Box>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="First Name"
+              value={firstName}
+              onChange={(e): void => setFirstName(e.target.value)}
+              required
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Last Name"
+              value={lastName}
+              onChange={(e): void => setLastName(e.target.value)}
+              required
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e): void => setEmail(e.target.value)}
+              required
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel id="role-select-label">Role</InputLabel>
+              <Select
+                labelId="role-select-label"
+                value={role}
+                onChange={(e): void => setRole(e.target.value as UserRole)}
+                label="Role"
+                required
+              >
+                {Object.values(UserRole).map((roleValue) => (
+                  <MenuItem key={roleValue} value={roleValue}>
+                    {roleValue}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <InputLabel id="workspace-select-label">Workspace</InputLabel>
+              <Select
+                labelId="workspace-select-label"
+                value={workspaceId}
+                onChange={(e): void => setWorkspaceId(e.target.value)}
+                label="Workspace"
+                required
+              >
+                {workspaces.map((workspace) => (
+                  <MenuItem key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12}>
+            <PrimaryButton type="submit" variant="contained" disabled={!isFormValid} fullWidth>
+              {user ? 'Update' : 'Create'} User
+            </PrimaryButton>
+          </Grid>
+        </Grid>
       </FormContainer>
     </form>
   );

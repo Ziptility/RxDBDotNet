@@ -30,7 +30,6 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
             <StyledTableCell>Email</StyledTableCell>
             <StyledTableCell>Role</StyledTableCell>
             <StyledTableCell>Workspace ID</StyledTableCell>
-            <StyledTableCell>Updated At</StyledTableCell>
             <StyledTableCell>Actions</StyledTableCell>
           </TableRow>
         </TableHead>
@@ -41,7 +40,6 @@ const UserList: React.FC<UserListProps> = ({ users, onEdit, onDelete }) => {
               <StyledTableCell>{user.email}</StyledTableCell>
               <StyledTableCell>{user.role}</StyledTableCell>
               <StyledTableCell>{user.workspaceId}</StyledTableCell>
-              <StyledTableCell>{new Date(user.updatedAt).toLocaleString()}</StyledTableCell>
               <StyledTableCell>
                 <IconButton onClick={(): void => onEdit(user)} color="primary">
                   <EditIcon />

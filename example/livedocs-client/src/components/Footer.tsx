@@ -1,3 +1,4 @@
+// src\components\Footer.tsx
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 

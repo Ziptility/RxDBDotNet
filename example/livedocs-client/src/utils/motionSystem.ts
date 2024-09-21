@@ -1,3 +1,4 @@
+// src\utils\motionSystem.ts
 import { type MotionProps, AnimatePresence } from 'framer-motion';
 
 // Easing functions

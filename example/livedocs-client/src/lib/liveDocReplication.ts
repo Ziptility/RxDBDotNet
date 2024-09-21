@@ -1,3 +1,4 @@
+// src\lib\liveDocReplication.ts
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';
 import type { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';

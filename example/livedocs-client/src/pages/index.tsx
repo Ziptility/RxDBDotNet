@@ -1,5 +1,4 @@
-// src/pages/index.tsx
-
+// src\pages\index.tsx
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { motion } from 'framer-motion';

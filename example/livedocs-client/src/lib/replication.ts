@@ -1,3 +1,4 @@
+// src\lib\replication.ts
 import { API_CONFIG } from '@/config';
 import { createLiveDocReplicator } from '@/lib/liveDocReplication';
 import type { LiveDoc, User, Workspace } from '@/lib/schemas';

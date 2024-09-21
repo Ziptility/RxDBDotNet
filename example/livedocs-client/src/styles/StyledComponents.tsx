@@ -1,4 +1,4 @@
-// src/styles/StyledComponents.tsx
+// src\styles\StyledComponents.tsx
 import {
   Box,
   Button,

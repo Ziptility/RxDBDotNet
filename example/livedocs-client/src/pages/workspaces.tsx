@@ -1,4 +1,4 @@
-// src/pages/workspaces.tsx
+// src\pages\workspaces.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';

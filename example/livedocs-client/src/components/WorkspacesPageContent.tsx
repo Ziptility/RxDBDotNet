@@ -1,4 +1,4 @@
-// src/components/WorkspacesPageContent.tsx
+// src\components\WorkspacesPageContent.tsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';

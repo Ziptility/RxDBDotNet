@@ -1,3 +1,4 @@
+// src\components\Header.tsx
 import React from 'react';
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import dynamic from 'next/dynamic';

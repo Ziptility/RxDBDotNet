@@ -1,3 +1,4 @@
+// src/styles/StyledComponents.tsx
 import {
   Box,
   Button,
@@ -15,6 +16,9 @@ import {
   Fab,
   AppBar,
   Toolbar,
+  Card,
+  CardContent,
+  Chip,
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 
@@ -30,25 +34,25 @@ export const PageContainer = styled(Container)(({ theme }) => ({
 
 // Updated ContentPaper with Material 3 elevation
 export const ContentPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
+  padding: theme.spacing(4),
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius * 2, // More pronounced rounding
-  boxShadow: theme.shadows[1], // Subtle elevation
+  boxShadow: theme.shadows[3], // Increased elevation
   transition: theme.transitions.create(['box-shadow']),
   '&:hover': {
-    boxShadow: theme.shadows[4], // Increased elevation on hover
+    boxShadow: theme.shadows[6], // Increased elevation on hover
   },
 }));
 
 // Enhanced typography components
 export const PageTitle = styled(Typography)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
+  marginBottom: theme.spacing(4),
   color: theme.palette.primary.main,
   fontWeight: 700, // Bolder weight for emphasis
 }));
 
 export const SectionTitle = styled(Typography)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(3),
   color: theme.palette.text.primary,
   fontWeight: 600,
 }));
@@ -64,15 +68,30 @@ export const FormContainer = styled(Box)(({ theme }) => ({
 export const PrimaryButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   color: theme.palette.primary.contrastText,
-  borderRadius: theme.shape.borderRadius * 4, // Pill-shaped button
+  borderRadius: theme.shape.borderRadius * 4,
   padding: theme.spacing(1.5, 3),
   textTransform: 'none',
   fontWeight: 500,
+  fontSize: '1rem',
+  lineHeight: 1.75,
+  letterSpacing: '0.02857em',
+  transition: theme.transitions.create(['background-color', 'box-shadow', 'transform'], {
+    duration: theme.transitions.duration.short,
+  }),
   '&:hover': {
     backgroundColor: theme.palette.primary.dark,
-    boxShadow: `0px 2px 4px -1px ${alpha(theme.palette.common.black, 0.2)},
-                0px 4px 5px 0px ${alpha(theme.palette.common.black, 0.14)},
-                0px 1px 10px 0px ${alpha(theme.palette.common.black, 0.12)}`,
+    transform: 'translateY(-1px)',
+    boxShadow: `0px 4px 8px ${alpha(theme.palette.common.black, 0.2)}`,
+  },
+  '&:active': {
+    backgroundColor: theme.palette.primary.dark,
+    transform: 'translateY(0)',
+    boxShadow: `0px 2px 4px ${alpha(theme.palette.common.black, 0.2)}`,
+  },
+  '&:disabled': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+    color: alpha(theme.palette.primary.contrastText, 0.38),
+    boxShadow: 'none',
   },
 }));
 
@@ -161,6 +180,7 @@ export const StyledCircularProgress = styled(CircularProgress)(({ theme }) => ({
 
 // Error text
 export const ErrorText = styled(Typography)(({ theme }) => ({
+  ...theme.typography.body2,
   color: theme.palette.error.main,
   fontWeight: 500,
 }));
@@ -168,7 +188,7 @@ export const ErrorText = styled(Typography)(({ theme }) => ({
 // Alert component
 export const StyledAlert = styled(Alert)(({ theme }) => ({
   marginBottom: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius * 1.5,
+  borderRadius: '12px',
 }));
 
 // Form
@@ -192,14 +212,12 @@ export const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-// New components aligned with Material Design 3
-
 // Floating Action Button (FAB)
 export const StyledFab = styled(Fab)(({ theme }) => ({
   position: 'fixed',
   bottom: theme.spacing(4),
   right: theme.spacing(4),
-  borderRadius: '16px', // More rounded corners for FAB
+  borderRadius: '16px',
 }));
 
 // App Bar
@@ -220,15 +238,70 @@ export const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 }));
 
 // Card component for list items
-export const StyledCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius * 2,
+export const StyledCard = styled(Card)(({ theme }) => ({
+  borderRadius: '24px',
   transition: theme.transitions.create(['box-shadow', 'transform']),
   '&:hover': {
     boxShadow: theme.shadows[4],
     transform: 'translateY(-2px)',
   },
+}));
+
+export const StyledCardContent = styled(CardContent)(({ theme }) => ({
+  padding: theme.spacing(3),
+}));
+
+// New components aligned with Material Design 3
+
+// Chip component
+export const StyledChip = styled(Chip)(({ theme }) => ({
+  borderRadius: '8px',
+  height: '32px',
+  '& .MuiChip-label': {
+    paddingLeft: theme.spacing(1.5),
+    paddingRight: theme.spacing(1.5),
+    fontSize: '0.875rem',
+    fontWeight: 500,
+  },
+  '& .MuiChip-deleteIcon': {
+    fontSize: '1.25rem',
+    color: theme.palette.text.secondary,
+    '&:hover': {
+      color: theme.palette.text.primary,
+    },
+  },
+}));
+
+// Search bar
+export const SearchBar = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '28px',
+    backgroundColor: alpha(theme.palette.common.white, 0.15),
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.common.white, 0.25),
+    },
+    '& fieldset': {
+      borderColor: 'transparent',
+    },
+    '&:hover fieldset': {
+      borderColor: 'transparent',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: theme.palette.primary.main,
+    },
+  },
+}));
+
+// Dialog content
+export const StyledDialogContent = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3),
+}));
+
+// Responsive grid
+export const ResponsiveGrid = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gap: theme.spacing(3),
+  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
 }));
 
 // Re-export Material-UI components that don't need custom styling

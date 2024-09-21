@@ -1,6 +1,5 @@
-// src/pages/login.tsx
 import React, { useState, useEffect } from 'react';
-import { FormControl, InputLabel, MenuItem, type SelectChangeEvent } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, type SelectChangeEvent, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,7 +71,7 @@ const LoginPage: React.FC = () => {
   return (
     <PageContainer maxWidth="sm">
       <motion.div {...motionProps['fadeIn']}>
-        <ContentPaper elevation={0}>
+        <ContentPaper elevation={3} sx={{ p: 4 }}>
           <motion.div {...staggeredChildren}>
             <motion.div {...motionProps['slideInFromBottom']}>
               <PageTitle variant="h4" align="center" gutterBottom>
@@ -86,7 +85,7 @@ const LoginPage: React.FC = () => {
             >
               <FormContainer>
                 <motion.div {...motionProps['slideInFromBottom']}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                     <InputLabel id="workspace-select-label">Workspace</InputLabel>
                     <StyledSelect
                       labelId="workspace-select-label"
@@ -97,14 +96,14 @@ const LoginPage: React.FC = () => {
                     >
                       {workspaces.map((workspace: Workspace) => (
                         <MenuItem key={workspace.id} value={workspace.id}>
-                          {workspace.name}
+                          <Typography variant="body1">{workspace.name}</Typography>
                         </MenuItem>
                       ))}
                     </StyledSelect>
                   </FormControl>
                 </motion.div>
                 <motion.div {...motionProps['slideInFromBottom']}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
                     <InputLabel id="user-select-label">User</InputLabel>
                     <StyledSelect
                       labelId="user-select-label"
@@ -118,20 +117,33 @@ const LoginPage: React.FC = () => {
                         .filter((user: User) => user.workspaceId === selectedWorkspace)
                         .map((user: User) => (
                           <MenuItem key={user.id} value={user.id}>
-                            {`${user.firstName} ${user.lastName} (${user.role})`}
+                            <Typography variant="body1">
+                              {`${user.firstName} ${user.lastName}`}
+                              <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
+                                ({user.role})
+                              </Typography>
+                            </Typography>
                           </MenuItem>
                         ))}
                     </StyledSelect>
                   </FormControl>
                 </motion.div>
                 <motion.div {...motionProps['slideInFromBottom']}>
-                  <PrimaryButton type="submit" disabled={!selectedWorkspace || !selectedUser} fullWidth>
-                    Sign In
+                  <PrimaryButton
+                    type="submit"
+                    disabled={!selectedWorkspace || !selectedUser}
+                    fullWidth
+                    size="large"
+                    sx={{ py: 1.5 }}
+                  >
+                    Sign in
                   </PrimaryButton>
                 </motion.div>
                 {error ? (
                   <motion.div {...motionProps['fadeIn']}>
-                    <ErrorText>{error}</ErrorText>
+                    <ErrorText variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
+                      {error}
+                    </ErrorText>
                   </motion.div>
                 ) : null}
               </FormContainer>

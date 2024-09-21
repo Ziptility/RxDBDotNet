@@ -1,4 +1,5 @@
 // src/pages/index.tsx
+
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -14,7 +15,7 @@ const Home: React.FC = () => {
           </Typography>
         </motion.div>
         <motion.div {...motionProps['slideInFromBottom']}>
-          <Typography variant="h5" component="h2" gutterBottom>
+          <Typography variant="h4" component="h2" gutterBottom>
             A real-time collaborative document management system
           </Typography>
         </motion.div>

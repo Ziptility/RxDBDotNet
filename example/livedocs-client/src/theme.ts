@@ -62,95 +62,103 @@ const createMuiThemeFromMaterialYou = (materialTheme: MaterialColorTheme, isDark
     typography: {
       fontFamily: 'Inter, Roboto, "Helvetica Neue", Arial, sans-serif',
       h1: {
-        fontSize: '57px',
+        fontSize: '3.5625rem', // 57px
         lineHeight: 1.12,
-        letterSpacing: '-0.25px',
+        letterSpacing: '-0.015625rem', // -0.25px
         fontWeight: 400,
       },
       h2: {
-        fontSize: '45px',
+        fontSize: '2.8125rem', // 45px
         lineHeight: 1.15,
-        letterSpacing: '0px',
+        letterSpacing: 0,
         fontWeight: 400,
       },
       h3: {
-        fontSize: '36px',
+        fontSize: '2.25rem', // 36px
         lineHeight: 1.22,
-        letterSpacing: '0px',
+        letterSpacing: 0,
         fontWeight: 400,
       },
       h4: {
-        fontSize: '32px',
+        fontSize: '2rem', // 32px
         lineHeight: 1.25,
-        letterSpacing: '0px',
+        letterSpacing: 0,
         fontWeight: 400,
       },
       h5: {
-        fontSize: '28px',
+        fontSize: '1.75rem', // 28px
         lineHeight: 1.29,
-        letterSpacing: '0px',
+        letterSpacing: 0,
         fontWeight: 400,
       },
       h6: {
-        fontSize: '24px',
+        fontSize: '1.5rem', // 24px
         lineHeight: 1.33,
-        letterSpacing: '0px',
+        letterSpacing: 0,
         fontWeight: 400,
       },
       subtitle1: {
-        fontSize: '22px',
-        lineHeight: 1.27,
-        letterSpacing: '0px',
-        fontWeight: 400,
+        fontSize: '1rem', // 16px
+        lineHeight: 1.5,
+        letterSpacing: '0.009375rem', // 0.15px
+        fontWeight: 500,
       },
       subtitle2: {
-        fontSize: '16px',
-        lineHeight: 1.5,
-        letterSpacing: '0.15px',
+        fontSize: '0.875rem', // 14px
+        lineHeight: 1.57,
+        letterSpacing: '0.00625rem', // 0.1px
         fontWeight: 500,
       },
       body1: {
-        fontSize: '16px',
+        fontSize: '1rem', // 16px
         lineHeight: 1.5,
-        letterSpacing: '0.5px',
+        letterSpacing: '0.03125rem', // 0.5px
         fontWeight: 400,
       },
       body2: {
-        fontSize: '14px',
+        fontSize: '0.875rem', // 14px
         lineHeight: 1.43,
-        letterSpacing: '0.25px',
+        letterSpacing: '0.015625rem', // 0.25px
         fontWeight: 400,
       },
       button: {
-        fontSize: '14px',
+        fontSize: '0.875rem', // 14px
         lineHeight: 1.75,
-        letterSpacing: '0.4px',
+        letterSpacing: '0.025rem', // 0.4px
         fontWeight: 500,
         textTransform: 'uppercase',
       },
       caption: {
-        fontSize: '12px',
+        fontSize: '0.75rem', // 12px
         lineHeight: 1.66,
-        letterSpacing: '0.4px',
+        letterSpacing: '0.025rem', // 0.4px
         fontWeight: 400,
       },
       overline: {
-        fontSize: '12px',
+        fontSize: '0.75rem', // 12px
         lineHeight: 2.66,
-        letterSpacing: '1px',
+        letterSpacing: '0.0625rem', // 1px
         fontWeight: 400,
         textTransform: 'uppercase',
       },
     },
     shape: {
-      borderRadius: 8,
+      borderRadius: 16,
     },
     components: {
       MuiButton: {
         styleOverrides: {
           root: {
             textTransform: 'none',
-            fontWeight: 500,
+            borderRadius: '20px',
+            padding: '10px 24px',
+          },
+          contained: {
+            boxShadow: 'none',
+            '&:hover': {
+              boxShadow:
+                '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)',
+            },
           },
         },
       },
@@ -158,6 +166,41 @@ const createMuiThemeFromMaterialYou = (materialTheme: MaterialColorTheme, isDark
         styleOverrides: {
           root: {
             backgroundImage: 'none',
+          },
+          rounded: {
+            borderRadius: '16px',
+          },
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            borderRadius: '24px',
+            boxShadow:
+              '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)',
+          },
+        },
+      },
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+            },
+          },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: {
+            borderRadius: '8px',
+          },
+        },
+      },
+      MuiTooltip: {
+        styleOverrides: {
+          tooltip: {
+            borderRadius: '8px',
           },
         },
       },

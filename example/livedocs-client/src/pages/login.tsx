@@ -132,6 +132,7 @@ const LoginPage: React.FC = () => {
                 <motion.div {...motionProps['slideInFromBottom']}>
                   <PrimaryButton
                     type="submit"
+                    variant="contained"
                     disabled={!selectedWorkspace || !selectedUser}
                     fullWidth
                     size="large"

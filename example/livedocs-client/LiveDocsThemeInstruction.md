@@ -2,129 +2,82 @@
 
 ## Core Design Principle
 
-1. Adhere to the philosophy: "Perfection is achieved when there is nothing left to take away."
-2. Prioritize simplicity and minimalism in all design decisions.
-3. Question the necessity of every element in the interface.
-4. Utilize shades of purple as the primary color palette to create a unique and cohesive visual identity.
+1. Adhere to Material Design 3 (Material You) principles while maintaining the unique identity of LiveDocs.
+2. Prioritize adaptability, accessibility, and user-centric design in all decisions.
+3. Leverage dynamic theming to create a personalized and cohesive user experience.
 
-## Theme Consistency
+## Theme Implementation
 
-1. Reference `theme.ts` as the source of truth for all theme configurations.
-2. Utilize `globals.css` for baseline styles, CSS variables, and utility classes.
-3. Prefer styled components from `StyledComponents.tsx` for consistent styling across the application.
-4. Do not modify `theme.ts` or `globals.css` without explicit instruction to do so.
+1. Utilize `@material/material-color-utilities` for generating dynamic color schemes based on a key color.
+2. Reference `theme.ts` as the source of truth for all theme configurations.
+3. Implement both light and dark themes with smooth transitions between them.
 
-## Color Palette
+## Color System
 
-1. Use the dark mode color scheme defined in `theme.ts`.
-2. Primary color: #ce93d8 (light purple)
-3. Secondary color: #9c27b0 (deep purple)
-4. Background color: #121212
-5. Surface color: #1e1e1e
-6. Text colors: Primary #ffffff, Secondary #b0bec5
-7. Accent colors (use sparingly):
-   - Error: #f44336
-   - Success: #66bb6a
-   - Warning: #ffa726
-   - Info: #29b6f6
+1. Use a dynamic color system that generates a full palette based on a key color.
+2. Implement color roles as defined in Material Design 3 for consistent application across the UI.
+3. Support both light and dark themes, allowing for user preference and system settings.
+4. Ensure all color combinations meet WCAG 2.1 AA standards for contrast.
 
 ## Typography
 
-1. Use the system font stack defined in `theme.ts` and `globals.css`.
-2. Adhere to heading sizes and weights as specified in the theme.
-3. Limit font variations to maintain consistency.
+1. Adopt Material Design 3's updated type scale, including new styles like "Display" for large headlines.
+2. Implement responsive typography that adjusts based on screen size.
+3. Use the system font stack as defined in `theme.ts`, with fallbacks for cross-platform consistency.
+
+## Shape and Elevation
+
+1. Implement Material Design 3's shape system with variable corner styles for different component sizes.
+2. Use shape to create distinct hierarchies in the UI.
+3. Apply a consistent elevation system using Material Design 3 guidelines to create depth and focus.
 
 ## Component Styling
 
-1. Prioritize use of components from `StyledComponents.tsx`.
-2. Create new styled components only when existing ones are insufficient.
-3. Ensure new components align with the established design system.
-4. Use `sx` prop for minor, one-off styling needs.
+1. Update existing components in `StyledComponents.tsx` to align with Material Design 3 specifications.
+2. Implement new Material Design 3 components such as the Navigation Bar and Search Bar.
+3. Ensure all components adapt to both light and dark themes.
 
 ## Layout and Spacing
 
-1. Apply the theme's spacing function for margins and padding.
-2. Utilize `PageContainer`, `ContentPaper`, and `ListContainer` for consistent layout structures.
-3. Use `SpaceBetweenBox` and `CenteredBox` for flexible layouts.
-4. Maintain ample white space to enhance readability and focus.
+1. Implement Material Design 3's adaptive layout grids for consistent spacing across devices.
+2. Use responsive design patterns to ensure optimal layout on various screen sizes and orientations.
 
-## Forms and Inputs
+## Motion and Animation
 
-1. Implement `StyledTextField`, `StyledFormControl`, and `StyledSelect` for form inputs.
-2. Use `PrimaryButton` and `SecondaryButton` for form actions.
-3. Ensure consistency in styling for labels, hints, and error messages.
-4. Minimize the number of form fields to essential inputs only.
+1. Implement Material Design 3's motion system for transitions and micro-interactions.
+2. Use meaningful motion to guide users, provide feedback, and reinforce hierarchies.
 
-## Error Handling and Feedback
+## Iconography
 
-1. Apply `ErrorText` component for inline error messages.
-2. Use `StyledAlert` for prominent notifications.
-3. Craft error messages to be clear, concise, and actionable.
-
-## Loading States
-
-1. Implement `StyledCircularProgress` for loading indicators.
-2. Center loading indicators using `CenteredBox`.
-
-## Tables and Lists
-
-1. Use `StyledTableCell` and `StyledTableRow` for consistent table styling.
-2. Implement `ListContainer` to wrap list-like components.
-
-## Responsive Design
-
-1. Ensure all layouts and components are responsive.
-2. Utilize Material-UI's responsive utilities and breakpoints.
-3. Prioritize critical information and functions on smaller screens.
+1. Adopt the Material Design 3 icon set with variable stroke weights.
+2. Implement variable icon weights to match typography and create better visual harmony.
 
 ## Accessibility
 
-1. Maintain WCAG 2.1 AA compliance.
-2. Ensure sufficient color contrast within the dark color scheme.
-3. Provide clear focus indicators for keyboard navigation.
-4. Utilize the `.visually-hidden` class from `globals.css` for screen reader-only content.
-
-## Code Organization
-
-1. Maintain styled components in `StyledComponents.tsx`.
-2. Use `globals.css` for baseline styles and utility classes.
-3. Keep theme configuration in `theme.ts`.
-
-## Dark Mode Implementation
-
-1. The application uses a dark mode theme by default.
-2. Ensure all new components and styles are designed with dark mode in mind.
-3. Use the color variables defined in `globals.css` for consistency.
-4. When adding new colors, consider their appearance in dark mode.
+1. Ensure all interactive elements have a minimum touch target size of 48x48dp.
+2. Implement robust keyboard navigation support throughout the application.
+3. Use semantic HTML and ARIA attributes where appropriate to enhance screen reader compatibility.
 
 ## Continuous Improvement
 
-1. Regularly refactor components for simplicity and reusability.
-2. Incorporate Material-UI best practices when relevant.
-3. Seek opportunities to enhance the dark mode, minimalist design.
-4. Consistently evaluate the necessity of each UI element.
+1. Regularly review and update the theme implementation to align with the latest Material Design specifications.
+2. Seek opportunities to enhance the user experience through thoughtful application of Material Design principles.
 
 ## AI-Specific Instructions
 
-1. When generating or modifying UI components, always refer to this document, `theme.ts`, and `StyledComponents.tsx`.
-2. Prioritize simplicity in all design suggestions or code generation.
-3. Before adding new elements, evaluate if existing components can fulfill the requirement.
-4. When suggesting changes, provide rationale based on the core design principle.
-5. Generate code that adheres to the established dark mode color palette and typography.
-6. Recommend removal of unnecessary elements to align with the minimalist aesthetic.
-7. Ensure all generated code and suggestions maintain accessibility standards.
-8. When in doubt, err on the side of simplicity and minimalism.
+1. When generating or modifying UI components, always refer to the latest Material Design 3 specifications.
+2. Utilize `@material/material-color-utilities` for color-related calculations and theme generation.
+3. Ensure all generated code adheres to accessibility standards and responsive design principles.
+4. When in doubt, defer to Material Design 3 guidelines while maintaining the core functionality and identity of LiveDocs.
 
 ## Evaluation Criteria
 
 When assessing design decisions or generated code, consider:
 
-1. Does it adhere to the core design principle of simplicity?
-2. Does it utilize the established dark mode theme and styled components?
-3. Does it maintain consistency with existing design patterns?
-4. Does it enhance or detract from the user's ability to complete their task?
-5. Can any element be removed without compromising functionality?
-6. Does it maintain good contrast and readability in dark mode?
-7. Does it effectively use the purple-focused color scheme?
+1. Does it align with Material Design 3 principles?
+2. Does it utilize the dynamic theming capabilities provided by `@material/material-color-utilities`?
+3. Is it accessible and responsive across different devices and user preferences?
+4. Does it maintain consistency with existing LiveDocs design patterns?
+5. Does it enhance the user's ability to complete their tasks efficiently?
 
-Apply these guidelines in all interactions related to the LiveDocs application's design and development. Constantly evaluate against the core principle of simplicity and minimalism, while ensuring a comfortable dark mode experience with a cohesive purple-focused theme.
+Apply these guidelines in all interactions related to the LiveDocs application's design and development. Continuously evaluate against Material Design 3 principles while ensuring the unique identity and functionality of LiveDocs are maintained.

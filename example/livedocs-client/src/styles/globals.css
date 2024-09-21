@@ -1,32 +1,26 @@
 /* src/styles/globals.css */
 
 :root {
-  /* Color Palette */
-  --color-primary: #ce93d8;
-  --color-secondary: #9c27b0;
-  --color-background: #121212;
-  --color-surface: #1e1e1e;
-  --color-error: #f44336;
-  --color-success: #66bb6a;
-  --color-warning: #ffa726;
-  --color-info: #29b6f6;
-
-  /* Text Colors */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #b0bec5;
-
   /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  --spacing-unit: 8px;
+  --spacing-xs: calc(var(--spacing-unit) * 0.5);
+  --spacing-sm: var(--spacing-unit);
+  --spacing-md: calc(var(--spacing-unit) * 2);
+  --spacing-lg: calc(var(--spacing-unit) * 3);
+  --spacing-xl: calc(var(--spacing-unit) * 4);
 
   /* Typography */
-  --font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   /* Transitions */
   --transition-speed: 0.2s;
+
+  /* Z-index */
+  --z-index-drawer: 1200;
+  --z-index-app-bar: 1100;
+  --z-index-modal: 1300;
+  --z-index-snackbar: 1400;
+  --z-index-tooltip: 1500;
 }
 
 /* Reset and base styles */
@@ -36,45 +30,77 @@
   padding: 0;
 }
 
-html,
-body {
-  font-family: var(--font-family);
+html {
   font-size: 16px;
-  line-height: 1.5;
-  color: var(--color-text-primary);
-  background-color: var(--color-background);
+  scroll-behavior: smooth;
 }
 
+body {
+  font-family: var(--font-family);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive typography */
+@media screen and (min-width: 600px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+@media screen and (min-width: 960px) {
+  html {
+    font-size: 20px;
+  }
+}
+
+/* Accessibility improvements */
 a {
-  color: var(--color-primary);
   text-decoration: none;
   transition: color var(--transition-speed) ease;
 }
 
-a:hover {
-  color: var(--color-secondary);
+a:hover,
+a:focus {
+  text-decoration: underline;
+}
+
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline-offset: 2px;
+}
+
+/* Improved focus visibility for keyboard navigation */
+:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Hide focus outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-surface);
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-secondary);
-  border-radius: 4px;
+  border-radius: 5px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
-}
-
-/* Accessibility */
+/* Utility classes */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -85,4 +111,73 @@ a:hover {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Responsive flex container */
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+/* Responsive grid system */
+.grid {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+@media screen and (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 960px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background-color: #fff;
+    color: #000;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  .no-print {
+    display: none;
+  }
 }

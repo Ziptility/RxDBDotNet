@@ -12,6 +12,7 @@ import Layout from '../components/Layout';
 import { createEmotionCache } from '../createEmotionCache';
 import { theme } from '../theme';
 import type { EmotionCache } from '@emotion/cache';
+import '@/styles/globals.css';
 
 interface MyAppProps extends AppProps {
   readonly emotionCache: EmotionCache;

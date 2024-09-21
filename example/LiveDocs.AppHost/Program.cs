@@ -17,9 +17,9 @@ builder.AddProject<LiveDocs_GraphQLApi>("replicationApi", "http")
     .WithReference(sqlDb)
     .WithEnvironment("SQL_PASSWORD", password);
 
-builder.AddNpmApp("livedocs-client", "../livedocs-client", "run")
+builder.AddNpmApp("livedocs-client", "../livedocs-client", "dev")
     .WithHttpEndpoint(port: 3001, targetPort: 3000, env: "PORT")
-    .WithEnvironment("NODE_ENV", "production")
+    .WithEnvironment("NODE_ENV", "development")
     .WithExternalHttpEndpoints();
 
 await builder.Build().RunAsync();

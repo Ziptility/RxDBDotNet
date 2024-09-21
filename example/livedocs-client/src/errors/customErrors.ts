@@ -2,7 +2,7 @@
 export class LiveDocsError extends Error {
   constructor(
     message: string,
-    public code: string,
+    public code: string
   ) {
     super(message);
     this.name = 'LiveDocsError';

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { Workspace } from '@/lib/schemas';
@@ -12,6 +13,7 @@ import {
   StyledAlert,
   StyledCircularProgress,
 } from '@/styles/StyledComponents';
+import { motionProps, staggeredChildren } from '@/utils/motionSystem';
 import WorkspaceForm from './WorkspaceForm';
 import WorkspaceList from './WorkspaceList';
 
@@ -57,33 +59,41 @@ const WorkspacesPageContent: React.FC = () => {
 
   return (
     <PageContainer>
-      {error ? (
-        <StyledAlert severity="error" sx={{ mb: 2 }}>
-          {error.message}
-        </StyledAlert>
-      ) : null}
-      <ContentPaper>
-        <SectionTitle variant="h6">{editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}</SectionTitle>
-        <WorkspaceForm
-          workspace={editingWorkspace ?? undefined}
-          onSubmit={editingWorkspace ? handleUpdate : handleCreate}
-        />
-        {editingWorkspace ? (
-          <SpaceBetweenBox sx={{ mt: 2 }}>
-            <PrimaryButton onClick={(): void => setEditingWorkspace(null)}>Cancel Editing</PrimaryButton>
-          </SpaceBetweenBox>
+      <motion.div {...staggeredChildren}>
+        {error ? (
+          <motion.div {...motionProps['fadeIn']}>
+            <StyledAlert severity="error" sx={{ mb: 2 }}>
+              {error.message}
+            </StyledAlert>
+          </motion.div>
         ) : null}
-      </ContentPaper>
-      <ListContainer>
-        <SectionTitle variant="h6">Workspace List</SectionTitle>
-        <WorkspaceList
-          workspaces={workspaces}
-          onEdit={setEditingWorkspace}
-          onDelete={(workspace): void => {
-            void deleteDocument(workspace.id);
-          }}
-        />
-      </ListContainer>
+        <motion.div {...motionProps['slideInFromBottom']}>
+          <ContentPaper>
+            <SectionTitle variant="h6">{editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}</SectionTitle>
+            <WorkspaceForm
+              workspace={editingWorkspace ?? undefined}
+              onSubmit={editingWorkspace ? handleUpdate : handleCreate}
+            />
+            {editingWorkspace ? (
+              <SpaceBetweenBox sx={{ mt: 2 }}>
+                <PrimaryButton onClick={(): void => setEditingWorkspace(null)}>Cancel Editing</PrimaryButton>
+              </SpaceBetweenBox>
+            ) : null}
+          </ContentPaper>
+        </motion.div>
+        <motion.div {...motionProps['slideInFromBottom']}>
+          <ListContainer>
+            <SectionTitle variant="h6">Workspace List</SectionTitle>
+            <WorkspaceList
+              workspaces={workspaces}
+              onEdit={setEditingWorkspace}
+              onDelete={(workspace): void => {
+                void deleteDocument(workspace.id);
+              }}
+            />
+          </ListContainer>
+        </motion.div>
+      </motion.div>
     </PageContainer>
   );
 };

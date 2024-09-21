@@ -97,7 +97,7 @@
     "react/react-in-jsx-scope": "off",
     "react/no-unknown-property": "error",
     "react/no-array-index-key": "error",
-    "react/jsx-props-no-spreading": "error",
+    "react/jsx-props-no-spreading": "off",
     "react/boolean-prop-naming": "error",
     "react/button-has-type": "error",
     "react/default-props-match-prop-types": "error",

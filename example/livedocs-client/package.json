@@ -4,15 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
+    "dev:debug": "cross-env NODE_OPTIONS=--inspect next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000",
     "run": "npm run build && npm run start",
-    "lint": "next lint --max-warnings=0",
-    "lint:strict": "eslint --max-warnings=0 .",
-    "typecheck": "tsc --noEmit",
-    "format:check": "prettier --check .",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,html,yml,yaml}\"",
-    "lint-staged": "lint-staged"
+    "start": "next start -p 3000",
+    "clean": "rimraf .next out",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,html,yml,yaml}\""
   },
   "dependencies": {
     "@emotion/cache": "^11.13.1",
@@ -24,7 +21,7 @@
     "@mui/material": "^6.1.1",
     "framer-motion": "^11.5.6",
     "graphql-ws": "^5.16.0",
-    "next": "^14.2.12",
+    "next": "^14.2.13",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.53.0",
@@ -53,6 +50,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "lint-staged": "^15",
     "prettier": "^3",
+    "rimraf": "^5.0.1",
     "tsc-files": "^1.1.4",
     "typescript": "^5"
   },

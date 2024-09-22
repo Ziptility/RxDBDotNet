@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2021",
+    "sourceMap": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "skipLibCheck": true,

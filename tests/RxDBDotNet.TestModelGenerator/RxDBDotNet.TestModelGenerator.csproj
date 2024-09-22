@@ -30,7 +30,7 @@
     <!-- Analyzers-->
     <ItemGroup>
         <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.1.0-beta" />
-        <PackageReference Include="Meziantou.Analyzer" Version="2.0.163">
+        <PackageReference Include="Meziantou.Analyzer" Version="2.0.168">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

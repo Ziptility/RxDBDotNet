@@ -1,78 +1,99 @@
-// src/components/UserForm.tsx
 import React, { useEffect } from 'react';
-import { TextField, MenuItem, FormControl, InputLabel, Select, Button } from '@mui/material';
+import { TextField, Button, Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { useForm, Controller } from 'react-hook-form';
-import { FormLayout, FormError } from '@/components/FormComponents';
+import { FormLayout } from '@/components/FormComponents';
 import type { User, Workspace } from '@/lib/schemas';
 import { UserRole } from '@/lib/schemas';
 
+const InlineFormContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  padding: theme.spacing(1, 0),
+  flexWrap: 'wrap',
+  [theme.breakpoints.up('md')]: {
+    flexWrap: 'nowrap',
+  },
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiInputBase-root': {
+    backgroundColor: theme.palette.background.paper,
+  },
+}));
+
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  minWidth: 120,
+  backgroundColor: theme.palette.background.paper,
+}));
+
 interface UserFormProps {
-  readonly user: User | undefined;
+  readonly user: User | null;
   readonly workspaces: Workspace[];
   readonly onSubmit: (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => void;
   readonly onCancel: () => void;
+  readonly isInline: boolean;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCancel }) => {
+const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCancel, isInline = false }) => {
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
     reset,
-  } = useForm({
+  } = useForm<Omit<User, 'id' | 'updatedAt' | 'isDeleted'>>({
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      role: UserRole.StandardUser,
-      workspaceId: '',
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      email: user?.email ?? '',
+      role: user?.role ?? UserRole.StandardUser,
+      workspaceId: user?.workspaceId ?? '',
     },
     mode: 'onChange',
   });
 
   useEffect(() => {
-    if (user) {
-      reset({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        workspaceId: user.workspaceId,
-      });
-    } else {
-      reset({
-        firstName: '',
-        lastName: '',
-        email: '',
-        role: UserRole.StandardUser,
-        workspaceId: '',
-      });
-    }
+    reset({
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      email: user?.email ?? '',
+      role: user?.role ?? UserRole.StandardUser,
+      workspaceId: user?.workspaceId ?? '',
+    });
   }, [user, reset]);
 
   const onSubmitForm = handleSubmit((data) => {
     onSubmit(data);
   });
 
-  return (
-    <FormLayout
-      title=""
-      onSubmit={(e) => {
-        e.preventDefault();
-        void onSubmitForm();
-      }}
-    >
+  const formContent = (
+    <>
       <Controller
         name="firstName"
         control={control}
         rules={{ required: 'First name is required' }}
         render={({ field }) => (
-          <TextField
+          <StyledTextField
             {...field}
             label="First Name"
             error={!!errors.firstName}
             helperText={errors.firstName?.message}
-            fullWidth
+            size={isInline ? 'small' : 'medium'}
+            variant={isInline ? 'outlined' : 'filled'}
+            slotProps={{
+              input: {
+                inputProps: {
+                  maxLength: 50,
+                },
+              },
+            }}
+            sx={{
+              width: 'auto',
+              '& .MuiInputBase-input': {
+                width: '20ch',
+              },
+            }}
           />
         )}
       />
@@ -81,12 +102,26 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCance
         control={control}
         rules={{ required: 'Last name is required' }}
         render={({ field }) => (
-          <TextField
+          <StyledTextField
             {...field}
             label="Last Name"
             error={!!errors.lastName}
             helperText={errors.lastName?.message}
-            fullWidth
+            size={isInline ? 'small' : 'medium'}
+            variant={isInline ? 'outlined' : 'filled'}
+            slotProps={{
+              input: {
+                inputProps: {
+                  maxLength: 50,
+                },
+              },
+            }}
+            sx={{
+              width: 'auto',
+              '& .MuiInputBase-input': {
+                width: '20ch',
+              },
+            }}
           />
         )}
       />
@@ -101,13 +136,26 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCance
           },
         }}
         render={({ field }) => (
-          <TextField
+          <StyledTextField
             {...field}
             label="Email"
-            type="email"
             error={!!errors.email}
             helperText={errors.email?.message}
-            fullWidth
+            size={isInline ? 'small' : 'medium'}
+            variant={isInline ? 'outlined' : 'filled'}
+            slotProps={{
+              input: {
+                inputProps: {
+                  maxLength: 100,
+                },
+              },
+            }}
+            sx={{
+              width: 'auto',
+              '& .MuiInputBase-input': {
+                width: '30ch',
+              },
+            }}
           />
         )}
       />
@@ -116,17 +164,16 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCance
         control={control}
         rules={{ required: 'Role is required' }}
         render={({ field }) => (
-          <FormControl fullWidth error={!!errors.role}>
+          <StyledFormControl error={!!errors.role} size={isInline ? 'small' : 'medium'}>
             <InputLabel>Role</InputLabel>
             <Select {...field} label="Role">
-              {Object.values(UserRole).map((roleValue) => (
-                <MenuItem key={roleValue} value={roleValue}>
-                  {roleValue}
+              {Object.values(UserRole).map((role) => (
+                <MenuItem key={role} value={role}>
+                  {role}
                 </MenuItem>
               ))}
             </Select>
-            {errors.role ? <FormError error={errors.role.message ?? null} /> : null}
-          </FormControl>
+          </StyledFormControl>
         )}
       />
       <Controller
@@ -134,7 +181,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCance
         control={control}
         rules={{ required: 'Workspace is required' }}
         render={({ field }) => (
-          <FormControl fullWidth error={!!errors.workspaceId}>
+          <StyledFormControl error={!!errors.workspaceId} size={isInline ? 'small' : 'medium'}>
             <InputLabel>Workspace</InputLabel>
             <Select {...field} label="Workspace">
               {workspaces.map((workspace) => (
@@ -143,18 +190,46 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCance
                 </MenuItem>
               ))}
             </Select>
-            {errors.workspaceId ? <FormError error={errors.workspaceId.message ?? null} /> : null}
-          </FormControl>
+          </StyledFormControl>
         )}
       />
-      <Button type="submit" variant="contained" color="primary" disabled={isSubmitting || !isValid} fullWidth>
-        {user ? 'Update User' : 'Create User'}
+      <Button
+        type="submit"
+        variant="contained"
+        color="primary"
+        disabled={isSubmitting || !isValid}
+        size={isInline ? 'small' : 'medium'}
+      >
+        {user ? 'Update' : 'Create'}
       </Button>
-      {user ? (
-        <Button onClick={onCancel} variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }}>
-          Cancel
-        </Button>
-      ) : null}
+      <Button onClick={onCancel} variant="outlined" color="secondary" size={isInline ? 'small' : 'medium'}>
+        Cancel
+      </Button>
+    </>
+  );
+
+  if (isInline) {
+    return (
+      <InlineFormContainer
+        as="form"
+        onSubmit={(e: React.FormEvent): void => {
+          e.preventDefault();
+          void onSubmitForm(e);
+        }}
+      >
+        {formContent}
+      </InlineFormContainer>
+    );
+  }
+
+  return (
+    <FormLayout
+      title=""
+      onSubmit={(e) => {
+        void onSubmitForm(e);
+      }}
+    >
+      {formContent}
     </FormLayout>
   );
 };

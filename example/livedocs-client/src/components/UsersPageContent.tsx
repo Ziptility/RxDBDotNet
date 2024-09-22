@@ -1,6 +1,7 @@
-// src\components\UsersPageContent.tsx
 import React, { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { Add as AddIcon } from '@mui/icons-material';
+import { Box, Fab, Tooltip } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { User, Workspace } from '@/lib/schemas';
@@ -17,26 +18,31 @@ import UserForm from './UserForm';
 import UserList from './UserList';
 
 const UsersPageContent: React.FC = () => {
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const {
     documents: users,
     isLoading: isLoadingUsers,
     error: userError,
-    upsertDocument,
-    deleteDocument,
+    upsertDocument: upsertUser,
+    deleteDocument: deleteUser,
   } = useDocuments<User>('user');
 
   const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
 
   const handleSubmit = useCallback(
     async (userData: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      if (editingUser) {
-        const updatedUser: User = {
-          ...editingUser,
-          ...userData,
-          updatedAt: new Date().toISOString(),
-        };
-        await upsertDocument(updatedUser);
+      if (editingUserId !== null) {
+        const existingUser = users.find((u) => u.id === editingUserId);
+        if (existingUser) {
+          const updatedUser: User = {
+            ...existingUser,
+            ...userData,
+            updatedAt: new Date().toISOString(),
+          };
+          await upsertUser(updatedUser);
+          setEditingUserId(null);
+        }
       } else {
         const newUser: User = {
           id: uuidv4(),
@@ -44,15 +50,34 @@ const UsersPageContent: React.FC = () => {
           updatedAt: new Date().toISOString(),
           isDeleted: false,
         };
-        await upsertDocument(newUser);
+        await upsertUser(newUser);
+        setIsCreating(false);
       }
-      setEditingUser(null);
     },
-    [editingUser, upsertDocument]
+    [editingUserId, users, upsertUser]
   );
 
-  const handleCancel = useCallback((): void => {
-    setEditingUser(null);
+  const handleEdit = useCallback((userId: string) => {
+    setEditingUserId(userId);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingUserId(null);
+  }, []);
+
+  const handleDelete = useCallback(
+    (userId: string) => {
+      void deleteUser(userId);
+    },
+    [deleteUser]
+  );
+
+  const handleCreateNew = useCallback(() => {
+    setIsCreating(true);
+  }, []);
+
+  const handleCancelCreate = useCallback(() => {
+    setIsCreating(false);
   }, []);
 
   if (isLoadingUsers || isLoadingWorkspaces) {
@@ -72,31 +97,47 @@ const UsersPageContent: React.FC = () => {
           </StyledAlert>
         </motion.div>
       ) : null}
-      <motion.div {...motionProps['slideInFromBottom']}>
-        <ContentPaper>
-          <SectionTitle variant="h6">{editingUser ? 'Edit User' : 'Create User'}</SectionTitle>
-          <UserForm
-            user={editingUser ?? undefined}
-            workspaces={workspaces}
-            onSubmit={(e) => {
-              void handleSubmit(e);
-            }}
-            onCancel={handleCancel}
-          />
-        </ContentPaper>
-      </motion.div>
+      <AnimatePresence>
+        {isCreating ? (
+          <motion.div {...motionProps['slideInFromTop']}>
+            <ContentPaper>
+              <SectionTitle variant="h6">Create User</SectionTitle>
+              <UserForm
+                onSubmit={(data) => {
+                  void handleSubmit(data);
+                }}
+                onCancel={handleCancelCreate}
+                user={null}
+                workspaces={workspaces}
+                isInline={false}
+              />
+            </ContentPaper>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       <motion.div {...motionProps['slideInFromBottom']}>
         <ListContainer>
-          <SectionTitle variant="h6">User List</SectionTitle>
+          <SectionTitle variant="h6">Users</SectionTitle>
           <UserList
             users={users}
-            onEdit={setEditingUser}
-            onDelete={(user): void => {
-              void deleteDocument(user.id);
+            workspaces={workspaces}
+            editingUserId={editingUserId}
+            onEdit={handleEdit}
+            onCancelEdit={handleCancelEdit}
+            onDelete={handleDelete}
+            onSubmit={(data) => {
+              void handleSubmit(data);
             }}
           />
         </ListContainer>
       </motion.div>
+      <Box sx={{ position: 'fixed', bottom: 24, right: 24 }}>
+        <Tooltip title="Create new user" arrow>
+          <Fab color="primary" onClick={handleCreateNew}>
+            <AddIcon />
+          </Fab>
+        </Tooltip>
+      </Box>
     </motion.div>
   );
 };

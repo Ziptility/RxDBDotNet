@@ -98,7 +98,7 @@ const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit, onCa
     return (
       <InlineFormContainer
         as="form"
-        onSubmit={(e: React.FormEvent<HTMLDivElement>): void => {
+        onSubmit={(e: React.FormEvent): void => {
           e.preventDefault();
           void onSubmitForm(e);
         }}

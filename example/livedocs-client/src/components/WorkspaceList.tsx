@@ -1,4 +1,3 @@
-// src\components\WorkspaceList.tsx
 import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,14 +13,25 @@ import {
   IconButton,
 } from '@/styles/StyledComponents';
 import { motionProps } from '@/utils/motionSystem';
+import WorkspaceForm from './WorkspaceForm';
 
 export interface WorkspaceListProps {
   readonly workspaces: Workspace[];
-  readonly onEdit: (workspace: Workspace) => void;
-  readonly onDelete: (workspace: Workspace) => void;
+  readonly editingWorkspaceId: string | null;
+  readonly onEdit: (workspaceId: string) => void;
+  readonly onCancelEdit: () => void;
+  readonly onDelete: (workspaceId: string) => void;
+  readonly onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => void;
 }
 
-const WorkspaceList: React.FC<WorkspaceListProps> = ({ workspaces, onEdit, onDelete }) => {
+const WorkspaceList: React.FC<WorkspaceListProps> = ({
+  workspaces,
+  editingWorkspaceId,
+  onEdit,
+  onCancelEdit,
+  onDelete,
+  onSubmit,
+}) => {
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -43,16 +53,24 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({ workspaces, onEdit, onDel
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <StyledTableCell>{workspace.name}</StyledTableCell>
-                <StyledTableCell>{new Date(workspace.updatedAt).toLocaleString()}</StyledTableCell>
-                <StyledTableCell>
-                  <IconButton onClick={(): void => onEdit(workspace)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={(): void => onDelete(workspace)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </StyledTableCell>
+                {editingWorkspaceId === workspace.id ? (
+                  <StyledTableCell colSpan={3}>
+                    <WorkspaceForm workspace={workspace} onSubmit={onSubmit} onCancel={onCancelEdit} isInline />
+                  </StyledTableCell>
+                ) : (
+                  <>
+                    <StyledTableCell>{workspace.name}</StyledTableCell>
+                    <StyledTableCell>{new Date(workspace.updatedAt).toLocaleString()}</StyledTableCell>
+                    <StyledTableCell>
+                      <IconButton onClick={() => onEdit(workspace.id)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => onDelete(workspace.id)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </StyledTableCell>
+                  </>
+                )}
               </motion.tr>
             ))}
           </AnimatePresence>

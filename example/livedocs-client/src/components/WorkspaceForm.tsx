@@ -1,75 +1,121 @@
-// src\components\WorkspaceForm.tsx
 import React, { useEffect } from 'react';
-import { TextField, Button } from '@mui/material';
+import { TextField, Button, Box } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { useForm, Controller } from 'react-hook-form';
 import { FormLayout } from '@/components/FormComponents';
 import type { Workspace } from '@/lib/schemas';
 
+const InlineFormContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  padding: theme.spacing(1, 0),
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiInputBase-root': {
+    backgroundColor: theme.palette.background.paper,
+  },
+}));
+
 interface WorkspaceFormProps {
-  readonly workspace: Workspace | undefined;
+  readonly workspace: Workspace | null;
   readonly onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => void;
   readonly onCancel: () => void;
+  readonly isInline: boolean;
 }
 
-const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit, onCancel }) => {
+const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit, onCancel, isInline = false }) => {
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
     reset,
-  } = useForm({
+  } = useForm<Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>>({
     defaultValues: {
-      name: '',
+      name: workspace?.name ?? '',
     },
     mode: 'onChange',
   });
 
   useEffect(() => {
-    if (workspace) {
-      reset({
-        name: workspace.name,
-      });
-    } else {
-      reset({
-        name: '',
-      });
-    }
+    reset({
+      name: workspace?.name ?? '',
+    });
   }, [workspace, reset]);
 
   const onSubmitForm = handleSubmit((data) => {
     onSubmit(data);
   });
 
-  return (
-    <FormLayout
-      title=""
-      onSubmit={(e) => {
-        e.preventDefault();
-        void onSubmitForm();
-      }}
-    >
+  const formContent = (
+    <>
       <Controller
         name="name"
         control={control}
         rules={{ required: 'Workspace name is required' }}
         render={({ field }) => (
-          <TextField
+          <StyledTextField
             {...field}
             label="Workspace Name"
             error={!!errors.name}
             helperText={errors.name?.message}
-            fullWidth
+            fullWidth={!isInline}
+            size={isInline ? 'small' : 'medium'}
+            variant={isInline ? 'outlined' : 'filled'}
+            slotProps={{
+              input: {
+                inputProps: {
+                  maxLength: 30,
+                },
+              },
+            }}
+            sx={{
+              width: 'auto',
+              '& .MuiInputBase-input': {
+                width: '30ch',
+              },
+            }}
           />
         )}
       />
-      <Button type="submit" variant="contained" color="primary" disabled={isSubmitting || !isValid} fullWidth>
-        {workspace ? 'Update Workspace' : 'Create Workspace'}
+      <Button
+        type="submit"
+        variant="contained"
+        color="primary"
+        disabled={isSubmitting || !isValid}
+        size={isInline ? 'small' : 'medium'}
+      >
+        {workspace ? 'Update' : 'Create'}
       </Button>
-      {workspace ? (
-        <Button onClick={onCancel} variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }}>
-          Cancel
-        </Button>
-      ) : null}
+      <Button onClick={onCancel} variant="outlined" color="secondary" size={isInline ? 'small' : 'medium'}>
+        Cancel
+      </Button>
+    </>
+  );
+
+  if (isInline) {
+    return (
+      <InlineFormContainer
+        as="form"
+        onSubmit={(e: React.FormEvent<HTMLDivElement>): void => {
+          e.preventDefault();
+          void onSubmitForm(e);
+        }}
+      >
+        {formContent}
+      </InlineFormContainer>
+    );
+  }
+
+  return (
+    <FormLayout
+      title=""
+      onSubmit={(e) => {
+        void onSubmitForm(e);
+      }}
+    >
+      {formContent}
     </FormLayout>
   );
 };

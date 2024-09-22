@@ -1,6 +1,7 @@
-// src\components\WorkspacesPageContent.tsx
 import React, { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { Add as AddIcon } from '@mui/icons-material';
+import { Box, Fab, Tooltip } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { Workspace } from '@/lib/schemas';
@@ -17,7 +18,8 @@ import WorkspaceForm from './WorkspaceForm';
 import WorkspaceList from './WorkspaceList';
 
 const WorkspacesPageContent: React.FC = () => {
-  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingWorkspaceId, setEditingWorkspaceId] = useState<string | null>(null);
   const {
     documents: workspaces,
     isLoading,
@@ -28,13 +30,17 @@ const WorkspacesPageContent: React.FC = () => {
 
   const handleSubmit = useCallback(
     async (workspaceData: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-      if (editingWorkspace) {
-        const updatedWorkspace: Workspace = {
-          ...editingWorkspace,
-          ...workspaceData,
-          updatedAt: new Date().toISOString(),
-        };
-        await upsertDocument(updatedWorkspace);
+      if (editingWorkspaceId !== null) {
+        const existingWorkspace = workspaces.find((w) => w.id === editingWorkspaceId);
+        if (existingWorkspace) {
+          const updatedWorkspace: Workspace = {
+            ...existingWorkspace,
+            ...workspaceData,
+            updatedAt: new Date().toISOString(),
+          };
+          await upsertDocument(updatedWorkspace);
+          setEditingWorkspaceId(null);
+        }
       } else {
         const newWorkspace: Workspace = {
           id: uuidv4(),
@@ -43,14 +49,33 @@ const WorkspacesPageContent: React.FC = () => {
           isDeleted: false,
         };
         await upsertDocument(newWorkspace);
+        setIsCreating(false);
       }
-      setEditingWorkspace(null);
     },
-    [editingWorkspace, upsertDocument]
+    [editingWorkspaceId, workspaces, upsertDocument]
   );
 
-  const handleCancel = useCallback((): void => {
-    setEditingWorkspace(null);
+  const handleEdit = useCallback((workspaceId: string) => {
+    setEditingWorkspaceId(workspaceId);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingWorkspaceId(null);
+  }, []);
+
+  const handleDelete = useCallback(
+    (workspaceId: string) => {
+      void deleteDocument(workspaceId);
+    },
+    [deleteDocument]
+  );
+
+  const handleCreateNew = useCallback(() => {
+    setIsCreating(true);
+  }, []);
+
+  const handleCancelCreate = useCallback(() => {
+    setIsCreating(false);
   }, []);
 
   if (isLoading) {
@@ -70,30 +95,45 @@ const WorkspacesPageContent: React.FC = () => {
           </StyledAlert>
         </motion.div>
       ) : null}
-      <motion.div {...motionProps['slideInFromBottom']}>
-        <ContentPaper>
-          <SectionTitle variant="h6">{editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}</SectionTitle>
-          <WorkspaceForm
-            workspace={editingWorkspace ?? undefined}
-            onSubmit={(e) => {
-              void handleSubmit(e);
-            }}
-            onCancel={handleCancel}
-          />
-        </ContentPaper>
-      </motion.div>
+      <AnimatePresence>
+        {isCreating ? (
+          <motion.div {...motionProps['slideInFromTop']}>
+            <ContentPaper>
+              <SectionTitle variant="h6">Create Workspace</SectionTitle>
+              <WorkspaceForm
+                onSubmit={(data) => {
+                  void handleSubmit(data);
+                }}
+                onCancel={handleCancelCreate}
+                workspace={null}
+                isInline={false}
+              />
+            </ContentPaper>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       <motion.div {...motionProps['slideInFromBottom']}>
         <ListContainer>
-          <SectionTitle variant="h6">Workspace List</SectionTitle>
+          <SectionTitle variant="h6">Workspaces</SectionTitle>
           <WorkspaceList
             workspaces={workspaces}
-            onEdit={setEditingWorkspace}
-            onDelete={(workspace): void => {
-              void deleteDocument(workspace.id);
+            editingWorkspaceId={editingWorkspaceId}
+            onEdit={handleEdit}
+            onCancelEdit={handleCancelEdit}
+            onDelete={handleDelete}
+            onSubmit={(data) => {
+              void handleSubmit(data);
             }}
           />
         </ListContainer>
       </motion.div>
+      <Box sx={{ position: 'fixed', bottom: 24, right: 24 }}>
+        <Tooltip title="Create new workspace" arrow>
+          <Fab color="primary" onClick={handleCreateNew}>
+            <AddIcon />
+          </Fab>
+        </Tooltip>
+      </Box>
     </motion.div>
   );
 };

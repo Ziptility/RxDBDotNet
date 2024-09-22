@@ -1,11 +1,11 @@
-// .vscode/launch.json
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Full-Stack Debugging",
+      "name": "Full-Stack Debugging (Firefox)",
       "type": "firefox",
       "request": "launch",
+      "reAttach": true,
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}",
       "pathMappings": [
@@ -24,7 +24,14 @@
       ],
       "skipFiles": ["<node_internals>/**"],
       "preLaunchTask": "Start Next.js with Debugging",
-      "firefoxExecutable": "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
+      "firefoxExecutable": "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+      "profile": "default",
+      "keepProfileChanges": true,
+      "preferences": {
+        "devtools.debugger.remote-enabled": true,
+        "devtools.chrome.enabled": true,
+        "devtools.debugger.prompt-connection": false
+      }
     },
     {
       "name": "Attach to Node.js (Next.js Server)",
@@ -40,7 +47,7 @@
   "compounds": [
     {
       "name": "Next.js: Full-Stack Debugging",
-      "configurations": ["Full-Stack Debugging", "Attach to Node.js (Next.js Server)"]
+      "configurations": ["Full-Stack Debugging (Firefox)", "Attach to Node.js (Next.js Server)"]
     }
   ]
 }

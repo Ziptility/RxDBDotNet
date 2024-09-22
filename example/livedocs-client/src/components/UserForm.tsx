@@ -1,21 +1,10 @@
 import React, { useEffect } from 'react';
-import { TextField, Button, Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useForm, Controller } from 'react-hook-form';
 import { FormLayout } from '@/components/FormComponents';
 import type { User, Workspace } from '@/lib/schemas';
 import { UserRole } from '@/lib/schemas';
-
-const InlineFormContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(2),
-  padding: theme.spacing(1, 0),
-  flexWrap: 'wrap',
-  [theme.breakpoints.up('md')]: {
-    flexWrap: 'nowrap',
-  },
-}));
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-root': {
@@ -207,20 +196,6 @@ const UserForm: React.FC<UserFormProps> = ({ user, workspaces, onSubmit, onCance
       </Button>
     </>
   );
-
-  if (isInline) {
-    return (
-      <InlineFormContainer
-        as="form"
-        onSubmit={(e: React.FormEvent): void => {
-          e.preventDefault();
-          void onSubmitForm(e);
-        }}
-      >
-        {formContent}
-      </InlineFormContainer>
-    );
-  }
 
   return (
     <FormLayout

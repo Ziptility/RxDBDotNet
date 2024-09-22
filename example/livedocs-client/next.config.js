@@ -1,8 +1,8 @@
+// src/next.config.js
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  webpack: (config, { dev, isServer }) => {
-    return config;
-  },
+  poweredByHeader: false,
   eslint: {
     dirs: ['src'],
     ignoreDuringBuilds: false,
@@ -10,7 +10,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  poweredByHeader: false,
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      config.devtool = 'source-map';
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;

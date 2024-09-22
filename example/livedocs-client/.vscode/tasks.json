@@ -46,7 +46,7 @@
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "ready - started server on .+, url: http://localhost:3000",
+          "beginsPattern": "started server on .+, url: http://localhost:3000",
           "endsPattern": "^$"
         }
       },

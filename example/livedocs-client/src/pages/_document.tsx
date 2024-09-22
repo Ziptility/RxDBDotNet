@@ -1,4 +1,4 @@
-// src\pages\_document.tsx
+// src/pages/_document.tsx
 import createEmotionServer from '@emotion/server/create-instance';
 import { type AppProps } from 'next/app';
 import type { AppPropsType } from 'next/dist/shared/lib/utils';

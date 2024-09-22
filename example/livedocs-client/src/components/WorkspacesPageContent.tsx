@@ -1,18 +1,16 @@
 // src\components\WorkspacesPageContent.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
 import type { Workspace } from '@/lib/schemas';
 import {
-  PageContainer,
   ContentPaper,
   SectionTitle,
-  PrimaryButton,
   ListContainer,
-  SpaceBetweenBox,
   StyledAlert,
   StyledCircularProgress,
+  CenteredBox,
 } from '@/styles/StyledComponents';
 import { motionProps, staggeredChildren } from '@/utils/motionSystem';
 import WorkspaceForm from './WorkspaceForm';
@@ -23,79 +21,80 @@ const WorkspacesPageContent: React.FC = () => {
   const {
     documents: workspaces,
     isLoading,
-    error,
+    error: workspaceError,
     upsertDocument,
     deleteDocument,
   } = useDocuments<Workspace>('workspace');
 
-  const handleCreate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    const newWorkspace: Workspace = {
-      id: uuidv4(),
-      ...workspace,
-      updatedAt: new Date().toISOString(),
-      isDeleted: false,
-    };
-    await upsertDocument(newWorkspace);
-  };
-
-  const handleUpdate = async (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (editingWorkspace) {
-      const updatedWorkspace: Workspace = {
-        ...editingWorkspace,
-        ...workspace,
-        updatedAt: new Date().toISOString(),
-      };
-      await upsertDocument(updatedWorkspace);
+  const handleSubmit = useCallback(
+    async (workspaceData: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingWorkspace) {
+        const updatedWorkspace: Workspace = {
+          ...editingWorkspace,
+          ...workspaceData,
+          updatedAt: new Date().toISOString(),
+        };
+        await upsertDocument(updatedWorkspace);
+      } else {
+        const newWorkspace: Workspace = {
+          id: uuidv4(),
+          ...workspaceData,
+          updatedAt: new Date().toISOString(),
+          isDeleted: false,
+        };
+        await upsertDocument(newWorkspace);
+      }
       setEditingWorkspace(null);
-    }
-  };
+    },
+    [editingWorkspace, upsertDocument]
+  );
+
+  const handleCancel = useCallback((): void => {
+    setEditingWorkspace(null);
+  }, []);
 
   if (isLoading) {
     return (
-      <PageContainer>
+      <CenteredBox sx={{ height: '50vh' }}>
         <StyledCircularProgress />
-      </PageContainer>
+      </CenteredBox>
     );
   }
 
   return (
-    <PageContainer>
-      <motion.div {...staggeredChildren}>
-        {error ? (
-          <motion.div {...motionProps['fadeIn']}>
-            <StyledAlert severity="error" sx={{ mb: 2 }}>
-              {error.message}
-            </StyledAlert>
-          </motion.div>
-        ) : null}
-        <motion.div {...motionProps['slideInFromBottom']}>
-          <ContentPaper>
-            <SectionTitle variant="h6">{editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}</SectionTitle>
-            <WorkspaceForm
-              workspace={editingWorkspace ?? undefined}
-              onSubmit={editingWorkspace ? handleUpdate : handleCreate}
-            />
-            {editingWorkspace ? (
-              <SpaceBetweenBox sx={{ mt: 2 }}>
-                <PrimaryButton onClick={(): void => setEditingWorkspace(null)}>Cancel Editing</PrimaryButton>
-              </SpaceBetweenBox>
-            ) : null}
-          </ContentPaper>
+    <motion.div {...staggeredChildren}>
+      {workspaceError ? (
+        <motion.div {...motionProps['fadeIn']}>
+          <StyledAlert severity="error" sx={{ mb: 2 }}>
+            {workspaceError.message}
+          </StyledAlert>
         </motion.div>
-        <motion.div {...motionProps['slideInFromBottom']}>
-          <ListContainer>
-            <SectionTitle variant="h6">Workspace List</SectionTitle>
-            <WorkspaceList
-              workspaces={workspaces}
-              onEdit={setEditingWorkspace}
-              onDelete={(workspace): void => {
-                void deleteDocument(workspace.id);
-              }}
-            />
-          </ListContainer>
-        </motion.div>
+      ) : null}
+      <motion.div {...motionProps['slideInFromBottom']}>
+        <ContentPaper>
+          <SectionTitle variant="h6">{editingWorkspace ? 'Edit Workspace' : 'Create Workspace'}</SectionTitle>
+          <WorkspaceForm
+            workspace={editingWorkspace ?? undefined}
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            onCancel={handleCancel}
+          />
+        </ContentPaper>
       </motion.div>
-    </PageContainer>
+      <motion.div {...motionProps['slideInFromBottom']}>
+        <ListContainer>
+          <SectionTitle variant="h6">Workspace List</SectionTitle>
+          <WorkspaceList
+            workspaces={workspaces}
+            onEdit={setEditingWorkspace}
+            onDelete={(workspace): void => {
+              void deleteDocument(workspace.id);
+            }}
+          />
+        </ListContainer>
+      </motion.div>
+    </motion.div>
   );
 };
 

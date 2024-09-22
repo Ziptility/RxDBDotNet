@@ -19,9 +19,11 @@ interface FormLayoutProps {
 
 export const FormLayout: React.FC<FormLayoutProps> = ({ title, children, onSubmit }) => (
   <Box component="form" onSubmit={onSubmit} noValidate autoComplete="off">
-    <PageTitle variant="h4" align="center" gutterBottom>
-      {title}
-    </PageTitle>
+    {title !== '' ? (
+      <PageTitle variant="h4" align="center" gutterBottom>
+        {title}
+      </PageTitle>
+    ) : null}
     <Stack spacing={3}>{children}</Stack>
   </Box>
 );
@@ -30,10 +32,23 @@ interface SubmitButtonProps {
   readonly label: string;
   readonly isSubmitting: boolean;
   readonly isValid: boolean;
+  readonly onClick: () => void;
 }
 
-export const SubmitButton: React.FC<SubmitButtonProps> = ({ label, isSubmitting, isValid }) => (
-  <Button type="submit" variant="contained" color="primary" disabled={isSubmitting || !isValid} fullWidth>
+export const SubmitButton: React.FC<SubmitButtonProps> = ({
+  label,
+  isSubmitting,
+  isValid,
+  onClick,
+}: SubmitButtonProps) => (
+  <Button
+    type="submit"
+    variant="contained"
+    color="primary"
+    disabled={isSubmitting || !isValid}
+    fullWidth
+    onClick={onClick}
+  >
     {isSubmitting ? 'Submitting...' : label}
   </Button>
 );

@@ -1,85 +1,122 @@
 // src\components\LiveDocForm.tsx
-import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import React, { useEffect } from 'react';
+import { TextField, MenuItem, FormControl, InputLabel, Select, Button } from '@mui/material';
+import { useForm, Controller } from 'react-hook-form';
+import { FormLayout, FormError } from '@/components/FormComponents';
 import type { LiveDoc, User, Workspace } from '@/lib/schemas';
 
 interface LiveDocFormProps {
   readonly liveDoc: LiveDoc | undefined;
   readonly users: User[];
   readonly workspaces: Workspace[];
-  readonly onSubmit: (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  readonly onSubmit: (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>) => void;
+  readonly onCancel: () => void;
 }
 
-const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit }) => {
-  const [content, setContent] = useState<string>('');
-  const [ownerId, setOwnerId] = useState<string>('');
-  const [workspaceId, setWorkspaceId] = useState<string>('');
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
+const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, onSubmit, onCancel }) => {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+  } = useForm({
+    defaultValues: {
+      content: '',
+      ownerId: '',
+      workspaceId: '',
+    },
+    mode: 'onChange',
+  });
 
   useEffect(() => {
     if (liveDoc) {
-      setContent(liveDoc.content);
-      setOwnerId(liveDoc.ownerId);
-      setWorkspaceId(liveDoc.workspaceId);
+      reset({
+        content: liveDoc.content,
+        ownerId: liveDoc.ownerId,
+        workspaceId: liveDoc.workspaceId,
+      });
     } else {
-      setContent('');
-      setOwnerId('');
-      setWorkspaceId('');
+      reset({
+        content: '',
+        ownerId: '',
+        workspaceId: '',
+      });
     }
-  }, [liveDoc]);
+  }, [liveDoc, reset]);
 
-  useEffect(() => {
-    setIsFormValid(content.trim() !== '' && ownerId !== '' && workspaceId !== '');
-  }, [content, ownerId, workspaceId]);
-
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
-    if (isFormValid) {
-      void onSubmit({ content, ownerId, workspaceId });
-      if (!liveDoc) {
-        setContent('');
-        setOwnerId('');
-        setWorkspaceId('');
-      }
-    }
-  };
+  const onSubmitForm = handleSubmit((data) => {
+    onSubmit(data);
+  });
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField
-          label="Content"
-          multiline
-          rows={4}
-          value={content}
-          onChange={(e): void => setContent(e.target.value)}
-          required
-        />
-        <FormControl fullWidth>
-          <InputLabel>Owner</InputLabel>
-          <Select value={ownerId} onChange={(e): void => setOwnerId(e.target.value)} required>
-            {users.map((user) => (
-              <MenuItem key={user.id} value={user.id}>
-                {`${user.firstName} ${user.lastName}`}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth>
-          <InputLabel>Workspace</InputLabel>
-          <Select value={workspaceId} onChange={(e): void => setWorkspaceId(e.target.value)} required>
-            {workspaces.map((workspace) => (
-              <MenuItem key={workspace.id} value={workspace.id}>
-                {workspace.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Button type="submit" variant="contained" disabled={!isFormValid}>
-          {liveDoc ? 'Update' : 'Create'} LiveDoc
+    <FormLayout
+      title=""
+      onSubmit={(e) => {
+        e.preventDefault();
+        void onSubmitForm();
+      }}
+    >
+      <Controller
+        name="content"
+        control={control}
+        rules={{ required: 'Content is required' }}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label="Content"
+            multiline
+            rows={4}
+            error={!!errors.content}
+            helperText={errors.content?.message}
+            fullWidth
+          />
+        )}
+      />
+      <Controller
+        name="ownerId"
+        control={control}
+        rules={{ required: 'Owner is required' }}
+        render={({ field }) => (
+          <FormControl fullWidth error={!!errors.ownerId}>
+            <InputLabel>Owner</InputLabel>
+            <Select {...field} label="Owner">
+              {users.map((user) => (
+                <MenuItem key={user.id} value={user.id}>
+                  {`${user.firstName} ${user.lastName}`}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.ownerId ? <FormError error={errors.ownerId.message ?? null} /> : null}
+          </FormControl>
+        )}
+      />
+      <Controller
+        name="workspaceId"
+        control={control}
+        rules={{ required: 'Workspace is required' }}
+        render={({ field }) => (
+          <FormControl fullWidth error={!!errors.workspaceId}>
+            <InputLabel>Workspace</InputLabel>
+            <Select {...field} label="Workspace">
+              {workspaces.map((workspace) => (
+                <MenuItem key={workspace.id} value={workspace.id}>
+                  {workspace.name}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.workspaceId ? <FormError error={errors.workspaceId.message ?? null} /> : null}
+          </FormControl>
+        )}
+      />
+      <Button type="submit" variant="contained" color="primary" disabled={isSubmitting || !isValid} fullWidth>
+        {liveDoc ? 'Update LiveDoc' : 'Create LiveDoc'}
+      </Button>
+      {liveDoc ? (
+        <Button onClick={onCancel} variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }}>
+          Cancel
         </Button>
-      </Box>
-    </form>
+      ) : null}
+    </FormLayout>
   );
 };
 

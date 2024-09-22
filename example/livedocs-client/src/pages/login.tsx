@@ -1,19 +1,46 @@
 // src/pages/login.tsx
-import React, { useState, useEffect } from 'react';
-import { FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } from '@mui/material';
+import React, { useEffect } from 'react';
+import { FormControl, InputLabel, MenuItem, Select, Typography, Button } from '@mui/material';
+import { motion } from 'framer-motion';
+import { useForm, Controller } from 'react-hook-form';
 import { useRouter } from 'next/router';
-import { FormLayout, FormError, SubmitButton } from '@/components/FormComponents';
+import { FormLayout, FormError } from '@/components/FormComponents';
 import { useAuth } from '@/contexts/AuthContext';
-import { PageContainer, ContentPaper } from '@/styles/StyledComponents';
+import type { Workspace, User } from '@/lib/schemas';
+import {
+  PageContainer,
+  ContentPaper,
+  PageTitle,
+  FormContainer,
+  StyledCircularProgress,
+  CenteredBox,
+} from '@/styles/StyledComponents';
+import { motionProps, staggeredChildren } from '@/utils/motionSystem';
+
+interface LoginFormData {
+  workspaceId: string;
+  userId: string;
+}
 
 const LoginPage: React.FC = () => {
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('');
-  const [selectedUser, setSelectedUser] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isValid, setIsValid] = useState<boolean>(false);
   const { login, workspaces, users, isLoggedIn, isInitialized } = useAuth();
   const router = useRouter();
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+  } = useForm<LoginFormData>({
+    defaultValues: {
+      workspaceId: '',
+      userId: '',
+    },
+    mode: 'onChange',
+  });
+
+  const selectedWorkspaceId = watch('workspaceId');
 
   useEffect(() => {
     if (isLoggedIn && isInitialized) {
@@ -22,82 +49,115 @@ const LoginPage: React.FC = () => {
   }, [isLoggedIn, isInitialized, router]);
 
   useEffect(() => {
-    setIsValid(!!selectedWorkspace && !!selectedUser);
-  }, [selectedWorkspace, selectedUser]);
+    // Reset userId when workspaceId changes
+    reset((formValues) => ({
+      ...formValues,
+      userId: '',
+    }));
+  }, [selectedWorkspaceId, reset]);
 
-  const handleWorkspaceChange = (event: SelectChangeEvent): void => {
-    setSelectedWorkspace(event.target.value);
-    setSelectedUser('');
-  };
-
-  const handleUserChange = (event: SelectChangeEvent): void => {
-    setSelectedUser(event.target.value);
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
-    if (!isValid) return;
-    setIsSubmitting(true);
-    setError(null);
+  const onSubmit = handleSubmit(async (data) => {
     try {
-      await login(selectedUser, selectedWorkspace);
+      await login(data.userId, data.workspaceId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid user or workspace');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Login error:', err);
     }
-  };
+  });
 
   if (!isInitialized) {
-    return null; // or a loading spinner
+    return (
+      <CenteredBox sx={{ height: '100vh' }}>
+        <StyledCircularProgress />
+      </CenteredBox>
+    );
   }
 
   return (
     <PageContainer maxWidth="sm">
-      <ContentPaper>
-        <FormLayout
-          title="Sign in to LiveDocs"
-          onSubmit={(e: React.FormEvent<HTMLFormElement>): void => {
-            void handleSubmit(e);
-          }}
-        >
-          <FormControl fullWidth>
-            <InputLabel id="workspace-select-label">Workspace</InputLabel>
-            <Select
-              labelId="workspace-select-label"
-              value={selectedWorkspace}
-              label="Workspace"
-              onChange={handleWorkspaceChange}
+      <motion.div {...motionProps['fadeIn']}>
+        <ContentPaper elevation={3} sx={{ p: 4 }}>
+          <motion.div {...staggeredChildren}>
+            <motion.div {...motionProps['slideInFromBottom']}>
+              <PageTitle variant="h4" align="center" gutterBottom>
+                Sign in to LiveDocs
+              </PageTitle>
+            </motion.div>
+            <FormLayout
+              title=""
+              onSubmit={(e) => {
+                void onSubmit(e);
+              }}
             >
-              {workspaces.map((workspace) => (
-                <MenuItem key={workspace.id} value={workspace.id}>
-                  {workspace.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth>
-            <InputLabel id="user-select-label">User</InputLabel>
-            <Select
-              labelId="user-select-label"
-              value={selectedUser}
-              label="User"
-              onChange={handleUserChange}
-              disabled={!selectedWorkspace}
-            >
-              {users
-                .filter((user) => user.workspaceId === selectedWorkspace)
-                .map((user) => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {`${user.firstName} ${user.lastName} (${user.role})`}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-          <FormError error={error} />
-          <SubmitButton label="Sign in" isSubmitting={isSubmitting} isValid={isValid} />
-        </FormLayout>
-      </ContentPaper>
+              <FormContainer>
+                <motion.div {...motionProps['slideInFromBottom']}>
+                  <Controller
+                    name="workspaceId"
+                    control={control}
+                    rules={{ required: 'Workspace is required' }}
+                    render={({ field }) => (
+                      <FormControl fullWidth error={!!errors.workspaceId}>
+                        <InputLabel id="workspace-select-label">Workspace</InputLabel>
+                        <Select {...field} labelId="workspace-select-label" label="Workspace">
+                          {workspaces.map((workspace: Workspace) => (
+                            <MenuItem key={workspace.id} value={workspace.id}>
+                              <Typography variant="body1">{workspace.name}</Typography>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {errors.workspaceId ? <FormError error={errors.workspaceId.message ?? null} /> : null}
+                      </FormControl>
+                    )}
+                  />
+                </motion.div>
+                <motion.div {...motionProps['slideInFromBottom']}>
+                  <Controller
+                    name="userId"
+                    control={control}
+                    rules={{ required: 'User is required' }}
+                    render={({ field }) => (
+                      <FormControl fullWidth error={!!errors.userId}>
+                        <InputLabel id="user-select-label">User</InputLabel>
+                        <Select {...field} labelId="user-select-label" label="User" disabled={!selectedWorkspaceId}>
+                          {users
+                            .filter((user: User) => user.workspaceId === selectedWorkspaceId)
+                            .map((user: User) => (
+                              <MenuItem key={user.id} value={user.id}>
+                                <Typography variant="body1">
+                                  {`${user.firstName} ${user.lastName}`}
+                                  <Typography
+                                    component="span"
+                                    variant="caption"
+                                    sx={{ ml: 1, color: 'text.secondary' }}
+                                  >
+                                    ({user.role})
+                                  </Typography>
+                                </Typography>
+                              </MenuItem>
+                            ))}
+                        </Select>
+                        {errors.userId ? <FormError error={errors.userId.message ?? null} /> : null}
+                      </FormControl>
+                    )}
+                  />
+                </motion.div>
+                <motion.div {...motionProps['slideInFromBottom']}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={isSubmitting || !isValid}
+                    fullWidth
+                    size="large"
+                    sx={{ py: 1.5 }}
+                  >
+                    Sign in
+                  </Button>
+                </motion.div>
+              </FormContainer>
+            </FormLayout>
+          </motion.div>
+        </ContentPaper>
+      </motion.div>
     </PageContainer>
   );
 };

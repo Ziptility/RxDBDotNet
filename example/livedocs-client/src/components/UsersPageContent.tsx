@@ -1,5 +1,5 @@
 // src\components\UsersPageContent.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -7,9 +7,7 @@ import type { User, Workspace } from '@/lib/schemas';
 import {
   ContentPaper,
   SectionTitle,
-  PrimaryButton,
   ListContainer,
-  SpaceBetweenBox,
   StyledAlert,
   StyledCircularProgress,
   CenteredBox,
@@ -30,27 +28,32 @@ const UsersPageContent: React.FC = () => {
 
   const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
 
-  const handleCreate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    const newUser: User = {
-      id: uuidv4(),
-      ...user,
-      updatedAt: new Date().toISOString(),
-      isDeleted: false,
-    };
-    await upsertDocument(newUser);
-  };
-
-  const handleUpdate = async (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (editingUser) {
-      const updatedUser: User = {
-        ...editingUser,
-        ...user,
-        updatedAt: new Date().toISOString(),
-      };
-      await upsertDocument(updatedUser);
+  const handleSubmit = useCallback(
+    async (userData: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingUser) {
+        const updatedUser: User = {
+          ...editingUser,
+          ...userData,
+          updatedAt: new Date().toISOString(),
+        };
+        await upsertDocument(updatedUser);
+      } else {
+        const newUser: User = {
+          id: uuidv4(),
+          ...userData,
+          updatedAt: new Date().toISOString(),
+          isDeleted: false,
+        };
+        await upsertDocument(newUser);
+      }
       setEditingUser(null);
-    }
-  };
+    },
+    [editingUser, upsertDocument]
+  );
+
+  const handleCancel = useCallback((): void => {
+    setEditingUser(null);
+  }, []);
 
   if (isLoadingUsers || isLoadingWorkspaces) {
     return (
@@ -75,13 +78,11 @@ const UsersPageContent: React.FC = () => {
           <UserForm
             user={editingUser ?? undefined}
             workspaces={workspaces}
-            onSubmit={editingUser ? handleUpdate : handleCreate}
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            onCancel={handleCancel}
           />
-          {editingUser ? (
-            <SpaceBetweenBox sx={{ mt: 2 }}>
-              <PrimaryButton onClick={(): void => setEditingUser(null)}>Cancel Editing</PrimaryButton>
-            </SpaceBetweenBox>
-          ) : null}
         </ContentPaper>
       </motion.div>
       <motion.div {...motionProps['slideInFromBottom']}>

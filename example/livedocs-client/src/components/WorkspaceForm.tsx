@@ -1,54 +1,76 @@
 // src\components\WorkspaceForm.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { TextField, Button } from '@mui/material';
+import { useForm, Controller } from 'react-hook-form';
+import { FormLayout } from '@/components/FormComponents';
 import type { Workspace } from '@/lib/schemas';
-import { FormContainer, TextField, PrimaryButton, StyledForm } from '@/styles/StyledComponents';
 
 interface WorkspaceFormProps {
   readonly workspace: Workspace | undefined;
-  readonly onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => Promise<void>;
+  readonly onSubmit: (workspace: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>) => void;
+  readonly onCancel: () => void;
 }
 
-const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit }) => {
-  const [name, setName] = useState<string>('');
-  const [isFormValid, setIsFormValid] = useState<boolean>(false);
+const WorkspaceForm: React.FC<WorkspaceFormProps> = ({ workspace, onSubmit, onCancel }) => {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    reset,
+  } = useForm({
+    defaultValues: {
+      name: '',
+    },
+    mode: 'onChange',
+  });
 
   useEffect(() => {
     if (workspace) {
-      setName(workspace.name);
+      reset({
+        name: workspace.name,
+      });
     } else {
-      setName('');
+      reset({
+        name: '',
+      });
     }
-  }, [workspace]);
+  }, [workspace, reset]);
 
-  useEffect(() => {
-    setIsFormValid(name.trim() !== '');
-  }, [name]);
-
-  const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
-    if (isFormValid) {
-      void onSubmit({ name });
-      if (!workspace) {
-        setName('');
-      }
-    }
-  };
+  const onSubmitForm = handleSubmit((data) => {
+    onSubmit(data);
+  });
 
   return (
-    <StyledForm onSubmit={handleSubmit}>
-      <FormContainer>
-        <TextField
-          label="Workspace Name"
-          value={name}
-          onChange={(e): void => setName(e.target.value)}
-          required
-          fullWidth
-        />
-        <PrimaryButton type="submit" variant="contained" disabled={!isFormValid}>
-          {workspace ? 'Update' : 'Create'} Workspace
-        </PrimaryButton>
-      </FormContainer>
-    </StyledForm>
+    <FormLayout
+      title=""
+      onSubmit={(e) => {
+        e.preventDefault();
+        void onSubmitForm();
+      }}
+    >
+      <Controller
+        name="name"
+        control={control}
+        rules={{ required: 'Workspace name is required' }}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label="Workspace Name"
+            error={!!errors.name}
+            helperText={errors.name?.message}
+            fullWidth
+          />
+        )}
+      />
+      <Button type="submit" variant="contained" color="primary" disabled={isSubmitting || !isValid} fullWidth>
+        {workspace ? 'Update Workspace' : 'Create Workspace'}
+      </Button>
+      {workspace ? (
+        <Button onClick={onCancel} variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }}>
+          Cancel
+        </Button>
+      ) : null}
+    </FormLayout>
   );
 };
 

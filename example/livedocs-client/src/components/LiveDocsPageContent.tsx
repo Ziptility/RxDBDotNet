@@ -1,5 +1,5 @@
 // src\components\LiveDocsPageContent.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -7,9 +7,7 @@ import type { LiveDoc, User, Workspace } from '@/lib/schemas';
 import {
   ContentPaper,
   SectionTitle,
-  PrimaryButton,
   ListContainer,
-  SpaceBetweenBox,
   StyledAlert,
   StyledCircularProgress,
   CenteredBox,
@@ -31,27 +29,32 @@ const LiveDocsPageContent: React.FC = () => {
   const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('user');
   const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
 
-  const handleCreate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    const newLiveDoc: LiveDoc = {
-      id: uuidv4(),
-      ...liveDoc,
-      updatedAt: new Date().toISOString(),
-      isDeleted: false,
-    };
-    await upsertDocument(newLiveDoc);
-  };
-
-  const handleUpdate = async (liveDoc: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (editingLiveDoc) {
-      const updatedLiveDoc: LiveDoc = {
-        ...editingLiveDoc,
-        ...liveDoc,
-        updatedAt: new Date().toISOString(),
-      };
-      await upsertDocument(updatedLiveDoc);
+  const handleSubmit = useCallback(
+    async (liveDocData: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingLiveDoc) {
+        const updatedLiveDoc: LiveDoc = {
+          ...editingLiveDoc,
+          ...liveDocData,
+          updatedAt: new Date().toISOString(),
+        };
+        await upsertDocument(updatedLiveDoc);
+      } else {
+        const newLiveDoc: LiveDoc = {
+          id: uuidv4(),
+          ...liveDocData,
+          updatedAt: new Date().toISOString(),
+          isDeleted: false,
+        };
+        await upsertDocument(newLiveDoc);
+      }
       setEditingLiveDoc(null);
-    }
-  };
+    },
+    [editingLiveDoc, upsertDocument]
+  );
+
+  const handleCancel = useCallback((): void => {
+    setEditingLiveDoc(null);
+  }, []);
 
   if (isLoadingLiveDocs || isLoadingUsers || isLoadingWorkspaces) {
     return (
@@ -77,13 +80,11 @@ const LiveDocsPageContent: React.FC = () => {
             liveDoc={editingLiveDoc ?? undefined}
             users={users}
             workspaces={workspaces}
-            onSubmit={editingLiveDoc ? handleUpdate : handleCreate}
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            onCancel={handleCancel}
           />
-          {editingLiveDoc ? (
-            <SpaceBetweenBox sx={{ mt: 2 }}>
-              <PrimaryButton onClick={(): void => setEditingLiveDoc(null)}>Cancel Editing</PrimaryButton>
-            </SpaceBetweenBox>
-          ) : null}
         </ContentPaper>
       </motion.div>
       <motion.div {...motionProps['slideInFromBottom']}>

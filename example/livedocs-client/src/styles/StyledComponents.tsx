@@ -17,12 +17,12 @@ import {
 import { styled, alpha } from '@mui/material/styles';
 
 export const PageContainer = styled(Container)(({ theme }) => ({
-  paddingTop: theme.spacing(4),
+  // paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(4),
-  paddingLeft: `calc(80px + ${theme.spacing(3)})`, // 80px for NavigationRail + some extra padding
+  paddingLeft: `calc(80px + ${theme.spacing(3)})`,
   paddingRight: theme.spacing(3),
   [theme.breakpoints.up('sm')]: {
-    paddingTop: theme.spacing(6),
+    paddingTop: theme.spacing(3),
     paddingBottom: theme.spacing(6),
   },
 }));

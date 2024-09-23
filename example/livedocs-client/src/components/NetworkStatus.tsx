@@ -1,7 +1,7 @@
 // src/components/NetworkStatus.tsx
 import React, { useEffect, useState } from 'react';
 import { Sync as SyncIcon, Wifi as WifiIcon, WifiOff as WifiOffIcon } from '@mui/icons-material';
-import { Box, Chip, Tooltip, Typography, styled } from '@mui/material';
+import { Box, Chip, Tooltip, Typography } from '@mui/material';
 import { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 import { combineLatest, map } from 'rxjs';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -11,19 +11,6 @@ import type { LiveDocsReplicationStates, ReplicationCheckpoint } from '@/types';
 interface NetworkStatusProps {
   readonly expanded: boolean;
 }
-
-const StyledChip = styled(Chip)<{ expanded: boolean }>(({ theme, expanded }) => ({
-  width: '100%',
-  justifyContent: 'flex-start',
-  '& .MuiChip-label': {
-    display: expanded ? 'block' : 'none',
-    paddingLeft: expanded ? theme.spacing(1) : 0,
-    transition: theme.transitions.create('padding'),
-  },
-  '&:hover .MuiChip-label': {
-    display: 'block',
-  },
-}));
 
 const NetworkStatus: React.FC<NetworkStatusProps> = ({ expanded }) => {
   const isOnline = useOnlineStatus();
@@ -79,12 +66,23 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ expanded }) => {
         </Box>
       }
     >
-      <StyledChip
+      <Chip
         icon={isOnline ? isSyncing ? <SyncIcon /> : <WifiIcon /> : <WifiOffIcon />}
         label={isOnline ? (isSyncing ? 'Syncing' : 'Online') : 'Offline'}
         color={isOnline ? (isSyncing ? 'warning' : 'success') : 'error'}
         size="small"
-        expanded={expanded}
+        sx={{
+          width: '100%',
+          justifyContent: 'flex-start',
+          '& .MuiChip-label': {
+            display: expanded ? 'block' : 'none',
+            paddingLeft: expanded ? 1 : 0,
+            transition: (theme) => theme.transitions.create('padding'),
+          },
+          '&:hover .MuiChip-label': {
+            display: 'block',
+          },
+        }}
       />
     </Tooltip>
   );

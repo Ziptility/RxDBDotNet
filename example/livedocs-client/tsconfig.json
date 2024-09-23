@@ -39,7 +39,8 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "noErrorTruncation": true,
-    "preserveConstEnums": true
+    "preserveConstEnums": true,
+    "jsxImportSource": "@emotion/react"
   },
   "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "build", ".next", "out", "next.config.js"]

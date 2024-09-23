@@ -32,29 +32,6 @@
       "group": "test",
       "problemMatcher": [],
       "detail": "This runs the Next.js lint script."
-    },
-    {
-      "label": "Start Next.js with Debugging",
-      "type": "npm",
-      "script": "dev:debug",
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "custom",
-        "fileLocation": ["relative", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "."
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "started server on .+, url: http://localhost:3000",
-          "endsPattern": "^$"
-        }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared",
-        "clear": false
-      }
     }
   ]
 }

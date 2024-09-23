@@ -1,46 +1,19 @@
-// .vscode/launch.json
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Full-Stack Debugging",
-      "type": "firefox",
-      "request": "launch",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}",
-      "pathMappings": [
-        {
-          "url": "webpack://_n_e/src",
-          "path": "${workspaceFolder}/src"
-        },
-        {
-          "url": "webpack:///./~",
-          "path": "${workspaceFolder}/node_modules"
-        },
-        {
-          "url": "webpack:///./",
-          "path": "${workspaceFolder}"
-        }
-      ],
-      "skipFiles": ["<node_internals>/**"],
-      "preLaunchTask": "Start Next.js with Debugging"
-    },
-    {
-      "name": "Attach to Node.js (Next.js Server)",
+      "name": "Next.js: debug full stack",
       "type": "node",
-      "request": "attach",
-      "port": 9229,
-      "restart": true,
-      "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/.next/**/*.js"],
-      "sourceMaps": true
-    }
-  ],
-  "compounds": [
-    // Compound configuration to start both client-side and server-side debuggers
-    {
-      "name": "Next.js: Full-Stack Debugging",
-      "configurations": ["Full-Stack Debugging", "Attach to Node.js (Next.js Server)"]
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/next/dist/bin/next",
+      "args": ["dev"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "serverReadyAction": {
+        "pattern": "started server on .+, url: (http?://.+)",
+        "action": "openExternally"
+      }
     }
   ]
 }

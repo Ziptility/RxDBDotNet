@@ -14,7 +14,6 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
-  styled,
   Avatar,
   Menu,
   MenuItem,
@@ -26,65 +25,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import NetworkStatus from './NetworkStatus';
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  height: '100vh',
-  width: '80px',
-  transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: 'hidden',
-  '&:hover': {
-    width: '240px',
-    overflowX: 'visible',
-  },
-  zIndex: theme.zIndex.appBar,
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-}));
-
-const StyledListItemButton = styled(ListItemButton)<{ active: boolean }>(({ theme, active }) => ({
-  minHeight: 48,
-  justifyContent: 'initial',
-  px: 2.5,
-  color: active ? theme.palette.primary.main : theme.palette.text.primary,
-  '& .MuiListItemIcon-root': {
-    minWidth: 0,
-    marginRight: theme.spacing(3),
-    justifyContent: 'center',
-    color: 'inherit',
-  },
-  '& .MuiListItemText-primary': {
-    opacity: 0,
-    transition: theme.transitions.create('opacity', {
-      duration: theme.transitions.duration.shorter,
-    }),
-  },
-  '&:hover .MuiListItemText-primary': {
-    opacity: 1,
-  },
-}));
-
-const UserSection = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const NetworkStatusWrapper = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  width: '100%',
-}));
 
 const navItems = [
   { label: 'Home', path: '/', icon: <HomeIcon />, ariaLabel: 'Go to Home' },
@@ -114,43 +54,83 @@ const NavigationRail: React.FC = () => {
   };
 
   return (
-    <StyledPaper
+    <Paper
       elevation={3}
       role="navigation"
       aria-label="Main Navigation"
       onMouseEnter={(): void => setIsExpanded(true)}
       onMouseLeave={(): void => setIsExpanded(false)}
+      sx={(theme) => ({
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        height: '100vh',
+        width: '80px',
+        transition: theme.transitions.create('width', {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
+        overflowX: 'hidden',
+        '&:hover': {
+          width: '240px',
+          overflowX: 'visible',
+        },
+        zIndex: theme.zIndex.appBar,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+      })}
     >
       <List>
         {navItems.map((item) => {
           const isActive = router.pathname === item.path;
           return (
             <Link key={item.path} href={item.path} passHref legacyBehavior>
-              <StyledListItemButton
-                active={isActive}
-                LinkComponent="a"
+              <ListItemButton
+                component="a"
                 aria-label={item.ariaLabel}
                 aria-current={isActive ? 'page' : undefined}
+                sx={(theme) => ({
+                  minHeight: 48,
+                  justifyContent: 'initial',
+                  px: 2.5,
+                  color: isActive ? theme.palette.primary.main : theme.palette.text.primary,
+                  '& .MuiListItemIcon-root': {
+                    minWidth: 0,
+                    marginRight: theme.spacing(3),
+                    justifyContent: 'center',
+                    color: 'inherit',
+                  },
+                  '& .MuiListItemText-primary': {
+                    opacity: 0,
+                    transition: theme.transitions.create('opacity', {
+                      duration: theme.transitions.duration.shorter,
+                    }),
+                  },
+                  '&:hover .MuiListItemText-primary': {
+                    opacity: 1,
+                  },
+                })}
               >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.label} />
-              </StyledListItemButton>
+              </ListItemButton>
             </Link>
           );
         })}
       </List>
       <Box>
-        <NetworkStatusWrapper>
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
           <NetworkStatus expanded={isExpanded} />
-        </NetworkStatusWrapper>
-        <UserSection>
+        </Box>
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <Avatar sx={{ width: 40, height: 40, mb: 1, cursor: 'pointer' }} onClick={handleMenuOpen}>
             <AccountCircleIcon />
           </Avatar>
           <Typography variant="caption" noWrap sx={{ maxWidth: '100%', textAlign: 'center' }}>
             {currentUser?.firstName}
           </Typography>
-        </UserSection>
+        </Box>
       </Box>
       <Menu
         anchorEl={anchorEl}
@@ -187,7 +167,7 @@ const NavigationRail: React.FC = () => {
           <ListItemText primary="Logout" />
         </MenuItem>
       </Menu>
-    </StyledPaper>
+    </Paper>
   );
 };
 

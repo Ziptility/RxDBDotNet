@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "dev:debug": "cross-env NODE_OPTIONS=--inspect next dev -p 3000",
     "build": "next build",
     "run": "npm run build && npm run start",
     "start": "next start -p 3000",

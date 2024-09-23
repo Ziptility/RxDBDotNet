@@ -10,12 +10,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  webpack: (config, { dev, isServer }) => {
-    if (dev) {
-      config.devtool = 'source-map';
-    }
-    return config;
-  },
 };
 
 module.exports = nextConfig;

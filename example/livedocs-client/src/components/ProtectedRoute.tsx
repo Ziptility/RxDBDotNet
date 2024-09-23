@@ -24,6 +24,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     if (isInitialized && !isLoggedIn && router.pathname !== '/login') {
       console.log('ProtectedRoute: Redirecting to login');
       void router.push('/login');
+    } else if (isInitialized && isLoggedIn && router.pathname === '/login') {
+      console.log('ProtectedRoute: Redirecting to home');
+      void router.push('/');
     }
   }, [isLoggedIn, isInitialized, router]);
 

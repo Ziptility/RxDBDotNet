@@ -28,6 +28,7 @@ const pullQueryBuilder = (variables: UserFilterInput): RxGraphQLReplicationPullQ
             lastName
             email
             role
+            jwtAccessToken
             workspaceId
             updatedAt
             isDeleted
@@ -100,6 +101,7 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
             lastName
             email
             role
+            jwtAccessToken
             workspaceId
             updatedAt
             isDeleted

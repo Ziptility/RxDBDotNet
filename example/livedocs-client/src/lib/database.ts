@@ -71,7 +71,6 @@ const initializeDatabase = async (): Promise<LiveDocsDatabase> => {
     console.log('Collections added successfully');
 
     // Set up replication with the backend
-    // We're passing true as the third argument to enable autoStart
     const replicationStates = setupReplication(db, API_CONFIG.DEFAULT_JWT_TOKEN);
     console.log('Replication set up successfully');
 

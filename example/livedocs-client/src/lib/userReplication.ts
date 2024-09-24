@@ -152,6 +152,6 @@ export const createUserReplicator = (
       Authorization: `Bearer ${token}`,
     },
     replicationIdentifier: 'user-replication',
-    autoStart: false,
+    autoStart: true,
   });
 };

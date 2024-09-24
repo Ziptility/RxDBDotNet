@@ -141,6 +141,6 @@ export const createWorkspaceReplicator = (
       Authorization: `Bearer ${token}`,
     },
     replicationIdentifier: `workspace-replication`,
-    autoStart: false,
+    autoStart: true,
   });
 };

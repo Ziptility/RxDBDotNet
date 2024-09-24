@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { API_CONFIG } from '@/config';
 import { useDocuments } from '@/hooks/useDocuments';
 import { getDatabase } from '@/lib/database';
-import { setupReplication, updateReplicationToken } from '@/lib/replication';
+import { updateReplicationToken } from '@/lib/replication';
 import type { User, Workspace } from '@/lib/schemas';
 import type { LiveDocsDatabase } from '@/types';
 import { createTypedContext } from '@/utils/createTypedContext';
@@ -120,17 +120,15 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   }, []);
 
   /**
-   * Sets up or restarts replication with the given database and token.
+   * Updates the replication token for the database.
    * This function is memoized with an empty dependency array.
    * It will remain the same across re-renders of this component,
    * but will be recreated if the component is unmounted and remounted.
    */
-  const setupOrRestartReplication = useCallback(async (db: LiveDocsDatabase, token: string): Promise<void> => {
-    console.log('Setting up or restarting replication');
+  const updateReplicationTokenForDatabase = useCallback(async (db: LiveDocsDatabase, token: string): Promise<void> => {
+    console.log('Updating replication token');
     if (db.replicationStates) {
       await updateReplicationToken(db.replicationStates, token);
-    } else {
-      db.replicationStates = await setupReplication(db, token);
     }
   }, []);
 
@@ -217,10 +215,10 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
         const token = user.jwtAccessToken ?? '';
         setAuthStateAndData(user, workspace, token);
         storeAuthData(userId, workspaceId, token);
-        await setupOrRestartReplication(db, token);
+        await updateReplicationTokenForDatabase(db, token);
       }, 'Login');
     },
-    [findUserAndWorkspace, setAuthStateAndData, storeAuthData, setupOrRestartReplication]
+    [findUserAndWorkspace, setAuthStateAndData, storeAuthData, updateReplicationTokenForDatabase]
   );
 
   /**
@@ -234,8 +232,8 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     clearAuthData();
 
     const db: LiveDocsDatabase = await getDatabase();
-    await setupOrRestartReplication(db, API_CONFIG.DEFAULT_JWT_TOKEN);
-  }, [setAuthStateAndData, clearAuthData, setupOrRestartReplication]);
+    await updateReplicationTokenForDatabase(db, API_CONFIG.DEFAULT_JWT_TOKEN);
+  }, [setAuthStateAndData, clearAuthData, updateReplicationTokenForDatabase]);
 
   /**
    * Initializes the authentication state.
@@ -273,7 +271,7 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
 
         if (user && workspace) {
           setAuthStateAndData(user, workspace, storedJwtToken);
-          await setupOrRestartReplication(db, storedJwtToken);
+          await updateReplicationTokenForDatabase(db, storedJwtToken);
         } else {
           console.error('Invalid stored user or workspace');
           await logoutRef.current?.();
@@ -281,7 +279,7 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
       } else {
         console.log('No valid stored authentication data found. Using default token.');
         setAuthStateAndData(null, null, API_CONFIG.DEFAULT_JWT_TOKEN);
-        await setupOrRestartReplication(db, API_CONFIG.DEFAULT_JWT_TOKEN);
+        // No need to update replication token here as it's already set up with the default token in database initialization
       }
 
       setAuthState('ready');
@@ -291,7 +289,7 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     } finally {
       setIsInitialized(true);
     }
-  }, [isInitialized, findUserAndWorkspace, setAuthStateAndData, setupOrRestartReplication]);
+  }, [isInitialized, findUserAndWorkspace, setAuthStateAndData, updateReplicationTokenForDatabase]);
 
   /**
    * Effect to initialize authentication when the component mounts.
@@ -339,3 +337,35 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
 };
 
 export { useAuth, AuthProviderComponent as AuthProvider };
+
+/**
+ * Best Practices and Notes for Maintainers:
+ *
+ * 1. State Management: This component uses React's useState for managing authentication state.
+ *    Ensure that state updates are done correctly to avoid race conditions.
+ *
+ * 2. Memoization: useCallback is used extensively to memoize functions. This helps prevent
+ *    unnecessary re-renders in child components that depend on these functions.
+ *
+ * 3. Side Effects: The useEffect hook is used for initialization. Be cautious when modifying
+ *    the dependencies array to avoid infinite loops or missed updates.
+ *
+ * 4. Error Handling: Error states are managed and displayed. Consider implementing more
+ *    robust error handling and recovery mechanisms for production use.
+ *
+ * 5. Local Storage: Authentication data is stored in localStorage for persistence across
+ *    page reloads. Be aware of security implications and consider using more secure
+ *    storage methods for sensitive data.
+ *
+ * 6. Performance: The component is designed to minimize re-renders. When making changes,
+ *    consider the performance impact, especially for frequently changing state.
+ *
+ * 7. Replication: This component manages the authentication token used for replication.
+ *    Ensure that token updates are properly propagated to the replication system.
+ *
+ * 8. Initialization: The auth state is initialized asynchronously. Ensure that your
+ *    application can handle this async initialization process correctly.
+ *
+ * 9. Context Usage: This component provides an AuthContext. Ensure that consumers of this
+ *    context handle potential undefined values correctly.
+ */

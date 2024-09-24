@@ -147,6 +147,6 @@ export const createLiveDocReplicator = (
       Authorization: `Bearer ${token}`,
     },
     replicationIdentifier: 'live-doc-replication',
-    autoStart: false,
+    autoStart: true,
   });
 };

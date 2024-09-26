@@ -1,5 +1,5 @@
 // src\types\index.ts
-import type { Workspace, User, LiveDoc } from '@/lib/schemas';
+import type { LiveDoc, User, Workspace } from '@/generated/graphql';
 import type { RxCollection, RxDatabase, SyncOptionsGraphQL, RxJsonSchema } from 'rxdb';
 import type { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 

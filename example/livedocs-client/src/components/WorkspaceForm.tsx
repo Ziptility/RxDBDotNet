@@ -3,7 +3,7 @@ import { TextField, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useForm, Controller } from 'react-hook-form';
 import { FormLayout } from '@/components/FormComponents';
-import type { Workspace } from '@/lib/schemas';
+import type { Workspace } from '@/generated/graphql';
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-root': {

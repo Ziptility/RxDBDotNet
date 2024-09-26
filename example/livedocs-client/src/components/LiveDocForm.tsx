@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { TextField, MenuItem, FormControl, InputLabel, Select, Button } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { FormLayout, FormError } from '@/components/FormComponents';
-import type { LiveDoc, User, Workspace } from '@/lib/schemas';
+import type { LiveDoc, User, Workspace } from '@/generated/graphql';
 
 interface LiveDocFormProps {
   readonly liveDoc: LiveDoc | undefined;
@@ -45,7 +45,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
   }, [liveDoc, reset]);
 
   const onSubmitForm = handleSubmit((data) => {
-    onSubmit(data);
+    onSubmit({ ...data, topics: [] });
   });
 
   return (

@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import { FormLayout, FormError } from '@/components/FormComponents';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Workspace, User } from '@/lib/schemas';
+import type { Workspace, User } from '@/generated/graphql';
 import {
   PageContainer,
   ContentPaper,

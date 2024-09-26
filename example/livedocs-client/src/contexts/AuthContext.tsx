@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { API_CONFIG } from '@/config';
+import type { User, Workspace } from '@/generated/graphql';
 import { useDocuments } from '@/hooks/useDocuments';
 import { getDatabase } from '@/lib/database';
 import { updateReplicationToken } from '@/lib/replication';
-import type { User, Workspace } from '@/lib/schemas';
 import type { LiveDocsDatabase } from '@/types';
 import { createTypedContext } from '@/utils/createTypedContext';
 import { handleAsyncError } from '@/utils/errorHandling';

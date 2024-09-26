@@ -1,7 +1,7 @@
 import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { User, Workspace } from '@/lib/schemas';
+import type { User, Workspace } from '@/generated/graphql';
 import {
   TableContainer,
   Table,

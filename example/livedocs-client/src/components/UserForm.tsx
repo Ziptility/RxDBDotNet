@@ -4,8 +4,7 @@ import { TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@m
 import { styled } from '@mui/material/styles';
 import { useForm, Controller } from 'react-hook-form';
 import { FormLayout } from '@/components/FormComponents';
-import type { User, Workspace } from '@/lib/schemas';
-import { UserRole } from '@/lib/schemas';
+import { type User, type Workspace, UserRole } from '@/generated/graphql';
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiInputBase-root': {

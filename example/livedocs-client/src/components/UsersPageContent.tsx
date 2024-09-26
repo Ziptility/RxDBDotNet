@@ -3,8 +3,8 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { Box, Fab, Tooltip } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import type { User, Workspace } from '@/generated/graphql';
 import { useDocuments } from '@/hooks/useDocuments';
-import type { User, Workspace } from '@/lib/schemas';
 import {
   ContentPaper,
   SectionTitle,

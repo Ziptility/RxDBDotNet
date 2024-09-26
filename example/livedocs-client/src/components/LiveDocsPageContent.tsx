@@ -2,8 +2,8 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import type { LiveDoc, User, Workspace } from '@/generated/graphql';
 import { useDocuments } from '@/hooks/useDocuments';
-import type { LiveDoc, User, Workspace } from '@/lib/schemas';
 import {
   ContentPaper,
   SectionTitle,
@@ -22,8 +22,8 @@ const LiveDocsPageContent: React.FC = () => {
     documents: liveDocs,
     isLoading: isLoadingLiveDocs,
     error: liveDocError,
-    upsertDocument,
-    deleteDocument,
+    upsertDocument: upsertDocument,
+    deleteDocument: deleteDocument,
   } = useDocuments<LiveDoc>('livedoc');
 
   const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('user');
@@ -55,6 +55,13 @@ const LiveDocsPageContent: React.FC = () => {
   const handleCancel = useCallback((): void => {
     setEditingLiveDoc(null);
   }, []);
+
+  const handleDelete = useCallback(
+    (liveDoc: LiveDoc) => {
+      void deleteDocument(liveDoc.id);
+    },
+    [deleteDocument]
+  );
 
   if (isLoadingLiveDocs || isLoadingUsers || isLoadingWorkspaces) {
     return (
@@ -90,13 +97,7 @@ const LiveDocsPageContent: React.FC = () => {
       <motion.div {...motionProps['slideInFromBottom']}>
         <ListContainer>
           <SectionTitle variant="h6">LiveDoc List</SectionTitle>
-          <LiveDocList
-            liveDocs={liveDocs}
-            onEdit={setEditingLiveDoc}
-            onDelete={(liveDoc): void => {
-              void deleteDocument(liveDoc.id);
-            }}
-          />
+          <LiveDocList liveDocs={liveDocs} onEdit={setEditingLiveDoc} onDelete={handleDelete} />
         </ListContainer>
       </motion.div>
     </motion.div>

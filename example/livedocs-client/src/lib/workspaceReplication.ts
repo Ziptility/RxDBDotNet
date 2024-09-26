@@ -1,23 +1,19 @@
 // src\lib\workspaceReplication.ts
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';
+import type { PushWorkspacePayload, Workspace, WorkspaceFilterInput } from '@/generated/graphql';
 import type { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
-import { type Workspace } from './schemas';
 import type {
   RxCollection,
   RxGraphQLReplicationPullQueryBuilder,
   RxGraphQLReplicationPullStreamQueryBuilder,
   RxReplicationWriteToMasterRow,
   RxGraphQLReplicationPushQueryBuilder,
+  ReplicationPushHandlerResult,
 } from 'rxdb';
 
-interface WorkspaceFilterInput {
-  name?: { eq?: string; contains?: string };
-  isDeleted?: { eq?: boolean };
-}
-
 const pullQueryBuilder = (
-  variables: WorkspaceFilterInput
+  variables?: WorkspaceFilterInput
 ): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
   return (checkpoint: ReplicationCheckpoint | undefined, limit: number) => {
     const query = `
@@ -116,7 +112,7 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
 export const createWorkspaceReplicator = (
   token: string,
   collection: RxCollection<Workspace>,
-  filter: WorkspaceFilterInput = {},
+  filter?: WorkspaceFilterInput,
   topics: string[] = [],
   batchSize = 100
 ): LiveDocsReplicationState<Workspace> => {
@@ -130,10 +126,17 @@ export const createWorkspaceReplicator = (
       queryBuilder: pullQueryBuilder(filter),
       streamQueryBuilder: pullStreamBuilder(topics),
       batchSize,
+      includeWsHeaders: true,
     },
     push: {
       queryBuilder: pushQueryBuilder,
       batchSize,
+      responseModifier: (response: PushWorkspacePayload): ReplicationPushHandlerResult<Workspace> => {
+        if (response.errors) {
+          console.log('push errors', response.errors);
+        }
+        return response.workspace ?? [];
+      },
     },
     live: true,
     deletedField: 'isDeleted',

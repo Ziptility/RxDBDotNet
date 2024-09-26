@@ -1,9 +1,10 @@
 // src\lib\userReplication.ts
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';
+import type { PushUserPayload, User, UserFilterInput } from '@/generated/graphql';
 import type { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
-import { type User } from './schemas';
 import type {
+  ReplicationPushHandlerResult,
   RxCollection,
   RxGraphQLReplicationPullQueryBuilder,
   RxGraphQLReplicationPullStreamQueryBuilder,
@@ -11,13 +12,7 @@ import type {
   RxReplicationWriteToMasterRow,
 } from 'rxdb';
 
-interface UserFilterInput {
-  email?: { eq?: string; contains?: string };
-  role?: { eq?: string };
-  isDeleted?: { eq?: boolean };
-}
-
-const pullQueryBuilder = (variables: UserFilterInput): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
+const pullQueryBuilder = (variables?: UserFilterInput): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
   return (checkpoint: ReplicationCheckpoint | undefined, limit: number) => {
     const query = `
       query PullUser($checkpoint: UserInputCheckpoint, $limit: Int!, $where: UserFilterInput) {
@@ -127,7 +122,7 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
 export const createUserReplicator = (
   token: string,
   collection: RxCollection<User>,
-  filter: UserFilterInput = {},
+  filter?: UserFilterInput,
   topics: string[] = [],
   batchSize = 100
 ): LiveDocsReplicationState<User> => {
@@ -141,10 +136,17 @@ export const createUserReplicator = (
       queryBuilder: pullQueryBuilder(filter),
       streamQueryBuilder: pullStreamBuilder(topics),
       batchSize,
+      includeWsHeaders: true,
     },
     push: {
       queryBuilder: pushQueryBuilder,
       batchSize,
+      responseModifier: (response: PushUserPayload): ReplicationPushHandlerResult<User> => {
+        if (response.errors) {
+          console.log('push user errors', response.errors);
+        }
+        return response.user ?? [];
+      },
     },
     live: true,
     deletedField: 'isDeleted',

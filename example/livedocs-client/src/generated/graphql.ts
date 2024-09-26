@@ -7,22 +7,22 @@ export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> =
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export interface Scalars {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
   /** The `DateTime` scalar represents an ISO-8601 compliant date time type. */
-  DateTime: { input: string; output: string; }
+  DateTime: { input: string; output: string };
   /** The EmailAddress scalar type constitutes a valid email address, represented as a UTF-8 character sequence. The scalar follows the specification defined by the HTML Spec https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address. */
-  EmailAddress: { input: string; output: string; }
-  UUID: { input: string; output: string; }
+  EmailAddress: { input: string; output: string };
+  UUID: { input: string; output: string };
 }
 
 export enum ApplyPolicy {
   AFTER_RESOLVER = 'AFTER_RESOLVER',
   BEFORE_RESOLVER = 'BEFORE_RESOLVER',
-  VALIDATION = 'VALIDATION'
+  VALIDATION = 'VALIDATION',
 }
 
 export interface AuthenticationError extends Error {
@@ -201,16 +201,13 @@ export interface Mutation {
   pushWorkspace: PushWorkspacePayload;
 }
 
-
 export interface MutationPushLiveDocArgs {
   input: PushLiveDocInput;
 }
 
-
 export interface MutationPushUserArgs {
   input: PushUserInput;
 }
-
 
 export interface MutationPushWorkspaceArgs {
   input: PushWorkspaceInput;
@@ -262,7 +259,6 @@ export interface Query {
   pullWorkspace: WorkspacePullBulk;
 }
 
-
 /** src/schema/schema.graphql */
 export interface QueryPullLiveDocArgs {
   checkpoint: InputMaybe<LiveDocInputCheckpoint>;
@@ -270,14 +266,12 @@ export interface QueryPullLiveDocArgs {
   where: InputMaybe<LiveDocFilterInput>;
 }
 
-
 /** src/schema/schema.graphql */
 export interface QueryPullUserArgs {
   checkpoint: InputMaybe<UserInputCheckpoint>;
   limit: Scalars['Int']['input'];
   where: InputMaybe<UserFilterInput>;
 }
-
 
 /** src/schema/schema.graphql */
 export interface QueryPullWorkspaceArgs {
@@ -310,18 +304,15 @@ export interface Subscription {
   streamWorkspace: WorkspacePullBulk;
 }
 
-
 export interface SubscriptionStreamLiveDocArgs {
   headers: InputMaybe<LiveDocInputHeaders>;
   topics: InputMaybe<Array<Scalars['String']['input']>>;
 }
 
-
 export interface SubscriptionStreamUserArgs {
   headers: InputMaybe<UserInputHeaders>;
   topics: InputMaybe<Array<Scalars['String']['input']>>;
 }
-
 
 export interface SubscriptionStreamWorkspaceArgs {
   headers: InputMaybe<WorkspaceInputHeaders>;
@@ -478,7 +469,7 @@ export enum UserRole {
   /** A system administrator with full control over all workspaces and system settings. */
   SystemAdmin = 'SystemAdmin',
   /** A workspace administrator with permissions to manage users and settings within their own workspace. */
-  WorkspaceAdmin = 'WorkspaceAdmin'
+  WorkspaceAdmin = 'WorkspaceAdmin',
 }
 
 export interface UserRoleOperationFilterInput {

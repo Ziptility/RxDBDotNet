@@ -3,16 +3,27 @@
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { RxDBDevModePlugin, disableWarnings } from 'rxdb/plugins/dev-mode';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
+import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { API_CONFIG } from '@/config';
-import type { LiveDocsDatabase, LiveDocsCollections, LiveDocsCollectionConfig } from '@/types';
+import type {
+  LiveDocsDatabase,
+  LiveDocsCollections,
+  LiveDocsCollectionConfig,
+  LiveDocsReplicationStates,
+  LiveDocTypes,
+} from '@/types';
 import { setupReplication } from './replication';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
+import type { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
 // Disable RxDB warnings in development mode
 disableWarnings();
 
 // Add the development mode plugin for better debugging capabilities
 addRxPlugin(RxDBDevModePlugin);
+
+// Add the update plugin for more efficient document updates
+addRxPlugin(RxDBUpdatePlugin);
 
 /**
  * Promise to hold the database instance.
@@ -40,6 +51,49 @@ const createCollections = (): LiveDocsCollectionConfig => ({
 });
 
 /**
+ * Sets up detailed logging for replication operations.
+ * This function subscribes to various observables of each replication state
+ * and logs relevant information to the console.
+ *
+ * @param {LiveDocsReplicationStates} replicationStates - The replication states for all collections.
+ */
+const setupReplicationLogging = (replicationStates: LiveDocsReplicationStates): void => {
+  Object.entries(replicationStates).forEach(([collectionName, replicator]) => {
+    const typedReplicator = replicator as RxGraphQLReplicationState<LiveDocTypes, unknown>;
+
+    // emits all errors that happen when running the push- & pull-handlers.
+    typedReplicator.error$.subscribe((error) => {
+      console.warn(`Replication error for ${collectionName}:`, error);
+    });
+
+    // emits each document that was send to the remote
+    typedReplicator.sent$.subscribe((docs) => {
+      console.log(`Replication sent for ${collectionName}:`, docs);
+    });
+
+    // emits each document that was received from the remote
+    typedReplicator.received$.subscribe((doc) => {
+      console.log(`Replication received for ${collectionName}:`, doc);
+    });
+
+    // emits true when a replication cycle is running, false when not.
+    typedReplicator.active$.subscribe((active) => {
+      console.log(`Replication active state for ${collectionName}:`, active);
+    });
+
+    // emits true when the replication was canceled, false when not.
+    typedReplicator.canceled$.subscribe((canceled) => {
+      console.log(`Replication canceled state for ${collectionName}:`, canceled);
+    });
+
+    // Log initial replication state
+    console.log(`Initial replication state for ${collectionName}:`, {
+      isStopped: typedReplicator.isStopped(),
+    });
+  });
+};
+
+/**
  * Initializes the RxDB database.
  * This function creates the database, adds collections, and sets up replication.
  * It should only be called once during the application lifecycle.
@@ -48,33 +102,28 @@ const createCollections = (): LiveDocsCollectionConfig => ({
  * @throws {Error} If database initialization fails.
  */
 const initializeDatabase = async (): Promise<LiveDocsDatabase> => {
-  initializationCount++;
+  initializationCount += 1;
   console.log(`Initializing database... (Attempt #${initializationCount})`);
 
   try {
-    // Create the RxDB database
-    // IMPORTANT: Ensure this combination of name and adapter is used only once.
-    // This can cause issues in React projects with hot reloading, which may
-    // reload code without fully resetting the application state.
     const db = await createRxDatabase<LiveDocsCollections>({
       name: 'livedocsdb',
       storage: getRxStorageDexie(),
-      multiInstance: false, // Set to false for single-instance applications (e.g., single-window electron apps)
-      ignoreDuplicate: false, // Set to false to throw an error if multiple instances are created (helps catch mistakes)
-      eventReduce: true, // Improves performance by reducing the number of change events
+      multiInstance: false,
+      ignoreDuplicate: false,
+      eventReduce: true,
     });
 
     console.log('Database created successfully');
 
-    // Add collections to the database
     await db.addCollections(createCollections());
     console.log('Collections added successfully');
 
-    // Set up replication with the backend
     const replicationStates = setupReplication(db, API_CONFIG.DEFAULT_JWT_TOKEN);
     console.log('Replication set up successfully');
 
-    // Return the database instance with replication states attached
+    setupReplicationLogging(replicationStates);
+
     return Object.assign(db, { replicationStates }) as LiveDocsDatabase;
   } catch (error) {
     console.error('Failed to initialize database:', error);
@@ -91,7 +140,7 @@ const initializeDatabase = async (): Promise<LiveDocsDatabase> => {
  */
 export const getDatabase = async (): Promise<LiveDocsDatabase> => {
   console.log('getDatabase called');
-  if (!databasePromise) {
+  if (databasePromise === null) {
     console.log('Creating new database promise');
     try {
       databasePromise = initializeDatabase();
@@ -152,4 +201,7 @@ export type { LiveDocsDatabase };
  *
  * 8. Schema Changes: If you modify the database schema, ensure you implement and test
  *    appropriate migration strategies to handle existing data.
+ *
+ * 9. Logging: The setupReplicationLogging function provides detailed logs about replication.
+ *    Consider adding a way to toggle this logging on/off in production environments.
  */

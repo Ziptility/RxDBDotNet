@@ -39,10 +39,11 @@ export const updateReplicationToken = async (
   newToken: string
 ): Promise<void> => {
   await Promise.all(
+    // eslint-disable-next-line @typescript-eslint/require-await
     Object.values(replicationStates).map(async (state: LiveDocsReplicationState<unknown>) => {
-      await state.cancel();
+      //await state.cancel();
       state.setHeaders({ Authorization: `Bearer ${newToken}` });
-      await state.start();
+      //await state.start();
     })
   );
 };

@@ -9,7 +9,7 @@
     "start": "next start -p 3000",
     "clean": "rimraf .next out",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md,html,yml,yaml}\"",
-    "generate": "graphql-codegen --config codegen.yml --validate"
+    "generate": "graphql-codegen --config codegen.ts --validate"
   },
   "dependencies": {
     "@emotion/cache": "^11.13.1",
@@ -32,7 +32,6 @@
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.2",
-    "@graphql-codegen/introspection": "^4.0.3",
     "@graphql-codegen/typescript": "^4.0.9",
     "@types/node": "^22",
     "@types/react": "^18",

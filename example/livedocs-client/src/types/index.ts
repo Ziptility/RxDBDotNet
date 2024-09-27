@@ -39,3 +39,5 @@ export interface ReplicationCheckpoint {
 }
 
 export type LiveDocsReplicationOptions<T> = SyncOptionsGraphQL<T, ReplicationCheckpoint>;
+
+export type LiveDocTypes = Workspace | User | LiveDoc;

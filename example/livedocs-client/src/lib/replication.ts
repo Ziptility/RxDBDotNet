@@ -28,7 +28,6 @@ export const setupReplication = (db: LiveDocsDatabase, jwtAccessToken: string): 
 
 /**
  * Updates the JWT token used for authentication in all replication states.
- * This function cancels ongoing replications, updates the token, and restarts the replications.
  *
  * @param {LiveDocsReplicationStates} replicationStates - The current replication states for all collections.
  * @param {string} newToken - The new JWT token to use for authentication.
@@ -39,11 +38,8 @@ export const updateReplicationToken = async (
   newToken: string
 ): Promise<void> => {
   await Promise.all(
-    // eslint-disable-next-line @typescript-eslint/require-await
-    Object.values(replicationStates).map(async (state: LiveDocsReplicationState<unknown>) => {
-      //await state.cancel();
+    Object.values(replicationStates).map((state: LiveDocsReplicationState<unknown>) => {
       state.setHeaders({ Authorization: `Bearer ${newToken}` });
-      //await state.start();
     })
   );
 };

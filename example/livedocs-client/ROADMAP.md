@@ -1,3 +1,5 @@
+<!-- ./ROADMAP.md -->
+
 # RxDBDotNet Example Client App Roadmap
 
 ## V1 MVP Enhancements
@@ -503,8 +505,7 @@ const handleCreate = async (data) => {
 
 ...
 
-```markdown
-
+````markdown
 ### 10. Implement Basic Monitoring
 
 #### Add: src/utils/logging.ts
@@ -515,16 +516,17 @@ Implement basic logging for RxDB operations:
 import { RxDatabase } from 'rxdb';
 
 export const setupLogging = (db: RxDatabase) => {
-  db.$.subscribe(event => {
+  db.$.subscribe((event) => {
     console.log('Database event:', event);
   });
 
-  Object.values(db.collections).forEach(collection => {
-    collection.$.subscribe(event => {
+  Object.values(db.collections).forEach((collection) => {
+    collection.$.subscribe((event) => {
       console.log(`Collection ${collection.name} event:`, event);
     });
   });
 };
+```
 ````
 
 This roadmap provides a clear path to enhance the existing codebase to fully embrace local-first principles while showcasing the capabilities of RxDBDotNet. Each suggestion is accompanied by an explanation of why it's needed and example code to illustrate the proposed changes.

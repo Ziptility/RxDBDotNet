@@ -1,3 +1,5 @@
+<!-- ./DESIGN.md -->
+
 # LiveDocs Application Design and Development Guidelines
 
 ## Core Principles

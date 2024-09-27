@@ -11,6 +11,7 @@ import type {
   LiveDocsCollectionConfig,
   LiveDocsReplicationStates,
   LiveDocTypes,
+  ReplicationCheckpoint,
 } from '@/types';
 import { setupReplication } from './replication';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
@@ -59,7 +60,7 @@ const createCollections = (): LiveDocsCollectionConfig => ({
  */
 const setupReplicationLogging = (replicationStates: LiveDocsReplicationStates): void => {
   Object.entries(replicationStates).forEach(([collectionName, replicator]) => {
-    const typedReplicator = replicator as RxGraphQLReplicationState<LiveDocTypes, unknown>;
+    const typedReplicator = replicator as RxGraphQLReplicationState<LiveDocTypes, ReplicationCheckpoint>;
 
     // emits all errors that happen when running the push- & pull-handlers.
     typedReplicator.error$.subscribe((error) => {

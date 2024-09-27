@@ -1,17 +1,36 @@
+<!-- docs/local-first-patterns.md -->
+
 # Local-First Patterns in RxDBDotNet Example Client App
 
 This document outlines the local-first patterns implemented in the RxDBDotNet Example Client App. These patterns leverage RxDB's built-in functionality to ensure a superior user experience with instant responsiveness, seamless offline capabilities, and efficient data synchronization. They demonstrate best practices for building robust local-first applications with RxDBDotNet while minimizing custom code.
 
 ## Table of Contents
 
-1. [Local-First Data Flow](#local-first-data-flow)
-2. [Instant Responsiveness](#instant-responsiveness)
-3. [Synchronization](#synchronization)
-4. [Conflict Resolution](#conflict-resolution)
-5. [Optimistic UI Updates](#optimistic-ui-updates)
-6. [Error Handling](#error-handling)
-7. [Local-Aware UI/UX](#local-aware-uiux)
-8. [Performance Optimization](#performance-optimization)
+- [Local-First Patterns in RxDBDotNet Example Client App](#local-first-patterns-in-rxdbdotnet-example-client-app)
+  - [Table of Contents](#table-of-contents)
+  - [Local-First Data Flow](#local-first-data-flow)
+    - [Implementation](#implementation)
+    - [Example](#example)
+  - [Instant Responsiveness](#instant-responsiveness)
+    - [Example](#example-1)
+  - [Synchronization](#synchronization)
+    - [Implementation](#implementation-1)
+    - [Example](#example-2)
+  - [Conflict Resolution](#conflict-resolution)
+    - [Implementation](#implementation-2)
+    - [Example](#example-3)
+  - [Optimistic UI Updates](#optimistic-ui-updates)
+    - [Implementation](#implementation-3)
+    - [Example](#example-4)
+  - [Error Handling](#error-handling)
+    - [Implementation](#implementation-4)
+    - [Example](#example-5)
+  - [Local-Aware UI/UX](#local-aware-uiux)
+    - [Implementation](#implementation-5)
+    - [Example](#example-6)
+  - [Performance Optimization](#performance-optimization)
+    - [Implementation](#implementation-6)
+    - [Example](#example-7)
 
 ## Local-First Data Flow
 

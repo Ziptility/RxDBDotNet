@@ -1,3 +1,5 @@
+<!-- ./README.md -->
+
 # RxDBDotNet Example Client App
 
 ## Introduction
@@ -13,6 +15,7 @@ Welcome to the RxDBDotNet Example Client App! This sophisticated, offline-first 
   - Subscription topics for fine-grained real-time updates
   - Enhanced error handling using Hot Chocolate's mutation conventions
 - **Custom Replication Logic**: Tailored strategies to fully leverage RxDBDotNet capabilities
+- **Real-time Synchronization**: Bi-directional replication for all document types
 - **Real-time Synchronization**: Bi-directional replication for all document types
 - **Conflict Resolution**: Sophisticated strategies for handling offline-to-online sync conflicts
 - **Optimistic UI Updates**: Immediate UI feedback with eventual consistency

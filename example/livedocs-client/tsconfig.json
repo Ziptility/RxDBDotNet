@@ -42,6 +42,6 @@
     "preserveConstEnums": true,
     "jsxImportSource": "@emotion/react"
   },
-  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", "codegen.ts"],
   "exclude": ["node_modules", "build", ".next", "out", "next.config.js"]
 }

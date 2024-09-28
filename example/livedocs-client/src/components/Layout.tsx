@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/router';
 import { PageContainer } from '@/styles/StyledComponents';
 import { motionProps, AnimatePresence } from '@/utils/motionSystem';
-import { Footer } from './Footer';
 import NavigationRail from './NavigationRail';
 
 interface LayoutProps {
@@ -48,7 +47,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </AnimatePresence>
           </Box>
         </PageContainer>
-        <Footer />
       </Box>
     </Box>
   );

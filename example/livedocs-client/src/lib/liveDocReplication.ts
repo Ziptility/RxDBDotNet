@@ -182,7 +182,7 @@ const initializeLoggingAndErrorHandlers = (replicationState: LiveDocsReplication
  * @param batchSize - The number of documents to process in each batch.
  * @returns A LiveDocsReplicationState for the LiveDoc collection.
  */
-export const createLiveDocReplicator = (
+export const replicateLiveDocs = (
   token: string,
   collection: RxCollection<LiveDoc>,
   filter?: LiveDocFilterInput,

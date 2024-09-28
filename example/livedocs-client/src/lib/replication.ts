@@ -1,9 +1,9 @@
 // src/lib/replication.ts
 
 import { API_CONFIG } from '@/config';
-import { createLiveDocReplicator } from '@/lib/liveDocReplication';
-import { createUserReplicator } from '@/lib/userReplication';
-import { createWorkspaceReplicator } from '@/lib/workspaceReplication';
+import { replicateLiveDocs } from '@/lib/liveDocReplication';
+import { replicateUsers } from '@/lib/userReplication';
+import { replicateWorkspaces } from '@/lib/workspaceReplication';
 import type { LiveDocsDatabase, LiveDocsReplicationState, LiveDocsReplicationStates } from '@/types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -21,13 +21,11 @@ export const setupReplication = (db: LiveDocsDatabase, jwtAccessToken: string): 
   const token = jwtAccessToken || API_CONFIG.DEFAULT_JWT_TOKEN;
 
   try {
-    const replicationStates: LiveDocsReplicationStates = {
-      workspaces: createWorkspaceReplicator(token, db.workspace),
-      users: createUserReplicator(token, db.user),
-      livedocs: createLiveDocReplicator(token, db.livedoc),
+    return {
+      workspaces: replicateWorkspaces(token, db.workspace),
+      users: replicateUsers(token, db.user),
+      livedocs: replicateLiveDocs(token, db.livedoc),
     };
-
-    return replicationStates;
   } catch (error) {
     handleError(error, 'Setting up replication');
     throw error; // Re-throw to allow caller to handle the error

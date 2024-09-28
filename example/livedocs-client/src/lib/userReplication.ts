@@ -188,7 +188,7 @@ const initializeLoggingAndErrorHandlers = (replicationState: LiveDocsReplication
  * @param batchSize - The number of documents to process in each batch.
  * @returns A LiveDocsReplicationState for the User collection.
  */
-export const createUserReplicator = (
+export const replicateUsers = (
   token: string,
   collection: RxCollection<User>,
   filter?: UserFilterInput,

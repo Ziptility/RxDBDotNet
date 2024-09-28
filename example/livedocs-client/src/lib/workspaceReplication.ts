@@ -178,7 +178,7 @@ const initializeLoggingAndErrorHandlers = (replicationState: LiveDocsReplication
  * @param batchSize - The number of documents to process in each batch.
  * @returns A LiveDocsReplicationState for the Workspace collection.
  */
-export const createWorkspaceReplicator = (
+export const replicateWorkspaces = (
   token: string,
   collection: RxCollection<Workspace>,
   filter?: WorkspaceFilterInput,

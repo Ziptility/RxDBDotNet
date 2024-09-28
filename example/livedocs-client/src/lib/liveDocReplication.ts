@@ -1,8 +1,10 @@
-// src\lib\liveDocReplication.ts
+// src/lib/liveDocReplication.ts
+
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';
 import type { LiveDoc, LiveDocFilterInput, PushLiveDocPayload } from '@/generated/graphql';
 import type { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
+import { handleError } from '@/utils/errorHandling';
 import type {
   RxCollection,
   RxGraphQLReplicationPullQueryBuilder,
@@ -12,6 +14,12 @@ import type {
   ReplicationPushHandlerResult,
 } from 'rxdb';
 
+/**
+ * Builds the GraphQL query for pulling LiveDoc data.
+ *
+ * @param variables - Optional filter input for the query.
+ * @returns A function that generates the GraphQL query object.
+ */
 const pullQueryBuilder = (
   variables?: LiveDocFilterInput
 ): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
@@ -22,6 +30,7 @@ const pullQueryBuilder = (
           documents {
             id
             content
+            topics
             ownerId
             workspaceId
             updatedAt
@@ -47,6 +56,12 @@ const pullQueryBuilder = (
   };
 };
 
+/**
+ * Builds the GraphQL mutation for pushing LiveDoc data.
+ *
+ * @param pushRows - The LiveDoc data to be pushed.
+ * @returns The GraphQL mutation object.
+ */
 const pushQueryBuilder: RxGraphQLReplicationPushQueryBuilder = (pushRows: RxReplicationWriteToMasterRow<LiveDoc>[]) => {
   const query = `
     mutation PushLiveDoc($input: PushLiveDocInput!) {
@@ -54,6 +69,7 @@ const pushQueryBuilder: RxGraphQLReplicationPushQueryBuilder = (pushRows: RxRepl
         liveDoc {
           id
           content
+          topics
           ownerId
           workspaceId
           updatedAt
@@ -82,6 +98,12 @@ const pushQueryBuilder: RxGraphQLReplicationPushQueryBuilder = (pushRows: RxRepl
   };
 };
 
+/**
+ * Builds the GraphQL subscription for streaming LiveDoc data.
+ *
+ * @param topics - The topics to subscribe to.
+ * @returns A function that generates the GraphQL subscription object.
+ */
 const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQueryBuilder => {
   return (headers: { [k: string]: string }) => {
     const query = `
@@ -90,6 +112,7 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
           documents {
             id
             content
+            topics
             ownerId
             workspaceId
             updatedAt
@@ -113,6 +136,52 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
   };
 };
 
+/**
+ * Sets up logging and error handlers.
+ *
+ * @param replicationState - The replication state to initialize.
+ */
+const initializeLoggingAndErrorHandlers = (replicationState: LiveDocsReplicationState<LiveDoc>): void => {
+  // emits and handles all errors that happen when running the push- & pull-handlers.
+  replicationState.error$.subscribe((error) => {
+    handleError(error, 'LiveDoc replication');
+  });
+
+  // emits each document that was received from the remote
+  replicationState.received$.subscribe((doc) => {
+    console.log('LiveDoc replication received:', doc);
+  });
+
+  // emits each document that was send to the remote
+  replicationState.sent$.subscribe((doc) => {
+    console.log('LiveDoc replication sent:', doc);
+  });
+
+  // emits true when a replication cycle is running, false when not.
+  replicationState.active$.subscribe((active) => {
+    console.log('LiveDoc replication active:', active);
+  });
+
+  replicationState.remoteEvents$.subscribe((event) => {
+    console.log('LiveDoc replication remote event:', event);
+  });
+
+  // emits true when the replication was canceled, false when not.
+  replicationState.canceled$.subscribe(() => {
+    console.log('LiveDoc replication canceled');
+  });
+};
+
+/**
+ * Creates a replicator for the LiveDoc collection.
+ *
+ * @param token - The authentication token.
+ * @param collection - The RxDB collection for LiveDocs.
+ * @param filter - Optional filter for the replication.
+ * @param topics - Optional topics for subscription.
+ * @param batchSize - The number of documents to process in each batch.
+ * @returns A LiveDocsReplicationState for the LiveDoc collection.
+ */
 export const createLiveDocReplicator = (
   token: string,
   collection: RxCollection<LiveDoc>,
@@ -120,7 +189,7 @@ export const createLiveDocReplicator = (
   topics: string[] = [],
   batchSize = 100
 ): LiveDocsReplicationState<LiveDoc> => {
-  return replicateGraphQL({
+  const replicationState = replicateGraphQL({
     collection,
     url: {
       http: API_CONFIG.GRAPHQL_ENDPOINT,
@@ -137,7 +206,7 @@ export const createLiveDocReplicator = (
       batchSize,
       responseModifier: (response: PushLiveDocPayload): ReplicationPushHandlerResult<LiveDoc> => {
         if (response.errors) {
-          console.log('push live doc errors', response.errors);
+          response.errors.forEach((error) => handleError(error, 'LiveDoc replication push'));
         }
         return response.liveDoc ?? [];
       },
@@ -150,4 +219,8 @@ export const createLiveDocReplicator = (
     replicationIdentifier: 'live-doc-replication',
     autoStart: true,
   });
+
+  initializeLoggingAndErrorHandlers(replicationState);
+
+  return replicationState;
 };

@@ -1,8 +1,10 @@
-// src\lib\workspaceReplication.ts
+// src/lib/workspaceReplication.ts
+
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';
 import type { PushWorkspacePayload, Workspace, WorkspaceFilterInput } from '@/generated/graphql';
 import type { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
+import { handleError } from '@/utils/errorHandling';
 import type {
   RxCollection,
   RxGraphQLReplicationPullQueryBuilder,
@@ -12,6 +14,12 @@ import type {
   ReplicationPushHandlerResult,
 } from 'rxdb';
 
+/**
+ * Builds the GraphQL query for pulling Workspace data.
+ *
+ * @param variables - Optional filter input for the query.
+ * @returns A function that generates the GraphQL query object.
+ */
 const pullQueryBuilder = (
   variables?: WorkspaceFilterInput
 ): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
@@ -22,6 +30,7 @@ const pullQueryBuilder = (
           documents {
             id
             name
+            topics
             updatedAt
             isDeleted
           }
@@ -45,6 +54,12 @@ const pullQueryBuilder = (
   };
 };
 
+/**
+ * Builds the GraphQL mutation for pushing Workspace data.
+ *
+ * @param pushRows - The Workspace data to be pushed.
+ * @returns The GraphQL mutation object.
+ */
 const pushQueryBuilder: RxGraphQLReplicationPushQueryBuilder = (
   pushRows: RxReplicationWriteToMasterRow<Workspace>[]
 ) => {
@@ -54,6 +69,7 @@ const pushQueryBuilder: RxGraphQLReplicationPushQueryBuilder = (
         workspace {
           id
           name
+          topics
           updatedAt
           isDeleted
         }
@@ -80,6 +96,12 @@ const pushQueryBuilder: RxGraphQLReplicationPushQueryBuilder = (
   };
 };
 
+/**
+ * Builds the GraphQL subscription for streaming Workspace data.
+ *
+ * @param topics - The topics to subscribe to.
+ * @returns A function that generates the GraphQL subscription object.
+ */
 const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQueryBuilder => {
   return (headers: { [k: string]: string }) => {
     const query = `
@@ -88,6 +110,7 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
           documents {
             id
             name
+            topics
             updatedAt
             isDeleted
           }
@@ -109,6 +132,52 @@ const pullStreamBuilder = (topics: string[]): RxGraphQLReplicationPullStreamQuer
   };
 };
 
+/**
+ * Sets up logging and error handlers.
+ *
+ * @param replicationState - The replication state to initialize.
+ */
+const initializeLoggingAndErrorHandlers = (replicationState: LiveDocsReplicationState<Workspace>): void => {
+  // emits and handles all errors that happen when running the push- & pull-handlers.
+  replicationState.error$.subscribe((error) => {
+    handleError(error, 'Workspace replication');
+  });
+
+  // emits each document that was received from the remote
+  replicationState.received$.subscribe((doc) => {
+    console.log('Workspace replication received:', doc);
+  });
+
+  // emits each document that was send to the remote
+  replicationState.sent$.subscribe((doc) => {
+    console.log('Workspace replication sent:', doc);
+  });
+
+  // emits true when a replication cycle is running, false when not.
+  replicationState.active$.subscribe((active) => {
+    console.log('Workspace replication active:', active);
+  });
+
+  replicationState.remoteEvents$.subscribe((event) => {
+    console.log('Workspace replication remote event:', event);
+  });
+
+  // emits true when the replication was canceled, false when not.
+  replicationState.canceled$.subscribe(() => {
+    console.log('Workspace replication canceled');
+  });
+};
+
+/**
+ * Creates a replicator for the Workspace collection.
+ *
+ * @param token - The authentication token.
+ * @param collection - The RxDB collection for Workspaces.
+ * @param filter - Optional filter for the replication.
+ * @param topics - Optional topics for subscription.
+ * @param batchSize - The number of documents to process in each batch.
+ * @returns A LiveDocsReplicationState for the Workspace collection.
+ */
 export const createWorkspaceReplicator = (
   token: string,
   collection: RxCollection<Workspace>,
@@ -116,7 +185,7 @@ export const createWorkspaceReplicator = (
   topics: string[] = [],
   batchSize = 100
 ): LiveDocsReplicationState<Workspace> => {
-  return replicateGraphQL({
+  const replicationState = replicateGraphQL({
     collection,
     url: {
       http: API_CONFIG.GRAPHQL_ENDPOINT,
@@ -133,7 +202,7 @@ export const createWorkspaceReplicator = (
       batchSize,
       responseModifier: (response: PushWorkspacePayload): ReplicationPushHandlerResult<Workspace> => {
         if (response.errors) {
-          console.log('push errors', response.errors);
+          response.errors.forEach((error) => handleError(error, 'Workspace replication push'));
         }
         return response.workspace ?? [];
       },
@@ -143,7 +212,11 @@ export const createWorkspaceReplicator = (
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    replicationIdentifier: `workspace-replication`,
+    replicationIdentifier: 'workspace-replication',
     autoStart: true,
   });
+
+  initializeLoggingAndErrorHandlers(replicationState);
+
+  return replicationState;
 };

@@ -33,6 +33,7 @@ namespace LiveDocs.GraphQLApi.Validations
     {
         /// <summary>
         /// Gets or sets a value indicating whether null values are allowed.
+        /// Default is false.
         /// </summary>
         public bool AllowNull { get; set; }
 

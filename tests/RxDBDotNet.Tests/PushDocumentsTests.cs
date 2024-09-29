@@ -151,7 +151,7 @@ public class PushDocumentsTests : IAsyncLifetime
             .BeNullOrEmpty();
 
         // Verify the valid document was processed
-        var updatedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        var updatedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id, TestContext.CancellationToken);
         updatedWorkspaceFromDb.Should()
             .NotBeNull();
         updatedWorkspaceFromDb.Name.Should()
@@ -215,7 +215,7 @@ public class PushDocumentsTests : IAsyncLifetime
         createdWorkspace.Name.Should()
             .Be(newWorkspace.Name.Value);
         createdWorkspace.UpdatedAt.Should()
-            .BeCloseTo(newWorkspace.UpdatedAt!.Value, TimeSpan.FromSeconds(1));
+            .BeCloseTo(newWorkspace.UpdatedAt.Value, TimeSpan.FromSeconds(1));
         createdWorkspace.IsDeleted.Should()
             .Be(newWorkspace.IsDeleted);
     }
@@ -267,7 +267,7 @@ public class PushDocumentsTests : IAsyncLifetime
             .BeNullOrEmpty();
 
         // Verify the document was updated
-        var updatedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        var updatedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id, TestContext.CancellationToken);
         updatedWorkspaceFromDb.Should()
             .NotBeNull();
         updatedWorkspaceFromDb.Id.Should()
@@ -275,7 +275,7 @@ public class PushDocumentsTests : IAsyncLifetime
         updatedWorkspaceFromDb.Name.Should()
             .Be(updatedWorkspace.Name.Value);
         updatedWorkspaceFromDb.UpdatedAt.Should()
-            .BeCloseTo(updatedWorkspace.UpdatedAt!.Value, TimeSpan.FromSeconds(1));
+            .BeCloseTo(updatedWorkspace.UpdatedAt.Value, TimeSpan.FromSeconds(1));
         updatedWorkspaceFromDb.IsDeleted.Should()
             .Be(updatedWorkspace.IsDeleted);
     }
@@ -414,19 +414,19 @@ public class PushDocumentsTests : IAsyncLifetime
             .BeNullOrEmpty();
 
         // Verify all documents were created/updated
-        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id!.Value, TestContext.CancellationToken);
+        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id, TestContext.CancellationToken);
         createdWorkspace.Should()
             .NotBeNull();
         createdWorkspace.Name.Should()
             .Be(newWorkspace.Name.Value);
 
-        var updatedWorkspace1FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id!.Value, TestContext.CancellationToken);
+        var updatedWorkspace1FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id, TestContext.CancellationToken);
         updatedWorkspace1FromDb.Should()
             .NotBeNull();
         updatedWorkspace1FromDb.Name.Should()
             .Be(updatedWorkspace1.Name.Value);
 
-        var updatedWorkspace2FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id!.Value, TestContext.CancellationToken);
+        var updatedWorkspace2FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id, TestContext.CancellationToken);
         updatedWorkspace2FromDb.Should()
             .NotBeNull();
         updatedWorkspace2FromDb.Name.Should()
@@ -480,7 +480,7 @@ public class PushDocumentsTests : IAsyncLifetime
             .BeNullOrEmpty();
 
         // Verify the document was marked as deleted
-        var deletedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        var deletedWorkspaceFromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id, TestContext.CancellationToken);
         deletedWorkspaceFromDb.Should()
             .NotBeNull();
         deletedWorkspaceFromDb.IsDeleted.Should()
@@ -561,7 +561,7 @@ public class PushDocumentsTests : IAsyncLifetime
 
         // Verify the document was not created
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await TestContext.HttpClient.GetWorkspaceByIdAsync(nonExistentWorkspace.Id!.Value, TestContext.CancellationToken));
+            await TestContext.HttpClient.GetWorkspaceByIdAsync(nonExistentWorkspace.Id, TestContext.CancellationToken));
     }
 
     [Fact]
@@ -654,14 +654,14 @@ public class PushDocumentsTests : IAsyncLifetime
             .BeNullOrEmpty();
 
         // Verify new document was created
-        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id!.Value, TestContext.CancellationToken);
+        var createdWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(newWorkspace.Id, TestContext.CancellationToken);
         createdWorkspace.Should()
             .NotBeNull();
         createdWorkspace.Name.Should()
             .Be(newWorkspace.Name.Value);
 
         // Verify existing document was updated
-        var updatedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id!.Value, TestContext.CancellationToken);
+        var updatedWorkspace = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace.Id, TestContext.CancellationToken);
         updatedWorkspace.Should()
             .NotBeNull();
         updatedWorkspace.Name.Should()
@@ -736,17 +736,17 @@ public class PushDocumentsTests : IAsyncLifetime
         // When a conflict is detected in a batch, the entire batch is rejected to maintain consistency
 
         // Verify existingWorkspace1 was not updated due to conflict
-        var workspace1FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id!.Value, TestContext.CancellationToken);
+        var workspace1FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace1.Id, TestContext.CancellationToken);
         workspace1FromDb.Should()
             .NotBeNull();
         workspace1FromDb.Name.Should()
             .Be(conflictingWorkspace.Name);
 
         // Verify existingWorkspace2 was not updated due to the conflict in the batch
-        var workspace2FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id!.Value, TestContext.CancellationToken);
+        var workspace2FromDb = await TestContext.HttpClient.GetWorkspaceByIdAsync(existingWorkspace2.Id, TestContext.CancellationToken);
         workspace2FromDb.Should()
             .NotBeNull();
         workspace2FromDb.Name.Should()
-            .Be(existingWorkspace2.Name!.Value);
+            .Be(existingWorkspace2.Name);
     }
 }

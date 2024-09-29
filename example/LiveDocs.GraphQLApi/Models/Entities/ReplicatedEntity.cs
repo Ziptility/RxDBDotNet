@@ -33,9 +33,8 @@ public abstract class ReplicatedEntity
     public required DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
-    /// An optional list of topics to publish events to when an instance is upserted.
+    /// A list of topics to publish events to when an instance is upserted.
     /// </summary>
-#pragma warning disable CA2227 // Collection properties should be read only
-    public List<Topic>? Topics { get; set; }
-#pragma warning restore CA2227 // Collection properties should be read only
+    [Required]
+    public required List<Topic> Topics { get; init; }
 }

@@ -27,6 +27,11 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
         _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
 
+    /// <summary>
+    /// Projects the storage entity to its corresponding document.
+    /// </summary>
+    protected abstract Expression<Func<TEntity, TDocument>> ProjectToDocument();
+
     /// <inheritdoc />
     public IQueryable<TDocument> GetQueryableDocuments()
     {
@@ -50,28 +55,44 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        await _dbContext.Set<TEntity>()
-            .AddAsync(await CreateAsync(document, cancellationToken), cancellationToken);
+        var newEntity = await CreateAsync(document, cancellationToken);
 
-        _pendingEvents.Add(document);
+        await _dbContext.Set<TEntity>()
+            .AddAsync(newEntity, cancellationToken);
+
+        // The document may have been updated during the update process, so we need to map it
+        // so that the latest version gets propagated to the client
+        var newDocument = MapToDocument(newEntity);
+
+        _pendingEvents.Add(newDocument);
 
         return document;
     }
+
+    /// <summary>
+    /// Retrieves an entity by its associated document ID.
+    /// </summary>
+    /// <param name="documentId">The unique identifier of the document.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the entity associated with the specified document ID.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the <paramref name="documentId"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when no entity is found for the specified <paramref name="documentId"/>.</exception>
+    protected abstract Task<TEntity> GetEntityByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken);
 
     /// <inheritdoc />
     public async Task<TDocument> UpdateDocumentAsync(TDocument document, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        var existingEntity = await _dbContext
-                                 .Set<TEntity>()
-                                 .Where(e => e.ReplicatedDocumentId == document.Id)
-                                 .SingleOrDefaultAsync(cancellationToken)
-                               ?? throw new InvalidOperationException($"Entity with a ReplicateDocumentId of {document.Id} not found for update.");
+        var existingEntity = await GetEntityByDocumentIdAsync(document.Id, cancellationToken);
 
-        Update(document, existingEntity);
+        existingEntity = Update(document, existingEntity);
 
-        _pendingEvents.Add(document);
+        // The document may have been updated during the update process, so we need to map it
+        // so that the latest version gets propagated to the client
+        var updatedDocument = MapToDocument(existingEntity);
+
+        _pendingEvents.Add(updatedDocument);
 
         return document;
     }
@@ -90,7 +111,11 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
         existingEntity.IsDeleted = true;
         existingEntity.UpdatedAt = document.UpdatedAt;
 
-        _pendingEvents.Add(document);
+        // The document is updated during the update process, so we need to map it
+        // so that the latest version gets propagated to the client
+        var deletedDocument = MapToDocument(existingEntity);
+
+        _pendingEvents.Add(deletedDocument);
 
         return document;
     }
@@ -118,9 +143,11 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
     }
 
     /// <summary>
-    /// Projects the storage entity to its corresponding document.
+    /// Maps the storage entity to its corresponding document.
     /// </summary>
-    protected abstract Expression<Func<TEntity, TDocument>> ProjectToDocument();
+    /// <param name="entityToMap">The entity to map to a document.</param>
+    /// <returns>The mapped document.</returns>
+    protected abstract TDocument MapToDocument(TEntity entityToMap);
 
     /// <summary>
     /// Updates an entity from the provided document.

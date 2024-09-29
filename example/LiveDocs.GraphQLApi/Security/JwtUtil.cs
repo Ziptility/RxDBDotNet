@@ -36,15 +36,13 @@ public static class JwtUtil
     /// Generates a JWT token for a given user, capturing the user's id, role, email, and a custom workspace claim.
     /// </summary>
     /// <param name="user">The <see cref="ReplicatedUser"/> for whom the token is being generated. This parameter cannot be null.</param>
-    /// <param name="role">The role of the user, represented as a <see cref="UserRole"/>.</param>
-    /// <param name="additionalClaims">Optional. A list of additional <see cref="Claim"/> objects to include in the token.</param>
     /// <param name="expires">Optional. The expiration time of the token. If not provided, the token will expire in 120 minutes.</param>
     /// <returns>A JWT token as a <see cref="string"/> that contains the user's claims.</returns>
     /// <remarks>
     /// This token is valid for 120 minutes and is signed using the HMAC SHA256 algorithm.
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown if the <paramref name="user"/> parameter is null.</exception>
-    public static string GenerateJwtToken(ReplicatedUser user, UserRole role, List<Claim>? additionalClaims = null, DateTime? expires = null)
+    public static string GenerateJwtToken(ReplicatedUser user, DateTime? expires = null)
     {
         ArgumentNullException.ThrowIfNull(user);
 
@@ -53,17 +51,12 @@ public static class JwtUtil
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString("D", CultureInfo.InvariantCulture)), // User's unique ID as the subject claim
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("D", CultureInfo.InvariantCulture)), // Unique identifier for the token
-            new(ClaimTypes.Role, role.ToString()),
+            new(ClaimTypes.Role, user.Role.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
             new(JwtRegisteredClaimNames.Nbf, now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
             new(CustomClaimTypes.WorkspaceId, user.WorkspaceId.ToString("D", CultureInfo.InvariantCulture)),
         };
-
-        if (additionalClaims != null)
-        {
-            claims.AddRange(additionalClaims);
-        }
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);

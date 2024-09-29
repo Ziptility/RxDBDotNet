@@ -395,7 +395,7 @@ public class SubscriptionTests : IAsyncLifetime
         response.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
             .Be(emptyUpdate.Checkpoint.LastDocumentId, "The LastDocumentId in the response should match the one in the empty update");
         response.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
-            .BeCloseTo(emptyUpdate.Checkpoint.UpdatedAt!.Value, TimeSpan.FromSeconds(1),
+            .BeCloseTo(emptyUpdate.Checkpoint.UpdatedAt.Value, TimeSpan.FromSeconds(1),
                 "The UpdatedAt timestamp should be close to the one in the empty update");
     }
 

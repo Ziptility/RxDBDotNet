@@ -28,13 +28,13 @@ public sealed class User : ReplicatedEntity
     /// </summary>
     [Required]
     [MaxLength(256)]
-    public required string Email { get; init; }
+    public required string Email { get; set; }
 
     /// <summary>
     /// The role of the user.
     /// </summary>
     [Required]
-    public required UserRole Role { get; init; }
+    public required UserRole Role { get; set; }
 
     /// <summary>
     /// A JWT access token used to simulate user authentication in a non-production environment.
@@ -48,9 +48,9 @@ public sealed class User : ReplicatedEntity
     /// and authorization system.
     /// </para>
     /// </remarks>
-    [JwtFormat(AllowNull = true)]
+    [JwtFormat]
     [MaxLength(2000)]
-    public required string? JwtAccessToken { get; init; }
+    public required string JwtAccessToken { get; set; }
 
     /// <summary>
     /// The server-generated primary key of the workspace to which the user belongs.

@@ -46,7 +46,7 @@ internal static class TestUtils
             IsDeleted = false,
         };
 
-        var jwtToken = JwtUtil.GenerateJwtToken(replicatedUser, role);
+        var jwtToken = JwtUtil.GenerateJwtToken(replicatedUser);
 
         var user = new User
         {
@@ -60,6 +60,7 @@ internal static class TestUtils
             UpdatedAt = replicatedUser.UpdatedAt,
             IsDeleted = replicatedUser.IsDeleted,
             ReplicatedDocumentId = replicatedUser.Id,
+            Topics = [],
         };
 
         await dbContext.Users.AddAsync(user, cancellationToken);
@@ -87,7 +88,7 @@ internal static class TestUtils
             FirstName = CreateString(),
             LastName = CreateString(),
             Email = $"{CreateString()}@example.com",
-            WorkspaceId = workspace.Id!.Value,
+            WorkspaceId = workspace.Id,
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
             Role = UserRole.StandardUser,
@@ -347,17 +348,18 @@ internal static class TestUtils
     {
         var liveDocId = Provider.Sql.Create();
 
+        Debug.Assert(workspace.Id != null, "workspace.Id != null");
         var newLiveDoc = new LiveDocInputGql
         {
             Id = liveDocId,
             Content = CreateString(),
-            OwnerId = owner.Id!.Value,
-            WorkspaceId = workspace.Id!.Value,
+            OwnerId = owner.Id,
+            WorkspaceId = workspace.Id,
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
             Topics = new List<string>
             {
-                workspace.Id!.Value.ToString(),
+                workspace.Id.Value.ToString(),
             },
         };
 
@@ -435,7 +437,7 @@ internal static class TestUtils
         response.Errors.Should()
             .BeNullOrEmpty();
 
-        return await httpClient.GetLiveDocByIdAsync(liveDoc.Id!.Value, cancellationToken);
+        return await httpClient.GetLiveDocByIdAsync(liveDoc.Id, cancellationToken);
     }
 
     public static async Task<LiveDocGql> GetLiveDocByIdAsync(

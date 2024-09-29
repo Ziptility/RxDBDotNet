@@ -2,6 +2,7 @@
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
+using Microsoft.EntityFrameworkCore;
 using RT.Comb;
 using RxDBDotNet.Services;
 
@@ -9,8 +10,10 @@ namespace LiveDocs.GraphQLApi.Services;
 
 public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
 {
+    private readonly LiveDocsDbContext _dbContext;
     public WorkspaceService(LiveDocsDbContext dbContext, IEventPublisher eventPublisher) : base(dbContext, eventPublisher)
     {
+        _dbContext = dbContext;
     }
 
     protected override Expression<Func<Workspace, ReplicatedWorkspace>> ProjectToDocument()
@@ -22,8 +25,28 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = workspace.UpdatedAt,
 #pragma warning disable RCS1077 // Optimize LINQ method call // EF Core cannot translate the optimized LINQ method call
-            Topics = workspace.Topics == null ? null : workspace.Topics.Select(t => t.Name).ToList(),
+            Topics = workspace.Topics.Select(t => t.Name).ToList(),
 #pragma warning restore RCS1077 // Optimize LINQ method call
+        };
+    }
+
+    protected override Task<Workspace> GetEntityByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken)
+    {
+        return _dbContext.Workspaces
+            .SingleAsync(ld => ld.ReplicatedDocumentId == documentId, cancellationToken);
+    }
+
+    protected override ReplicatedWorkspace MapToDocument(Workspace entityToMap)
+    {
+        ArgumentNullException.ThrowIfNull(entityToMap);
+
+        return new ReplicatedWorkspace
+        {
+            Id = entityToMap.ReplicatedDocumentId,
+            Name = entityToMap.Name,
+            IsDeleted = entityToMap.IsDeleted,
+            UpdatedAt = entityToMap.UpdatedAt,
+            Topics = entityToMap.Topics.ConvertAll(t => t.Name),
         };
     }
 
@@ -34,10 +57,11 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
 
         entityToUpdate.Name = updatedDocument.Name;
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
-        entityToUpdate.Topics = updatedDocument.Topics?.ConvertAll(t => new Topic
+        entityToUpdate.Topics.Clear();
+        if (updatedDocument.Topics != null)
         {
-            Name = t,
-        });
+            entityToUpdate.Topics.AddRange(updatedDocument.Topics.ConvertAll(t => new Topic { Name = t }));
+        }
 
         return entityToUpdate;
     }
@@ -53,7 +77,7 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
             Name = newDocument.Name,
             IsDeleted = false,
             UpdatedAt = newDocument.UpdatedAt,
-            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t }),
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t }) ?? [],
         });
     }
 }

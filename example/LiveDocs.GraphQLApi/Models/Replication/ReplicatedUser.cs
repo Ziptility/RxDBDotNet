@@ -46,7 +46,7 @@ public sealed record ReplicatedUser : Document
     }
 
     /// <summary>
-    /// The email of the user. jThis must be globally unique.
+    /// The email of the user. This must be globally unique.
     /// For simplicity in this example app, it cannot be updated.
     /// </summary>
     [Required]
@@ -103,6 +103,7 @@ public sealed record ReplicatedUser : Document
                string.Equals(FirstName, other.FirstName, StringComparison.Ordinal) &&
                string.Equals(LastName, other.LastName, StringComparison.Ordinal) &&
                string.Equals(Email, other.Email, StringComparison.Ordinal) &&
+               Role == other.Role &&
                string.Equals(JwtAccessToken, other.JwtAccessToken, StringComparison.Ordinal) &&
                WorkspaceId.Equals(other.WorkspaceId);
     }
@@ -114,6 +115,7 @@ public sealed record ReplicatedUser : Document
             FirstName,
             LastName,
             Email,
+            Role,
             JwtAccessToken,
             WorkspaceId
         );

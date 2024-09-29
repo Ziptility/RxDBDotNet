@@ -32,10 +32,11 @@ namespace LiveDocs.GraphQLApi.Infrastructure
             var rootWorkspace = new Workspace
             {
                 Id = RT.Comb.Provider.Sql.Create(),
-                Name = "LiveDocs Example Org Workspace",
+                Name = "Default Workspace",
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
                 ReplicatedDocumentId = Guid.NewGuid(),
+                Topics = [],
             };
 
             await dbContext.Workspaces.AddAsync(rootWorkspace);
@@ -47,7 +48,6 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 LastName = "Admin",
                 Email = "systemadmin@livedocs.example.org",
                 Role = UserRole.SystemAdmin,
-                JwtAccessToken = null,
                 WorkspaceId = rootWorkspace.ReplicatedDocumentId,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
@@ -56,7 +56,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
             // Generate a non-expiring JWT token for the system admin user
             // We'll use this in the client app to bootstrap the "logged in" state
             // since we are not supporting username and password login in this example application
-            var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, UserRole.SystemAdmin, expires: DateTime.MaxValue);
+            var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, expires: DateTime.MaxValue);
 
             var systemAdminUser = new User
             {
@@ -70,6 +70,7 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 UpdatedAt = systemAdminReplicatedUser.UpdatedAt,
                 IsDeleted = systemAdminReplicatedUser.IsDeleted,
                 ReplicatedDocumentId = systemAdminReplicatedUser.Id,
+                Topics = [],
             };
 
             await dbContext.Users.AddAsync(systemAdminUser);

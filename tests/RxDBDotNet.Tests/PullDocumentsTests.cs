@@ -47,7 +47,7 @@ public class PullDocumentsTests : IAsyncLifetime
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
-            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
+            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id));
 
         // Act
         var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
@@ -84,7 +84,7 @@ public class PullDocumentsTests : IAsyncLifetime
         // Get initial checkpoint
         var initialQuery = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
-            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
+            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id));
 
         var initialResponse = await TestContext.HttpClient.PostGqlQueryAsync(initialQuery, TestContext.CancellationToken);
         var checkpoint = initialResponse.Data.PullLiveDoc?.Checkpoint;
@@ -95,10 +95,10 @@ public class PullDocumentsTests : IAsyncLifetime
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, new LiveDocInputCheckpointGql
-        {
-            LastDocumentId = checkpoint?.LastDocumentId,
-            UpdatedAt = checkpoint?.UpdatedAt,
-        }, CreateWorkspaceFilter(workspace.Id!.Value));
+            {
+                LastDocumentId = checkpoint?.LastDocumentId,
+                UpdatedAt = checkpoint?.UpdatedAt,
+            }, CreateWorkspaceFilter(workspace.Id));
 
         // Act
         var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
@@ -125,7 +125,7 @@ public class PullDocumentsTests : IAsyncLifetime
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
-            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 2, where: CreateWorkspaceFilter(workspace.Id!.Value));
+            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 2, where: CreateWorkspaceFilter(workspace.Id));
 
         // Act
         var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
@@ -186,7 +186,7 @@ public class PullDocumentsTests : IAsyncLifetime
 
         var initialQuery = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
-            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
+            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id));
 
         var initialResponse = await TestContext.HttpClient.PostGqlQueryAsync(initialQuery, TestContext.CancellationToken);
         var checkpoint = initialResponse.Data.PullLiveDoc?.Checkpoint;
@@ -194,10 +194,10 @@ public class PullDocumentsTests : IAsyncLifetime
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
             .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, new LiveDocInputCheckpointGql
-        {
-            LastDocumentId = checkpoint?.LastDocumentId,
-            UpdatedAt = checkpoint?.UpdatedAt,
-        }, CreateWorkspaceFilter(workspace.Id!.Value));
+            {
+                LastDocumentId = checkpoint?.LastDocumentId,
+                UpdatedAt = checkpoint?.UpdatedAt,
+            }, CreateWorkspaceFilter(workspace.Id));
 
         // Act
         var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
@@ -223,7 +223,7 @@ public class PullDocumentsTests : IAsyncLifetime
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
-            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
+            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id));
 
         // Act
         var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);
@@ -253,7 +253,7 @@ public class PullDocumentsTests : IAsyncLifetime
 
         var query = new QueryQueryBuilderGql().WithPullLiveDoc(new LiveDocPullBulkQueryBuilderGql().WithAllFields()
             .WithDocuments(new LiveDocQueryBuilderGql().WithAllFields())
-            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id!.Value));
+            .WithCheckpoint(new CheckpointQueryBuilderGql().WithAllFields()), 1000, where: CreateWorkspaceFilter(workspace.Id));
 
         // Act
         var response = await TestContext.HttpClient.PostGqlQueryAsync(query, TestContext.CancellationToken);

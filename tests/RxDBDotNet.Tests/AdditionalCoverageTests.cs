@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Tests.Model;
+﻿using System.Diagnostics;
+using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
 
 namespace RxDBDotNet.Tests;
@@ -74,7 +75,7 @@ public class AdditionalCoverageTests : IAsyncLifetime
             .HaveCount(1);
         response.Data.PushWorkspace?.Workspace?.First()
             .Id.Should()
-            .Be(workspace1.Id!.Value);
+            .Be(workspace1.Id);
         response.Data.PushWorkspace?.Errors.Should()
             .BeNullOrEmpty();
     }
@@ -150,10 +151,12 @@ public class AdditionalCoverageTests : IAsyncLifetime
 
         await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
+        Debug.Assert(workspace1.workspaceInputGql.Id != null, "workspace1.workspaceInputGql.Id != null");
+        Debug.Assert(workspace2.workspaceInputGql.Id != null, "workspace2.workspaceInputGql.Id != null");
         var topics = new List<string>
         {
-            workspace1.workspaceInputGql.Id!.Value.ToString(),
-            workspace2.workspaceInputGql.Id!.Value.ToString(),
+            workspace1.workspaceInputGql.Id.ToString() ?? throw new InvalidOperationException(),
+            workspace2.workspaceInputGql.Id.ToString() ?? throw new InvalidOperationException(),
         };
 
         var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
@@ -192,8 +195,8 @@ public class AdditionalCoverageTests : IAsyncLifetime
                 .NotBeNull();
             var workspaceIds = new List<Guid?>
             {
-                workspace1.workspaceInputGql.Id!.Value,
-                workspace2.workspaceInputGql.Id!.Value,
+                workspace1.workspaceInputGql.Id.Value,
+                workspace2.workspaceInputGql.Id.Value,
             };
 
             workspaceIds.Should()

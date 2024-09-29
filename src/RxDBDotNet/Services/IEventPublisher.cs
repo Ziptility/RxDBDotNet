@@ -15,5 +15,5 @@ public interface IEventPublisher
     /// <param name="cancellationToken">A token to cancel the operation if needed.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task PublishDocumentChangedEventAsync<TDocument>(TDocument changedDocument, CancellationToken cancellationToken)
-        where TDocument : class, IReplicatedDocument;
+        where TDocument : IDocument;
 }

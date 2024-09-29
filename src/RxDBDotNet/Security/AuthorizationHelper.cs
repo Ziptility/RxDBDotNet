@@ -25,7 +25,7 @@ public sealed class AuthorizationHelper(IAuthorizationService? authorizationServ
     public async Task AuthorizeAsync<TDocument>(
         ClaimsPrincipal? currentUser,
         DocumentOperation documentOperation,
-        SecurityOptions<TDocument>? securityOptions) where TDocument : class, IReplicatedDocument
+        SecurityOptions<TDocument>? securityOptions) where TDocument : IDocument
     {
         ArgumentNullException.ThrowIfNull(documentOperation);
 

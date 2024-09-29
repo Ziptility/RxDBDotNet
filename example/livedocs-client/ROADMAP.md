@@ -113,9 +113,7 @@ These files can be enhanced to provide more efficient and flexible replication:
 Example enhancement for src/lib/workspaceReplication.ts:
 
 ```typescript
-const pullQueryBuilder = (
-  variables: WorkspaceFilterInput
-): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
+const pullQueryBuilder = (variables: WorkspaceFilterInput): RxGraphQLReplicationPullQueryBuilder<Checkpoint> => {
   return (checkpoint, limit) => ({
     query: `
       query PullWorkspace($checkpoint: WorkspaceInputCheckpoint, $limit: Int!, $where: WorkspaceFilterInput) {

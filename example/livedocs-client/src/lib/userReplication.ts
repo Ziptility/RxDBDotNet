@@ -2,8 +2,8 @@
 
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';
-import type { PushUserPayload, User, UserFilterInput } from '@/generated/graphql';
-import type { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
+import type { Checkpoint, PushUserPayload, User, UserFilterInput } from '@/generated/graphql';
+import type { LiveDocsReplicationState } from '@/types';
 import { handleError } from '@/utils/errorHandling';
 import type {
   ReplicationPushHandlerResult,
@@ -20,8 +20,8 @@ import type {
  * @param variables - Optional filter input for the query.
  * @returns A function that generates the GraphQL query object.
  */
-const pullQueryBuilder = (variables?: UserFilterInput): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
-  return (checkpoint: ReplicationCheckpoint | undefined, limit: number) => {
+const pullQueryBuilder = (variables?: UserFilterInput): RxGraphQLReplicationPullQueryBuilder<Checkpoint> => {
+  return (checkpoint: Checkpoint | undefined, limit: number) => {
     const query = `
       query PullUser($checkpoint: UserInputCheckpoint, $limit: Int!, $where: UserFilterInput) {
         pullUser(checkpoint: $checkpoint, limit: $limit, where: $where) {

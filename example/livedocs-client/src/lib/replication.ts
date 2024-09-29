@@ -4,7 +4,7 @@ import { API_CONFIG } from '@/config';
 import { replicateLiveDocs } from '@/lib/liveDocReplication';
 import { replicateUsers } from '@/lib/userReplication';
 import { replicateWorkspaces } from '@/lib/workspaceReplication';
-import type { LiveDocsDatabase, LiveDocsReplicationState, LiveDocsReplicationStates } from '@/types';
+import type { Document, LiveDocsDatabase, LiveDocsReplicationState, LiveDocsReplicationStates } from '@/types';
 import { handleError } from '@/utils/errorHandling';
 
 /**
@@ -47,7 +47,7 @@ export const updateReplicationToken = async (
 ): Promise<void> => {
   try {
     await Promise.all(
-      Object.values(replicationStates).map((state: LiveDocsReplicationState<unknown>) => {
+      Object.values(replicationStates).map((state: LiveDocsReplicationState<Document>) => {
         state.setHeaders({ Authorization: `Bearer ${newToken}` });
       })
     );
@@ -56,54 +56,3 @@ export const updateReplicationToken = async (
     throw error; // Re-throw to allow caller to handle the error
   }
 };
-
-/**
- * Best Practices and Notes for Maintainers:
- *
- * 1. Token Management:
- *    - The setupReplication function uses a fallback to DEFAULT_JWT_TOKEN if no token is provided.
- *    - Ensure that your authentication flow properly manages and updates tokens as needed.
- *    - Use updateReplicationToken whenever the JWT token changes (e.g., on user login/logout or token refresh).
- *
- * 2. Replication States:
- *    - The setupReplication function returns an object with replication states for each collection.
- *    - These states can be used to monitor and control replication for individual collections.
- *    - You can access properties like .error$, .received$, and .sent$ on each state for detailed monitoring.
- *
- * 3. Error Handling:
- *    - While these functions handle errors internally using handleError, they also re-throw errors.
- *    - Implement proper error handling where these functions are called, especially when starting replications.
- *    - Consider implementing retry mechanisms for transient errors.
- *
- * 4. Performance Considerations:
- *    - Starting and stopping replications can be resource-intensive.
- *    - Consider the frequency of token updates and their impact on application performance.
- *    - Use stopAllReplications and restartAllReplications judiciously, as frequent starts and stops can impact performance.
- *
- * 5. Customization:
- *    - If different collections require different replication strategies, modify the setupReplication function accordingly.
- *    - You may need to add additional parameters to createWorkspaceReplicator, createUserReplicator, and createLiveDocReplicator for custom behaviors.
- *
- * 6. Next.js Considerations:
- *    - This replication setup is designed to work on the client-side in a Next.js application.
- *    - Ensure that replication is only set up in useEffect hooks or similar client-side lifecycle methods.
- *    - Be cautious of using this in server-side rendered (SSR) contexts, as RxDB is primarily a client-side database.
- *
- * 7. Testing:
- *    - Implement thorough unit and integration tests for these replication functions.
- *    - Test various scenarios including token updates, network disconnections, and error conditions.
- *
- * 8. Monitoring and Logging:
- *    - Consider implementing more detailed logging for replication events in a production environment.
- *    - You might want to add application monitoring to track replication performance and error rates.
- *
- * 9. Scalability:
- *    - As your application grows, you might need to implement more granular control over replication.
- *    - Consider strategies like selective replication or pagination for large datasets.
- *
- * 10. Security:
- *     - Ensure that the JWT tokens are securely stored and transmitted.
- *     - Implement proper token refresh mechanisms to maintain continuous authentication.
- *
- * Remember to keep this documentation up-to-date as the replication logic evolves.
- */

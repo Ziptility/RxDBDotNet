@@ -7,7 +7,7 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 /// <summary>
 /// Base record for a document that is replicated via RxDBDotNet.
 /// </summary>
-public abstract record ReplicatedDocument : IReplicatedDocument
+public abstract record Document : IDocument
 {
     private readonly List<string>? _topics;
     private DateTimeOffset _updatedAt;
@@ -42,7 +42,7 @@ public abstract record ReplicatedDocument : IReplicatedDocument
         init => _topics = value?.Select(topic => topic.Trim()).ToList();
     }
 
-    public virtual bool Equals(ReplicatedDocument? other)
+    public virtual bool Equals(Document? other)
     {
         if (other is null || GetType() != other.GetType())
         {

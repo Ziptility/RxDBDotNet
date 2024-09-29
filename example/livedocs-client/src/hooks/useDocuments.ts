@@ -2,24 +2,8 @@
 import { useState, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 import { getDatabase } from '@/lib/database';
-import type { LiveDocsDatabase } from '@/types';
+import type { LiveDocsDatabase, Document } from '@/types';
 import type { RxCollection, RxDocument, MangoQuerySelector, MangoQuerySortPart } from 'rxdb';
-
-interface Document {
-  id: string;
-  updatedAt: string;
-}
-
-type DocumentWithIsDeleted = Document & { isDeleted?: boolean };
-
-function hasIsDeleted(doc: Document): doc is DocumentWithIsDeleted {
-  return 'isDeleted' in doc;
-}
-
-function hasUpdatedAt(doc: Document): doc is Document & { updatedAt: string } {
-  return 'updatedAt' in doc;
-}
-
 interface UseDocumentsResult<T extends Document> {
   documents: T[];
   isLoading: boolean;
@@ -42,14 +26,12 @@ export function useDocuments<T extends Document>(collectionName: keyof LiveDocsD
         const db = await getDatabase();
         collection = db[collectionName] as RxCollection<T>;
         const selector: MangoQuerySelector<T> = {};
-        if (hasIsDeleted({} as T)) {
-          (selector as MangoQuerySelector<DocumentWithIsDeleted>).isDeleted = { $ne: true };
-        }
+
+        (selector as MangoQuerySelector<Document>)['isDeleted'] = { $ne: true };
 
         const sort: MangoQuerySortPart<T>[] = [];
-        if (hasUpdatedAt({} as T)) {
-          sort.push({ updatedAt: 'desc' } as MangoQuerySortPart<T>);
-        }
+
+        sort.push({ updatedAt: 'desc' } as MangoQuerySortPart<T>);
 
         subscription = collection
           .find({
@@ -91,13 +73,8 @@ export function useDocuments<T extends Document>(collectionName: keyof LiveDocsD
     const db = await getDatabase();
     const collection = db[collectionName] as RxCollection<T>;
     const docToUpdate = await collection.findOne(id).exec();
-    if (docToUpdate && hasIsDeleted(docToUpdate)) {
-      await docToUpdate.update({
-        $set: {
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        },
-      });
+    if (docToUpdate) {
+      await docToUpdate.remove();
     }
   };
 

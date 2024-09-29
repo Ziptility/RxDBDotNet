@@ -4,13 +4,13 @@ namespace RxDBDotNet.Security;
 
 /// <summary>
 /// Provides configuration options for setting up security policies in RxDBDotNet.
-/// This class allows for fine-grained control over access to replicated documents.
+/// This class allows for fine-grained control over access to documents.
 /// </summary>
 /// <typeparam name="TDocument">
 /// The type of document that the security options apply to.
-/// This type must implement the <see cref="IReplicatedDocument"/> interface.
+/// This type must implement the <see cref="IDocument"/> interface.
 /// </typeparam>
-public sealed class SecurityOptions<TDocument> where TDocument : class, IReplicatedDocument
+public sealed class SecurityOptions<TDocument> where TDocument : IDocument
 {
     internal List<PolicyRequirement> PolicyRequirements { get; } = [];
 

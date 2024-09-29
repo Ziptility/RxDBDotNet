@@ -45,9 +45,9 @@ Here are the minimial steps to get you up and running with RxDBDotNet in your ex
    dotnet add package RxDBDotNet
    ```
 
-2. Implement `IReplicatedDocument` for the type of document you want to replicate:
+2. Implement `IDocument` for the type of document you want to replicate:
    ```csharp
-    public class Workspace : IReplicatedDocument
+    public class Workspace : IDocument
     {
         public required Guid Id { get; init; }
         public required string Name { get; set; }
@@ -61,7 +61,7 @@ Here are the minimial steps to get you up and running with RxDBDotNet in your ex
    ```csharp
     // Implement and add your document service to the DI container
     builder.Services
-        .AddSingleton<IDocumentService<Workspace>, WorkspaceService>();
+        .AddSingleton<IReplicatedDocumentService<Workspace>, WorkspaceService>();
 
     // Configure the Hot Chocolate GraphQL server
     builder.Services
@@ -111,7 +111,7 @@ using RxDBDotNet.Documents;
 
 namespace RxDBDotNetExample;
 
-public class Workspace : IReplicatedDocument
+public class Workspace : IDocument
 {
     public required Guid Id { get; init; }
     public required string Name { get; set; }
@@ -128,7 +128,7 @@ using RxDBDotNet.Services;
 
 namespace RxDBDotNetExample;
 
-public class WorkspaceService : IDocumentService<Workspace>
+public class WorkspaceService : IReplicatedDocumentService<Workspace>
 {
     private readonly ConcurrentDictionary<Guid, Workspace> _documents = new();
     private readonly IEventPublisher _eventPublisher;
@@ -211,7 +211,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add your document service to the DI container
 builder.Services
-    .AddSingleton<IDocumentService<Workspace>, WorkspaceService>();
+    .AddSingleton<IReplicatedDocumentService<Workspace>, WorkspaceService>();
 
 // Configure the Hot Chocolate GraphQL server
 builder.Services
@@ -444,7 +444,7 @@ To use RxDBDotNet with RxDB clients, you'll need to create a custom GraphQL clie
 
 ### Policy-Based Security
 
-RxDBDotNet supports policy-based security using the Microsoft.AspNetCore.Authorization infrastructure. This allows you to define and apply fine-grained access control to your replicated documents.
+RxDBDotNet supports policy-based security using the Microsoft.AspNetCore.Authorization infrastructure. This allows you to define and apply fine-grained access control to your documents.
 
 #### Configuration
 
@@ -461,7 +461,7 @@ builder.Services.AddAuthorization(options =>
 });
 ```
 
-2. When configuring your GraphQL server, add security options for your replicated documents:
+2. When configuring your GraphQL server, add security options for your documents:
 
 ```csharp
 builder.Services
@@ -521,11 +521,11 @@ This subscription will only receive updates for LiveDocs that have "workspace-12
 
 ### Custom Error Types
 
-RxDBDotNet allows you to configure custom error types through the ReplicationOptions.Errors property when setting up your replicated documents. This feature enables you to define specific exception types that can be handled during replication operations, providing more detailed error information to your clients.
+RxDBDotNet allows you to configure custom error types through the ReplicationOptions.Errors property when setting up your documents. This feature enables you to define specific exception types that can be handled during replication operations, providing more detailed error information to your clients.
 
 ```csharp
 // Define your document type
-public class User : IReplicatedDocument
+public class User : IDocument
 {
     public required Guid Id { get; init; }
     public required string Username { get; set; }
@@ -551,7 +551,7 @@ public class InvalidUserNameException : Exception
 }
 
 // Implement your document service
-public class UserService : IDocumentService<User>
+public class UserService : IReplicatedDocumentService<User>
 {
     // ... other methods ...
 
@@ -580,7 +580,7 @@ public class UserService : IDocumentService<User>
 
 // Configure services in Program.cs
 builder.Services
-    .AddSingleton<IDocumentService<User>, UserService>()
+    .AddSingleton<IReplicatedDocumentService<User>, UserService>()
     .AddSingleton<IEventPublisher, InMemoryEventPublisher>();
 
 // Configure the GraphQL server
@@ -647,7 +647,7 @@ RxDBDotNet implements a [crucial security measure](https://rxdb.info/replication
 
 This security measure is implemented in the `MutationResolver<TDocument>` class, which handles document push operations. Developers using RxDBDotNet should be aware that any client-provided `UpdatedAt` value will be ignored and replaced with the server's timestamp.
 
-Important: While the `IReplicatedDocument` interface defines `UpdatedAt` with both a getter and a setter, developers should not manually set this property in their application code. Always rely on the server to set the correct `UpdatedAt` value during replication operations. The setter is present solely to allow the server to overwrite the timestamp as a security measure.
+Important: While the `IDocument` interface defines `UpdatedAt` with both a getter and a setter, developers should not manually set this property in their application code. Always rely on the server to set the correct `UpdatedAt` value during replication operations. The setter is present solely to allow the server to overwrite the timestamp as a security measure.
 
 ## Contributing
 

@@ -18,7 +18,7 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 /// instead of relying on this approach.
 /// </remarks>
 [GraphQLName("User")]
-public sealed record ReplicatedUser : ReplicatedDocument
+public sealed record ReplicatedUser : Document
 {
     /// <summary>
     /// The first name of the user.
@@ -42,7 +42,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
     public string? FullName
     {
         get => $"{FirstName} {LastName}".Trim();
-        init{}
+        init { }
     }
 
     /// <summary>

@@ -19,7 +19,7 @@ builder.AddProject<LiveDocs_GraphQLApi>("replicationApi", "http")
 
 if (!string.Equals(Environment.GetEnvironmentVariable("EXCLUDE_CLIENT"), "true", StringComparison.Ordinal))
 {
-    _ = builder.AddNpmApp("livedocs-client", "../livedocs-client", "run")
+    builder.AddNpmApp("livedocs-client", "../livedocs-client", "run")
         .WithHttpEndpoint(port: 3001, targetPort: 3000, env: "PORT")
         .WithEnvironment("NODE_ENV", "production")
         .WithExternalHttpEndpoints();

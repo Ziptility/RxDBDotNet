@@ -2,8 +2,8 @@
 
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';
-import type { PushWorkspacePayload, Workspace, WorkspaceFilterInput } from '@/generated/graphql';
-import type { LiveDocsReplicationState, ReplicationCheckpoint } from '@/types';
+import type { Checkpoint, PushWorkspacePayload, Workspace, WorkspaceFilterInput } from '@/generated/graphql';
+import type { LiveDocsReplicationState } from '@/types';
 import { handleError } from '@/utils/errorHandling';
 import type {
   RxCollection,
@@ -20,10 +20,8 @@ import type {
  * @param variables - Optional filter input for the query.
  * @returns A function that generates the GraphQL query object.
  */
-const pullQueryBuilder = (
-  variables?: WorkspaceFilterInput
-): RxGraphQLReplicationPullQueryBuilder<ReplicationCheckpoint> => {
-  return (checkpoint: ReplicationCheckpoint | undefined, limit: number) => {
+const pullQueryBuilder = (variables?: WorkspaceFilterInput): RxGraphQLReplicationPullQueryBuilder<Checkpoint> => {
+  return (checkpoint: Checkpoint | undefined, limit: number) => {
     const query = `
       query PullWorkspace($checkpoint: WorkspaceInputCheckpoint, $limit: Int!, $where: WorkspaceFilterInput) {
         pullWorkspace(checkpoint: $checkpoint, limit: $limit, where: $where) {

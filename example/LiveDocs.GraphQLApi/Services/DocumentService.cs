@@ -8,14 +8,14 @@ using RxDBDotNet.Services;
 namespace LiveDocs.GraphQLApi.Services;
 
 /// <summary>
-///     An implementation of IDocumentService using Entity Framework Core.
+///     An implementation of IReplicatedDocumentService using Entity Framework Core.
 ///     This class provides optimized database access for document operations required by the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TEntity">The type of entity in which the replicated document data is stored.</typeparam>
-/// <typeparam name="TDocument">The type of replicated document being managed, which must implement IReplicatedDocument.</typeparam>
+/// <typeparam name="TDocument">The type of replicated document being managed, which must implement IDocument.</typeparam>
 public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
     where TEntity : ReplicatedEntity
-    where TDocument : ReplicatedDocument
+    where TDocument : Document
 {
     private readonly LiveDocsDbContext _dbContext;
     private readonly IEventPublisher _eventPublisher;

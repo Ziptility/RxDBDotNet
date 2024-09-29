@@ -7,8 +7,8 @@ namespace RxDBDotNet.Services;
 /// This interface supports asynchronous operations required by the RxDB replication protocol.
 /// Implementors should ensure thread-safety and proper handling of concurrent operations.
 /// </summary>
-/// <typeparam name="TDocument">The type of document being managed. Must implement IReplicatedDocument.</typeparam>
-public interface IDocumentService<TDocument> where TDocument : class, IReplicatedDocument
+/// <typeparam name="TDocument">The type of document being managed. Must implement IDocument.</typeparam>
+public interface IDocumentService<TDocument> where TDocument : class, IDocument
 {
     /// <summary>
     /// Provides a queryable representation of all documents in the service.

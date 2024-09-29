@@ -5,7 +5,7 @@
 /// This interface defines the core properties and behaviors necessary for document replication,
 /// including support for topic-based event publishing.
 /// </summary>
-public interface IReplicatedDocument
+public interface IDocument
 {
     /// <summary>
     /// The client-assigned identifier for this document.
@@ -52,7 +52,7 @@ public interface IReplicatedDocument
     /// <para>
     /// Example usage:
     /// <code>
-    /// public class MyDocument : IReplicatedDocument
+    /// public class MyDocument : IDocument
     /// {
     ///     public Guid Id { get; set; }
     ///     public DateTimeOffset UpdatedAt { get; set; }

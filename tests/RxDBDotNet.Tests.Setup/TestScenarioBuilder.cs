@@ -1,29 +1,29 @@
-﻿using HotChocolate.Execution.Configuration;
-using System.Security.Claims;
-using LiveDocs.GraphQLApi.Infrastructure;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using RxDBDotNet.Documents;
-using RxDBDotNet.Extensions;
-using Microsoft.AspNetCore.Http;
+﻿using System.Diagnostics;
 using System.Net;
+using System.Security.Claims;
 using HotChocolate.AspNetCore;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
-using System.Diagnostics;
-using HotChocolate.Subscriptions;
-using StackExchange.Redis;
+using HotChocolate.Execution.Configuration;
 using HotChocolate.Execution.Options;
+using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Data;
+using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
+using LiveDocs.GraphQLApi.Security;
 using LiveDocs.GraphQLApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
-using RxDBDotNet.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using RxDBDotNet.Documents;
+using RxDBDotNet.Extensions;
 using RxDBDotNet.Security;
-using LiveDocs.GraphQLApi.Security;
+using RxDBDotNet.Services;
+using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.Setup
 {
@@ -79,7 +79,7 @@ namespace RxDBDotNet.Tests.Setup
                     .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
             });
 
-            // Add replicated documents with no additional configuration
+            // Add documents with no additional configuration
             // Can be overridden by the test scenario
             ConfigureReplicatedDocument<ReplicatedUser>();
             ConfigureReplicatedDocument<ReplicatedWorkspace>();
@@ -137,7 +137,7 @@ namespace RxDBDotNet.Tests.Setup
         /// <param name="configure">An action to configure replication options.</param>
         /// <returns>The current <see cref="TestScenarioBuilder"/> instance.</returns>
         public TestScenarioBuilder ConfigureReplicatedDocument<TDocument>(Action<ReplicationOptions<TDocument>>? configure = null)
-            where TDocument : class, IReplicatedDocument
+            where TDocument : class, IDocument
         {
             _configureReplicatedDocuments[typeof(TDocument)] = builder => builder.AddReplicatedDocument(configure);
             return this;
@@ -159,7 +159,7 @@ namespace RxDBDotNet.Tests.Setup
 
             var timeoutToken = timeoutTokenSource.Token;
 
-            #pragma warning disable CA2000 // This is disposed in the TestContext.DisposeAsync method
+#pragma warning disable CA2000 // This is disposed in the TestContext.DisposeAsync method
             var factory = ConfigureWebApplicationFactory();
 
             asyncDisposables.Add(factory);

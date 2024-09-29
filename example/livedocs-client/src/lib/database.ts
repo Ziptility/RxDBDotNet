@@ -6,16 +6,15 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { API_CONFIG } from '@/config';
 import type {
+  Document,
   LiveDocsDatabase,
   LiveDocsCollections,
   LiveDocsCollectionConfig,
+  LiveDocsReplicationState,
   LiveDocsReplicationStates,
-  LiveDocTypes,
-  ReplicationCheckpoint,
 } from '@/types';
 import { setupReplication } from './replication';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
-import type { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';
 
 // Disable RxDB warnings in development mode
 disableWarnings();
@@ -60,7 +59,7 @@ const createCollections = (): LiveDocsCollectionConfig => ({
  */
 const setupReplicationLogging = (replicationStates: LiveDocsReplicationStates): void => {
   Object.entries(replicationStates).forEach(([collectionName, replicator]) => {
-    const typedReplicator = replicator as RxGraphQLReplicationState<LiveDocTypes, ReplicationCheckpoint>;
+    const typedReplicator = replicator as LiveDocsReplicationState<Document>;
 
     // emits all errors that happen when running the push- & pull-handlers.
     typedReplicator.error$.subscribe((error) => {

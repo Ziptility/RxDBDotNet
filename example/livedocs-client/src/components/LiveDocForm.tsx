@@ -1,9 +1,21 @@
 // src\components\LiveDocForm.tsx
 import React, { useEffect } from 'react';
 import { TextField, MenuItem, FormControl, InputLabel, Select, Button } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { useForm, Controller } from 'react-hook-form';
 import { FormLayout, FormError } from '@/components/FormComponents';
 import type { LiveDoc, User, Workspace } from '@/generated/graphql';
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiInputBase-root': {
+    backgroundColor: theme.palette.background.paper,
+  },
+}));
+
+const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  minWidth: 120,
+  backgroundColor: theme.palette.background.paper,
+}));
 
 interface LiveDocFormProps {
   readonly liveDoc: LiveDoc | undefined;
@@ -19,7 +31,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
     handleSubmit,
     formState: { errors, isSubmitting, isValid },
     reset,
-  } = useForm({
+  } = useForm<Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>>({
     defaultValues: {
       content: '',
       ownerId: '',
@@ -52,8 +64,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
     <FormLayout
       title=""
       onSubmit={(e) => {
-        e.preventDefault();
-        void onSubmitForm();
+        void onSubmitForm(e);
       }}
     >
       <Controller
@@ -61,7 +72,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
         control={control}
         rules={{ required: 'Content is required' }}
         render={({ field }) => (
-          <TextField
+          <StyledTextField
             {...field}
             label="Content"
             multiline
@@ -77,7 +88,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
         control={control}
         rules={{ required: 'Owner is required' }}
         render={({ field }) => (
-          <FormControl fullWidth error={!!errors.ownerId}>
+          <StyledFormControl fullWidth error={!!errors.ownerId}>
             <InputLabel>Owner</InputLabel>
             <Select {...field} label="Owner">
               {users.map((user) => (
@@ -87,7 +98,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
               ))}
             </Select>
             {errors.ownerId ? <FormError error={errors.ownerId.message ?? null} /> : null}
-          </FormControl>
+          </StyledFormControl>
         )}
       />
       <Controller
@@ -95,7 +106,7 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
         control={control}
         rules={{ required: 'Workspace is required' }}
         render={({ field }) => (
-          <FormControl fullWidth error={!!errors.workspaceId}>
+          <StyledFormControl fullWidth error={!!errors.workspaceId}>
             <InputLabel>Workspace</InputLabel>
             <Select {...field} label="Workspace">
               {workspaces.map((workspace) => (
@@ -105,17 +116,15 @@ const LiveDocForm: React.FC<LiveDocFormProps> = ({ liveDoc, users, workspaces, o
               ))}
             </Select>
             {errors.workspaceId ? <FormError error={errors.workspaceId.message ?? null} /> : null}
-          </FormControl>
+          </StyledFormControl>
         )}
       />
       <Button type="submit" variant="contained" color="primary" disabled={isSubmitting || !isValid} fullWidth>
         {liveDoc ? 'Update LiveDoc' : 'Create LiveDoc'}
       </Button>
-      {liveDoc ? (
-        <Button onClick={onCancel} variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }}>
-          Cancel
-        </Button>
-      ) : null}
+      <Button onClick={onCancel} variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }}>
+        Cancel
+      </Button>
     </FormLayout>
   );
 };

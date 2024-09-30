@@ -1,6 +1,8 @@
 // src\components\LiveDocsPageContent.tsx
 import React, { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { Add as AddIcon } from '@mui/icons-material';
+import { Box, Fab, Tooltip } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import type { LiveDoc, User, Workspace } from '@/generated/graphql';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -17,6 +19,7 @@ import LiveDocForm from './LiveDocForm';
 import LiveDocList from './LiveDocList';
 
 const LiveDocsPageContent: React.FC = () => {
+  const [isCreating, setIsCreating] = useState(false);
   const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
   const {
     documents: liveDocs,
@@ -48,12 +51,19 @@ const LiveDocsPageContent: React.FC = () => {
         await upsertDocument(newLiveDoc);
       }
       setEditingLiveDoc(null);
+      setIsCreating(false);
     },
     [editingLiveDoc, upsertDocument]
   );
 
   const handleCancel = useCallback((): void => {
     setEditingLiveDoc(null);
+    setIsCreating(false);
+  }, []);
+
+  const handleEdit = useCallback((liveDoc: LiveDoc): void => {
+    setEditingLiveDoc(liveDoc);
+    setIsCreating(true);
   }, []);
 
   const handleDelete = useCallback(
@@ -62,6 +72,11 @@ const LiveDocsPageContent: React.FC = () => {
     },
     [deleteDocument]
   );
+
+  const handleCreateNew = useCallback(() => {
+    setEditingLiveDoc(null);
+    setIsCreating(true);
+  }, []);
 
   if (isLoadingLiveDocs || isLoadingUsers || isLoadingWorkspaces) {
     return (
@@ -80,26 +95,37 @@ const LiveDocsPageContent: React.FC = () => {
           </StyledAlert>
         </motion.div>
       ) : null}
-      <motion.div {...motionProps['slideInFromBottom']}>
-        <ContentPaper>
-          <SectionTitle variant="h6">{editingLiveDoc ? 'Edit LiveDoc' : 'Create LiveDoc'}</SectionTitle>
-          <LiveDocForm
-            liveDoc={editingLiveDoc ?? undefined}
-            users={users}
-            workspaces={workspaces}
-            onSubmit={(e) => {
-              void handleSubmit(e);
-            }}
-            onCancel={handleCancel}
-          />
-        </ContentPaper>
-      </motion.div>
+      <AnimatePresence>
+        {isCreating ? (
+          <motion.div {...motionProps['slideInFromTop']}>
+            <ContentPaper>
+              <SectionTitle variant="h6">{editingLiveDoc ? 'Edit LiveDoc' : 'Create LiveDoc'}</SectionTitle>
+              <LiveDocForm
+                liveDoc={editingLiveDoc ?? undefined}
+                users={users}
+                workspaces={workspaces}
+                onSubmit={(e) => {
+                  void handleSubmit(e);
+                }}
+                onCancel={handleCancel}
+              />
+            </ContentPaper>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       <motion.div {...motionProps['slideInFromBottom']}>
         <ListContainer>
           <SectionTitle variant="h6">LiveDoc List</SectionTitle>
-          <LiveDocList liveDocs={liveDocs} onEdit={setEditingLiveDoc} onDelete={handleDelete} />
+          <LiveDocList liveDocs={liveDocs} onEdit={handleEdit} onDelete={handleDelete} />
         </ListContainer>
       </motion.div>
+      <Box sx={{ position: 'fixed', bottom: 24, right: 24 }}>
+        <Tooltip title="Create new LiveDoc" arrow>
+          <Fab color="primary" onClick={handleCreateNew}>
+            <AddIcon />
+          </Fab>
+        </Tooltip>
+      </Box>
     </motion.div>
   );
 };

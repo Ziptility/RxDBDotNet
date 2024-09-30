@@ -93,11 +93,7 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        var existingEntity = await _dbContext
-                                 .Set<TEntity>()
-                                 .Where(e => e.ReplicatedDocumentId == document.Id)
-                                 .SingleOrDefaultAsync(cancellationToken)
-                             ?? throw new InvalidOperationException($"Entity with a ReplicateDocumentId of {document.Id} not found for delete.");
+        var existingEntity = await GetEntityByDocumentIdAsync(document.Id, cancellationToken);
 
         existingEntity.IsDeleted = true;
         existingEntity.UpdatedAt = document.UpdatedAt;

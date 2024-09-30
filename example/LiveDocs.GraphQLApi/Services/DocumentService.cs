@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using LiveDocs.GraphQLApi.Data;
+﻿using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +7,7 @@ using RxDBDotNet.Services;
 namespace LiveDocs.GraphQLApi.Services;
 
 /// <summary>
-///     An implementation of IReplicatedDocumentService using Entity Framework Core.
+///     An implementation of IDocumentService using Entity Framework Core.
 ///     This class provides optimized database access for document operations required by the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TEntity">The type of entity in which the replicated document data is stored.</typeparam>
@@ -27,16 +26,8 @@ public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDo
         _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
 
-    /// <summary>
-    /// Projects the storage entity to its corresponding document.
-    /// </summary>
-    protected abstract Expression<Func<TEntity, TDocument>> ProjectToDocument();
-
     /// <inheritdoc />
-    public IQueryable<TDocument> GetQueryableDocuments()
-    {
-        return _dbContext.Set<TEntity>().AsNoTracking().Select(ProjectToDocument());
-    }
+    public abstract IQueryable<TDocument> GetQueryableDocuments();
 
     /// <inheritdoc />
     public Task<List<TDocument>> ExecuteQueryAsync(IQueryable<TDocument> query, CancellationToken cancellationToken)

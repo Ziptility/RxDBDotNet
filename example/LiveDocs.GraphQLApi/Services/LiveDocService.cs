@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using LiveDocs.GraphQLApi.Data;
+﻿using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +17,9 @@ public class LiveDocService : DocumentService<LiveDoc, ReplicatedLiveDoc>
         _dbContext = dbContext;
     }
 
-    protected override Expression<Func<LiveDoc, ReplicatedLiveDoc>> ProjectToDocument()
+    public override IQueryable<ReplicatedLiveDoc> GetQueryableDocuments()
     {
-        return liveDoc => new ReplicatedLiveDoc
+        return _dbContext.Set<LiveDoc>().AsNoTracking().Select(liveDoc => new ReplicatedLiveDoc
         {
             Id = liveDoc.ReplicatedDocumentId,
             Content = liveDoc.Content,
@@ -31,7 +30,7 @@ public class LiveDocService : DocumentService<LiveDoc, ReplicatedLiveDoc>
 #pragma warning disable RCS1077 // Optimize LINQ method call // EF Core cannot translate the optimized LINQ method call
             Topics = liveDoc.Topics.Select(t => t.Name).ToList(),
 #pragma warning restore RCS1077 // Optimize LINQ method call
-        };
+        });
     }
 
     protected override Task<LiveDoc> GetEntityByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken)

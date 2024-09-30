@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using LiveDocs.GraphQLApi.Data;
+﻿using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
@@ -16,9 +15,9 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
         _dbContext = dbContext;
     }
 
-    protected override Expression<Func<Workspace, ReplicatedWorkspace>> ProjectToDocument()
+    public override IQueryable<ReplicatedWorkspace> GetQueryableDocuments()
     {
-        return workspace => new ReplicatedWorkspace
+        return _dbContext.Set<Workspace>().AsNoTracking().Select(workspace => new ReplicatedWorkspace
         {
             Id = workspace.ReplicatedDocumentId,
             Name = workspace.Name,
@@ -27,7 +26,7 @@ public class WorkspaceService : DocumentService<Workspace, ReplicatedWorkspace>
 #pragma warning disable RCS1077 // Optimize LINQ method call // EF Core cannot translate the optimized LINQ method call
             Topics = workspace.Topics.Select(t => t.Name).ToList(),
 #pragma warning restore RCS1077 // Optimize LINQ method call
-        };
+        });
     }
 
     protected override Task<Workspace> GetEntityByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken)

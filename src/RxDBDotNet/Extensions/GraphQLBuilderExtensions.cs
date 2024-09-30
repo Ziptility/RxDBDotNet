@@ -76,7 +76,7 @@ public static class GraphQLBuilderExtensions
     /// </remarks>
     public static IRequestExecutorBuilder AddReplicatedDocument<TDocument>(
         this IRequestExecutorBuilder builder,
-        Action<ReplicationOptions<TDocument>>? configure = null) where TDocument : class, IDocument
+        Action<ReplicationOptions<TDocument>>? configure = null) where TDocument : class, IReplicatedDocument
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -98,7 +98,7 @@ public static class GraphQLBuilderExtensions
 
     private static IRequestExecutorBuilder ConfigureDocumentQueries<TDocument>(
         this IRequestExecutorBuilder builder,
-        ReplicationOptions<TDocument> replicationOptions) where TDocument : class, IDocument
+        ReplicationOptions<TDocument> replicationOptions) where TDocument : class, IReplicatedDocument
     {
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
         var pullBulkTypeName = $"{graphQLTypeName}PullBulk";
@@ -158,7 +158,7 @@ public static class GraphQLBuilderExtensions
 
     private static void AddReadAuthorizationIfNecessary<TDocument>(
         IObjectFieldDescriptor queryField,
-        ReplicationOptions<TDocument> replicationOptions) where TDocument : IDocument
+        ReplicationOptions<TDocument> replicationOptions) where TDocument : IReplicatedDocument
     {
         foreach (var readPolicyRequirement in replicationOptions.Security.PolicyRequirements.Where(pr =>
                      pr.DocumentOperation.Operation == Operation.Read))
@@ -169,7 +169,7 @@ public static class GraphQLBuilderExtensions
 
     private static IRequestExecutorBuilder ConfigureDocumentMutations<TDocument>(
         this IRequestExecutorBuilder builder,
-        ReplicationOptions<TDocument> replicationOptions) where TDocument : class, IDocument
+        ReplicationOptions<TDocument> replicationOptions) where TDocument : class, IReplicatedDocument
     {
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
         var pushRowTypeName = $"{graphQLTypeName}InputPushRow";
@@ -216,7 +216,7 @@ public static class GraphQLBuilderExtensions
     }
 
     private static void AddFieldErrorTypes<TDocument>(IObjectFieldDescriptor field, ReplicationOptions<TDocument> replicationOptions)
-        where TDocument : IDocument
+        where TDocument : IReplicatedDocument
     {
         var addedErrorTypes = new HashSet<Type>();
 
@@ -239,7 +239,7 @@ public static class GraphQLBuilderExtensions
 
     private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(
         this IRequestExecutorBuilder builder,
-        ReplicationOptions<TDocument> replicationOptions) where TDocument : IDocument
+        ReplicationOptions<TDocument> replicationOptions) where TDocument : IReplicatedDocument
     {
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
         var streamDocumentName = $"stream{graphQLTypeName}";

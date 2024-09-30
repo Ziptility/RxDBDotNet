@@ -7,10 +7,10 @@ namespace RxDBDotNet.Extensions;
 /// Provides configuration options for replicating documents of type <typeparamref name="TDocument"/>.
 /// </summary>
 /// <typeparam name="TDocument">
-/// The type of document to be replicated, which must implement <see cref="IDocument"/>.
+/// The type of document to be replicated, which must implement <see cref="IReplicatedDocument"/>.
 /// </typeparam>
 public sealed class ReplicationOptions<TDocument>
-    where TDocument : IDocument
+    where TDocument : IReplicatedDocument
 {
     /// <summary>
     /// The security options for replicating documents of type <typeparamref name="TDocument"/>.

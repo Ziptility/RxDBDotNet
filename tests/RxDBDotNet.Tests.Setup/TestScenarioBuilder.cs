@@ -137,7 +137,7 @@ namespace RxDBDotNet.Tests.Setup
         /// <param name="configure">An action to configure replication options.</param>
         /// <returns>The current <see cref="TestScenarioBuilder"/> instance.</returns>
         public TestScenarioBuilder ConfigureReplicatedDocument<TDocument>(Action<ReplicationOptions<TDocument>>? configure = null)
-            where TDocument : class, IDocument
+            where TDocument : class, IReplicatedDocument
         {
             _configureReplicatedDocuments[typeof(TDocument)] = builder => builder.AddReplicatedDocument(configure);
             return this;

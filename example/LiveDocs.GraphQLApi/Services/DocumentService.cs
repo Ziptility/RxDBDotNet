@@ -15,7 +15,7 @@ namespace LiveDocs.GraphQLApi.Services;
 /// <typeparam name="TDocument">The type of replicated document being managed, which must implement IDocument.</typeparam>
 public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
     where TEntity : ReplicatedEntity
-    where TDocument : Document
+    where TDocument : ReplicatedDocument
 {
     private readonly LiveDocsDbContext _dbContext;
     private readonly IEventPublisher _eventPublisher;

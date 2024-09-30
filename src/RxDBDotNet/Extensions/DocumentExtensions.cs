@@ -5,7 +5,7 @@ namespace RxDBDotNet.Extensions;
 
 public static class DocumentExtensions
 {
-    public static string GetGraphQLTypeName<TDocument>() where TDocument : IDocument
+    public static string GetGraphQLTypeName<TDocument>() where TDocument : IReplicatedDocument
     {
         var attribute = typeof(TDocument).GetCustomAttribute<GraphQLNameAttribute>();
 

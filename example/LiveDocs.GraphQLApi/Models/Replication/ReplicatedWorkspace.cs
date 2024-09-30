@@ -12,7 +12,7 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 /// within the LiveDocs platform. Each workspace has a unique name across the entire system.
 /// </remarks>
 [GraphQLName("Workspace")]
-public sealed record ReplicatedWorkspace : Document
+public sealed record ReplicatedWorkspace : ReplicatedDocument
 {
     /// <summary>
     /// The name of the workspace. This must be globally unique.

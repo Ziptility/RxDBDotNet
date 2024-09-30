@@ -8,7 +8,7 @@ namespace RxDBDotNet.Services;
 /// Implementors should ensure thread-safety and proper handling of concurrent operations.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being managed. Must implement IDocument.</typeparam>
-public interface IDocumentService<TDocument> where TDocument : class, IDocument
+public interface IDocumentService<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Provides a queryable representation of all documents in the service.

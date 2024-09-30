@@ -15,7 +15,7 @@ namespace RxDBDotNet.Resolvers;
 ///     Note that this class must not use constructor injection per:
 ///     https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
-public sealed class MutationResolver<TDocument> where TDocument : class, IDocument
+public sealed class MutationResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     ///     Pushes a set of documents to the server and detects any conflicts.

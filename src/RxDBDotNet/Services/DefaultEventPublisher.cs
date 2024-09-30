@@ -15,7 +15,7 @@ public sealed class DefaultEventPublisher(ITopicEventSender eventSender) : IEven
 {
     /// <inheritdoc/>
     public async Task PublishDocumentChangedEventAsync<TDocument>(TDocument changedDocument, CancellationToken cancellationToken)
-        where TDocument : IDocument
+        where TDocument : IReplicatedDocument
     {
         ArgumentNullException.ThrowIfNull(changedDocument);
 

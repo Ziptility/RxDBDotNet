@@ -8,9 +8,9 @@ namespace RxDBDotNet.Security;
 /// </summary>
 /// <typeparam name="TDocument">
 /// The type of document that the security options apply to.
-/// This type must implement the <see cref="IDocument"/> interface.
+/// This type must implement the <see cref="IReplicatedDocument"/> interface.
 /// </typeparam>
-public sealed class SecurityOptions<TDocument> where TDocument : IDocument
+public sealed class SecurityOptions<TDocument> where TDocument : IReplicatedDocument
 {
     internal List<PolicyRequirement> PolicyRequirements { get; } = [];
 

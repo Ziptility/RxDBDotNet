@@ -18,7 +18,7 @@ namespace LiveDocs.GraphQLApi.Models.Replication;
 /// instead of relying on this approach.
 /// </remarks>
 [GraphQLName("User")]
-public sealed record ReplicatedUser : Document
+public sealed record ReplicatedUser : ReplicatedDocument
 {
     /// <summary>
     /// The first name of the user.

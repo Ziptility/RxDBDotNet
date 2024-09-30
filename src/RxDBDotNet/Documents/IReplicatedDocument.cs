@@ -5,7 +5,7 @@
 /// This interface defines the core properties and behaviors necessary for document replication,
 /// including support for topic-based event publishing.
 /// </summary>
-public interface IDocument
+public interface IReplicatedDocument
 {
     /// <summary>
     /// The client-assigned identifier for this document.

@@ -17,7 +17,7 @@ namespace RxDBDotNet.Resolvers;
 /// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
 /// <typeparam name="TDocument">The type of the document to be pulled, which must implement IDocument.</typeparam>
-public sealed class QueryResolver<TDocument> where TDocument : class, IDocument
+public sealed class QueryResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>
     /// Pulls documents from the backend based on the given checkpoint and limit.

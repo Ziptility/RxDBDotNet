@@ -148,6 +148,10 @@ public class AdditionalCoverageTests : IAsyncLifetime
         TestContext = new TestScenarioBuilder().Build();
         var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        workspace1.workspaceInputGql.Topics?.Value.Should()
+            .HaveCount(1);
+        workspace2.workspaceInputGql.Topics?.Value.Should()
+            .HaveCount(1);
 
         await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
@@ -155,15 +159,12 @@ public class AdditionalCoverageTests : IAsyncLifetime
         Debug.Assert(workspace2.workspaceInputGql.Id != null, "workspace2.workspaceInputGql.Id != null");
         var topics = new List<string>
         {
-            workspace1.workspaceInputGql.Id.ToString() ?? throw new InvalidOperationException(),
-            workspace2.workspaceInputGql.Id.ToString() ?? throw new InvalidOperationException(),
+            workspace1.workspaceInputGql.Id.Value.ToString() ?? throw new InvalidOperationException(),
+            workspace2.workspaceInputGql.Id.Value.ToString() ?? throw new InvalidOperationException(),
         };
 
-        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
-                new WorkspaceInputHeadersGql
-                {
-                    Authorization = "test-auth-token",
-                }, topics)
+        var subscriptionQuery = new SubscriptionQueryBuilderGql()
+            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), topics: topics)
             .Build();
 
         var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 2);

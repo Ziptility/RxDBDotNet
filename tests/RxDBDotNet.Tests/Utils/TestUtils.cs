@@ -211,12 +211,19 @@ internal static class TestUtils
             },
         };
 
-        var updateWorkspace =
-            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), workspaceInputGql);
+        var updateWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields()
+                .WithErrors(new PushWorkspaceErrorQueryBuilderGql()
+                    .WithAuthenticationErrorFragment(new AuthenticationErrorQueryBuilderGql().WithAllFields())
+                    .WithUnauthorizedAccessErrorFragment(new UnauthorizedAccessErrorQueryBuilderGql().WithAllFields())),
+            workspaceInputGql);
 
         var response = await httpClient.PostGqlMutationAsync(updateWorkspace, cancellationToken);
 
         response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Workspace.Should()
             .BeNullOrEmpty();
 
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken, jwtAccessToken);

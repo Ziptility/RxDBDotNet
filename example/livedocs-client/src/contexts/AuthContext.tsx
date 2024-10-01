@@ -9,7 +9,7 @@ import { getDatabase } from '@/lib/database';
 import { updateReplicationToken } from '@/lib/replication';
 import type { LiveDocsDatabase } from '@/types';
 import { createTypedContext } from '@/utils/createTypedContext';
-import { handleAsyncError } from '@/utils/errorHandling';
+import { handleAsyncError, handleError } from '@/utils/errorHandling';
 
 /**
  * Defines the shape of the authentication context.
@@ -114,7 +114,7 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
       try {
         localStorage.setItem('jwtAccessToken', token);
       } catch (error) {
-        console.error('Failed to store token in localStorage:', error);
+        handleError(error, 'AuthContext - setToken', { storeInLocalStorage });
       }
     }
   }, []);
@@ -127,8 +127,15 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
    */
   const updateReplicationTokenForDatabase = useCallback(async (db: LiveDocsDatabase, token: string): Promise<void> => {
     console.log('Updating replication token');
-    if (db.replicationStates) {
-      await updateReplicationToken(db.replicationStates, token);
+    if (db.replicationStates !== undefined) {
+      const replicationStates = db.replicationStates;
+      await handleAsyncError(
+        async () => {
+          await updateReplicationToken(replicationStates, token);
+        },
+        'AuthContext - updateReplicationTokenForDatabase',
+        { token }
+      );
     }
   }, []);
 
@@ -202,21 +209,25 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
    */
   loginRef.current = useCallback(
     async (userId: string, workspaceId: string): Promise<void> => {
-      await handleAsyncError(async () => {
-        console.log('Logging in:', { userId, workspaceId });
+      await handleAsyncError(
+        async () => {
+          console.log('Logging in:', { userId, workspaceId });
 
-        const db: LiveDocsDatabase = await getDatabase();
-        const { user, workspace } = findUserAndWorkspace(userId, workspaceId);
+          const db: LiveDocsDatabase = await getDatabase();
+          const { user, workspace } = findUserAndWorkspace(userId, workspaceId);
 
-        if (!user || !workspace) {
-          throw new Error('Invalid user or workspace');
-        }
+          if (!user || !workspace) {
+            throw new Error('Invalid user or workspace');
+          }
 
-        const token = user.jwtAccessToken ?? '';
-        setAuthStateAndData(user, workspace, token);
-        storeAuthData(userId, workspaceId, token);
-        await updateReplicationTokenForDatabase(db, token);
-      }, 'Login');
+          const token = user.jwtAccessToken ?? '';
+          setAuthStateAndData(user, workspace, token);
+          storeAuthData(userId, workspaceId, token);
+          await updateReplicationTokenForDatabase(db, token);
+        },
+        'AuthContext - login',
+        { userId, workspaceId }
+      );
     },
     [findUserAndWorkspace, setAuthStateAndData, storeAuthData, updateReplicationTokenForDatabase]
   );

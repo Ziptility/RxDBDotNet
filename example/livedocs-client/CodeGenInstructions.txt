@@ -1,0 +1,1 @@
+Considering DESIGN.md, please 1. Update and generate the entire file, and 2. Maintain and enhance the in-file documentation for future maintainers and users new to this codebase or next.js, and 3. Ensure full compliance with .eslintrc and tsconfig.

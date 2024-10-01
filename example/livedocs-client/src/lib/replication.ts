@@ -1,11 +1,10 @@
 // src/lib/replication.ts
-
 import { API_CONFIG } from '@/config';
 import { replicateLiveDocs } from '@/lib/liveDocReplication';
 import { replicateUsers } from '@/lib/userReplication';
 import { replicateWorkspaces } from '@/lib/workspaceReplication';
 import type { Document, LiveDocsDatabase, LiveDocsReplicationState, LiveDocsReplicationStates } from '@/types';
-import { handleError } from '@/utils/errorHandling';
+import { handleError, handleAsyncError } from '@/utils/errorHandling';
 
 /**
  * Sets up replication for all collections in the database.
@@ -27,8 +26,8 @@ export const setupReplication = (db: LiveDocsDatabase, jwtAccessToken: string): 
       livedocs: replicateLiveDocs(token, db.livedoc),
     };
   } catch (error) {
-    handleError(error, 'Setting up replication');
-    throw error; // Re-throw to allow caller to handle the error
+    handleError(error, 'setupReplication', { jwtAccessToken });
+    throw error;
   }
 };
 
@@ -38,21 +37,20 @@ export const setupReplication = (db: LiveDocsDatabase, jwtAccessToken: string): 
  * @param {LiveDocsReplicationStates} replicationStates - The current replication states for all collections.
  * @param {string} newToken - The new JWT token to use for authentication.
  * @returns {Promise<void>}
- *
- * @throws {Error} If there's an issue updating the token for any replication state.
  */
 export const updateReplicationToken = async (
   replicationStates: LiveDocsReplicationStates,
   newToken: string
 ): Promise<void> => {
-  try {
+  await handleAsyncError(async () => {
     await Promise.all(
-      Object.values(replicationStates).map((state: LiveDocsReplicationState<Document>) => {
-        state.setHeaders({ Authorization: `Bearer ${newToken}` });
-      })
+      Object.entries(replicationStates).map(([name, state]: [string, LiveDocsReplicationState<Document>]) =>
+        handleError(
+          state.setHeaders({ Authorization: `Bearer ${newToken}` }),
+          'updateReplicationToken for collection',
+          { collectionName: name, newToken }
+        )
+      )
     );
-  } catch (error) {
-    handleError(error, 'Updating replication token');
-    throw error; // Re-throw to allow caller to handle the error
-  }
+  }, 'updateReplicationToken');
 };

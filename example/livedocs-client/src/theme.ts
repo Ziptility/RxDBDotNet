@@ -118,10 +118,10 @@ const createMuiThemeFromMaterialYou = (materialTheme: MaterialColorTheme, isDark
         fontWeight: 400,
       },
       body2: {
-        fontSize: '0.875rem', // 14px
-        lineHeight: 1.43,
-        letterSpacing: '0.015625rem', // 0.25px
-        fontWeight: 400,
+        fontSize: '0.875rem',
+        '@media (min-width:600px)': {
+          fontSize: '1rem',
+        },
       },
       button: {
         fontSize: '0.875rem', // 14px

@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
   Error as ErrorIcon,
   Warning as WarningIcon,
   Info as InfoIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -19,7 +19,6 @@ import {
   Typography,
   Box,
   useTheme,
-  Collapse,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type ErrorNotification, errorSubject, ErrorType } from '@/utils/errorHandling';
@@ -57,42 +56,99 @@ interface ErrorHandlerContext {
 
 /**
  * State machine for the error handler
+ *
+ * This state machine defines the transitions between different error states
+ * and the actions that trigger these transitions. It ensures that the error
+ * handling UI behaves consistently and predictably across various scenarios.
  */
 const errorHandlerStateMachine: Record<ErrorState, Record<string, Transition>> = {
+  /**
+   * NO_ERRORS State:
+   * Initial state when there are no errors to display.
+   */
   [ErrorState.NO_ERRORS]: {
+    // Transition when an error occurs
     ERROR_OCCURRED: (_, context) =>
+      // If it's the first error, go to SINGLE_ERROR state
+      // Otherwise, go to MULTIPLE_ERRORS_COLLAPSED state
       context.errors.length === 1 ? ErrorState.SINGLE_ERROR : ErrorState.MULTIPLE_ERRORS_COLLAPSED,
   },
+
+  /**
+   * SINGLE_ERROR State:
+   * State when there is exactly one error being displayed.
+   */
   [ErrorState.SINGLE_ERROR]: {
-    ERROR_RESOLVED: (_, context) => (context.errors.length === 0 ? ErrorState.NO_ERRORS : ErrorState.SINGLE_ERROR),
+    // Transition when an error is resolved
+    ERROR_RESOLVED: (_, context) =>
+      // If all errors are resolved, go back to NO_ERRORS state
+      // Otherwise, remain in SINGLE_ERROR state
+      context.errors.length === 0 ? ErrorState.NO_ERRORS : ErrorState.SINGLE_ERROR,
+
+    // Transition when another error occurs
     ERROR_OCCURRED: (_, context) =>
+      // If there's more than one error now, go to MULTIPLE_ERRORS_COLLAPSED state
+      // Otherwise, remain in SINGLE_ERROR state
       context.errors.length > 1 ? ErrorState.MULTIPLE_ERRORS_COLLAPSED : ErrorState.SINGLE_ERROR,
+
+    // Transition when user requests to view error details
     VIEW_DETAILS: () => ErrorState.ERROR_DETAILS_VIEW,
   },
+
+  /**
+   * MULTIPLE_ERRORS_COLLAPSED State:
+   * State when there are multiple errors, but they are displayed in a collapsed view.
+   */
   [ErrorState.MULTIPLE_ERRORS_COLLAPSED]: {
+    // Transition when an error is resolved
     ERROR_RESOLVED: (_, context) => {
       if (context.errors.length === 0) return ErrorState.NO_ERRORS;
       if (context.errors.length === 1) return ErrorState.SINGLE_ERROR;
       return ErrorState.MULTIPLE_ERRORS_COLLAPSED;
     },
+
+    // Transition when another error occurs
     ERROR_OCCURRED: () => ErrorState.MULTIPLE_ERRORS_COLLAPSED,
+
+    // Transition when user expands the error list
     EXPAND_ERRORS: () => ErrorState.MULTIPLE_ERRORS_EXPANDED,
+
+    // Transition when user requests to view error details
     VIEW_DETAILS: () => ErrorState.ERROR_DETAILS_VIEW,
   },
+
+  /**
+   * MULTIPLE_ERRORS_EXPANDED State:
+   * State when there are multiple errors and they are displayed in an expanded view.
+   */
   [ErrorState.MULTIPLE_ERRORS_EXPANDED]: {
+    // Transition when an error is resolved
     ERROR_RESOLVED: (_, context) => {
       if (context.errors.length === 0) return ErrorState.NO_ERRORS;
       if (context.errors.length === 1) return ErrorState.SINGLE_ERROR;
       return ErrorState.MULTIPLE_ERRORS_EXPANDED;
     },
+
+    // Transition when another error occurs
     ERROR_OCCURRED: () => ErrorState.MULTIPLE_ERRORS_EXPANDED,
+
+    // Transition when user collapses the error list
     COLLAPSE_ERRORS: () => ErrorState.MULTIPLE_ERRORS_COLLAPSED,
+
+    // Transition when user requests to view error details
     VIEW_DETAILS: () => ErrorState.ERROR_DETAILS_VIEW,
   },
+
+  /**
+   * ERROR_DETAILS_VIEW State:
+   * State when the user is viewing detailed information about a specific error.
+   */
   [ErrorState.ERROR_DETAILS_VIEW]: {
+    // Transition when user closes the error details view
     CLOSE_DETAILS: (_, context) => {
       if (context.errors.length === 0) return ErrorState.NO_ERRORS;
       if (context.errors.length === 1) return ErrorState.SINGLE_ERROR;
+      // Return to the appropriate multiple errors state based on whether errors were expanded
       return context.expandedErrors ? ErrorState.MULTIPLE_ERRORS_EXPANDED : ErrorState.MULTIPLE_ERRORS_COLLAPSED;
     },
   },
@@ -104,15 +160,6 @@ const errorHandlerStateMachine: Record<ErrorState, Record<string, Transition>> =
  * This component provides a centralized error handling UI for the LiveDocs application,
  * designed to align with Material Design 3 principles and WCAG 2.1 AA standards.
  * It is optimized for desktop/laptop users with screens ranging from 13" to 27".
- *
- * Key Features:
- * - Implements a state machine to manage different error states
- * - Displays multiple errors as compact, grouped alerts
- * - Allows viewing detailed error information in a dialog
- * - Animates error notifications entry and exit
- * - Implements a collapsible UI for handling many simultaneous errors
- * - Ensures accessibility with proper ARIA labels and roles
- * - Optimized for desktop environments and high-DPI displays
  *
  * @component
  */
@@ -192,26 +239,6 @@ const ErrorHandler: React.FC = () => {
     }
   }, []);
 
-  const groupedErrors = useMemo(() => {
-    return errors.reduce<Record<string, ErrorNotification[]>>((groups, error) => {
-      const errorType = error.type;
-      if (groups[errorType]) {
-        groups[errorType].push(error);
-      } else {
-        groups[errorType] = [error];
-      }
-      return groups;
-    }, {});
-  }, [errors]);
-
-  const toggleExpandErrors = useCallback(() => {
-    setExpandedErrors((prev) => {
-      const newExpandedState = !prev;
-      transition(newExpandedState ? 'EXPAND_ERRORS' : 'COLLAPSE_ERRORS');
-      return newExpandedState;
-    });
-  }, [transition]);
-
   if (currentState === ErrorState.NO_ERRORS) {
     return null;
   }
@@ -233,60 +260,60 @@ const ErrorHandler: React.FC = () => {
         }}
       >
         <AnimatePresence>
-          {Object.entries(groupedErrors).map(([errorType, errorGroup], index) => (
+          {errors.slice(0, expandedErrors ? undefined : MAX_VISIBLE_ERRORS).map((error) => (
             <motion.div
-              key={errorType}
+              key={error.id}
               {...motionProps['slideInFromTop']}
               style={{ width: '100%', marginBottom: theme.spacing(1) }}
             >
-              <Collapse in={index < MAX_VISIBLE_ERRORS || expandedErrors}>
-                <Alert
-                  severity={getErrorSeverity(errorType as ErrorType)}
-                  variant="filled"
-                  icon={getErrorIcon(getErrorSeverity(errorType as ErrorType))}
-                  sx={{
-                    width: '100%',
-                    pointerEvents: 'auto',
-                    borderRadius: theme.shape.borderRadius,
-                    boxShadow: theme.shadows[3],
-                    '& .MuiAlert-message': {
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    },
-                  }}
-                >
-                  <AlertTitle>
-                    {errorType} Error{errorGroup.length > 1 ? `s (${errorGroup.length})` : ''}
-                  </AlertTitle>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    {errorGroup[0]?.message !== undefined && errorGroup[0]?.message.length > 50
-                      ? `${errorGroup[0]?.message.substring(0, 50)}...`
-                      : errorGroup[0]?.message}
-                  </Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {errorGroup[0] ? (
-                      <Button color="inherit" size="small" onClick={handleViewDetails(errorGroup[0].id)}>
-                        View Details
-                      </Button>
-                    ) : null}
-                    {errorGroup.length > 1 && (
-                      <Button color="inherit" size="small" onClick={toggleExpandErrors}>
-                        {expandedErrors ? 'Hide' : 'Show All'}
-                      </Button>
-                    )}
-                  </Box>
-                </Alert>
-              </Collapse>
+              <Alert
+                severity={getErrorSeverity(error.type)}
+                variant="filled"
+                icon={getErrorIcon(getErrorSeverity(error.type))}
+                sx={{
+                  width: '100%',
+                  pointerEvents: 'auto',
+                  borderRadius: '12px',
+                  boxShadow: theme.shadows[3],
+                  '& .MuiAlert-message': {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  },
+                }}
+              >
+                <AlertTitle>{error.type} Error</AlertTitle>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {error.message.length > 50 ? `${error.message.substring(0, 50)}...` : error.message}
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Button color="inherit" size="small" onClick={handleViewDetails(error.id)}>
+                    View Details
+                  </Button>
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      setErrors((prevErrors) => prevErrors.filter((e) => e.id !== error.id));
+                      transition('ERROR_RESOLVED');
+                    }}
+                  >
+                    Dismiss
+                  </Button>
+                </Box>
+              </Alert>
             </motion.div>
           ))}
         </AnimatePresence>
-        {Object.keys(groupedErrors).length > MAX_VISIBLE_ERRORS && (
+        {errors.length > MAX_VISIBLE_ERRORS && (
           <Button
-            onClick={toggleExpandErrors}
-            startIcon={expandedErrors ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            onClick={() => {
+              setExpandedErrors((prev) => !prev);
+              transition(expandedErrors ? 'COLLAPSE_ERRORS' : 'EXPAND_ERRORS');
+            }}
             sx={{ mt: 1, pointerEvents: 'auto' }}
+            startIcon={expandedErrors ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           >
-            {expandedErrors ? 'Show Less' : `Show ${Object.keys(groupedErrors).length - MAX_VISIBLE_ERRORS} More`}
+            {expandedErrors ? 'Show Less' : `Show ${errors.length - MAX_VISIBLE_ERRORS} More`}
           </Button>
         )}
       </Box>
@@ -298,10 +325,7 @@ const ErrorHandler: React.FC = () => {
         aria-labelledby="error-dialog-title"
         PaperProps={{
           style: {
-            borderRadius: theme.shape.borderRadius,
-            overflow: 'hidden',
-            width: '80%',
-            maxWidth: '80vw',
+            borderRadius: '12px',
           },
         }}
       >
@@ -312,12 +336,20 @@ const ErrorHandler: React.FC = () => {
               if (!error) return null;
               return (
                 <>
-                  <DialogTitle id="error-dialog-title">{`${error.type} Error Details`}</DialogTitle>
-                  <DialogContent dividers>
-                    <Typography variant="h6" gutterBottom>
-                      {error.message}
-                    </Typography>
-                    <Typography variant="body2" gutterBottom>
+                  <DialogTitle id="error-dialog-title" sx={{ padding: theme.spacing(3) }}>
+                    {`${error.type} Error Details`}
+                  </DialogTitle>
+                  <DialogContent dividers sx={{ padding: theme.spacing(3) }}>
+                    <Typography
+                      variant="body2"
+                      gutterBottom
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                      }}
+                    >
                       Context: {error.context}
                     </Typography>
                     <Box
@@ -325,7 +357,7 @@ const ErrorHandler: React.FC = () => {
                         maxHeight: '400px',
                         overflow: 'auto',
                         backgroundColor: theme.palette.background.default,
-                        borderRadius: theme.shape.borderRadius,
+                        borderRadius: '12px',
                         p: 2,
                         mt: 2,
                         '&::-webkit-scrollbar': {
@@ -393,61 +425,3 @@ const ErrorHandler: React.FC = () => {
 };
 
 export default ErrorHandler;
-
-/**
- * Best Practices and Notes for Maintainers (continued):
- *
- * 6. Accessibility: The component uses proper ARIA attributes and ensures good
- *    color contrast for better accessibility. Icons are used in addition to colors
- *    to convey error severity, meeting WCAG 2.1 AA standards.
- *
- * 7. Desktop-Optimized Design: The component is designed for desktop/laptop screens
- *    (13" to 27"), ensuring readability and usability across this range. It uses
- *    responsive units (rem) for font sizes and spacing to maintain consistency.
- *
- * 8. Performance: The component uses React hooks like useCallback and useMemo
- *    to optimize performance, especially when dealing with many errors. It should
- *    handle up to 100 simultaneous errors without significant degradation.
- *
- * 9. High-DPI Support: SVG icons are used to ensure crisp graphics on high-DPI displays.
- *
- * 10. Keyboard Navigation: All interactive elements are keyboard accessible. Implement
- *     a mechanism to close the Error Details View using the Esc key for better UX.
- *
- * 11. Multi-Monitor Support: The fixed positioning of error alerts and centered
- *     dialog should work correctly across multiple monitors. Test this scenario
- *     if making layout changes.
- *
- * 12. Error Subscription: The component subscribes to the global errorSubject to
- *     receive new errors. Ensure that error producers in the application correctly
- *     emit errors through this subject.
- *
- * 13. Compliance: This component has been designed to comply with the project's
- *     ESLint and TypeScript configurations. Maintain this compliance when making changes.
- *
- * Conceptual Testing Verification:
- * - Single Error State: Correctly displays a single error with all required elements.
- * - Multiple Errors: Properly collapses and expands multiple errors.
- * - Error Details View: Displays comprehensive error information in a modal dialog.
- * - State Transitions: All state transitions defined in the state machine are handled.
- * - Accessibility: Uses ARIA labels and roles, and conveys information through both color and icons.
- * - Performance: Uses memoization to optimize rendering of grouped errors.
- * - Responsiveness: Uses responsive units and Material-UI's theming for consistent display across screen sizes.
- * - Animation: Implements smooth animations for error entry/exit and state transitions.
- *
- * Future Enhancements:
- * - Implement a way to dismiss individual errors.
- * - Add auto-dismiss functionality for non-critical errors after a set time period.
- * - Provide a way to copy error details to the clipboard for easy sharing or reporting.
- * - Implement error persistence across page reloads for critical errors.
- * - Add support for custom error types and their respective UI representations.
- * - Implement a mechanism to manage focus when the Error Details View opens and closes.
- *
- * When modifying this component:
- * 1. Ensure changes align with Material Design 3 principles and maintain WCAG 2.1 AA compliance.
- * 2. Update the state machine if adding new states or transitions.
- * 3. Test thoroughly across different screen sizes (13" to 27") and with various input methods.
- * 4. Verify performance with a large number of errors (up to 100).
- * 5. Ensure all text remains visible and buttons accessible in all states.
- * 6. Maintain clear, up-to-date documentation for future developers.
- */

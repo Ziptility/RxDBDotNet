@@ -1,14 +1,13 @@
 // src/utils/globalErrorListeners.ts
-import { errorSubject } from './errorHandling';
+import { errorSubject, handleError, ErrorType } from './errorHandling';
 
 export const setupGlobalErrorListeners = (): void => {
   if (typeof window !== 'undefined') {
     window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
       console.error('Unhandled promise rejection:', event.reason);
-      errorSubject.next({
-        message: `Unhandled promise rejection: ${event.reason}`,
-        severity: 'error',
-      });
+
+      const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      handleError(error, 'Unhandled Promise Rejection');
     });
 
     window.addEventListener('error', (event: ErrorEvent) => {
@@ -26,12 +25,11 @@ export const setupGlobalErrorListeners = (): void => {
         Message: ${errorDetails.message}
         File: ${errorDetails.filename}
         Line: ${errorDetails.lineno}
-        Column: ${errorDetails.colno}
-        Stack: ${errorDetails.error.stack}`;
+        Column: ${errorDetails.colno}`;
 
       errorSubject.next({
         message: formattedMessage,
-        severity: 'error',
+        type: ErrorType.UNKNOWN,
       });
     });
   }

@@ -5,7 +5,7 @@ import {
   applyTheme,
   type Theme as MaterialColorTheme,
 } from '@material/material-color-utilities';
-import { createTheme, type ThemeOptions } from '@mui/material/styles';
+import { alpha, createTheme, type ThemeOptions, type Theme } from '@mui/material/styles';
 
 // Function to convert ARGB to hex
 const hexFromArgb = (argb: number): string => {
@@ -48,6 +48,8 @@ const createMuiThemeFromMaterialYou = (materialTheme: MaterialColorTheme, isDark
       },
       error: {
         main: hexFromArgb(scheme.error),
+        light: hexFromArgb(materialTheme.palettes.error.tone(80)),
+        dark: hexFromArgb(materialTheme.palettes.error.tone(20)),
       },
       warning: {
         main: hexFromArgb(materialTheme.palettes.tertiary.tone(40)),
@@ -202,6 +204,47 @@ const createMuiThemeFromMaterialYou = (materialTheme: MaterialColorTheme, isDark
           tooltip: {
             borderRadius: '8px',
           },
+        },
+      },
+      MuiSnackbar: {
+        styleOverrides: {
+          root: {
+            bottom: '24px',
+          },
+        },
+      },
+      MuiAlert: {
+        styleOverrides: {
+          root: {
+            borderRadius: '8px',
+          },
+          standardError: {
+            backgroundColor: alpha('#f44336', 0.9),
+            color: '#fff',
+          },
+          standardWarning: {
+            backgroundColor: alpha('#ff9800', 0.9),
+            color: '#fff',
+          },
+          standardInfo: {
+            backgroundColor: alpha('#2196f3', 0.9),
+            color: '#fff',
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: '16px',
+          },
+        },
+      },
+      MuiDialogTitle: {
+        styleOverrides: {
+          root: ({ theme }: { theme: Theme }) => ({
+            backgroundColor: theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
+          }),
         },
       },
     },

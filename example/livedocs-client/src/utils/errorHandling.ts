@@ -1,141 +1,92 @@
 // src/utils/errorHandling.ts
 
-import { toast, type ToastOptions } from 'react-toastify';
-import { RxError } from 'rxdb';
 import { Subject } from 'rxjs';
 
 /**
- * Represents the structure of an error notification.
+ * Enum representing different types of errors in the application.
+ * This can be expanded to include more specific error types as needed.
  */
-interface ErrorNotification {
-  message: string;
-  severity: 'error' | 'warning' | 'info';
+export enum ErrorType {
+  NETWORK = 'NETWORK',
+  AUTHENTICATION = 'AUTHENTICATION',
+  VALIDATION = 'VALIDATION',
+  REPLICATION = 'REPLICATION',
+  UNKNOWN = 'UNKNOWN',
 }
 
 /**
- * A Subject that emits error notifications.
- * This can be used to implement a global error handling mechanism.
+ * Interface describing the structure of error notifications.
+ * This is used to standardize the error format across the application.
+ */
+export interface ErrorNotification {
+  message: string;
+  type: ErrorType;
+  details?: string;
+  stack?: string;
+}
+
+/**
+ * RxJS Subject that emits error notifications.
+ * Components can subscribe to this to receive and handle errors.
  */
 export const errorSubject = new Subject<ErrorNotification>();
 
 /**
- * Logs an error to the console with optional context.
- * If the error is an RxError, it logs additional details.
+ * Determines the type of error based on its message.
+ * This function can be expanded to handle more specific error types.
  *
- * @param error - The error to be logged.
- * @param context - Optional context information for the error.
+ * @param error - The Error object to categorize
+ * @returns The determined ErrorType
  */
-export function logError(error: RxError | Error, context = ''): void {
-  console.error(`Error${context ? ` in ${context}` : ''}:`, error);
-  if (error instanceof RxError) {
-    console.error('RxDB Error details:', error.parameters);
-  }
+function determineErrorType(error: Error): ErrorType {
+  if (error.message.toLowerCase().includes('network')) return ErrorType.NETWORK;
+  if (error.message.toLowerCase().includes('authentication')) return ErrorType.AUTHENTICATION;
+  if (error.message.toLowerCase().includes('validation')) return ErrorType.VALIDATION;
+  if (error.message.toLowerCase().includes('replication')) return ErrorType.REPLICATION;
+  return ErrorType.UNKNOWN;
 }
 
 /**
- * Notifies the user of an error or information through the errorSubject.
- * This can be used to trigger global error notifications.
+ * Handles errors by logging them and emitting an error notification.
  *
- * @param message - The message to be displayed to the user.
- * @param severity - The severity level of the message (default: 'error').
- */
-export function notifyUser(message: string, severity: ErrorNotification['severity'] = 'error'): void {
-  errorSubject.next({ message, severity });
-}
-
-/**
- * Handles an error by logging it, displaying a toast notification, and emitting it through errorSubject.
- * This function provides a comprehensive way to handle errors throughout the application.
- *
- * @param error - The error to be handled.
- * @param context - The context in which the error occurred.
+ * @param error - The error object or unknown value to be handled
+ * @param context - A string describing where the error occurred
  */
 export function handleError(error: unknown, context: string): void {
   console.error(`Error in ${context}:`, error);
 
-  let errorMessage: string;
-  let errorDetails: string | undefined;
+  let errorNotification: ErrorNotification;
 
-  if (error instanceof RxError) {
-    errorMessage = error.message;
-    errorDetails = JSON.stringify(error.parameters, null, 2);
-  } else if (error instanceof Error) {
-    errorMessage = error.message;
-    errorDetails = error.stack;
+  if (error instanceof Error) {
+    errorNotification = {
+      message: error.message,
+      type: determineErrorType(error),
+      details: error.toString(),
+      stack: error.stack ?? '',
+    };
   } else {
-    errorMessage = 'An unknown error occurred';
+    errorNotification = {
+      message: 'An unknown error occurred',
+      type: ErrorType.UNKNOWN,
+      details: JSON.stringify(error),
+    };
   }
 
-  const toastOptions: ToastOptions = {
-    position: 'top-right',
-    autoClose: 5000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-  };
-
-  const toastMessage = `Error in ${context}: ${errorMessage}${errorDetails === undefined ? '\n\nSee console for more details.' : ''}`;
-
-  toast.error(toastMessage, toastOptions);
-
-  // Also notify through the errorSubject for global error handling
-  notifyUser(errorMessage, 'error');
+  errorSubject.next(errorNotification);
 }
 
 /**
- * Handles asynchronous errors by executing a given function and handling any errors that occur.
- * This is useful for wrapping async operations with consistent error handling.
+ * Wraps an async function to handle any errors it may throw.
  *
- * @template T - The type of the value returned by the async function.
- * @param fn - The async function to execute.
- * @param errorMessage - A custom error message to use if an error occurs.
- * @returns A promise that resolves to the result of fn, or null if an error occurred.
+ * @param fn - The async function to execute
+ * @param context - A string describing where the function is being called
+ * @returns A Promise that resolves to the function's result or null if an error occurred
  */
-export async function handleAsyncError<T>(fn: () => Promise<T>, errorMessage: string): Promise<T | null> {
+export async function handleAsyncError<T>(fn: () => Promise<T>, context: string): Promise<T | null> {
   try {
     return await fn();
   } catch (error: unknown) {
-    handleError(error, errorMessage);
+    handleError(error, context);
     return null;
-  }
-}
-
-/**
- * A custom error class for replication errors.
- * This can be used to distinguish replication-specific errors in the application.
- */
-export class ReplicationError extends Error {
-  /**
-   * Creates a new ReplicationError.
-   *
-   * @param message - The error message.
-   * @param originalError - The original error that caused this ReplicationError.
-   */
-  constructor(
-    message: string,
-    public readonly originalError: RxError | Error
-  ) {
-    super(message);
-    this.name = 'ReplicationError';
-  }
-}
-
-/**
- * Sets up global error listeners for unhandled promise rejections and uncaught exceptions.
- * This function should be called once when the application initializes.
- */
-export function setupGlobalErrorListeners(): void {
-  if (typeof window !== 'undefined') {
-    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-      const error: unknown = event.reason;
-      console.error('Unhandled promise rejection:', error);
-      handleError(error instanceof Error ? error : new Error(String(error)), 'Unhandled Promise Rejection');
-    });
-
-    window.addEventListener('error', (event: ErrorEvent) => {
-      console.error('Uncaught exception:', event.error);
-      handleError(event.error, 'Uncaught Exception');
-    });
   }
 }

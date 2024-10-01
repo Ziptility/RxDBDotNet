@@ -19,10 +19,11 @@ import {
   Typography,
   Box,
   useTheme,
+  Slide,
 } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { type ErrorNotification, errorSubject, ErrorType } from '@/utils/errorHandling';
-import { motionProps } from '@/utils/motionSystem';
+import ErrorDetails from './ErrorDetails';
 
 /**
  * Maximum number of errors to display before collapsing
@@ -161,7 +162,27 @@ const errorHandlerStateMachine: Record<ErrorState, Record<string, Transition>> =
  * designed to align with Material Design 3 principles and WCAG 2.1 AA standards.
  * It is optimized for desktop/laptop users with screens ranging from 13" to 27".
  *
+ * The component manages different error states and provides an interface for users
+ * to view error details, dismiss errors, and manage multiple errors.
+ *
  * @component
+ *
+ * @example
+ * // To use this component, place it at the top level of your application
+ * function App() {
+ *   return (
+ *     <>
+ *       <ErrorHandler />
+ *       {// Rest of your application }
+ *     </>
+ *   );
+ * }
+ *
+ * @remarks
+ * This component uses a state machine to manage different error states,
+ * providing a consistent and predictable error handling experience.
+ * It integrates with the global error subject to catch and display errors
+ * from anywhere in the application.
  */
 const ErrorHandler: React.FC = () => {
   const [errors, setErrors] = useState<ErrorNotification[]>([]);
@@ -252,7 +273,7 @@ const ErrorHandler: React.FC = () => {
           right: theme.spacing(2),
           maxWidth: '400px',
           width: '100%',
-          zIndex: theme.zIndex.snackbar + 1,
+          zIndex: theme.zIndex.snackbar,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
@@ -261,47 +282,44 @@ const ErrorHandler: React.FC = () => {
       >
         <AnimatePresence>
           {errors.slice(0, expandedErrors ? undefined : MAX_VISIBLE_ERRORS).map((error) => (
-            <motion.div
-              key={error.id}
-              {...motionProps['slideInFromTop']}
-              style={{ width: '100%', marginBottom: theme.spacing(1) }}
-            >
-              <Alert
-                severity={getErrorSeverity(error.type)}
-                variant="filled"
-                icon={getErrorIcon(getErrorSeverity(error.type))}
-                sx={{
-                  width: '100%',
-                  pointerEvents: 'auto',
-                  borderRadius: '12px',
-                  boxShadow: theme.shadows[3],
-                  '& .MuiAlert-message': {
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                }}
-              >
-                <AlertTitle>{error.type} Error</AlertTitle>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  {error.message.length > 50 ? `${error.message.substring(0, 50)}...` : error.message}
-                </Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Button color="inherit" size="small" onClick={handleViewDetails(error.id)}>
-                    View Details
-                  </Button>
-                  <Button
-                    color="inherit"
-                    size="small"
-                    onClick={() => {
-                      setErrors((prevErrors) => prevErrors.filter((e) => e.id !== error.id));
-                      transition('ERROR_RESOLVED');
-                    }}
-                  >
-                    Dismiss
-                  </Button>
-                </Box>
-              </Alert>
-            </motion.div>
+            <Slide direction="left" in key={error.id} mountOnEnter unmountOnExit>
+              <Box sx={{ width: '100%', mb: 1, pointerEvents: 'auto' }}>
+                <Alert
+                  severity={getErrorSeverity(error.type)}
+                  variant="filled"
+                  icon={getErrorIcon(getErrorSeverity(error.type))}
+                  sx={{
+                    width: '100%',
+                    borderRadius: '12px',
+                    boxShadow: theme.shadows[3],
+                    '& .MuiAlert-message': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    },
+                  }}
+                >
+                  <AlertTitle>{error.type} Error</AlertTitle>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    {error.message.length > 50 ? `${error.message.substring(0, 50)}...` : error.message}
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Button color="inherit" size="small" onClick={handleViewDetails(error.id)}>
+                      View Details
+                    </Button>
+                    <Button
+                      color="inherit"
+                      size="small"
+                      onClick={() => {
+                        setErrors((prevErrors) => prevErrors.filter((e) => e.id !== error.id));
+                        transition('ERROR_RESOLVED');
+                      }}
+                    >
+                      Dismiss
+                    </Button>
+                  </Box>
+                </Alert>
+              </Box>
+            </Slide>
           ))}
         </AnimatePresence>
         {errors.length > MAX_VISIBLE_ERRORS && (
@@ -329,96 +347,19 @@ const ErrorHandler: React.FC = () => {
           },
         }}
       >
-        <motion.div {...motionProps['fadeIn']}>
-          {openDialogId !== null &&
-            (() => {
-              const error = errors.find((e) => e.id === openDialogId);
-              if (!error) return null;
-              return (
-                <>
-                  <DialogTitle id="error-dialog-title" sx={{ padding: theme.spacing(3) }}>
-                    {`${error.type} Error Details`}
-                  </DialogTitle>
-                  <DialogContent dividers sx={{ padding: theme.spacing(3) }}>
-                    <Typography
-                      variant="body2"
-                      gutterBottom
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Context: {error.context}
-                    </Typography>
-                    <Box
-                      sx={{
-                        maxHeight: '400px',
-                        overflow: 'auto',
-                        backgroundColor: theme.palette.background.default,
-                        borderRadius: '12px',
-                        p: 2,
-                        mt: 2,
-                        '&::-webkit-scrollbar': {
-                          width: '0.4em',
-                        },
-                        '&::-webkit-scrollbar-track': {
-                          boxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          backgroundColor: theme.palette.primary.light,
-                          outline: `1px solid ${theme.palette.primary.main}`,
-                          borderRadius: '4px',
-                        },
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        component="pre"
-                        sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                      >
-                        {error.details}
-                      </Typography>
-                      {error.additionalInfo !== undefined ? (
-                        <>
-                          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                            Additional Information
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            component="pre"
-                            sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                          >
-                            {error.additionalInfo}
-                          </Typography>
-                        </>
-                      ) : null}
-                      {error.stack !== undefined ? (
-                        <>
-                          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                            Stack Trace
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            component="pre"
-                            sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                          >
-                            {error.stack}
-                          </Typography>
-                        </>
-                      ) : null}
-                    </Box>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleDialogClose} color="primary">
-                      Close
-                    </Button>
-                  </DialogActions>
-                </>
-              );
-            })()}
-        </motion.div>
+        <DialogTitle id="error-dialog-title" sx={{ padding: theme.spacing(3) }}>
+          {openDialogId !== null && errors.find((e) => e.id === openDialogId)?.type} Error Details
+        </DialogTitle>
+        <DialogContent dividers sx={{ padding: theme.spacing(3) }}>
+          {openDialogId !== null && (
+            <ErrorDetails error={errors.find((e) => e.id === openDialogId) as ErrorNotification} />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Close
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

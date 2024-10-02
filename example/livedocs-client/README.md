@@ -88,6 +88,18 @@ This application demonstrates sophisticated integration between client-side RxDB
 - **State Management**: Uses RxDB for local state and synchronization with the server.
 - **UI Components**: Material-UI components adapted for desktop experiences with offline indicators.
 
+## Error Handling
+
+This example application uses simplified error handling for demonstration purposes. Instead of displaying errors in the UI, all errors are logged to the browser console. This approach is suitable for developers who are comfortable using browser developer tools for debugging.
+
+To view errors:
+
+1. Open your browser's developer tools (usually F12 or Ctrl+Shift+I).
+2. Navigate to the "Console" tab.
+3. Any errors or warnings will be displayed here with relevant context and information.
+
+This simplified approach allows for a cleaner UI while still providing valuable debugging information for developers learning to use RxDBDotNet.
+
 ## Development
 
 ### Available Scripts
@@ -116,7 +128,7 @@ For more detailed information, please read our [Contribution Guidelines](../../C
 
 ## Learning Resources
 
-- **Offline-First Patterns**: Check `docs/offline-first-patterns.md` for detailed explanations of the offline-first strategies implemented in this app.
+- **Local-First Patterns**: Check `docs/local-first-patterns.md` for detailed explanations of the local-first strategies implemented in this app.
 
 ## License
 

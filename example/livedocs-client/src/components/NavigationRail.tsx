@@ -1,5 +1,5 @@
 // src/components/NavigationRail.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Home as HomeIcon,
   Group as GroupIcon,
@@ -26,7 +26,14 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import NetworkStatus from './NetworkStatus';
 
-const navItems = [
+interface NavItem {
+  readonly label: string;
+  readonly path: string;
+  readonly icon: React.ReactElement;
+  readonly ariaLabel: string;
+}
+
+const navItems: NavItem[] = [
   { label: 'Home', path: '/', icon: <HomeIcon />, ariaLabel: 'Go to Home' },
   { label: 'Workspaces', path: '/workspaces', icon: <WorkIcon />, ariaLabel: 'Go to Workspaces' },
   { label: 'Users', path: '/users', icon: <GroupIcon />, ariaLabel: 'Go to Users' },
@@ -47,16 +54,16 @@ const NavigationRail: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = async (): Promise<void> => {
+  const handleLogout = useCallback(async (): Promise<void> => {
     await logout();
     handleMenuClose();
     await router.push('/login');
-  };
+  }, [logout, router]);
 
   return (
     <Paper
       elevation={3}
-      role="navigation"
+      component="nav"
       aria-label="Main Navigation"
       onMouseEnter={(): void => setIsExpanded(true)}
       onMouseLeave={(): void => setIsExpanded(false)}
@@ -81,7 +88,7 @@ const NavigationRail: React.FC = () => {
         justifyContent: 'space-between',
       })}
     >
-      <List>
+      <List component="div">
         {navItems.map((item) => {
           const isActive = router.pathname === item.path;
           return (

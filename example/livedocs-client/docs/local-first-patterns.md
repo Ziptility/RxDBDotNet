@@ -31,6 +31,15 @@ This document outlines the local-first patterns implemented in the RxDBDotNet Ex
   - [Performance Optimization](#performance-optimization)
     - [Implementation](#implementation-6)
     - [Example](#example-7)
+  - [Offline-First Approach](#offline-first-approach)
+    - [Implementation](#implementation-7)
+    - [Example](#example-8)
+  - [Network Status Management](#network-status-management)
+    - [Implementation](#implementation-8)
+    - [Example](#example-9)
+  - [Sync Recovery](#sync-recovery)
+    - [Implementation](#implementation-9)
+    - [Example](#example-10)
 
 ## Local-First Data Flow
 
@@ -117,6 +126,7 @@ Leverage RxDB's built-in replication mechanisms for efficient synchronization wi
 
 - Use RxDB's GraphQL replication plugin for bi-directional synchronization.
 - Configure replication settings in the database setup.
+- Handle network disconnections and reconnections gracefully.
 
 ### Example
 
@@ -135,13 +145,20 @@ const replicationState = replicateGraphQL({
     modifier: (doc) => doc,
   },
   live: true,
-  retryTime: 1000,
-  waitForLeadership: true,
+  retry: {
+    autoReconnect: true,
+    maxRetries: Infinity,
+    retryDelay: (attempt) => Math.min(attempt * 1000, 30000), // Exponential backoff with max 30s delay
+  },
 });
 
 // Optionally observe replication state
 replicationState.error$.subscribe((error) => {
   console.error('Replication error:', error);
+});
+
+replicationState.active$.subscribe((active) => {
+  console.log('Replication active:', active);
 });
 ```
 
@@ -201,12 +218,14 @@ function DocumentList() {
 
 ## Error Handling
 
-Implement error handling for local operations and synchronization issues.
+Implement error handling for local operations and synchronization issues, distinguishing between actual errors and expected offline scenarios.
 
 ### Implementation
 
 - Use try-catch blocks for local database operations.
 - Subscribe to RxDB's replication error events for synchronization issues.
+- Implement retry mechanisms for network-related errors.
+- Treat offline scenarios as normal operations, not errors.
 
 ### Example
 
@@ -215,41 +234,72 @@ async function handleDatabaseOperation() {
   try {
     await collection.documents.insert(newDocument);
   } catch (error) {
-    console.error('Database operation failed:', error);
-    // Handle error (e.g., show user feedback)
+    if (error.name === 'OfflineError') {
+      console.log('Operation queued for sync:', error);
+      // Handle offline scenario (e.g., show offline indicator)
+    } else {
+      console.error('Database operation failed:', error);
+      // Handle other types of errors (e.g., show error message)
+    }
   }
 }
 
 // For replication errors
 replicationState.error$.subscribe((error) => {
-  console.error('Replication error:', error);
-  // Handle error (e.g., show sync failure message)
+  if (error.name === 'NetworkError') {
+    console.log('Network error occurred, will retry:', error);
+    // Handle network error (e.g., show reconnecting indicator)
+  } else {
+    console.error('Replication error:', error);
+    // Handle other types of replication errors
+  }
 });
 ```
 
 ## Local-Aware UI/UX
 
-Design the user interface to provide clear indications of the app's sync status and the local state of data.
+Design the user interface to provide clear indications of the app's sync status and the local state of data, without alarming users during offline periods.
 
 ### Implementation
 
 - Use RxDB's replication state to display sync status.
 - Leverage RxDB's change events to show real-time updates in the UI.
+- Implement subtle indicators for online/offline status.
 
 ### Example
 
 ```typescript
 function SyncStatusIndicator() {
   const [syncStatus, setSyncStatus] = useState('idle');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
     const subscription = replicationState.active$.subscribe(
       isActive => setSyncStatus(isActive ? 'syncing' : 'idle')
     );
-    return () => subscription.unsubscribe();
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
-  return <div>Sync Status: {syncStatus}</div>;
+  return (
+    <div>
+      <Chip
+        icon={isOnline ? <SyncIcon /> : <CloudOffIcon />}
+        label={isOnline ? (syncStatus === 'syncing' ? 'Syncing...' : 'Synced') : 'Offline'}
+        color={isOnline ? 'primary' : 'default'}
+        size="small"
+      />
+    </div>
+  );
 }
 ```
 
@@ -297,8 +347,171 @@ const recentDocuments = await collection
     limit: 50,
   })
   .exec();
+
+// Implement virtual scrolling for large lists
+import { FixedSizeList } from 'react-window';
+
+function DocumentList({ documents }) {
+  const Row = ({ index, style }) => (
+    <div style={style}>
+      <DocumentItem document={documents[index]} />
+    </div>
+  );
+
+  return (
+    <FixedSizeList
+      height={400}
+      itemCount={documents.length}
+      itemSize={50}
+      width="100%"
+    >
+      {Row}
+    </FixedSizeList>
+  );
+}
 ```
 
-By implementing these patterns, the RxDBDotNet Example Client App demonstrates a robust local-first architecture that leverages RxDB's built-in capabilities. This approach provides a seamless user experience across various network conditions while minimizing custom code and complexity. These patterns can be easily adapted and extended to suit the specific needs of different applications built with RxDBDotNet.
+## Offline-First Approach
+
+Design the application to work seamlessly offline, treating offline scenarios as normal operations.
+
+### Implementation
+
+- Ensure all core functionality works offline without errors.
+- Implement local queueing of operations performed while offline.
+- Provide clear, non-intrusive feedback about the offline state.
+
+### Example
+
+```typescript
+function OfflineAwareButton({ onClick, children }) {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleClick = async () => {
+    try {
+      await onClick();
+    } catch (error) {
+      if (!isOnline) {
+        // Queue the operation for later
+        await queueOfflineOperation(onClick);
+        // Provide feedback to the user
+        showToast('Action will be performed when online');
+      } else {
+        // Handle other types of errors
+        console.error('Operation failed:', error);
+      }
+    }
+  };
+
+  return (
+    <Button onClick={handleClick} disabled={!isOnline}>
+      {children}
+      {!isOnline && <OfflineIcon fontSize="small" />}
+    </Button>
+  );
+}
+```
+
+## Network Status Management
+
+Implement robust network status detection and management to ensure smooth transitions between online and offline states.
+
+### Implementation
+
+- Use the browser's online/offline events to detect network status changes.
+- Implement a custom hook for network status management.
+- Provide clear visual feedback about the current network status.
+
+### Example
+
+```typescript
+function useNetworkStatus() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
+
+function NetworkStatusIndicator() {
+  const isOnline = useNetworkStatus();
+
+  return (
+    <Chip
+      icon={isOnline ? <WifiIcon /> : <WifiOffIcon />}
+      label={isOnline ? 'Online' : 'Offline'}
+      color={isOnline ? 'success' : 'default'}
+    />
+  );
+}
+```
+
+## Sync Recovery
+
+Implement robust sync recovery mechanisms for when the app comes back online after being offline.
+
+### Implementation
+
+- Use RxDB's replication mechanisms to handle sync recovery.
+- Implement a queue for operations performed while offline.
+- Provide clear, non-intrusive feedback during the sync recovery process.
+
+### Example
+
+```typescript
+function useSyncRecovery(replicationState) {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const isOnline = useNetworkStatus();
+
+  useEffect(() => {
+    if (isOnline) {
+      setIsSyncing(true);
+      replicationState.reSync().then(() => {
+        setIsSyncing(false);
+        showToast('All changes synced');
+      }).catch(error => {
+        console.error('Sync failed:', error);
+        showToast('Sync failed, will retry later');
+      });
+    }
+  }, [isOnline, replicationState]);
+
+  return isSyncing;
+}
+
+function SyncRecoveryIndicator({ replicationState }) {
+  const isSyncing = useSyncRecovery(replicationState);
+
+  if (!isSyncing) return null;
+
+  return (
+    <LinearProgress variant="indeterminate" />
+  );
+}
+```
+
+By implementing these local-first patterns, the RxDBDotNet Example Client App demonstrates a robust local-first architecture that leverages RxDB's built-in capabilities. This approach provides a seamless user experience across various network conditions while minimizing custom code and complexity. These patterns can be easily adapted and extended to suit the specific needs of different applications built with RxDBDotNet.
 
 Remember to continuously review and update these implementations as RxDBDotNet evolves and new best practices emerge in the local-first application development community.

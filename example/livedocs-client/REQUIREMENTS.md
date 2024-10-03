@@ -14,6 +14,8 @@ Key aspects of this example app include:
 
 3. **Simplified Replication Logic**: The app illustrates how to use RxDB's built-in replication mechanisms to handle synchronization with the server.
 
+4. **Offline-First Approach**: The app treats offline scenarios and network issues as normal, expected behaviors, not as errors.
+
 This example app serves as a learning resource for software engineers looking to build robust, local-first web applications using RxDBDotNet.
 
 ## 2. Technology Stack
@@ -44,7 +46,8 @@ This example app serves as a learning resource for software engineers looking to
 
 - Implement bi-directional replication for all document types using RxDB's GraphQL replication plugin.
 - Configure replication settings in the database setup.
-- Provide clear indicators of synchronization status in the UI.
+- Provide clear, unobtrusive indicators of synchronization status in the UI.
+- Handle network disconnections and reconnections gracefully, treating them as normal operations.
 
 ### 3.4 Authentication
 
@@ -65,20 +68,24 @@ This example app serves as a learning resource for software engineers looking to
 
 - Implement error handling for local operations using try-catch blocks.
 - Use RxDB's replication error events for handling synchronization issues.
+- Distinguish between actual errors and expected offline/network scenarios.
 
 ### 4.3 Subscription Management
 
 - Utilize RxDB's built-in subscription capabilities for real-time updates.
+- Implement graceful handling of subscription interruptions due to network issues.
 
 ### 4.4 Optimistic UI Updates
 
 - Leverage RxDB's reactive nature for optimistic UI updates.
 - Use RxDB's change events to keep the UI in sync with local data changes.
+- Ensure the UI remains responsive and functional during offline periods.
 
 ### 4.5 GraphQL Integration
 
 - Use RxDB's GraphQL replication plugin for server synchronization.
 - Configure GraphQL endpoints and query/mutation builders as per RxDB's requirements.
+- Implement retry mechanisms for failed GraphQL operations due to network issues.
 
 ## 5. User Interface
 
@@ -102,11 +109,13 @@ This example app serves as a learning resource for software engineers looking to
 
 ### 5.5 Sync Status Indicators
 
-- Provide clear visual indicators for sync status using RxDB's replication state.
+- Provide clear, unobtrusive visual indicators for sync status using RxDB's replication state.
+- Design indicators that do not disrupt the user experience but clearly convey the current sync state.
 
 ### 5.6 Network Status Indicators
 
-- Develop clear visual indicators for the app's online/offline status.
+- Develop subtle but clear visual indicators for the app's online/offline status.
+- Ensure these indicators do not alarm users but inform them of the current network state.
 
 ## 6. Development Practices
 
@@ -115,27 +124,31 @@ This example app serves as a learning resource for software engineers looking to
 - Strictly adhere to TypeScript and Next.js typing rules.
 - Follow ESLint and Prettier configurations.
 - Implement error handling for both local operations and synchronization issues.
+- Distinguish between true errors and expected offline scenarios in the codebase.
 
 ### 6.2 Documentation
 
 - Provide inline documentation for RxDB-specific implementations.
 - Include the file location as a comment at the top of each file.
 - Document local-first patterns and best practices used in the app.
+- Clearly explain the approach to handling offline scenarios and network issues.
 
 ### 6.3 Performance Monitoring
 
 - Use RxDB's built-in logging and monitoring capabilities.
+- Implement custom logging for offline and synchronization events.
 
 ## 7. Developer Experience
 
 ### 7.1 Setup and Installation
 
 - Provide clear, step-by-step documentation for setting up the development environment.
-- Include instructions for testing local-first functionality.
+- Include instructions for testing local-first functionality, including offline scenarios.
 
 ### 7.2 Scripts and Commands
 
 - Include and document npm scripts for common development tasks.
+- Provide scripts for simulating offline scenarios and network interruptions.
 
 ## 8. Learning Resources
 
@@ -146,15 +159,18 @@ This example app serves as a learning resource for software engineers looking to
   - Setup and installation instructions
   - Available scripts and their purposes
   - Common troubleshooting steps
+  - Guidelines for testing offline functionality
 
 ### 8.2 Code Examples
 
 - Provide example usage patterns and code snippets for common RxDBDotNet scenarios, focusing on built-in features.
+- Include examples demonstrating proper handling of offline scenarios and network issues.
 
 ### 8.3 Local-First Patterns Guide
 
 - Create documentation detailing the implemented local-first patterns using RxDB's built-in capabilities.
 - Provide code examples and best practices for each local-first pattern.
+- Explain the approach to handling offline scenarios and network issues as normal operations.
 
 ## 9. Performance Optimization
 
@@ -166,15 +182,34 @@ This example app serves as a learning resource for software engineers looking to
 ### 9.2 Synchronization Efficiency
 
 - Leverage RxDB's built-in replication mechanisms for efficient synchronization.
+- Implement batching and throttling strategies for synchronization to handle large datasets efficiently.
 
-## 10. Continuous Improvement
+## 10. Offline-First Approach
 
-### 10.1 Updates
+### 10.1 Offline Operation
+
+- Ensure all core functionality works offline without errors.
+- Implement local queueing of operations performed while offline.
+
+### 10.2 Sync Recovery
+
+- Implement robust sync recovery mechanisms for when the app comes back online.
+- Provide clear, non-intrusive feedback during the sync recovery process.
+
+### 10.3 Conflict Resolution
+
+- Implement and document strategies for resolving conflicts that may arise due to offline operations.
+
+## 11. Continuous Improvement
+
+### 11.1 Updates
 
 - Regularly review and update implementations to align with the latest RxDBDotNet features and best practices.
+- Keep the offline-first and local-first strategies up-to-date with emerging patterns in the field.
 
-### 10.2 Community Engagement
+### 11.2 Community Engagement
 
 - Include contribution guidelines to encourage community involvement.
+- Encourage contributions that enhance the app's offline and local-first capabilities.
 
-This requirements document serves as a guide for developing the RxDBDotNet Example Client App, emphasizing its local-first nature and leveraging RxDB's built-in capabilities for synchronization and data management.
+This requirements document serves as a guide for developing the RxDBDotNet Example Client App, emphasizing its local-first nature and leveraging RxDB's built-in capabilities for synchronization and data management. The focus on treating offline scenarios as normal operations underscores the app's commitment to providing a seamless user experience regardless of network conditions.

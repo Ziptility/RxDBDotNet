@@ -1,6 +1,6 @@
 // src\components\NetworkStatus.tsx
 import React, { useEffect, useState } from 'react';
-import { Sync as SyncIcon, Wifi as WifiIcon, WifiOff as WifiOffIcon } from '@mui/icons-material';
+import { Sync as SyncIcon, WifiOff as WifiOffIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { Box, Chip, Tooltip, Typography } from '@mui/material';
 import { combineLatest, map } from 'rxjs';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -52,12 +52,31 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ expanded }) => {
 
   const isSyncing = Object.values(syncStatus).some(Boolean);
 
+  const getStatusIcon = (): React.ReactNode => {
+    if (!isOnline) return <WifiOffIcon />;
+    if (isSyncing) return <SyncIcon />;
+    return <CheckCircleIcon />;
+  };
+
+  const getStatusLabel = (): string => {
+    if (!isOnline) return 'Offline';
+    if (isSyncing) return 'Syncing';
+    return 'Synced';
+  };
+
+  const getStatusColor = (): 'error' | 'warning' | 'success' => {
+    if (!isOnline) return 'error';
+    if (isSyncing) return 'warning';
+    return 'success';
+  };
+
   return (
     <Tooltip
       title={
         <Box>
+          <Typography variant="body2">{isOnline ? 'Connected to server' : 'Working offline'}</Typography>
           {Object.entries(syncStatus).map(([name, active]) => (
-            <Typography key={name} variant="caption">
+            <Typography key={name} variant="caption" display="block">
               {`${name}: ${active ? 'Syncing' : 'Synced'}`}
             </Typography>
           ))}
@@ -65,9 +84,9 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ expanded }) => {
       }
     >
       <Chip
-        icon={isOnline ? isSyncing ? <SyncIcon /> : <WifiIcon /> : <WifiOffIcon />}
-        label={isOnline ? (isSyncing ? 'Syncing' : 'Online') : 'Offline'}
-        color={isOnline ? (isSyncing ? 'warning' : 'success') : 'error'}
+        icon={getStatusIcon() as React.ReactElement}
+        label={getStatusLabel()}
+        color={getStatusColor()}
         size="small"
         sx={{
           width: '100%',

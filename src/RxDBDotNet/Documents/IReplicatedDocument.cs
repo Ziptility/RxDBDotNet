@@ -52,7 +52,7 @@ public interface IReplicatedDocument
     /// <para>
     /// Example usage:
     /// <code>
-    /// public class MyDocument : IDocument
+    /// public class MyDocument : IReplicatedDocument
     /// {
     ///     public Guid Id { get; set; }
     ///     public DateTimeOffset UpdatedAt { get; set; }

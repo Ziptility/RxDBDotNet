@@ -1,7 +1,7 @@
 ﻿using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
-using LiveDocs.GraphQLApi.Models.Replication;
 using Microsoft.EntityFrameworkCore;
+using RxDBDotNet.Documents;
 using RxDBDotNet.Services;
 
 namespace LiveDocs.GraphQLApi.Services;
@@ -11,10 +11,10 @@ namespace LiveDocs.GraphQLApi.Services;
 ///     This class provides optimized database access for document operations required by the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TEntity">The type of entity in which the replicated document data is stored.</typeparam>
-/// <typeparam name="TDocument">The type of replicated document being managed, which must implement IDocument.</typeparam>
+/// <typeparam name="TDocument">The type of replicated document being managed, which must implement ReplicatedDocument.</typeparam>
 public abstract class DocumentService<TEntity, TDocument> : IDocumentService<TDocument>
     where TEntity : ReplicatedEntity
-    where TDocument : ReplicatedDocument
+    where TDocument : class, IReplicatedDocument
 {
     private readonly LiveDocsDbContext _dbContext;
     private readonly IEventPublisher _eventPublisher;

@@ -50,7 +50,7 @@ public static class GraphQLBuilderExtensions
     ///     This method configures all necessary types, queries, mutations, and subscriptions for the RxDB replication
     ///     protocol.
     /// </summary>
-    /// <typeparam name="TDocument">The type of document to support, which must implement IDocument.</typeparam>
+    /// <typeparam name="TDocument">The type of document to support, which must implement IReplicatedDocument.</typeparam>
     /// <param name="builder">The HotChocolate IRequestExecutorBuilder to configure.</param>
     /// <param name="configure">
     ///     An optional configuration action to customize the replication options for the document type.

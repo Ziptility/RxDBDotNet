@@ -16,7 +16,7 @@ namespace RxDBDotNet.Resolvers;
 /// Note that this class must not use constructor injection per:
 /// https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
-/// <typeparam name="TDocument">The type of the document to be pulled, which must implement IDocument.</typeparam>
+/// <typeparam name="TDocument">The type of the document to be pulled, which must implement IReplicatedDocument.</typeparam>
 public sealed class QueryResolver<TDocument> where TDocument : class, IReplicatedDocument
 {
     /// <summary>

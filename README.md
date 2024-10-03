@@ -25,16 +25,29 @@ Ready to dive in? [Get started](#getting-started) or [contribute](#contributing)
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
-- [Sample Implementation](#sample-implementation)
-- [RxDB Replication Protocol Details](#rxdb-replication-protocol-details)
-- [Advanced Features](#advanced-features)
-- [Security Considerations](#security-considerations)
-- [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-- [Contact](#contact)
+- [RxDBDotNet](#rxdbdotnet)
+  - [Key Features](#key-features)
+  - [Table of Contents](#table-of-contents)
+  - [Getting Started](#getting-started)
+  - [Sample Implementation](#sample-implementation)
+  - [RxDB Replication Protocol Details](#rxdb-replication-protocol-details)
+  - [Important Note for RxDB GraphQL Plugin Users](#important-note-for-rxdb-graphql-plugin-users)
+  - [Advanced Features](#advanced-features)
+    - [Policy-Based Security](#policy-based-security)
+      - [Configuration](#configuration)
+    - [Subscription Topics](#subscription-topics)
+      - [Usage](#usage)
+    - [Custom Error Types](#custom-error-types)
+    - [OpenID Connect (OIDC) Support for Subscription Authentication](#openid-connect-oidc-support-for-subscription-authentication)
+      - [Key Features:](#key-features-1)
+      - [Usage:](#usage-1)
+  - [Security Considerations](#security-considerations)
+    - [Server-Side Timestamp Overwriting](#server-side-timestamp-overwriting)
+  - [Contributing](#contributing)
+  - [Code of Conduct](#code-of-conduct)
+  - [License](#license)
+  - [Security](#security)
+  - [Acknowledgments](#acknowledgments)
 
 ## Getting Started
 
@@ -45,9 +58,9 @@ Here are the minimial steps to get you up and running with RxDBDotNet in your ex
    dotnet add package RxDBDotNet
    ```
 
-2. Implement `IDocument` for the type of document you want to replicate:
+2. Implement `IReplicatedDocument` for the type of document you want to replicate:
    ```csharp
-    public class Workspace : IDocument
+    public class Workspace : IReplicatedDocument
     {
         public required Guid Id { get; init; }
         public required string Name { get; set; }
@@ -111,7 +124,7 @@ using RxDBDotNet.Documents;
 
 namespace RxDBDotNetExample;
 
-public class Workspace : IDocument
+public class Workspace : IReplicatedDocument
 {
     public required Guid Id { get; init; }
     public required string Name { get; set; }
@@ -525,7 +538,7 @@ RxDBDotNet allows you to configure custom error types through the ReplicationOpt
 
 ```csharp
 // Define your document type
-public class User : IDocument
+public class User : IReplicatedDocument
 {
     public required Guid Id { get; init; }
     public required string Username { get; set; }
@@ -647,7 +660,7 @@ RxDBDotNet implements a [crucial security measure](https://rxdb.info/replication
 
 This security measure is implemented in the `MutationResolver<TDocument>` class, which handles document push operations. Developers using RxDBDotNet should be aware that any client-provided `UpdatedAt` value will be ignored and replaced with the server's timestamp.
 
-Important: While the `IDocument` interface defines `UpdatedAt` with both a getter and a setter, developers should not manually set this property in their application code. Always rely on the server to set the correct `UpdatedAt` value during replication operations. The setter is present solely to allow the server to overwrite the timestamp as a security measure.
+Important: While the `IReplicatedDocument` interface defines `UpdatedAt` with both a getter and a setter, developers should not manually set this property in their application code. Always rely on the server to set the correct `UpdatedAt` value during replication operations. The setter is present solely to allow the server to overwrite the timestamp as a security measure.
 
 ## Contributing
 

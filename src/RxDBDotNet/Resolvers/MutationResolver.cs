@@ -10,7 +10,7 @@ namespace RxDBDotNet.Resolvers;
 ///     Represents a GraphQL mutation resolver for pushing documents.
 ///     This class implements the server-side logic for the 'push' operation in the RxDB replication protocol.
 /// </summary>
-/// <typeparam name="TDocument">The type of document being replicated, which must implement IDocument.</typeparam>
+/// <typeparam name="TDocument">The type of document being replicated, which must implement IReplicatedDocument.</typeparam>
 /// <remarks>
 ///     Note that this class must not use constructor injection per:
 ///     https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection

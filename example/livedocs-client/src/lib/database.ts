@@ -13,6 +13,7 @@ import type {
   LiveDocsReplicationState,
   LiveDocsReplicationStates,
 } from '@/types';
+import { handleError } from '@/utils/errorHandling';
 import { setupReplication } from './replication';
 import { workspaceSchema, userSchema, liveDocSchema } from './schemas';
 
@@ -61,32 +62,26 @@ const setupReplicationLogging = (replicationStates: LiveDocsReplicationStates): 
   Object.entries(replicationStates).forEach(([collectionName, replicator]) => {
     const typedReplicator = replicator as LiveDocsReplicationState<Document>;
 
-    // emits all errors that happen when running the push- & pull-handlers.
     typedReplicator.error$.subscribe((error) => {
       console.warn(`Replication error for ${collectionName}:`, error);
     });
 
-    // emits each document that was send to the remote
     typedReplicator.sent$.subscribe((docs) => {
       console.log(`Replication sent for ${collectionName}:`, docs);
     });
 
-    // emits each document that was received from the remote
     typedReplicator.received$.subscribe((doc) => {
       console.log(`Replication received for ${collectionName}:`, doc);
     });
 
-    // emits true when a replication cycle is running, false when not.
     typedReplicator.active$.subscribe((active) => {
       console.log(`Replication active state for ${collectionName}:`, active);
     });
 
-    // emits true when the replication was canceled, false when not.
     typedReplicator.canceled$.subscribe((canceled) => {
       console.log(`Replication canceled state for ${collectionName}:`, canceled);
     });
 
-    // Log initial replication state
     console.log(`Initial replication state for ${collectionName}:`, {
       isStopped: typedReplicator.isStopped(),
     });
@@ -126,7 +121,7 @@ const initializeDatabase = async (): Promise<LiveDocsDatabase> => {
 
     return Object.assign(db, { replicationStates }) as LiveDocsDatabase;
   } catch (error) {
-    console.error('Failed to initialize database:', error);
+    handleError(error, 'initializeDatabase');
     throw error;
   }
 };
@@ -204,4 +199,19 @@ export type { LiveDocsDatabase };
  *
  * 9. Logging: The setupReplicationLogging function provides detailed logs about replication.
  *    Consider adding a way to toggle this logging on/off in production environments.
+ *
+ * 10. Type Safety: The code has been updated to be more type-safe. Always ensure that
+ *     TypeScript's strict mode is enabled and that all types are properly defined.
+ *
+ * 11. Plugin Management: Be cautious when adding or removing RxDB plugins. Each plugin can
+ *     affect the database's behavior and performance.
+ *
+ * 12. Configuration: The API_CONFIG is used for default values. Ensure this configuration
+ *     is properly maintained and updated as needed.
+ *
+ * 13. Testing: Implement unit tests for database initialization and operations. Mock RxDB
+ *     methods to test various scenarios, including error cases.
+ *
+ * 14. Security: While this example uses a default JWT token, in a production environment,
+ *     implement proper token management and security measures.
  */

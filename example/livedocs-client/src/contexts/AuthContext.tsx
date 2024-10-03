@@ -9,7 +9,7 @@ import { getDatabase } from '@/lib/database';
 import { updateReplicationToken } from '@/lib/replication';
 import type { LiveDocsDatabase } from '@/types';
 import { createTypedContext } from '@/utils/createTypedContext';
-import { handleAsyncError, handleError } from '@/utils/errorHandling';
+import { handleError, handleAsyncError } from '@/utils/errorHandling';
 
 /**
  * Defines the shape of the authentication context.
@@ -37,52 +37,8 @@ type AuthState = 'initializing' | 'ready' | 'error';
 /**
  * AuthProviderComponent manages the authentication state and provides
  * authentication-related functionality to its children components.
- *
- * This component leverages several React hooks for state management and optimization:
- *
- * 1. useState:
- *    Used for managing component-specific state that, when changed, should trigger a re-render.
- *    Each state variable is independent and can be updated separately.
- *    Example: const [currentUser, setCurrentUser] = useState<User | null>(null);
- *
- * 2. useEffect:
- *    Used for performing side effects after render, such as data fetching or subscriptions.
- *    It runs after every render by default, but dependencies can be specified to control when it runs.
- *    Example: useEffect(() => { ... }, [dep1, dep2]);
- *
- * 3. useCallback:
- *    Used to memoize functions, providing a stable function reference across re-renders.
- *    This is particularly useful for optimizing performance when passing callbacks to child components.
- *    Example: const memoizedFn = useCallback(() => { ... }, [dep1, dep2]);
- *
- * 4. useRef:
- *    Used for holding mutable values that persist across re-renders without causing re-renders when changed.
- *    Useful for storing values like DOM elements, interval IDs, or previous state for comparison.
- *    Example: const myRef = useRef(initialValue);
- *
- * Understanding re-renders:
- * A re-render in React occurs when a component's state or props change, or when its parent component re-renders.
- * Re-renders ensure the UI stays in sync with the component's data, but excessive re-renders can impact performance.
- *
- * When to use useRef vs. useState:
- * - Use useState for values that should cause a re-render when changed and be reflected in the UI.
- * - Use useRef for values that can change but shouldn't cause a re-render, like:
- *   1. Storing DOM elements
- *   2. Keeping track of interval IDs
- *   3. Caching values for comparison between renders
- *   4. Mutable values in event handlers or effects
- *
- * Performance considerations:
- * - Memoize callbacks and values that are passed to child components to prevent unnecessary re-renders.
- * - Use useRef for values that don't need to trigger re-renders when changed.
- * - Optimize useEffect dependencies to prevent unnecessary effect runs.
- *
- * IMPORTANT: Modifying the usage of these hooks without understanding their purpose may lead to unexpected behavior,
- * performance issues, or bugs. Always consider the implications of changes on re-render behavior and component lifecycle.
  */
 const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children }): JSX.Element => {
-  // State declarations using useState
-  // These will trigger re-renders when changed, updating the UI
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [jwtAccessToken, setJwtAccessToken] = useState<string | null>(null);
@@ -90,23 +46,13 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
   const [isInitialized, setIsInitialized] = useState(false);
   const [authState, setAuthState] = useState<AuthState>('initializing');
 
-  // Custom hook to fetch documents
-  // This abstracts the data fetching logic and provides loading states
   const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
   const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('user');
 
-  // Refs for mutable values that don't require re-renders
-  // These can be updated without causing the component to re-render
   const loginRef = useRef<AuthContextType['login']>();
   const logoutRef = useRef<AuthContextType['logout']>();
   const initializationRef = useRef(false);
 
-  /**
-   * Sets the JWT token and optionally stores it in localStorage.
-   * This function is memoized with an empty dependency array.
-   * It will remain the same across re-renders of this component,
-   * but will be recreated if the component is unmounted and remounted.
-   */
   const setToken = useCallback((token: string, storeInLocalStorage = true): void => {
     console.log('Setting token:', { token, storeInLocalStorage });
     setJwtAccessToken(token);
@@ -119,31 +65,21 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     }
   }, []);
 
-  /**
-   * Updates the replication token for the database.
-   * This function is memoized with an empty dependency array.
-   * It will remain the same across re-renders of this component,
-   * but will be recreated if the component is unmounted and remounted.
-   */
   const updateReplicationTokenForDatabase = useCallback(async (db: LiveDocsDatabase, token: string): Promise<void> => {
     console.log('Updating replication token');
-    if (db.replicationStates !== undefined) {
-      const replicationStates = db.replicationStates;
-      await handleAsyncError(
-        async () => {
-          await updateReplicationToken(replicationStates, token);
-        },
-        'AuthContext - updateReplicationTokenForDatabase',
-        { token }
-      );
-    }
+    await handleAsyncError(
+      async () => {
+        if (db.replicationStates) {
+          await updateReplicationToken(db.replicationStates, token);
+        } else {
+          console.warn('Replication states are not initialized, skipping token update');
+        }
+      },
+      'AuthContext - updateReplicationTokenForDatabase',
+      { token }
+    );
   }, []);
 
-  /**
-   * Finds a user and workspace by their IDs.
-   * This function is memoized and depends on users and workspaces.
-   * It will be re-created when users or workspaces change, ensuring it always uses the latest data.
-   */
   const findUserAndWorkspace = useCallback(
     (userId: string, workspaceId: string): { user: User | undefined; workspace: Workspace | undefined } => {
       const user = users.find((u): boolean => u.id === userId);
@@ -153,12 +89,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     [users, workspaces]
   );
 
-  /**
-   * Stores authentication data in localStorage.
-   * This function is memoized with an empty dependency array.
-   * It will remain the same across re-renders of this component,
-   * but will be recreated if the component is unmounted and remounted.
-   */
   const storeAuthData = useCallback((userId: string, workspaceId: string, token: string): void => {
     try {
       localStorage.setItem('userId', userId);
@@ -170,12 +100,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     }
   }, []);
 
-  /**
-   * Clears authentication data from localStorage.
-   * This function is memoized with an empty dependency array.
-   * It will remain the same across re-renders of this component,
-   * but will be recreated if the component is unmounted and remounted.
-   */
   const clearAuthData = useCallback((): void => {
     try {
       localStorage.removeItem('userId');
@@ -187,11 +111,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     }
   }, []);
 
-  /**
-   * Sets the authentication state and related data.
-   * This function is memoized and depends on setToken.
-   * It will be re-created if setToken changes, which should be never in this implementation.
-   */
   const setAuthStateAndData = useCallback(
     (user: User | null, workspace: Workspace | null, token: string): void => {
       setCurrentUser(user);
@@ -202,11 +121,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     [setToken]
   );
 
-  /**
-   * Logs in a user with the given userId and workspaceId.
-   * This function is memoized and updates when its dependencies change.
-   * It's stored in a ref to avoid infinite loops in effect dependencies.
-   */
   loginRef.current = useCallback(
     async (userId: string, workspaceId: string): Promise<void> => {
       await handleAsyncError(
@@ -232,11 +146,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     [findUserAndWorkspace, setAuthStateAndData, storeAuthData, updateReplicationTokenForDatabase]
   );
 
-  /**
-   * Logs out the current user.
-   * This function is memoized and updates when its dependencies change.
-   * It's stored in a ref to avoid infinite loops in effect dependencies.
-   */
   logoutRef.current = useCallback(async (): Promise<void> => {
     console.log('Logging out');
     setAuthStateAndData(null, null, API_CONFIG.DEFAULT_JWT_TOKEN);
@@ -246,11 +155,6 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     await updateReplicationTokenForDatabase(db, API_CONFIG.DEFAULT_JWT_TOKEN);
   }, [setAuthStateAndData, clearAuthData, updateReplicationTokenForDatabase]);
 
-  /**
-   * Initializes the authentication state.
-   * This function is memoized and updates when its dependencies change.
-   * The dependencies ensure it has access to the latest state and functions.
-   */
   const initializeAuth = useCallback(async (): Promise<void> => {
     if (isInitialized || initializationRef.current) {
       console.log('Auth already initialized, skipping');
@@ -302,19 +206,12 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     }
   }, [isInitialized, findUserAndWorkspace, setAuthStateAndData, updateReplicationTokenForDatabase]);
 
-  /**
-   * Effect to initialize authentication when the component mounts.
-   * This effect runs when its dependencies change, which includes the initialization function
-   * and loading states. It ensures auth is initialized only once when all required data is loaded.
-   */
   useEffect(() => {
     if (!isInitialized && !initializationRef.current && !isLoadingWorkspaces && !isLoadingUsers) {
       void initializeAuth();
     }
   }, [initializeAuth, isInitialized, isLoadingWorkspaces, isLoadingUsers]);
 
-  // Prepare the context value
-  // This object will be passed down to all child components that use the useAuth hook
   const contextValue: AuthContextType = {
     currentUser,
     currentWorkspace,
@@ -333,17 +230,14 @@ const AuthProviderComponent: React.FC<AuthProviderComponentProps> = ({ children 
     users,
   };
 
-  // Render loading state if still initializing or loading essential data
   if (authState === 'initializing' || isLoadingWorkspaces || isLoadingUsers) {
     return <div>Loading...</div>;
   }
 
-  // Render error state if initialization failed
   if (authState === 'error') {
     return <div>Error initializing authentication. Please try refreshing the page.</div>;
   }
 
-  // Provide the authentication context to child components
   return <AuthProvider value={contextValue}>{children}</AuthProvider>;
 };
 
@@ -379,4 +273,25 @@ export { useAuth, AuthProviderComponent as AuthProvider };
  *
  * 9. Context Usage: This component provides an AuthContext. Ensure that consumers of this
  *    context handle potential undefined values correctly.
+ *
+ * 10. Logging: Extensive logging has been added to help diagnose issues. In a production
+ *     environment, consider using a more sophisticated logging system and potentially
+ *     reducing the verbosity of logs.
+ *
+ * 11. Type Safety: The code has been updated to be more type-safe. Always ensure that
+ *     TypeScript's strict mode is enabled and that all types are properly defined.
+ *
+ * 12. Async Operations: Many operations in this component are asynchronous. Always use
+ *     await with async functions and handle potential Promise rejections.
+ *
+ * 13. Dependency Management: Be cautious when adding or removing dependencies from useCallback
+ *     and useEffect hooks. Missing dependencies can lead to stale closures, while unnecessary
+ *     ones can cause excessive re-renders.
+ *
+ * 14. Null Checks: Always check for null or undefined values, especially when dealing with
+ *     properties that might not be initialized, such as db.replicationStates.
+ *
+ * 15. Graceful Degradation: When a non-critical operation can't be performed (like updating
+ *     replication token), log a warning and continue execution rather than throwing an error.
+ *     This allows the application to function even if some features are temporarily unavailable.
  */

@@ -1,4 +1,6 @@
-﻿using LiveDocs.GraphQLApi.Infrastructure;
+﻿// example/LiveDocs.GraphQLApi/Data/LiveDocsDbContext.cs
+
+using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 

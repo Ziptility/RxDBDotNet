@@ -1,3 +1,5 @@
+// example/LiveDocs.GraphQLApi/Program.cs
+
 using System.Net;
 using System.Security.Claims;
 using HotChocolate.AspNetCore;

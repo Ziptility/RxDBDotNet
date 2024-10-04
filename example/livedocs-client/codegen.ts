@@ -1,4 +1,4 @@
-// ./codegen.ts
+// example/livedocs-client/codegen.ts
 import type { CodegenConfig } from '@graphql-codegen/cli';
 
 /**

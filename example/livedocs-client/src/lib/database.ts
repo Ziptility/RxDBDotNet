@@ -1,4 +1,4 @@
-// src/lib/database.ts
+// example/livedocs-client/src/lib/database.ts
 
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import { RxDBDevModePlugin, disableWarnings } from 'rxdb/plugins/dev-mode';

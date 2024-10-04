@@ -1,4 +1,4 @@
-// src/pages/_app.tsx
+// example/livedocs-client/src/pages/_app.tsx
 
 import { useEffect } from 'react';
 import { CacheProvider } from '@emotion/react';

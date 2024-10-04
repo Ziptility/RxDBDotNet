@@ -1,4 +1,5 @@
-﻿using System.Security.Authentication;
+﻿// src\RxDBDotNet\Security\AuthorizationHelper.cs
+using System.Security.Authentication;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using RxDBDotNet.Documents;

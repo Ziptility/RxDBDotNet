@@ -1,4 +1,4 @@
-﻿
+﻿// example/LiveDocs.GraphQLApi/Security/PolicyNames.cs
 namespace LiveDocs.GraphQLApi.Security;
 
 /// <summary>

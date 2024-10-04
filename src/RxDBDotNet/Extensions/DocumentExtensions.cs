@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿// src\RxDBDotNet\Extensions\DocumentExtensions.cs
+using System.Reflection;
 using RxDBDotNet.Documents;
 
 namespace RxDBDotNet.Extensions;

@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Security;
+﻿// src\RxDBDotNet\Security\DocumentOperation.cs
+namespace RxDBDotNet.Security;
 
 /// <summary>
 /// Represents an operation performed on a document.

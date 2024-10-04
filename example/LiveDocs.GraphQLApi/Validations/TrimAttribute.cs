@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Validations/TrimAttribute.cs
+
+using System.ComponentModel.DataAnnotations;
 
 namespace LiveDocs.GraphQLApi.Validations;
 

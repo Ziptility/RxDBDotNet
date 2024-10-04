@@ -1,3 +1,4 @@
+// example/livedocs-client/src/components/WorkspaceList.tsx
 import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';

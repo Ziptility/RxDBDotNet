@@ -1,4 +1,5 @@
-﻿using System.Security.Authentication;
+﻿// src\RxDBDotNet\Extensions\GraphQLBuilderExtensions.cs
+using System.Security.Authentication;
 using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
 using HotChocolate.Subscriptions;

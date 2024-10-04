@@ -1,4 +1,4 @@
-// src\components\LiveDocList.tsx
+// example/livedocs-client/src/components/LiveDocList.tsx
 import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';

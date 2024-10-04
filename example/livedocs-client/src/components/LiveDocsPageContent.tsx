@@ -1,4 +1,4 @@
-// src\components\LiveDocsPageContent.tsx
+// example/livedocs-client/src/components/LiveDocsPageContent.tsx
 import React, { useState, useCallback } from 'react';
 import { Add as AddIcon } from '@mui/icons-material';
 import { Box, Fab, Tooltip } from '@mui/material';

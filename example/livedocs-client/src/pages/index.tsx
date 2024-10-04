@@ -1,4 +1,4 @@
-// src\pages\index.tsx
+// example/livedocs-client/src/pages/index.tsx
 import React from 'react';
 import { Typography, Box } from '@mui/material';
 import { motion } from 'framer-motion';

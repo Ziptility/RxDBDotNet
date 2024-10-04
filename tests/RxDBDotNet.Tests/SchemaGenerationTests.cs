@@ -1,4 +1,5 @@
-﻿using GraphQlClientGenerator;
+﻿// tests\RxDBDotNet.Tests\SchemaGenerationTests.cs
+using GraphQlClientGenerator;
 using Newtonsoft.Json;
 
 namespace RxDBDotNet.Tests;

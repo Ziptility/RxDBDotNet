@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Models/Entities/ReplicatedEntity.cs
+
+using System.ComponentModel.DataAnnotations;
 
 namespace LiveDocs.GraphQLApi.Models.Entities;
 

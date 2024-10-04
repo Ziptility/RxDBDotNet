@@ -1,4 +1,4 @@
-<!-- ./README.md -->
+<!-- example/livedocs-client/README.md -->
 
 # RxDBDotNet Example Client App
 

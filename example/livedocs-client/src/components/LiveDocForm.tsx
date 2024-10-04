@@ -1,4 +1,4 @@
-// src\components\LiveDocForm.tsx
+// example/livedocs-client/src/components/LiveDocForm.tsx
 import React, { useEffect } from 'react';
 import { TextField, MenuItem, FormControl, InputLabel, Select, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';

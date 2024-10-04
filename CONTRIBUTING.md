@@ -1,18 +1,22 @@
+<!-- CONTRIBUTING.md -->
 # Contributing to RxDBDotNet
 
 We're thrilled that you're interested in contributing to RxDBDotNet! This document provides guidelines for doing so. By participating in this project, you agree to its terms.
 
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Submitting Changes](#submitting-changes)
-- [Coding Standards](#coding-standards)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Community](#community)
-- [Reporting Security Issues](#reporting-security-issues)
+- [Contributing to RxDBDotNet](#contributing-to-rxdbdotnet)
+  - [Table of Contents](#table-of-contents)
+  - [Code of Conduct](#code-of-conduct)
+  - [Getting Started](#getting-started)
+  - [Development Workflow](#development-workflow)
+  - [Submitting Changes](#submitting-changes)
+  - [Pull Request Titles](#pull-request-titles)
+  - [Coding Standards](#coding-standards)
+  - [Testing](#testing)
+  - [Documentation](#documentation)
+  - [Community](#community)
+  - [Reporting Security Issues](#reporting-security-issues)
 
 ## Code of Conduct
 

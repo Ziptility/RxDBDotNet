@@ -1,4 +1,6 @@
-﻿namespace RxDBDotNet.Documents;
+﻿// src\RxDBDotNet\Documents\IReplicatedDocument.cs
+
+namespace RxDBDotNet.Documents;
 
 /// <summary>
 /// Represents the minimum requirements for a document to be replicated using RxDBDotNet.

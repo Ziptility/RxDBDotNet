@@ -1,4 +1,4 @@
-<!-- ./ROADMAP.md -->
+<!-- example/livedocs-client/ROADMAP.md -->
 
 # RxDBDotNet Example Client App Roadmap
 

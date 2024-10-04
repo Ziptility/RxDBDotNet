@@ -1,4 +1,6 @@
-﻿using LiveDocs.GraphQLApi.Data;
+﻿// example/LiveDocs.GraphQLApi/Infrastructure/LiveDocsDbInitializer.cs
+
+using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
 using LiveDocs.GraphQLApi.Security;

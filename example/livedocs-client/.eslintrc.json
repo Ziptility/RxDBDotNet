@@ -1,3 +1,4 @@
+// example/livedocs-client/.eslintrc.json
 {
   "root": true,
   "extends": [

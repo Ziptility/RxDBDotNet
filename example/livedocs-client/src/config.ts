@@ -1,4 +1,4 @@
-// src\config.ts
+// example/livedocs-client/src/config.ts
 export const API_CONFIG = {
   GRAPHQL_ENDPOINT: 'http://localhost:5414/graphql',
   WS_ENDPOINT: 'ws://localhost:5414/graphql',

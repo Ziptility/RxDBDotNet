@@ -1,4 +1,4 @@
-// src/components/NavigationRail.tsx
+// example/livedocs-client/src/components/NavigationRail.tsx
 import React, { useState, useCallback } from 'react';
 import {
   Home as HomeIcon,

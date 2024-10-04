@@ -1,4 +1,4 @@
-// src/utils/globalErrorListeners.ts
+// example/livedocs-client/src/utils/globalErrorListeners.ts
 
 export const setupGlobalErrorListeners = (): void => {
   if (typeof window !== 'undefined') {

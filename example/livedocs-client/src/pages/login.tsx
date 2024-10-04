@@ -1,4 +1,4 @@
-// src/pages/login.tsx
+// example/livedocs-client/src/pages/login.tsx
 import React, { useEffect } from 'react';
 import { FormControl, InputLabel, MenuItem, Select, Typography, Button } from '@mui/material';
 import { motion } from 'framer-motion';

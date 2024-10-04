@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿// example/LiveDocs.GraphQLApi/Security/UserRole.cs
+
+using System.Text.Json.Serialization;
 using HotChocolate;
 
 namespace LiveDocs.GraphQLApi.Security;

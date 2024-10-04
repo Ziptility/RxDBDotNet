@@ -1,4 +1,4 @@
-// src\createEmotionCache.ts
+// example/livedocs-client/src/createEmotionCache.ts
 import createCache from '@emotion/cache';
 import type { EmotionCache } from '@emotion/cache';
 

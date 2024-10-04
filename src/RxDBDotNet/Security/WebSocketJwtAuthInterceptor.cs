@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿// src\RxDBDotNet\Security\WebSocketJwtAuthInterceptor.cs
+-using System.Security.Claims;
 using HotChocolate.AspNetCore;
 using HotChocolate.AspNetCore.Subscriptions;
 using HotChocolate.AspNetCore.Subscriptions.Protocols;

@@ -1,4 +1,4 @@
-// src/lib/schemas.ts
+// example/livedocs-client/src/lib/schemas.ts
 import { toTypedRxJsonSchema, type RxJsonSchema } from 'rxdb';
 import { type User, UserRole, type LiveDoc, type Workspace } from '@/generated/graphql';
 

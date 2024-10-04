@@ -1,4 +1,4 @@
-<!-- ./REQUIREMENTS.md -->
+<!-- example/livedocs-client/REQUIREMENTS.md -->
 
 # RxDBDotNet Example Client App Requirements
 

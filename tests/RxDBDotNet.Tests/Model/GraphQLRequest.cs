@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Tests.Model;
+﻿// tests\RxDBDotNet.Tests\Model\GraphQLRequest.cs
+namespace RxDBDotNet.Tests.Model;
 
 public readonly record struct GraphQLRequest
 {

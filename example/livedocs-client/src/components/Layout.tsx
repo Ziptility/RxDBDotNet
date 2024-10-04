@@ -1,4 +1,4 @@
-// src/components/Layout.tsx
+// example/livedocs-client/src/components/Layout.tsx
 import React, { type ReactNode } from 'react';
 import { Box } from '@mui/material';
 import { motion } from 'framer-motion';

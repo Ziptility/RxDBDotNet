@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Security;
+﻿// src\RxDBDotNet\Security\SocketConnectPayload.cs
+namespace RxDBDotNet.Security;
 
 /// <summary>
 /// Represents the payload for a socket connection, containing the necessary authorization information.

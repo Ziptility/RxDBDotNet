@@ -1,4 +1,6 @@
-﻿namespace LiveDocs.GraphQLApi.Infrastructure;
+﻿// example/LiveDocs.GraphQLApi/Infrastructure/ConfigKeys.cs
+
+namespace LiveDocs.GraphQLApi.Infrastructure;
 
 public static class ConfigKeys
 {

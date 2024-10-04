@@ -1,4 +1,4 @@
-// src\components\NavButtons.tsx
+// example/livedocs-client/src/components/NavButtons.tsx
 import React from 'react';
 import { Button } from '@mui/material';
 import Link from 'next/link';

@@ -1,4 +1,4 @@
-// src\types\index.ts
+// example/livedocs-client/src/types/index.ts
 import type { Checkpoint, LiveDoc, Maybe, Scalars, User, Workspace } from '@/generated/graphql';
 import type { RxCollection, RxDatabase, SyncOptionsGraphQL, RxJsonSchema } from 'rxdb';
 import type { RxGraphQLReplicationState } from 'rxdb/plugins/replication-graphql';

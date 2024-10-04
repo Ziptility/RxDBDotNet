@@ -1,4 +1,4 @@
-// src\pages\livedocs.tsx
+// example/livedocs-client/src/pages/livedocs.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';

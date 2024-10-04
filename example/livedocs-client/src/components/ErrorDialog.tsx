@@ -1,4 +1,4 @@
-// src/components/ErrorDialog.tsx
+// example/livedocs-client/src/components/ErrorDialog.tsx
 import React from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from '@mui/material';
 

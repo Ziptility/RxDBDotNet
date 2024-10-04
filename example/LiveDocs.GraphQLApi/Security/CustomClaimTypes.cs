@@ -1,4 +1,6 @@
-﻿namespace LiveDocs.GraphQLApi.Security;
+﻿// example/LiveDocs.GraphQLApi/Security/CustomClaimTypes.cs
+
+namespace LiveDocs.GraphQLApi.Security;
 
 /// <summary>
 /// Provides custom claim types used within the LiveDocs example app.

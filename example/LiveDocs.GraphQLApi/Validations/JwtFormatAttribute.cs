@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Validations/JwtFormatAttribute.cs
+
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace LiveDocs.GraphQLApi.Validations

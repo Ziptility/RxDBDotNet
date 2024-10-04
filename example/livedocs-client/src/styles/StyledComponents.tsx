@@ -1,4 +1,4 @@
-// src\styles\StyledComponents.tsx
+// example/livedocs-client/src/styles/StyledComponents.tsx
 import {
   Box,
   Button,

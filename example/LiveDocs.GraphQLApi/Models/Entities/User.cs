@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Models/Entities/User.cs
+
+using System.ComponentModel.DataAnnotations;
 using LiveDocs.GraphQLApi.Security;
 using LiveDocs.GraphQLApi.Validations;
 

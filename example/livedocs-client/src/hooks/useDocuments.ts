@@ -1,4 +1,4 @@
-// src\hooks\useDocuments.ts
+// example/livedocs-client/src/hooks/useDocuments.ts
 import { useState, useEffect } from 'react';
 import { Subscription } from 'rxjs';
 import { getDatabase } from '@/lib/database';

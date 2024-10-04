@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Documents;
+﻿// src\RxDBDotNet\Extensions\ReplicationOptions.cs
+using RxDBDotNet.Documents;
 using RxDBDotNet.Security;
 
 namespace RxDBDotNet.Extensions;

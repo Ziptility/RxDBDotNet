@@ -1,4 +1,4 @@
-<!-- ./DESIGN.md -->
+<!-- example/livedocs-client/DESIGN.md -->
 
 # LiveDocs Application Design and Development Guidelines
 

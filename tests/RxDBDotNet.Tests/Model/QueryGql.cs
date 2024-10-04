@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿// tests\RxDBDotNet.Tests\Model\QueryGql.cs
+using System.Text.Json.Serialization;
 
 namespace RxDBDotNet.Tests.Model;
 

@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Models;
+﻿// src\RxDBDotNet\Models\Checkpoint.cs
+namespace RxDBDotNet.Models;
 
 /// <summary>
 ///     Represents a checkpoint in the replication process.

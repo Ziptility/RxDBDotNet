@@ -1,4 +1,4 @@
-// src/lib/liveDocReplication.ts
+// example/livedocs-client/src/lib/liveDocReplication.ts
 
 import { replicateGraphQL } from 'rxdb/plugins/replication-graphql';
 import { API_CONFIG } from '@/config';

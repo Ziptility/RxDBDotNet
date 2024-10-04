@@ -1,4 +1,4 @@
-// src/next.config.js
+// example/livedocs-client/next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

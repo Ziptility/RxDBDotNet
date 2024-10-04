@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿// src\RxDBDotNet\Resolvers\SubscriptionResolver.cs
+using System.Runtime.CompilerServices;
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using RxDBDotNet.Documents;

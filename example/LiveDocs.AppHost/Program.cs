@@ -1,3 +1,5 @@
+// example/LiveDocs.AppHost/Program.cs
+
 using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);

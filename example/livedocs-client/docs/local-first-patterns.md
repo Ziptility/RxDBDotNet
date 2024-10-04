@@ -1,4 +1,4 @@
-<!-- docs/local-first-patterns.md -->
+<!-- example/livedocs-client/docs/local-first-patterns.md -->
 
 # Local-First Patterns in RxDBDotNet Example Client App
 

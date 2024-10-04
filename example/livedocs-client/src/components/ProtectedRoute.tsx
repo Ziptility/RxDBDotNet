@@ -1,4 +1,4 @@
-// src\components\ProtectedRoute.tsx
+// example/livedocs-client/src/components/ProtectedRoute.tsx
 import React, { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { CircularProgress, Box } from '@mui/material';

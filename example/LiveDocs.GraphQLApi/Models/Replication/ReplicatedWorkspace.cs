@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Models/Replication/ReplicatedWorkspace.cs
+
+using System.ComponentModel.DataAnnotations;
 using HotChocolate;
 using LiveDocs.GraphQLApi.Validations;
 

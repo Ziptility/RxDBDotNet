@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// src\RxDBDotNet\Security\PolicyRequirement.cs
+-using Microsoft.AspNetCore.Authorization;
 
 namespace RxDBDotNet.Security;
 

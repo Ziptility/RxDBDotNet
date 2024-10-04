@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.tsx
+// example/livedocs-client/src/contexts/AuthContext.tsx
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';

@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Documents;
+﻿// src\RxDBDotNet\Security\SecurityOptions.cs
+using RxDBDotNet.Documents;
 
 namespace RxDBDotNet.Security;
 

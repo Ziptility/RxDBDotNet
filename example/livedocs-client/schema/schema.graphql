@@ -1,6 +1,7 @@
 """
-src/schema/schema.graphql
+example/livedocs-client/schema/schema.graphql
 """
+
 type Query {
   """
   Pulls LiveDoc documents from the server based on the given checkpoint, limit, optional filters, and projections

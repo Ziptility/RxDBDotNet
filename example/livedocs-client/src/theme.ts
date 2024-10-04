@@ -1,4 +1,4 @@
-// src\theme.ts
+// example/livedocs-client/src/theme.ts
 import {
   argbFromHex,
   themeFromSourceColor,

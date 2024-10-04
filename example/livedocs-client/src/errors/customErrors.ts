@@ -1,4 +1,4 @@
-// src\errors\customErrors.ts
+// example/livedocs-client/src/errors/customErrors.ts
 export class LiveDocsError extends Error {
   constructor(
     message: string,

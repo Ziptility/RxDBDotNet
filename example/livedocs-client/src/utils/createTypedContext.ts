@@ -1,4 +1,4 @@
-// src\utils\createTypedContext.ts
+// example/livedocs-client/src/utils/createTypedContext.ts
 import { createContext, useContext, type Provider } from 'react';
 
 export function createTypedContext<T>(): readonly [() => T, Provider<T | undefined>] {

@@ -1,4 +1,4 @@
-// src/utils/errorHandling.ts
+// example/livedocs-client/src/utils/errorHandling.ts
 
 /**
  * Enum representing different types of errors in the application.

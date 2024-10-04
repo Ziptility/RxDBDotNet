@@ -1,5 +1,5 @@
 /* eslint-disable react/no-multi-comp */
-// src/components/FormComponents.tsx
+// example/livedocs-client/src/components/FormComponents.tsx
 import React from 'react';
 import { Alert, Box, Stack, Button } from '@mui/material';
 import { PageTitle } from '@/styles/StyledComponents';

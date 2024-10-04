@@ -1,4 +1,4 @@
-// src\components\ErrorBoundary.tsx
+// example/livedocs-client/src/components/ErrorBoundary.tsx
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 

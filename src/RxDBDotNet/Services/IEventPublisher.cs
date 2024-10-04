@@ -1,5 +1,7 @@
 ﻿// src\RxDBDotNet\Services\IEventPublisher.cs
 
+using RxDBDotNet.Documents;
+
 namespace RxDBDotNet.Services;
 
 /// <summary>

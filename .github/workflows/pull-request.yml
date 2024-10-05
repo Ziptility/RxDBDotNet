@@ -19,6 +19,9 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Install dotnet-trx
+      run: dotnet tool install -g dotnet-trx
+
     - name: Install .NET Aspire workload
       run: dotnet workload install aspire
 
@@ -54,7 +57,7 @@ jobs:
           --logger "console;verbosity=detailed" \
           --logger "trx;LogFileName=test-results.trx" \
           --results-directory ./TestResults
-      timeout-minutes: 10
+      timeout-minutes: 5
 
     - name: Check Docker status after tests
       if: always()
@@ -63,17 +66,11 @@ jobs:
         docker logs $(docker ps -aq --filter name=rxdbdotnet_test_db)
         docker logs $(docker ps -aq --filter name=rxdbdotnet_test_redis)
 
-    - name: Display test output
+    - name: Display test results summary
       if: always()
       run: |
-        echo "Test Output:"
-        cat ./TestResults/test-results.trx
-        echo "Environment Variables:"
-        env
-        echo "Directory Structure:"
-        find .
-        echo "Docker Disk Usage:"
-        docker system df -v
+        echo "Test Results Summary:"
+        dotnet-trx --output Compact ./TestResults/test-results.trx
 
     - name: Upload test results
       if: always()

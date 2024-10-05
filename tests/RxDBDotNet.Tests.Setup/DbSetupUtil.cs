@@ -1,7 +1,6 @@
 ﻿using Docker.DotNet;
 using Docker.DotNet.Models;
 using LiveDocs.GraphQLApi.Infrastructure;
-using Polly;
 using Testcontainers.MsSql;
 
 namespace RxDBDotNet.Tests.Setup
@@ -14,7 +13,10 @@ namespace RxDBDotNet.Tests.Setup
 
         public static async Task SetupAsync()
         {
-            if (_isInitialized) return;
+            if (_isInitialized)
+            {
+                return;
+            }
 
             await Semaphore.WaitAsync();
             try
@@ -31,73 +33,55 @@ namespace RxDBDotNet.Tests.Setup
             }
         }
 
-        private static Task SetupInternalAsync()
+        private static async Task SetupInternalAsync()
         {
             Environment.SetEnvironmentVariable(ConfigKeys.DbConnectionString, DbConnectionString);
 
             const string containerName = "rxdbdotnet_test_db";
             const string saPassword = "Admin123!";
 
-            var policy = Policy
-                .Handle<Exception>()
-                .WaitAndRetryAsync(3, retryAttempt =>
-                        TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    (exception, timeSpan, retryCount, _) => Console.WriteLine($"Error during database setup (Attempt {retryCount}). Retrying in {timeSpan}... Error: {exception.Message}"));
+            Console.WriteLine("Starting database setup...");
+            using var dockerClientConfiguration = new DockerClientConfiguration();
+            using var client = dockerClientConfiguration.CreateClient();
 
-            return policy.ExecuteAsync(async () =>
+            var existingContainers = await client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
+            var existingContainer = existingContainers.FirstOrDefault(c => c.Names.Contains($"/{containerName}", StringComparer.OrdinalIgnoreCase));
+
+            if (existingContainer != null)
             {
-                Console.WriteLine("Starting database setup...");
-                using var dockerClientConfiguration = new DockerClientConfiguration();
-                using var client = dockerClientConfiguration.CreateClient();
-
-                var existingContainers = await client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
-                var existingContainer = existingContainers.FirstOrDefault(c => c.Names.Contains($"/{containerName}", StringComparer.OrdinalIgnoreCase));
-
-                if (existingContainer != null)
+                if (!string.Equals(existingContainer.State, "running", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.Equals(existingContainer.State, "running", StringComparison.OrdinalIgnoreCase))
-                    {
-                        Console.WriteLine($"Starting existing SQL Server container: {existingContainer.ID}");
-                        await client.Containers.StartContainerAsync(existingContainer.ID, new ContainerStartParameters());
-                        Console.WriteLine($"Started existing SQL Server container: {existingContainer.ID}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"SQL Server container is already running: {existingContainer.ID}");
-                    }
+                    Console.WriteLine($"Starting existing SQL Server container: {existingContainer.ID}");
+                    await client.Containers.StartContainerAsync(existingContainer.ID, new ContainerStartParameters());
+                    Console.WriteLine($"Started existing SQL Server container: {existingContainer.ID}");
                 }
                 else
                 {
-                    Console.WriteLine("Creating new SQL Server container...");
-                    var sqlServerContainer = new MsSqlBuilder()
-                        .WithName(containerName)
-                        .WithPassword(saPassword)
-                        .WithPortBinding(1445, 1433)
-                        .WithCleanUp(false)
-                        .Build();
-
-                    await sqlServerContainer.StartAsync();
-                    Console.WriteLine("Started new SQL Server container");
+                    Console.WriteLine($"SQL Server container is already running: {existingContainer.ID}");
                 }
+            }
+            else
+            {
+                Console.WriteLine("Creating new SQL Server container...");
+                var sqlServerContainer = new MsSqlBuilder()
+                    .WithName(containerName)
+                    .WithPassword(saPassword)
+                    .WithPortBinding(1445, 1433)
+                    .WithCleanUp(false)
+                    .Build();
 
-                await InitializeDatabaseWithRetry();
-            });
+                await sqlServerContainer.StartAsync();
+                Console.WriteLine("Started new SQL Server container");
+            }
+
+            await InitializeDatabase();
         }
 
-        private static Task InitializeDatabaseWithRetry()
+        private static async Task InitializeDatabase()
         {
-            var policy = Policy
-                .Handle<Exception>()
-                .WaitAndRetryAsync(3, retryAttempt =>
-                        TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    (exception, timeSpan, retryCount, _) => Console.WriteLine($"Error during database initialization (Attempt {retryCount}). Retrying in {timeSpan}... Error: {exception.Message}"));
-
-            return policy.ExecuteAsync(async () =>
-            {
-                Console.WriteLine("Initializing database...");
-                await LiveDocsDbInitializer.InitializeAsync();
-                Console.WriteLine("Database initialized successfully");
-            });
+            Console.WriteLine("Initializing database...");
+            await LiveDocsDbInitializer.InitializeAsync();
+            Console.WriteLine("Database initialized successfully");
         }
     }
 }

@@ -40,8 +40,32 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test with coverage
-      run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --collect:"XPlat Code Coverage" --settings coverlet.runsettings
-      timeout-minutes: 5
+      run: |
+        dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj \
+          --configuration Release \
+          --collect:"XPlat Code Coverage" \
+          --settings coverlet.runsettings \
+          --logger "console;verbosity=detailed" \
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory ./TestResults
+      timeout-minutes: 3
+
+    - name: Display test output
+      if: always()
+      run: |
+        echo "Test Output:"
+        cat ./TestResults/test-results.trx
+        echo "Environment Variables:"
+        env
+        echo "Directory Structure:"
+        find .
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-results
+        path: ./TestResults
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1

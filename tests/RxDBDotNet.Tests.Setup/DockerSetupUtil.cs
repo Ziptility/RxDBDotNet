@@ -1,5 +1,4 @@
-﻿using Polly;
-using Xunit;
+﻿using Xunit;
 
 namespace RxDBDotNet.Tests.Setup
 {
@@ -10,7 +9,10 @@ namespace RxDBDotNet.Tests.Setup
 
         public async Task InitializeAsync()
         {
-            if (_isInitialized) return;
+            if (_isInitialized)
+            {
+                return;
+            }
 
             await Semaphore.WaitAsync();
             try
@@ -29,21 +31,12 @@ namespace RxDBDotNet.Tests.Setup
 
         public Task DisposeAsync() => Task.CompletedTask;
 
-        private static Task InitializeAsyncInternal()
+        private static async Task InitializeAsyncInternal()
         {
-            var policy = Policy
-                .Handle<Exception>()
-                .WaitAndRetryAsync(3, retryAttempt =>
-                        TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    (exception, timeSpan, retryCount, _) => Console.WriteLine($"Error during Docker setup (Attempt {retryCount}). Retrying in {timeSpan}... Error: {exception.Message}"));
-
-            return policy.ExecuteAsync(async () =>
-            {
-                Console.WriteLine("Starting Docker setup...");
-                await RedisSetupUtil.SetupAsync();
-                await DbSetupUtil.SetupAsync();
-                Console.WriteLine("Docker setup completed successfully");
-            });
+            Console.WriteLine("Starting Docker setup...");
+            await RedisSetupUtil.SetupAsync();
+            await DbSetupUtil.SetupAsync();
+            Console.WriteLine("Docker setup completed successfully");
         }
     }
 }

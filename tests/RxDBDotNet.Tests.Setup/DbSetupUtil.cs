@@ -49,33 +49,7 @@ namespace RxDBDotNet.Tests.Setup
                 var existingContainers = await client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
                 var existingContainer = existingContainers.FirstOrDefault(c => c.Names.Contains($"/{containerName}", StringComparer.OrdinalIgnoreCase));
 
-                if (existingContainer != null)
-                {
-                    Console.WriteLine($"Found existing container: {existingContainer.ID}, State: {existingContainer.State}");
-                    if (!string.Equals(existingContainer.State, "running", StringComparison.OrdinalIgnoreCase))
-                    {
-                        Console.WriteLine($"Starting existing SQL Server container: {existingContainer.ID}");
-                        await client.Containers.StartContainerAsync(existingContainer.ID, new ContainerStartParameters());
-                        Console.WriteLine($"Started existing SQL Server container: {existingContainer.ID}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"SQL Server container is already running: {existingContainer.ID}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Creating new SQL Server container...");
-                    var sqlServerContainer = new MsSqlBuilder()
-                        .WithName(containerName)
-                        .WithPassword(saPassword)
-                        .WithPortBinding(1445, 1433)
-                        .WithCleanUp(false)
-                        .Build();
-
-                    await sqlServerContainer.StartAsync();
-                    Console.WriteLine("Started new SQL Server container");
-                }
+                await HandleSqlServerContainer(existingContainer, client, containerName, saPassword);
 
                 // Wait for the container to be fully started
                 await Task.Delay(TimeSpan.FromSeconds(10));
@@ -99,6 +73,38 @@ namespace RxDBDotNet.Tests.Setup
                 Console.WriteLine($"Error during database setup: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
+            }
+        }
+
+        private static async Task HandleSqlServerContainer(ContainerListResponse? existingContainer, DockerClient client,
+            string containerName, string saPassword)
+        {
+            if (existingContainer != null)
+            {
+                Console.WriteLine($"Found existing container: {existingContainer.ID}, State: {existingContainer.State}");
+                if (!string.Equals(existingContainer.State, "running", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"Starting existing SQL Server container: {existingContainer.ID}");
+                    await client.Containers.StartContainerAsync(existingContainer.ID, new ContainerStartParameters());
+                    Console.WriteLine($"Started existing SQL Server container: {existingContainer.ID}");
+                }
+                else
+                {
+                    Console.WriteLine($"SQL Server container is already running: {existingContainer.ID}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Creating new SQL Server container...");
+                var sqlServerContainer = new MsSqlBuilder()
+                    .WithName(containerName)
+                    .WithPassword(saPassword)
+                    .WithPortBinding(1445, 1433)
+                    .WithCleanUp(false)
+                    .Build();
+
+                await sqlServerContainer.StartAsync();
+                Console.WriteLine("Started new SQL Server container");
             }
         }
 

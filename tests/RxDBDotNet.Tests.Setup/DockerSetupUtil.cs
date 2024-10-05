@@ -1,38 +1,51 @@
-﻿// tests\RxDBDotNet.Tests.Setup\DockerSetupUtil.cs
+﻿using Microsoft.Extensions.Logging;
+using Polly;
 using Xunit;
 
 namespace RxDBDotNet.Tests.Setup;
 
 public sealed class DockerSetupUtil : IAsyncLifetime
 {
-    private readonly Lazy<Task> _initializer = new(InitializeAsyncInternal);
+    private static readonly ILogger<DockerSetupUtil> Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<DockerSetupUtil>();
+    private static readonly SemaphoreSlim Semaphore = new(1, 1);
+    private static volatile bool _isInitialized;
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
-        return _initializer.Value;
-    }
-
-    public Task DisposeAsync()
-    {
-        // since the test containers are expensive to setup
-        // we don't want to dispose of them after each test run.
-        // Manually delete them when necessary; for example,
-        // when the db schema changes.
-        return Task.CompletedTask;
-    }
-
-    private static async Task InitializeAsyncInternal()
-    {
-        if (!IsRunningInGitHubActions())
+        if (_isInitialized)
         {
-            await RedisSetupUtil.SetupAsync();
+            return;
         }
 
-        await DbSetupUtil.SetupAsync();
+        await Semaphore.WaitAsync();
+        try
+        {
+            if (!_isInitialized)
+            {
+                await InitializeAsyncInternal();
+                _isInitialized = true;
+            }
+        }
+        finally
+        {
+            Semaphore.Release();
+        }
     }
 
-    private static bool IsRunningInGitHubActions()
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    private static Task InitializeAsyncInternal()
     {
-        return string.Equals(Environment.GetEnvironmentVariable("CI_ENVIRONMENT"), "true", StringComparison.OrdinalIgnoreCase);
+        var policy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(3, retryAttempt =>
+                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                (exception, timeSpan, retryCount, _) => Logger.LogWarning(exception, "Error during Docker setup (Attempt {RetryCount}). Retrying in {RetryTimeSpan}...", retryCount, timeSpan));
+
+        return policy.ExecuteAsync(async () =>
+        {
+            await RedisSetupUtil.SetupAsync();
+            await DbSetupUtil.SetupAsync();
+        });
     }
 }

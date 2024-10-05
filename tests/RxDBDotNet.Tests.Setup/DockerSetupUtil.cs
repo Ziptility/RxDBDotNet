@@ -23,8 +23,16 @@ public sealed class DockerSetupUtil : IAsyncLifetime
 
     private static async Task InitializeAsyncInternal()
     {
-        await RedisSetupUtil.SetupAsync();
+        if (!IsRunningInGitHubActions())
+        {
+            await RedisSetupUtil.SetupAsync();
+        }
 
         await DbSetupUtil.SetupAsync();
+    }
+
+    private static bool IsRunningInGitHubActions()
+    {
+        return string.Equals(Environment.GetEnvironmentVariable("CI_ENVIRONMENT"), "true", StringComparison.OrdinalIgnoreCase);
     }
 }

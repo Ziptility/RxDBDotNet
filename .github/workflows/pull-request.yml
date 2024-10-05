@@ -9,6 +9,29 @@ on:
 jobs:
   build-and-test-pr:
     runs-on: ubuntu-latest
+    services:
+      sql-server:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        env:
+          SA_PASSWORD: Admin123!
+          ACCEPT_EULA: Y
+        ports:
+          - 1445:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Admin123!' -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.0
+        ports:
+          - 3333:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v3
       with:
@@ -41,7 +64,9 @@ jobs:
 
     - name: Test with coverage
       run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --collect:"XPlat Code Coverage" --settings coverlet.runsettings
-      timeout-minutes: 5
+      env:
+        CI_ENVIRONMENT: true
+      timeout-minutes: 10
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1

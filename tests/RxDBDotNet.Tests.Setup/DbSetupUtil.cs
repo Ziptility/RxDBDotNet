@@ -23,6 +23,13 @@ public static class DbSetupUtil
         {
             if (!_isInitialized)
             {
+                if (IsRunningInGitHubActions())
+                {
+                    // In GitHub Actions, the SQL Server is already set up as a service
+                    _isInitialized = true;
+                    return;
+                }
+
                 const string containerName = "rxdbdotnet_test_db";
                 const string saPassword = "Admin123!";
 
@@ -54,8 +61,6 @@ public static class DbSetupUtil
                     await sqlServerDockerContainer.StartAsync();
                 }
 
-                await LiveDocsDbInitializer.InitializeAsync();
-
                 _isInitialized = true;
             }
         }
@@ -63,5 +68,12 @@ public static class DbSetupUtil
         {
             Semaphore.Release();
         }
+
+        await LiveDocsDbInitializer.InitializeAsync();
+    }
+
+    private static bool IsRunningInGitHubActions()
+    {
+        return string.Equals(Environment.GetEnvironmentVariable("CI_ENVIRONMENT"), "true", StringComparison.OrdinalIgnoreCase);
     }
 }

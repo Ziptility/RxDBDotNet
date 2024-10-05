@@ -39,6 +39,12 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    - name: Check Docker status before tests
+      run: |
+        docker ps -a
+        docker system info
+        docker version
+
     - name: Test with coverage
       run: |
         dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj \
@@ -48,7 +54,14 @@ jobs:
           --logger "console;verbosity=detailed" \
           --logger "trx;LogFileName=test-results.trx" \
           --results-directory ./TestResults
-      timeout-minutes: 5
+      timeout-minutes: 10
+
+    - name: Check Docker status after tests
+      if: always()
+      run: |
+        docker ps -a
+        docker logs $(docker ps -aq --filter name=rxdbdotnet_test_db)
+        docker logs $(docker ps -aq --filter name=rxdbdotnet_test_redis)
 
     - name: Display test output
       if: always()
@@ -59,6 +72,8 @@ jobs:
         env
         echo "Directory Structure:"
         find .
+        echo "Docker Disk Usage:"
+        docker system df -v
 
     - name: Upload test results
       if: always()

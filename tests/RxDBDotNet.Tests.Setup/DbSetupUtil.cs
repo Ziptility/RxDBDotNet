@@ -44,37 +44,62 @@ namespace RxDBDotNet.Tests.Setup
             using var dockerClientConfiguration = new DockerClientConfiguration();
             using var client = dockerClientConfiguration.CreateClient();
 
-            var existingContainers = await client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
-            var existingContainer = existingContainers.FirstOrDefault(c => c.Names.Contains($"/{containerName}", StringComparer.OrdinalIgnoreCase));
-
-            if (existingContainer != null)
+            try
             {
-                if (!string.Equals(existingContainer.State, "running", StringComparison.OrdinalIgnoreCase))
+                var existingContainers = await client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
+                var existingContainer = existingContainers.FirstOrDefault(c => c.Names.Contains($"/{containerName}", StringComparer.OrdinalIgnoreCase));
+
+                if (existingContainer != null)
                 {
-                    Console.WriteLine($"Starting existing SQL Server container: {existingContainer.ID}");
-                    await client.Containers.StartContainerAsync(existingContainer.ID, new ContainerStartParameters());
-                    Console.WriteLine($"Started existing SQL Server container: {existingContainer.ID}");
+                    Console.WriteLine($"Found existing container: {existingContainer.ID}, State: {existingContainer.State}");
+                    if (!string.Equals(existingContainer.State, "running", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine($"Starting existing SQL Server container: {existingContainer.ID}");
+                        await client.Containers.StartContainerAsync(existingContainer.ID, new ContainerStartParameters());
+                        Console.WriteLine($"Started existing SQL Server container: {existingContainer.ID}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"SQL Server container is already running: {existingContainer.ID}");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"SQL Server container is already running: {existingContainer.ID}");
+                    Console.WriteLine("Creating new SQL Server container...");
+                    var sqlServerContainer = new MsSqlBuilder()
+                        .WithName(containerName)
+                        .WithPassword(saPassword)
+                        .WithPortBinding(1445, 1433)
+                        .WithCleanUp(false)
+                        .Build();
+
+                    await sqlServerContainer.StartAsync();
+                    Console.WriteLine("Started new SQL Server container");
                 }
+
+                // Wait for the container to be fully started
+                await Task.Delay(TimeSpan.FromSeconds(10));
+
+                Console.WriteLine("Checking container status...");
+                var containers = await client.Containers.ListContainersAsync(new ContainersListParameters { All = true });
+                var container = containers.FirstOrDefault(c => c.Names.Contains($"/{containerName}", StringComparer.OrdinalIgnoreCase));
+                if (container != null)
+                {
+                    Console.WriteLine($"Container status: {container.State}, {container.Status}");
+                }
+                else
+                {
+                    Console.WriteLine("Container not found after starting!");
+                }
+
+                await InitializeDatabase();
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Creating new SQL Server container...");
-                var sqlServerContainer = new MsSqlBuilder()
-                    .WithName(containerName)
-                    .WithPassword(saPassword)
-                    .WithPortBinding(1445, 1433)
-                    .WithCleanUp(false)
-                    .Build();
-
-                await sqlServerContainer.StartAsync();
-                Console.WriteLine("Started new SQL Server container");
+                Console.WriteLine($"Error during database setup: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
             }
-
-            await InitializeDatabase();
         }
 
         private static async Task InitializeDatabase()

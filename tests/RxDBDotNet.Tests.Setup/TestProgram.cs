@@ -34,6 +34,6 @@ public sealed class TestProgram
         builder.Logging.AddFilter(
             "Microsoft.AspNetCore.Http.Connections",
             LogLevel.Critical);
-        builder.Logging.SetMinimumLevel(LogLevel.Critical);
+        builder.Logging.SetMinimumLevel(LogLevel.Information);
     }
 }

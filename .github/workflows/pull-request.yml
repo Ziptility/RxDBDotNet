@@ -48,7 +48,7 @@ jobs:
           --logger "console;verbosity=detailed" \
           --logger "trx;LogFileName=test-results.trx" \
           --results-directory ./TestResults
-      timeout-minutes: 3
+      timeout-minutes: 5
 
     - name: Display test output
       if: always()
@@ -62,7 +62,7 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: test-results
         path: ./TestResults

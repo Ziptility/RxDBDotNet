@@ -1,59 +1,51 @@
 name: Pull Request
-
 on:
   pull_request:
     branches: [ main ]
     types: [opened, reopened, synchronize]
-
 jobs:
   build-and-test-pr:
     runs-on: windows-latest
     steps:
+    - name: Switch to Linux containers
+      run: |
+        & $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
+
+    - name: Verify Docker is using Linux containers
+      run: |
+        docker info
+        if ((docker info --format '{{.OSType}}') -ne 'linux') {
+          Write-Error "Docker is not using Linux containers"
+          exit 1
+        }
+
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-
-    - name: Check Docker Container Mode
-      run: docker info
         
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.0.x'
-
     - name: Install .NET Aspire workload
       run: dotnet workload install aspire
-
-    - name: Install Docker
-      run: |
-        Start-Service docker
-        docker --version
-
-    - name: Pull Redis Docker Image
-      run: |
-        docker pull redis:7.0
-
     - name: Install Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18.x'
-
+      
     - name: Install dependencies and build the client
       working-directory: example/livedocs-client
       run: |
         npm ci
         npm run build
-
     - name: Restore dependencies
       run: dotnet restore
-
     - name: Build
       run: dotnet build --configuration Release --no-restore
-
     - name: Test with coverage
       run: dotnet test ./tests/RxDBDotNet.Tests/RxDBDotNet.Tests.csproj --configuration Release --collect:"XPlat Code Coverage" --settings coverlet.runsettings
       timeout-minutes: 5
-
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4.0.1
       with:

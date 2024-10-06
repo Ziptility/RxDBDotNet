@@ -1,4 +1,6 @@
-﻿using RxDBDotNet.Tests.Model;
+﻿// tests\RxDBDotNet.Tests\AdditionalAuthorizationTests.cs
+using LiveDocs.GraphQLApi.Security;
+using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
 
 namespace RxDBDotNet.Tests;
@@ -62,8 +64,8 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
             Name = workspace.Name,
             IsDeleted = true,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Topics = workspace.Topics?.Select(t => t.Name)
-                .ToList(),
+            Topics = workspace.Topics.ConvertAll(t => t.Name)
+,
         };
 
         var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
@@ -74,8 +76,8 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
                 Name = workspace.Name,
                 IsDeleted = workspace.IsDeleted,
                 UpdatedAt = workspace.UpdatedAt,
-                Topics = workspace.Topics?.Select(t => t.Name)
-                    .ToList(),
+                Topics = workspace.Topics.ConvertAll(t => t.Name)
+,
             },
             NewDocumentState = workspaceToDelete,
         };
@@ -136,8 +138,8 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
             Name = Strings.CreateString(),
             IsDeleted = workspace.IsDeleted,
             UpdatedAt = DateTimeOffset.UtcNow,
-            Topics = workspace.Topics?.Select(t => t.Name)
-                .ToList(),
+            Topics = workspace.Topics.ConvertAll(t => t.Name)
+,
         };
 
         var workspaceInputPushRowGql = new WorkspaceInputPushRowGql
@@ -148,8 +150,8 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
                 Name = workspace.Name,
                 IsDeleted = workspace.IsDeleted,
                 UpdatedAt = workspace.UpdatedAt,
-                Topics = workspace.Topics?.Select(t => t.Name)
-                    .ToList(),
+                Topics = workspace.Topics.ConvertAll(t => t.Name)
+,
             },
             NewDocumentState = updatedWorkspace,
         };
@@ -340,6 +342,6 @@ public class AdditionalAuthorizationTests : IAsyncLifetime
         verifyResponse.Errors.Should()
             .BeNullOrEmpty();
         verifyResponse.Data.PullWorkspace?.Documents.Should()
-            .Contain(w => w.Id == deleteWorkspace.Id!.Value && w.IsDeleted);
+            .Contain(w => w.Id == deleteWorkspace.Id.Value && w.IsDeleted);
     }
 }

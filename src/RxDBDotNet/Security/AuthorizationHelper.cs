@@ -1,4 +1,5 @@
-﻿using System.Security.Authentication;
+﻿// src\RxDBDotNet\Security\AuthorizationHelper.cs
+using System.Security.Authentication;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using RxDBDotNet.Documents;
@@ -25,7 +26,7 @@ public sealed class AuthorizationHelper(IAuthorizationService? authorizationServ
     public async Task AuthorizeAsync<TDocument>(
         ClaimsPrincipal? currentUser,
         DocumentOperation documentOperation,
-        SecurityOptions<TDocument>? securityOptions) where TDocument : class, IReplicatedDocument
+        SecurityOptions<TDocument>? securityOptions) where TDocument : IReplicatedDocument
     {
         ArgumentNullException.ThrowIfNull(documentOperation);
 

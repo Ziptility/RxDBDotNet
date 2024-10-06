@@ -1,7 +1,9 @@
-﻿using System.Linq.Expressions;
+﻿// example/LiveDocs.GraphQLApi/Services/UserService.cs
+
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
+using LiveDocs.GraphQLApi.Security;
 using Microsoft.EntityFrameworkCore;
 using RT.Comb;
 using RxDBDotNet.Services;
@@ -17,21 +19,51 @@ public class UserService : DocumentService<User, ReplicatedUser>
         _dbContext = dbContext;
     }
 
-    protected override Expression<Func<User, ReplicatedUser>> ProjectToDocument()
+    public override IQueryable<ReplicatedUser> GetQueryableDocuments()
     {
-        return user => new ReplicatedUser
+        return _dbContext.Set<User>().AsNoTracking().Select(user => new ReplicatedUser
         {
             Id = user.ReplicatedDocumentId,
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email,
+            Role = user.Role,
             JwtAccessToken = user.JwtAccessToken,
             WorkspaceId = user.Workspace!.ReplicatedDocumentId,
             IsDeleted = user.IsDeleted,
             UpdatedAt = user.UpdatedAt,
 #pragma warning disable RCS1077 // Optimize LINQ method call // EF Core cannot translate the optimized LINQ method call
-            Topics = user.Topics == null ? null : user.Topics.Select(t => t.Name).ToList(),
+            Topics = user.Topics.Select(t => t.Name).ToList(),
 #pragma warning restore RCS1077 // Optimize LINQ method call
+        });
+    }
+
+    protected override Task<User> GetEntityByDocumentIdAsync(Guid documentId, CancellationToken cancellationToken)
+    {
+        return _dbContext.Users
+            // Include the workspace entity in the query
+            // so that the document can be mapped to a ReplicatedUser
+            .Include(ld => ld.Workspace)
+            .SingleAsync(ld => ld.ReplicatedDocumentId == documentId, cancellationToken);
+    }
+
+    protected override ReplicatedUser MapToDocument(User entityToMap)
+    {
+        ArgumentNullException.ThrowIfNull(entityToMap);
+        ArgumentNullException.ThrowIfNull(entityToMap.Workspace);
+
+        return new ReplicatedUser
+        {
+            Id = entityToMap.ReplicatedDocumentId,
+            FirstName = entityToMap.FirstName,
+            LastName = entityToMap.LastName,
+            Email = entityToMap.Email,
+            Role = entityToMap.Role,
+            JwtAccessToken = entityToMap.JwtAccessToken,
+            WorkspaceId = entityToMap.Workspace.ReplicatedDocumentId,
+            IsDeleted = entityToMap.IsDeleted,
+            UpdatedAt = entityToMap.UpdatedAt,
+            Topics = entityToMap.Topics.ConvertAll(t => t.Name),
         };
     }
 
@@ -40,14 +72,17 @@ public class UserService : DocumentService<User, ReplicatedUser>
         ArgumentNullException.ThrowIfNull(updatedDocument);
         ArgumentNullException.ThrowIfNull(entityToUpdate);
 
-        // For simplicity, email and JWT access token cannot be updated
         entityToUpdate.FirstName = updatedDocument.FirstName;
         entityToUpdate.LastName = updatedDocument.LastName;
+        entityToUpdate.Email = updatedDocument.Email;
+        entityToUpdate.Role = updatedDocument.Role;
+        entityToUpdate.JwtAccessToken = JwtUtil.GenerateJwtToken(updatedDocument);
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
-        entityToUpdate.Topics = updatedDocument.Topics?.ConvertAll(t => new Topic
+        entityToUpdate.Topics.Clear();
+        if (updatedDocument.Topics != null)
         {
-            Name = t,
-        });
+            entityToUpdate.Topics.AddRange(updatedDocument.Topics.ConvertAll(t => new Topic { Name = t }));
+        }
 
         return entityToUpdate;
     }
@@ -56,10 +91,11 @@ public class UserService : DocumentService<User, ReplicatedUser>
     {
         ArgumentNullException.ThrowIfNull(newDocument);
 
-        var workspacePk = await _dbContext.Workspaces
+        var workspace = await _dbContext.Workspaces
             .Where(w => w.ReplicatedDocumentId == newDocument.WorkspaceId)
-            .Select(w => w.Id)
             .SingleAsync(cancellationToken);
+
+        var jwtToken = JwtUtil.GenerateJwtToken(newDocument);
 
         return new User
         {
@@ -68,11 +104,13 @@ public class UserService : DocumentService<User, ReplicatedUser>
             FirstName = newDocument.FirstName,
             LastName = newDocument.LastName,
             Email = newDocument.Email,
-            JwtAccessToken = newDocument.JwtAccessToken,
+            Role = newDocument.Role,
+            JwtAccessToken = jwtToken,
             UpdatedAt = newDocument.UpdatedAt,
             IsDeleted = false,
-            WorkspaceId = workspacePk,
-            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t }),
+            WorkspaceId = workspace.Id,
+            Workspace = workspace,
+            Topics = newDocument.Topics?.ConvertAll(t => new Topic { Name = t }) ?? [],
         };
     }
 }

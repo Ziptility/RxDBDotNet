@@ -1,9 +1,11 @@
-﻿using System.Diagnostics;
+﻿// tests\RxDBDotNet.Tests\SubscriptionTests.cs
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
+using LiveDocs.GraphQLApi.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -394,7 +396,7 @@ public class SubscriptionTests : IAsyncLifetime
         response.Data?.StreamWorkspace?.Checkpoint?.LastDocumentId.Should()
             .Be(emptyUpdate.Checkpoint.LastDocumentId, "The LastDocumentId in the response should match the one in the empty update");
         response.Data?.StreamWorkspace?.Checkpoint?.UpdatedAt.Should()
-            .BeCloseTo(emptyUpdate.Checkpoint.UpdatedAt!.Value, TimeSpan.FromSeconds(1),
+            .BeCloseTo(emptyUpdate.Checkpoint.UpdatedAt.Value, TimeSpan.FromSeconds(1),
                 "The UpdatedAt timestamp should be close to the one in the empty update");
     }
 

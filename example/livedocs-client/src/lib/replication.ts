@@ -1,116 +1,111 @@
-import { LiveDocsDatabase } from '@/lib/database';
-import {
-  pullQueryBuilderFromRxSchema,
-  pushQueryBuilderFromRxSchema,
-  pullStreamBuilderFromRxSchema,
-  replicateGraphQL,
-  RxGraphQLReplicationState,
-} from 'rxdb/plugins/replication-graphql';
-import { RxCollection, GraphQLServerUrl } from 'rxdb';
-import { logError, notifyUser } from './errorHandling';
-import { workspaceSchema, userSchema, liveDocSchema, WorkspaceDocType, UserDocType, LiveDocDocType } from './schemas';
-import { ReplicationCheckpoint, LiveDocsCollections } from '@/types';
+// example/livedocs-client/src/lib/replication.ts
+import { API_CONFIG } from '@/config';
+import { replicateLiveDocs } from '@/lib/liveDocReplication';
+import { replicateUsers } from '@/lib/userReplication';
+import { replicateWorkspaces } from '@/lib/workspaceReplication';
+import type { Document, LiveDocsDatabase, LiveDocsReplicationState, LiveDocsReplicationStates } from '@/types';
+import { handleError, handleAsyncError } from '@/utils/errorHandling';
 
-const GRAPHQL_ENDPOINT = 'http://localhost:5414/graphql';
-const WS_ENDPOINT = 'ws://localhost:5414/graphql';
-const JWT_TOKEN =
-  'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJMaXZlRG9jcyIsImV4cCI6MTcyMjk1MTc2NCwiaWF0IjoxNzIyOTUxNzY0fQ.VP3WRdWB6R-lrHfsNM4o2AA95SgE2_PrJQSOoZTyYkg';
-
-const BATCH_SIZE = 50;
-
-const getGraphQLServerUrl = (): GraphQLServerUrl => {
-  const url: GraphQLServerUrl = {};
-  url.http = GRAPHQL_ENDPOINT;
-  url.ws = WS_ENDPOINT;
-  return url;
-};
-
-const setupReplicationForCollection = <T extends WorkspaceDocType | UserDocType | LiveDocDocType>(
-  collection: RxCollection<T>,
-  schemaName: string,
-  schema: typeof workspaceSchema | typeof userSchema | typeof liveDocSchema
-): RxGraphQLReplicationState<T, ReplicationCheckpoint> => {
-  const pullQueryBuilder = pullQueryBuilderFromRxSchema(schemaName, {
-    schema,
-    checkpointFields: ['lastDocumentId', 'updatedAt'],
-    deletedField: 'isDeleted',
-  });
-  const pushQueryBuilder = pushQueryBuilderFromRxSchema(schemaName, {
-    schema,
-    checkpointFields: ['lastDocumentId', 'updatedAt'],
-    deletedField: 'isDeleted',
-  });
-  const pullStreamBuilder = pullStreamBuilderFromRxSchema(schemaName, {
-    schema,
-    checkpointFields: ['lastDocumentId', 'updatedAt'],
-    deletedField: 'isDeleted',
-  });
-
-  const replicationState = replicateGraphQL<T, ReplicationCheckpoint>({
-    collection,
-    url: getGraphQLServerUrl(),
-    pull: {
-      queryBuilder: pullQueryBuilder,
-      streamQueryBuilder: pullStreamBuilder,
-      batchSize: BATCH_SIZE,
-    },
-    push: {
-      queryBuilder: pushQueryBuilder,
-      batchSize: 5,
-    },
-    live: true,
-    deletedField: 'isDeleted',
-    retryTime: 1000 * 30, // 30 seconds
-    replicationIdentifier: `livedocs-${collection.name}-replication`,
-    headers: {
-      Authorization: `Bearer ${JWT_TOKEN}`,
-    },
-  });
-
-  replicationState.error$.subscribe((error) => {
-    logError(error, `Replication error in ${collection.name}`);
-    notifyUser(`Error in ${collection.name} synchronization. Please try again later.`, 'error');
-  });
-
-  return replicationState;
-};
-
-interface ReplicationStates {
-  workspaces: RxGraphQLReplicationState<WorkspaceDocType, ReplicationCheckpoint>;
-  users: RxGraphQLReplicationState<UserDocType, ReplicationCheckpoint>;
-  livedocs: RxGraphQLReplicationState<LiveDocDocType, ReplicationCheckpoint>;
-}
-
-export const setupReplication = async (db: LiveDocsDatabase): Promise<ReplicationStates> => {
-  const replicationStates: ReplicationStates = {
-    workspaces: setupReplicationForCollection<WorkspaceDocType>(db.workspaces, 'workspace', workspaceSchema),
-    users: setupReplicationForCollection<UserDocType>(db.users, 'user', userSchema),
-    livedocs: setupReplicationForCollection<LiveDocDocType>(db.livedocs, 'liveDoc', liveDocSchema),
-  };
+/**
+ * Sets up replication for all collections in the database.
+ * This function creates replicators for each collection and initializes them.
+ *
+ * @param {LiveDocsDatabase} db - The RxDB database instance.
+ * @param {string} jwtAccessToken - The JWT token for authentication with the backend.
+ * @returns {LiveDocsReplicationStates} An object containing all replication states.
+ *
+ * @throws {Error} If there's an issue setting up the replication.
+ */
+export const setupReplication = (db: LiveDocsDatabase, jwtAccessToken: string): LiveDocsReplicationStates => {
+  const token = jwtAccessToken || API_CONFIG.DEFAULT_JWT_TOKEN;
 
   try {
-    await Promise.all(
-      Object.values(replicationStates).map((state) =>
-        (state as RxGraphQLReplicationState<unknown, unknown>).awaitInitialReplication()
-      )
-    );
-    console.log('Initial replication completed successfully');
+    console.log('Setting up replication with token:', token);
+    const replicationStates: LiveDocsReplicationStates = {
+      workspaces: replicateWorkspaces(token, db.workspace),
+      users: replicateUsers(token, db.user),
+      livedocs: replicateLiveDocs(token, db.livedoc),
+    };
+    console.log('Replication setup completed');
+    return replicationStates;
   } catch (error) {
-    logError(
-      error instanceof Error ? error : new Error('Unknown error during initial replication'),
-      'Initial replication'
-    );
-    notifyUser('Failed to complete initial data sync. Some data may be outdated.');
+    handleError(error, 'setupReplication', { jwtAccessToken });
+    throw error;
   }
-
-  return replicationStates;
 };
 
-export const subscribeToCollectionChanges = <K extends keyof LiveDocsCollections>(
-  collection: RxCollection<LiveDocsCollections[K]>,
-  onChange: (docs: LiveDocsCollections[K][]) => void
-): void => {
-  collection.find().$.subscribe((docs) => {
-    onChange(docs);
-  });
+/**
+ * Updates the JWT token used for authentication in all replication states.
+ *
+ * @param {LiveDocsReplicationStates} replicationStates - The current replication states for all collections.
+ * @param {string} newToken - The new JWT token to use for authentication.
+ * @returns {Promise<void>}
+ */
+export const updateReplicationToken = async (
+  replicationStates: LiveDocsReplicationStates | undefined,
+  newToken: string
+): Promise<void> => {
+  await handleAsyncError(async () => {
+    if (!replicationStates) {
+      console.warn('Replication states are undefined, skipping token update');
+      return;
+    }
+
+    console.log('Updating replication token for all collections');
+    await Promise.all(
+      Object.entries(replicationStates).map(([name, state]: [string, LiveDocsReplicationState<Document>]) => {
+        if (typeof state.setHeaders === 'function') {
+          state.setHeaders({ Authorization: `Bearer ${newToken}` });
+          console.log(`Updated token for ${name} replication`);
+        } else {
+          console.warn(`Replication state for ${name} is not properly initialized or lacks setHeaders method`);
+        }
+      })
+    );
+    console.log('Replication token update completed');
+  }, 'updateReplicationToken');
 };
+
+/**
+ * Best Practices and Notes for Maintainers:
+ *
+ * 1. Error Handling: Both functions use centralized error handling utilities.
+ *    This ensures consistent error logging and handling across the application.
+ *
+ * 2. Logging: Extensive logging has been added to help diagnose issues.
+ *    In a production environment, consider using a more sophisticated logging system.
+ *
+ * 3. Token Management: The code now handles cases where the token might be undefined or null,
+ *    falling back to a default token. Always ensure that a valid token is provided.
+ *
+ * 4. Type Safety: The functions are now more type-safe, using TypeScript's strict mode.
+ *    Always maintain strict typing to catch potential errors at compile-time.
+ *
+ * 5. Asynchronous Operations: The updateReplicationToken function uses Promise.all for
+ *    concurrent execution. Be aware of potential race conditions when updating multiple
+ *    replication states simultaneously.
+ *
+ * 6. Extensibility: The code is structured to easily add new collection types for replication.
+ *    When adding a new collection, ensure to update the LiveDocsReplicationStates type and
+ *    include it in the setupReplication function.
+ *
+ * 7. Configuration: The code uses API_CONFIG for default values. Ensure that this configuration
+ *    is properly set up and maintained.
+ *
+ * 8. Replication State Management: The code assumes that replication states have a setHeaders
+ *    method. If this changes in future RxDB versions, update this code accordingly.
+ *
+ * 9. Error Propagation: setupReplication throws errors, while updateReplicationToken handles
+ *    them internally. Consider standardizing this behavior based on how errors should be
+ *    handled at the application level.
+ *
+ * 10. Testing: Implement unit tests for these functions, mocking the RxDB replication states
+ *     and testing various scenarios including error cases.
+ * 11. Null Safety: The updateReplicationToken function now handles the case where
+ *     replicationStates might be undefined. This makes the function more robust and
+ *     prevents runtime errors.
+ *
+ * 12. Logging: Extensive logging has been added to help diagnose issues with replication
+ *     state initialization and token updates. In a production environment, consider
+ *     using a more sophisticated logging system and potentially reducing log verbosity.
+ */

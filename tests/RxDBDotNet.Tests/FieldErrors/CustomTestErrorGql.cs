@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Tests.Model;
+﻿// tests\RxDBDotNet.Tests\FieldErrors\CustomTestErrorGql.cs
+namespace RxDBDotNet.Tests.Model;
 
 [GraphQlObjectType("CustomTestError")]
 public class CustomTestErrorGql : IPushWorkspaceErrorGql, IErrorGql

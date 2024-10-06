@@ -1,119 +1,145 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button } from '@mui/material';
-import { Subscription } from 'rxjs';
-import UserList from './UserList';
-import UserForm from './UserForm';
-import { getDatabase } from '../lib/database';
-import { setupReplication } from '../lib/replication';
-import { UserDocType, WorkspaceDocType } from '../lib/schemas';
-import { LiveDocsDatabase } from '@/types';
+// example/livedocs-client/src/components/UsersPageContent.tsx
+import React, { useState, useCallback } from 'react';
+import { Add as AddIcon } from '@mui/icons-material';
+import { Box, Fab, Tooltip } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import type { User, Workspace } from '@/generated/graphql';
+import { useDocuments } from '@/hooks/useDocuments';
+import {
+  ContentPaper,
+  SectionTitle,
+  ListContainer,
+  StyledAlert,
+  StyledCircularProgress,
+  CenteredBox,
+} from '@/styles/StyledComponents';
+import { motionProps, staggeredChildren } from '@/utils/motionSystem';
+import UserForm from './UserForm';
+import UserList from './UserList';
 
-const UsersPageContent: React.FC = (): JSX.Element => {
-  const [db, setDb] = useState<LiveDocsDatabase | null>(null);
-  const [editingUser, setEditingUser] = useState<UserDocType | null>(null);
-  const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
+const UsersPageContent: React.FC = () => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const {
+    documents: users,
+    isLoading: isLoadingUsers,
+    error: userError,
+    upsertDocument: upsertUser,
+    deleteDocument: deleteUser,
+  } = useDocuments<User>('user');
 
-  useEffect(() => {
-    let workspacesSubscription: Subscription | undefined;
+  const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
 
-    const initDb = async (): Promise<void> => {
-      try {
-        const database = await getDatabase();
-        await setupReplication(database);
-        setDb(database);
-
-        workspacesSubscription = database.workspaces
-          .find({
-            selector: {
-              isDeleted: false,
-            },
-          })
-          .$.subscribe((docs) => {
-            setWorkspaces(docs.map((doc) => doc.toJSON()));
-          });
-      } catch (error) {
-        console.error('Error initializing database:', error);
-      }
-    };
-
-    void initDb();
-
-    return () => {
-      workspacesSubscription?.unsubscribe();
-    };
-  }, []);
-
-  const handleCreate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db) {
-      try {
-        await db.users.insert({
+  const handleSubmit = useCallback(
+    async (userData: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingUserId !== null) {
+        const existingUser = users.find((u) => u.id === editingUserId);
+        if (existingUser) {
+          const updatedUser: User = {
+            ...existingUser,
+            ...userData,
+            updatedAt: new Date().toISOString(),
+          };
+          await upsertUser(updatedUser);
+          setEditingUserId(null);
+        }
+      } else {
+        const newUser: User = {
           id: uuidv4(),
-          ...user,
+          ...userData,
           updatedAt: new Date().toISOString(),
           isDeleted: false,
-        });
-      } catch (error) {
-        console.error('Error creating user:', error);
+        };
+        await upsertUser(newUser);
+        setIsCreating(false);
       }
-    }
-  };
+    },
+    [editingUserId, users, upsertUser]
+  );
 
-  const handleUpdate = async (user: Omit<UserDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db && editingUser) {
-      try {
-        await db.users.upsert({
-          ...editingUser,
-          ...user,
-          updatedAt: new Date().toISOString(),
-        });
-        setEditingUser(null);
-      } catch (error) {
-        console.error('Error updating user:', error);
-      }
-    }
-  };
+  const handleEdit = useCallback((userId: string) => {
+    setEditingUserId(userId);
+  }, []);
 
-  const handleDelete = async (user: UserDocType): Promise<void> => {
-    if (db) {
-      try {
-        await db.users.upsert({
-          ...user,
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error('Error deleting user:', error);
-      }
-    }
-  };
+  const handleCancelEdit = useCallback(() => {
+    setEditingUserId(null);
+  }, []);
 
-  if (!db) {
-    return <Box>Initializing database...</Box>;
+  const handleDelete = useCallback(
+    (userId: string) => {
+      void deleteUser(userId);
+    },
+    [deleteUser]
+  );
+
+  const handleCreateNew = useCallback(() => {
+    setIsCreating(true);
+  }, []);
+
+  const handleCancelCreate = useCallback(() => {
+    setIsCreating(false);
+  }, []);
+
+  if (isLoadingUsers || isLoadingWorkspaces) {
+    return (
+      <CenteredBox sx={{ height: '50vh' }}>
+        <StyledCircularProgress />
+      </CenteredBox>
+    );
   }
 
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <UserForm
-          user={editingUser ?? undefined}
-          workspaces={workspaces.map((w) => ({ id: w.id, name: w.name }))}
-          onSubmit={editingUser ? handleUpdate : handleCreate}
-        />
+    <motion.div {...staggeredChildren}>
+      {userError ? (
+        <motion.div {...motionProps['fadeIn']}>
+          <StyledAlert severity="error" sx={{ mb: 2 }}>
+            {userError.message}
+          </StyledAlert>
+        </motion.div>
+      ) : null}
+      <AnimatePresence>
+        {isCreating ? (
+          <motion.div {...motionProps['slideInFromTop']}>
+            <ContentPaper>
+              <SectionTitle variant="h6">Create User</SectionTitle>
+              <UserForm
+                onSubmit={(data) => {
+                  void handleSubmit(data);
+                }}
+                onCancel={handleCancelCreate}
+                user={null}
+                workspaces={workspaces}
+                isInline={false}
+              />
+            </ContentPaper>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      <motion.div {...motionProps['slideInFromBottom']}>
+        <ListContainer>
+          <SectionTitle variant="h6">Users</SectionTitle>
+          <UserList
+            users={users}
+            workspaces={workspaces}
+            editingUserId={editingUserId}
+            onEdit={handleEdit}
+            onCancelEdit={handleCancelEdit}
+            onDelete={handleDelete}
+            onSubmit={(data) => {
+              void handleSubmit(data);
+            }}
+          />
+        </ListContainer>
+      </motion.div>
+      <Box sx={{ position: 'fixed', bottom: 24, right: 24 }}>
+        <Tooltip title="Create new user" arrow>
+          <Fab color="primary" onClick={handleCreateNew}>
+            <AddIcon />
+          </Fab>
+        </Tooltip>
       </Box>
-      {editingUser && (
-        <Button onClick={(): void => setEditingUser(null)} sx={{ mb: 2 }}>
-          Cancel Editing
-        </Button>
-      )}
-      <UserList
-        db={db}
-        onEdit={setEditingUser}
-        onDelete={(user): void => {
-          void handleDelete(user);
-        }}
-      />
-    </Box>
+    </motion.div>
   );
 };
 

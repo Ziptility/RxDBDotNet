@@ -1,7 +1,9 @@
-﻿using LiveDocs.GraphQLApi.Data;
+﻿// example/LiveDocs.GraphQLApi/Infrastructure/LiveDocsDbInitializer.cs
+
+using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Models.Shared;
+using LiveDocs.GraphQLApi.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace LiveDocs.GraphQLApi.Infrastructure
@@ -12,25 +14,31 @@ namespace LiveDocs.GraphQLApi.Infrastructure
         {
             await using var dbContext = new LiveDocsDbContext();
 
-            await dbContext.Database.EnsureCreatedAsync();
+            try
+            {
+                await dbContext.Database.EnsureCreatedAsync();
+            }
+            catch
+            {
+                // ignore this error; the db exists
+            }
 
-            await SeedDataAsync(dbContext);
+            if (!await dbContext.Workspaces.AnyAsync())
+            {
+                await SeedDataAsync(dbContext);
+            }
         }
 
         private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
         {
-            if (await dbContext.Workspaces.AnyAsync())
-            {
-                return; // Data has already been seeded
-            }
-
             var rootWorkspace = new Workspace
             {
                 Id = RT.Comb.Provider.Sql.Create(),
-                Name = "LiveDocs Example Org Workspace",
+                Name = "Default Workspace",
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
                 ReplicatedDocumentId = Guid.NewGuid(),
+                Topics = [],
             };
 
             await dbContext.Workspaces.AddAsync(rootWorkspace);
@@ -41,13 +49,16 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 FirstName = "System",
                 LastName = "Admin",
                 Email = "systemadmin@livedocs.example.org",
-                JwtAccessToken = null,
+                Role = UserRole.SystemAdmin,
                 WorkspaceId = rootWorkspace.ReplicatedDocumentId,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
             };
 
-            var jwtAccessToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, UserRole.SystemAdmin);
+            // Generate a non-expiring JWT token for the system admin user
+            // We'll use this in the client app to bootstrap the "logged in" state
+            // since we are not supporting username and password login in this example application
+            var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, expires: DateTime.MaxValue);
 
             var systemAdminUser = new User
             {
@@ -55,11 +66,13 @@ namespace LiveDocs.GraphQLApi.Infrastructure
                 FirstName = systemAdminReplicatedUser.FirstName,
                 LastName = systemAdminReplicatedUser.LastName,
                 Email = systemAdminReplicatedUser.Email,
-                JwtAccessToken = jwtAccessToken,
+                Role = systemAdminReplicatedUser.Role,
+                JwtAccessToken = nonExpiringToken,
                 WorkspaceId = rootWorkspace.Id,
                 UpdatedAt = systemAdminReplicatedUser.UpdatedAt,
                 IsDeleted = systemAdminReplicatedUser.IsDeleted,
                 ReplicatedDocumentId = systemAdminReplicatedUser.Id,
+                Topics = [],
             };
 
             await dbContext.Users.AddAsync(systemAdminUser);

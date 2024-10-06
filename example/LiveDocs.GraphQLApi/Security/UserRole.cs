@@ -1,7 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿// example/LiveDocs.GraphQLApi/Security/UserRole.cs
+
+using System.Text.Json.Serialization;
 using HotChocolate;
 
-namespace LiveDocs.GraphQLApi.Models.Shared;
+namespace LiveDocs.GraphQLApi.Security;
 
 /// <summary>
 /// Defines the roles a user can have within the LiveDocs system,

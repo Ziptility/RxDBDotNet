@@ -1,6 +1,7 @@
-﻿using LiveDocs.GraphQLApi.Infrastructure;
+﻿// example/LiveDocs.GraphQLApi/Data/LiveDocsDbContext.cs
+
+using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Entities;
-using LiveDocs.GraphQLApi.Models.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace LiveDocs.GraphQLApi.Data;
@@ -38,7 +39,6 @@ public class LiveDocsDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Workspace> Workspaces => Set<Workspace>();
     public DbSet<LiveDoc> LiveDocs => Set<LiveDoc>();
-    public DbSet<Hero> Heroes => Set<Hero>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,22 +48,6 @@ public class LiveDocsDbContext : DbContext
         ConfigureUserEntity(modelBuilder);
         ConfigureWorkspaceEntity(modelBuilder);
         ConfigureLiveDocEntity(modelBuilder);
-        ConfigureHeroEntity(modelBuilder);
-    }
-
-    private static void ConfigureHeroEntity(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Hero>(entity =>
-        {
-            entity.ToTable("Heroes");
-
-            entity.Property(e => e.Id)
-                .ValueGeneratedNever();
-
-            entity.Property(e => e.UpdatedAt)
-                .IsRequired()
-                .HasColumnType("datetimeoffset(7)");
-        });
     }
 
     private static void ConfigureUserEntity(ModelBuilder modelBuilder)
@@ -77,6 +61,10 @@ public class LiveDocsDbContext : DbContext
 
             entity.HasIndex(u => u.Email)
                 .IsUnique();
+
+            entity.Property(e => e.Role)
+                .HasConversion<string>()
+                .HasMaxLength(15);
 
             entity.Property(e => e.UpdatedAt)
                 .IsRequired()

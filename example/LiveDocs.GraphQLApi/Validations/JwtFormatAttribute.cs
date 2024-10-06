@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Validations/JwtFormatAttribute.cs
+
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace LiveDocs.GraphQLApi.Validations
@@ -33,6 +35,7 @@ namespace LiveDocs.GraphQLApi.Validations
     {
         /// <summary>
         /// Gets or sets a value indicating whether null values are allowed.
+        /// Default is false.
         /// </summary>
         public bool AllowNull { get; set; }
 

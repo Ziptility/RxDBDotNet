@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Tests.MutationConventions;
+﻿// tests\RxDBDotNet.Tests\MutationConventions\Book.cs
+namespace RxDBDotNet.Tests.MutationConventions;
 
 public class Book
 {

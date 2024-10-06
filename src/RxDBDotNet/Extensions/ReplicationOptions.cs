@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Documents;
+﻿// src\RxDBDotNet\Extensions\ReplicationOptions.cs
+using RxDBDotNet.Documents;
 using RxDBDotNet.Security;
 
 namespace RxDBDotNet.Extensions;
@@ -10,7 +11,7 @@ namespace RxDBDotNet.Extensions;
 /// The type of document to be replicated, which must implement <see cref="IReplicatedDocument"/>.
 /// </typeparam>
 public sealed class ReplicationOptions<TDocument>
-    where TDocument : class, IReplicatedDocument
+    where TDocument : IReplicatedDocument
 {
     /// <summary>
     /// The security options for replicating documents of type <typeparamref name="TDocument"/>.

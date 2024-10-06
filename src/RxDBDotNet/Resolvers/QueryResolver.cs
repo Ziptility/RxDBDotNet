@@ -1,4 +1,5 @@
-﻿using HotChocolate.Execution;
+﻿// src\RxDBDotNet\Resolvers\QueryResolver.cs
+using HotChocolate.Execution;
 using HotChocolate.Resolvers;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;

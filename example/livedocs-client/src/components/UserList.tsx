@@ -1,64 +1,96 @@
-import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+// example/livedocs-client/src/components/UserList.tsx
+import React from 'react';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { LiveDocsDatabase } from '@/types';
-import { UserDocType } from '@/lib/schemas';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { User, Workspace } from '@/generated/graphql';
+import {
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableBody,
+  StyledTableCell,
+  Paper,
+  IconButton,
+} from '@/styles/StyledComponents';
+import { motionProps } from '@/utils/motionSystem';
+import UserForm from './UserForm';
 
-interface UserListProps {
-  db: LiveDocsDatabase;
-  onEdit: (user: UserDocType) => void;
-  onDelete: (user: UserDocType) => void;
+export interface UserListProps {
+  readonly users: User[];
+  readonly workspaces: Workspace[];
+  readonly editingUserId: string | null;
+  readonly onEdit: (userId: string) => void;
+  readonly onCancelEdit: () => void;
+  readonly onDelete: (userId: string) => void;
+  readonly onSubmit: (user: Omit<User, 'id' | 'updatedAt' | 'isDeleted'>) => void;
 }
 
-const UserList: React.FC<UserListProps> = ({ db, onEdit, onDelete }): JSX.Element => {
-  const [users, setUsers] = useState<UserDocType[]>([]);
-
-  useEffect(() => {
-    const subscription = db.users
-      .find({
-        selector: {
-          isDeleted: false,
-        },
-        sort: [{ updatedAt: 'desc' }],
-      })
-      .$.subscribe((docs) => {
-        setUsers(docs.map((doc) => doc.toJSON()));
-      });
-
-    return (): void => subscription.unsubscribe();
-  }, [db]);
-
+const UserList: React.FC<UserListProps> = ({
+  users,
+  workspaces,
+  editingUserId,
+  onEdit,
+  onCancelEdit,
+  onDelete,
+  onSubmit,
+}) => {
   return (
     <TableContainer component={Paper}>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Role</TableCell>
-            <TableCell>Workspace ID</TableCell>
-            <TableCell>Updated At</TableCell>
-            <TableCell>Actions</TableCell>
+            <StyledTableCell>Name</StyledTableCell>
+            <StyledTableCell>Email</StyledTableCell>
+            <StyledTableCell>Role</StyledTableCell>
+            <StyledTableCell>Workspace</StyledTableCell>
+            <StyledTableCell>Actions</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              {/* <TableCell>{user.role}</TableCell> */}
-              <TableCell>{user.workspaceId}</TableCell>
-              <TableCell>{new Date(user.updatedAt).toLocaleString()}</TableCell>
-              <TableCell>
-                <IconButton onClick={(): void => onEdit(user)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton onClick={(): void => onDelete(user)}>
-                  <DeleteIcon />
-                </IconButton>
-              </TableCell>
-            </TableRow>
-          ))}
+          <AnimatePresence>
+            {users.map((user) => (
+              <motion.tr
+                key={user.id}
+                {...motionProps['fadeIn']}
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {editingUserId === user.id ? (
+                  <StyledTableCell colSpan={5}>
+                    <UserForm
+                      user={user}
+                      workspaces={workspaces}
+                      onSubmit={(data) => {
+                        void onSubmit(data);
+                      }}
+                      onCancel={onCancelEdit}
+                      isInline
+                    />
+                  </StyledTableCell>
+                ) : (
+                  <>
+                    <StyledTableCell>{`${user.firstName} ${user.lastName}`}</StyledTableCell>
+                    <StyledTableCell>{user.email}</StyledTableCell>
+                    <StyledTableCell>{user.role}</StyledTableCell>
+                    <StyledTableCell>
+                      {workspaces.find((w) => w.id === user.workspaceId)?.name ?? 'Unknown'}
+                    </StyledTableCell>
+                    <StyledTableCell>
+                      <IconButton onClick={() => onEdit(user.id)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => onDelete(user.id)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </StyledTableCell>
+                  </>
+                )}
+              </motion.tr>
+            ))}
+          </AnimatePresence>
         </TableBody>
       </Table>
     </TableContainer>

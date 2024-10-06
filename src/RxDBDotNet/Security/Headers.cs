@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Security;
+﻿// src\RxDBDotNet\Security\Headers.cs
+namespace RxDBDotNet.Security;
 
 public sealed class Headers
 {

@@ -1,6 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Models/Replication/ReplicatedUser.cs
+
+using System.ComponentModel.DataAnnotations;
 using HotChocolate;
 using HotChocolate.Types;
+using LiveDocs.GraphQLApi.Security;
 using LiveDocs.GraphQLApi.Validations;
 
 namespace LiveDocs.GraphQLApi.Models.Replication;
@@ -41,11 +44,11 @@ public sealed record ReplicatedUser : ReplicatedDocument
     public string? FullName
     {
         get => $"{FirstName} {LastName}".Trim();
-        init{}
+        init { }
     }
 
     /// <summary>
-    /// The email of the user. jThis must be globally unique.
+    /// The email of the user. This must be globally unique.
     /// For simplicity in this example app, it cannot be updated.
     /// </summary>
     [Required]
@@ -54,6 +57,12 @@ public sealed record ReplicatedUser : ReplicatedDocument
     [GraphQLType(typeof(EmailAddressType))]
     [MaxLength(256)]
     public required string Email { get; init; }
+
+    /// <summary>
+    /// The role of the user.
+    /// </summary>
+    [Required]
+    public required UserRole Role { get; init; }
 
     /// <summary>
     /// A JWT access token used to simulate user authentication in a non-production environment.
@@ -96,6 +105,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
                string.Equals(FirstName, other.FirstName, StringComparison.Ordinal) &&
                string.Equals(LastName, other.LastName, StringComparison.Ordinal) &&
                string.Equals(Email, other.Email, StringComparison.Ordinal) &&
+               Role == other.Role &&
                string.Equals(JwtAccessToken, other.JwtAccessToken, StringComparison.Ordinal) &&
                WorkspaceId.Equals(other.WorkspaceId);
     }
@@ -107,6 +117,7 @@ public sealed record ReplicatedUser : ReplicatedDocument
             FirstName,
             LastName,
             Email,
+            Role,
             JwtAccessToken,
             WorkspaceId
         );

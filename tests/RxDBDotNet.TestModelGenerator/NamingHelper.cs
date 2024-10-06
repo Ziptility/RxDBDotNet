@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿// tests\RxDBDotNet.TestModelGenerator\NamingHelper.cs
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace RxDBDotNet.TestModelGenerator;

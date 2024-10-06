@@ -1,0 +1,865 @@
+"""
+example/livedocs-client/schema/schema.graphql
+"""
+
+type Query {
+  """
+  Pulls LiveDoc documents from the server based on the given checkpoint, limit, optional filters, and projections
+  """
+  pullLiveDoc(
+    """
+    The last known checkpoint for LiveDoc replication.
+    """
+    checkpoint: LiveDocInputCheckpoint
+
+    """
+    The maximum number of LiveDoc documents to return.
+    """
+    limit: Int!
+    where: LiveDocFilterInput
+  ): LiveDocPullBulk!
+
+  """
+  Pulls User documents from the server based on the given checkpoint, limit, optional filters, and projections
+  """
+  pullUser(
+    """
+    The last known checkpoint for User replication.
+    """
+    checkpoint: UserInputCheckpoint
+
+    """
+    The maximum number of User documents to return.
+    """
+    limit: Int!
+    where: UserFilterInput
+  ): UserPullBulk!
+
+  """
+  Pulls Workspace documents from the server based on the given checkpoint, limit, optional filters, and projections
+  """
+  pullWorkspace(
+    """
+    The last known checkpoint for Workspace replication.
+    """
+    checkpoint: WorkspaceInputCheckpoint
+
+    """
+    The maximum number of Workspace documents to return.
+    """
+    limit: Int!
+    where: WorkspaceFilterInput
+  ): WorkspacePullBulk!
+}
+
+type Mutation {
+  """
+  Pushes LiveDoc documents to the server and detects any conflicts.
+  """
+  pushLiveDoc(input: PushLiveDocInput!): PushLiveDocPayload!
+
+  """
+  Pushes User documents to the server and detects any conflicts.
+  """
+  pushUser(input: PushUserInput!): PushUserPayload!
+
+  """
+  Pushes Workspace documents to the server and detects any conflicts.
+  """
+  pushWorkspace(input: PushWorkspaceInput!): PushWorkspacePayload!
+}
+
+type Subscription {
+  """
+  An optional set topics to receive events for when LiveDoc is upserted. If null then events will be received for all LiveDoc upserts.
+  """
+  streamLiveDoc(
+    """
+    Headers for LiveDoc subscription authentication. Note: This parameter is defined to maintain compatibility with the RxDB protocol, but is not used in the RxDBDotNet implementation. Instead, clients should pass the Authorization header in the HTTP request following standard practices for Hot Chocolate subscriptions and ASP.NET applications.
+    """
+    headers: LiveDocInputHeaders
+    topics: [String!]
+  ): LiveDocPullBulk!
+
+  """
+  An optional set topics to receive events for when User is upserted. If null then events will be received for all User upserts.
+  """
+  streamUser(
+    """
+    Headers for User subscription authentication. Note: This parameter is defined to maintain compatibility with the RxDB protocol, but is not used in the RxDBDotNet implementation. Instead, clients should pass the Authorization header in the HTTP request following standard practices for Hot Chocolate subscriptions and ASP.NET applications.
+    """
+    headers: UserInputHeaders
+    topics: [String!]
+  ): UserPullBulk!
+
+  """
+  An optional set topics to receive events for when Workspace is upserted. If null then events will be received for all Workspace upserts.
+  """
+  streamWorkspace(
+    """
+    Headers for Workspace subscription authentication. Note: This parameter is defined to maintain compatibility with the RxDB protocol, but is not used in the RxDBDotNet implementation. Instead, clients should pass the Authorization header in the HTTP request following standard practices for Hot Chocolate subscriptions and ASP.NET applications.
+    """
+    headers: WorkspaceInputHeaders
+    topics: [String!]
+  ): WorkspacePullBulk!
+}
+
+"""
+Represents the result of a pull operation for LiveDoc documents.
+"""
+type LiveDocPullBulk {
+  """
+  The list of LiveDoc documents pulled from the server.
+  """
+  documents: [LiveDoc!]!
+
+  """
+  The new checkpoint after this pull operation.
+  """
+  checkpoint: Checkpoint!
+}
+
+"""
+Input type for the checkpoint of LiveDoc replication.
+"""
+input LiveDocInputCheckpoint {
+  """
+  The timestamp of the last update included in the synchronization batch.
+  """
+  updatedAt: DateTime
+
+  """
+  The ID of the last document included in the synchronization batch.
+  """
+  lastDocumentId: ID
+}
+
+"""
+Input type for pushing LiveDoc documents to the server.
+"""
+input LiveDocInputPushRow {
+  """
+  The assumed state of the document on the server before the push.
+  """
+  assumedMasterState: LiveDocInput
+
+  """
+  The new state of the document being pushed.
+  """
+  newDocumentState: LiveDocInput!
+}
+
+"""
+Represents the result of a pull operation for User documents.
+"""
+type UserPullBulk {
+  """
+  The list of User documents pulled from the server.
+  """
+  documents: [User!]!
+
+  """
+  The new checkpoint after this pull operation.
+  """
+  checkpoint: Checkpoint!
+}
+
+"""
+Input type for the checkpoint of User replication.
+"""
+input UserInputCheckpoint {
+  """
+  The timestamp of the last update included in the synchronization batch.
+  """
+  updatedAt: DateTime
+
+  """
+  The ID of the last document included in the synchronization batch.
+  """
+  lastDocumentId: ID
+}
+
+"""
+Input type for pushing User documents to the server.
+"""
+input UserInputPushRow {
+  """
+  The assumed state of the document on the server before the push.
+  """
+  assumedMasterState: UserInput
+
+  """
+  The new state of the document being pushed.
+  """
+  newDocumentState: UserInput!
+}
+
+"""
+Represents the result of a pull operation for Workspace documents.
+"""
+type WorkspacePullBulk {
+  """
+  The list of Workspace documents pulled from the server.
+  """
+  documents: [Workspace!]!
+
+  """
+  The new checkpoint after this pull operation.
+  """
+  checkpoint: Checkpoint!
+}
+
+"""
+Input type for the checkpoint of Workspace replication.
+"""
+input WorkspaceInputCheckpoint {
+  """
+  The timestamp of the last update included in the synchronization batch.
+  """
+  updatedAt: DateTime
+
+  """
+  The ID of the last document included in the synchronization batch.
+  """
+  lastDocumentId: ID
+}
+
+"""
+Input type for pushing Workspace documents to the server.
+"""
+input WorkspaceInputPushRow {
+  """
+  The assumed state of the document on the server before the push.
+  """
+  assumedMasterState: WorkspaceInput
+
+  """
+  The new state of the document being pushed.
+  """
+  newDocumentState: WorkspaceInput!
+}
+
+enum ApplyPolicy {
+  BEFORE_RESOLVER
+  AFTER_RESOLVER
+  VALIDATION
+}
+
+"""
+Represents a document that can be collaboratively edited in real-time
+by multiple users within the same workspace.
+"""
+input LiveDocFilterInput {
+  and: [LiveDocFilterInput!]
+  or: [LiveDocFilterInput!]
+
+  """
+  The content of the live doc.
+  """
+  content: StringOperationFilterInput
+
+  """
+  The client-assigned identifier of the live doc's owner within the workspace.
+  """
+  ownerId: UuidOperationFilterInput
+
+  """
+  The client-assigned identifier of the workspace to which the live doc belongs.
+  """
+  workspaceId: UuidOperationFilterInput
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UuidOperationFilterInput
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: BooleanOperationFilterInput
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTimeOperationFilterInput
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: ListStringOperationFilterInput
+}
+
+"""
+Represents a document that can be collaboratively edited in real-time
+by multiple users within the same workspace.
+"""
+type LiveDoc {
+  """
+  The content of the live doc.
+  """
+  content: String!
+
+  """
+  The client-assigned identifier of the live doc's owner within the workspace.
+  """
+  ownerId: UUID!
+
+  """
+  The client-assigned identifier of the workspace to which the live doc belongs.
+  """
+  workspaceId: UUID!
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UUID!
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: Boolean!
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTime!
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: [String!]
+}
+
+"""
+Represents a checkpoint in the replication process.
+Checkpoints are used to track the state of synchronization
+between the client and server, ensuring that only new or updated
+documents are synchronized.
+"""
+type Checkpoint {
+  """
+  The ID of the last document included in the synchronization batch.
+      This ID is used to ensure that synchronization can accurately resume
+      if it is interrupted, by providing a unique identifier for the last processed document.
+
+
+      If the value is null, it indicates that there are no documents to synchronize,
+      and the client should treat this as a starting point or an indication that no previous checkpoint exists.
+  """
+  lastDocumentId: UUID
+
+  """
+  The timestamp of the last update included in the synchronization batch.
+      This timestamp helps in filtering out documents that have already been synchronized,
+      ensuring that only new or updated documents are processed during synchronization.
+
+
+      If the value is null, it indicates that there are no updates to synchronize,
+      and the client should treat this as a starting point or an indication that no previous checkpoint exists.
+  """
+  updatedAt: DateTime
+}
+
+"""
+The `DateTime` scalar represents an ISO-8601 compliant date time type.
+"""
+scalar DateTime @specifiedBy(url: "https://www.graphql-scalars.com/date-time")
+
+type AuthenticationError implements Error {
+  message: String!
+}
+
+type UnauthorizedAccessError implements Error {
+  message: String!
+}
+
+"""
+Represents a document that can be collaboratively edited in real-time
+by multiple users within the same workspace.
+"""
+input LiveDocInput {
+  """
+  The content of the live doc.
+  """
+  content: String!
+
+  """
+  The client-assigned identifier of the live doc's owner within the workspace.
+  """
+  ownerId: UUID!
+
+  """
+  The client-assigned identifier of the workspace to which the live doc belongs.
+  """
+  workspaceId: UUID!
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UUID!
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: Boolean!
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTime!
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: [String!]
+}
+
+input LiveDocInputHeaders {
+  """
+  The JWT bearer token for authentication.
+  """
+  Authorization: String!
+}
+
+"""
+Represents a user of the LiveDocs system.
+"""
+input UserFilterInput {
+  and: [UserFilterInput!]
+  or: [UserFilterInput!]
+
+  """
+  The first name of the user.
+  """
+  firstName: StringOperationFilterInput
+
+  """
+  The last name of the user.
+  """
+  lastName: StringOperationFilterInput
+
+  """
+  The full name of the user.
+  """
+  fullName: StringOperationFilterInput
+
+  """
+  The email of the user. jThis must be globally unique.
+  For simplicity in this example app, it cannot be updated.
+  """
+  email: StringOperationFilterInput
+
+  """
+  The role of the user.
+  """
+  role: UserRoleOperationFilterInput
+
+  """
+  A JWT access token used to simulate user authentication in a non-production environment.
+  For simplicity in this example app, it cannot be updated.
+  """
+  jwtAccessToken: StringOperationFilterInput
+
+  """
+  The client-assigned identifier of the workspace to which the user belongs.
+  """
+  workspaceId: UuidOperationFilterInput
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UuidOperationFilterInput
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: BooleanOperationFilterInput
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTimeOperationFilterInput
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: ListStringOperationFilterInput
+}
+
+"""
+Represents a user of the LiveDocs system.
+"""
+type User {
+  """
+  The first name of the user.
+  """
+  firstName: String!
+
+  """
+  The last name of the user.
+  """
+  lastName: String!
+
+  """
+  The full name of the user.
+  """
+  fullName: String
+
+  """
+  The email of the user. jThis must be globally unique.
+  For simplicity in this example app, it cannot be updated.
+  """
+  email: EmailAddress
+
+  """
+  The role of the user.
+  """
+  role: UserRole!
+
+  """
+  A JWT access token used to simulate user authentication in a non-production environment.
+  For simplicity in this example app, it cannot be updated.
+  """
+  jwtAccessToken: String
+
+  """
+  The client-assigned identifier of the workspace to which the user belongs.
+  """
+  workspaceId: UUID!
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UUID!
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: Boolean!
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTime!
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: [String!]
+}
+
+"""
+Represents a user of the LiveDocs system.
+"""
+input UserInput {
+  """
+  The first name of the user.
+  """
+  firstName: String!
+
+  """
+  The last name of the user.
+  """
+  lastName: String!
+
+  """
+  The full name of the user.
+  """
+  fullName: String
+
+  """
+  The email of the user. jThis must be globally unique.
+  For simplicity in this example app, it cannot be updated.
+  """
+  email: EmailAddress
+
+  """
+  The role of the user.
+  """
+  role: UserRole!
+
+  """
+  A JWT access token used to simulate user authentication in a non-production environment.
+  For simplicity in this example app, it cannot be updated.
+  """
+  jwtAccessToken: String
+
+  """
+  The client-assigned identifier of the workspace to which the user belongs.
+  """
+  workspaceId: UUID!
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UUID!
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: Boolean!
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTime!
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: [String!]
+}
+
+input UserInputHeaders {
+  """
+  The JWT bearer token for authentication.
+  """
+  Authorization: String!
+}
+
+"""
+Represents a workspace in the LiveDocs system, designed for synchronization via RxDBDotNet.
+"""
+input WorkspaceFilterInput {
+  and: [WorkspaceFilterInput!]
+  or: [WorkspaceFilterInput!]
+
+  """
+  The name of the workspace. This must be globally unique.
+  """
+  name: StringOperationFilterInput
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UuidOperationFilterInput
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: BooleanOperationFilterInput
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTimeOperationFilterInput
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: ListStringOperationFilterInput
+}
+
+"""
+Represents a workspace in the LiveDocs system, designed for synchronization via RxDBDotNet.
+"""
+type Workspace {
+  """
+  The name of the workspace. This must be globally unique.
+  """
+  name: String!
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UUID!
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: Boolean!
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTime!
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: [String!]
+}
+
+"""
+Represents a workspace in the LiveDocs system, designed for synchronization via RxDBDotNet.
+"""
+input WorkspaceInput {
+  """
+  The name of the workspace. This must be globally unique.
+  """
+  name: String!
+
+  """
+  The client-assigned identifier for this document.
+  This property is used for client-side identification and replication purposes.
+  """
+  id: UUID!
+
+  """
+  A value indicating whether the document has been marked as deleted.
+  """
+  isDeleted: Boolean!
+
+  """
+  The timestamp of the last update to the document.
+  """
+  updatedAt: DateTime!
+
+  """
+  An optional list of topics to publish events to when an instance is upserted.
+  """
+  topics: [String!]
+}
+
+input WorkspaceInputHeaders {
+  """
+  The JWT bearer token for authentication.
+  """
+  Authorization: String!
+}
+
+input StringOperationFilterInput {
+  and: [StringOperationFilterInput!]
+  or: [StringOperationFilterInput!]
+  eq: String
+  neq: String
+  contains: String
+  ncontains: String
+  in: [String]
+  nin: [String]
+  startsWith: String
+  nstartsWith: String
+  endsWith: String
+  nendsWith: String
+}
+
+input UuidOperationFilterInput {
+  eq: UUID
+  neq: UUID
+  in: [UUID]
+  nin: [UUID]
+  gt: UUID
+  ngt: UUID
+  gte: UUID
+  ngte: UUID
+  lt: UUID
+  nlt: UUID
+  lte: UUID
+  nlte: UUID
+}
+
+input BooleanOperationFilterInput {
+  eq: Boolean
+  neq: Boolean
+}
+
+input DateTimeOperationFilterInput {
+  eq: DateTime
+  neq: DateTime
+  in: [DateTime]
+  nin: [DateTime]
+  gt: DateTime
+  ngt: DateTime
+  gte: DateTime
+  ngte: DateTime
+  lt: DateTime
+  nlt: DateTime
+  lte: DateTime
+  nlte: DateTime
+}
+
+input ListStringOperationFilterInput {
+  all: StringOperationFilterInput
+  none: StringOperationFilterInput
+  some: StringOperationFilterInput
+  any: Boolean
+}
+
+interface Error {
+  message: String!
+}
+
+input UserRoleOperationFilterInput {
+  eq: UserRole
+  neq: UserRole
+  in: [UserRole!]
+  nin: [UserRole!]
+}
+
+"""
+The EmailAddress scalar type constitutes a valid email address, represented as a UTF-8 character sequence. The scalar follows the specification defined by the HTML Spec https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address.
+"""
+scalar EmailAddress
+
+scalar UUID @specifiedBy(url: "https://tools.ietf.org/html/rfc4122")
+
+"""
+Defines the roles a user can have within the LiveDocs system,
+determining their level of access and permissions.
+"""
+enum UserRole {
+  """
+  A standard user with access to basic features like viewing and editing their own documents.
+  """
+  StandardUser
+
+  """
+  A workspace administrator with permissions to manage users and settings within their own workspace.
+  """
+  WorkspaceAdmin
+
+  """
+  A system administrator with full control over all workspaces and system settings.
+  """
+  SystemAdmin
+}
+
+input PushLiveDocInput {
+  """
+  The list of LiveDoc documents to push to the server.
+  """
+  liveDocPushRow: [LiveDocInputPushRow]
+}
+
+union PushLiveDocError = AuthenticationError | UnauthorizedAccessError
+
+type PushLiveDocPayload {
+  liveDoc: [LiveDoc!]
+  errors: [PushLiveDocError!]
+}
+
+input PushUserInput {
+  """
+  The list of User documents to push to the server.
+  """
+  userPushRow: [UserInputPushRow]
+}
+
+union PushUserError = AuthenticationError | UnauthorizedAccessError
+
+type PushUserPayload {
+  user: [User!]
+  errors: [PushUserError!]
+}
+
+input PushWorkspaceInput {
+  """
+  The list of Workspace documents to push to the server.
+  """
+  workspacePushRow: [WorkspaceInputPushRow]
+}
+
+union PushWorkspaceError = AuthenticationError | UnauthorizedAccessError
+
+type PushWorkspacePayload {
+  workspace: [Workspace!]
+  errors: [PushWorkspaceError!]
+}

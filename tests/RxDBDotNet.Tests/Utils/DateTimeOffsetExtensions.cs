@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Tests.Utils;
+﻿// tests\RxDBDotNet.Tests\Utils\DateTimeOffsetExtensions.cs
+namespace RxDBDotNet.Tests.Utils;
 
 public static class DateTimeOffsetExtensions
 {

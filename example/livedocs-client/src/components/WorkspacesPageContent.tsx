@@ -1,100 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button } from '@mui/material';
-import WorkspaceList from './WorkspaceList';
-import WorkspaceForm from './WorkspaceForm';
-import { getDatabase } from '../lib/database';
-import { setupReplication } from '../lib/replication';
-import { WorkspaceDocType } from '../lib/schemas';
-import { LiveDocsDatabase } from '@/types';
+// example/livedocs-client/src/components/WorkspacesPageContent.tsx
+import React, { useState, useCallback } from 'react';
+import { Add as AddIcon } from '@mui/icons-material';
+import { Box, Fab, Tooltip } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import type { Workspace } from '@/generated/graphql';
+import { useDocuments } from '@/hooks/useDocuments';
+import {
+  ContentPaper,
+  SectionTitle,
+  ListContainer,
+  StyledAlert,
+  StyledCircularProgress,
+  CenteredBox,
+} from '@/styles/StyledComponents';
+import { motionProps, staggeredChildren } from '@/utils/motionSystem';
+import WorkspaceForm from './WorkspaceForm';
+import WorkspaceList from './WorkspaceList';
 
-const WorkspacesPageContent: React.FC = (): JSX.Element => {
-  const [db, setDb] = useState<LiveDocsDatabase | null>(null);
-  const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceDocType | null>(null);
+const WorkspacesPageContent: React.FC = () => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingWorkspaceId, setEditingWorkspaceId] = useState<string | null>(null);
+  const {
+    documents: workspaces,
+    isLoading,
+    error: workspaceError,
+    upsertDocument,
+    deleteDocument,
+  } = useDocuments<Workspace>('workspace');
 
-  useEffect(() => {
-    const initDb = async (): Promise<void> => {
-      try {
-        const database = await getDatabase();
-        await setupReplication(database);
-        setDb(database);
-      } catch (error) {
-        console.error('Error initializing database:', error);
-      }
-    };
-
-    void initDb();
-  }, []);
-
-  const handleCreate = async (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db) {
-      try {
-        await db.workspaces.insert({
+  const handleSubmit = useCallback(
+    async (workspaceData: Omit<Workspace, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingWorkspaceId !== null) {
+        const existingWorkspace = workspaces.find((w) => w.id === editingWorkspaceId);
+        if (existingWorkspace) {
+          const updatedWorkspace: Workspace = {
+            ...existingWorkspace,
+            ...workspaceData,
+            updatedAt: new Date().toISOString(),
+          };
+          await upsertDocument(updatedWorkspace);
+          setEditingWorkspaceId(null);
+        }
+      } else {
+        const newWorkspace: Workspace = {
           id: uuidv4(),
-          ...workspace,
+          ...workspaceData,
           updatedAt: new Date().toISOString(),
           isDeleted: false,
-        });
-      } catch (error) {
-        console.error('Error creating workspace:', error);
+        };
+        await upsertDocument(newWorkspace);
+        setIsCreating(false);
       }
-    }
-  };
+    },
+    [editingWorkspaceId, workspaces, upsertDocument]
+  );
 
-  const handleUpdate = async (workspace: Omit<WorkspaceDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db && editingWorkspace) {
-      try {
-        await db.workspaces.upsert({
-          ...editingWorkspace,
-          ...workspace,
-          updatedAt: new Date().toISOString(),
-        });
-        setEditingWorkspace(null);
-      } catch (error) {
-        console.error('Error updating workspace:', error);
-      }
-    }
-  };
+  const handleEdit = useCallback((workspaceId: string) => {
+    setEditingWorkspaceId(workspaceId);
+  }, []);
 
-  const handleDelete = async (workspace: WorkspaceDocType): Promise<void> => {
-    if (db) {
-      try {
-        await db.workspaces.upsert({
-          ...workspace,
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error('Error deleting workspace:', error);
-      }
-    }
-  };
+  const handleCancelEdit = useCallback(() => {
+    setEditingWorkspaceId(null);
+  }, []);
 
-  if (!db) {
-    return <Box>Initializing database...</Box>;
+  const handleDelete = useCallback(
+    (workspaceId: string) => {
+      void deleteDocument(workspaceId);
+    },
+    [deleteDocument]
+  );
+
+  const handleCreateNew = useCallback(() => {
+    setIsCreating(true);
+  }, []);
+
+  const handleCancelCreate = useCallback(() => {
+    setIsCreating(false);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <CenteredBox sx={{ height: '50vh' }}>
+        <StyledCircularProgress />
+      </CenteredBox>
+    );
   }
 
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <WorkspaceForm
-          workspace={editingWorkspace ?? undefined}
-          onSubmit={editingWorkspace ? handleUpdate : handleCreate}
-        />
+    <motion.div {...staggeredChildren}>
+      {workspaceError ? (
+        <motion.div {...motionProps['fadeIn']}>
+          <StyledAlert severity="error" sx={{ mb: 2 }}>
+            {workspaceError.message}
+          </StyledAlert>
+        </motion.div>
+      ) : null}
+      <AnimatePresence>
+        {isCreating ? (
+          <motion.div {...motionProps['slideInFromTop']}>
+            <ContentPaper>
+              <SectionTitle variant="h6">Create Workspace</SectionTitle>
+              <WorkspaceForm
+                onSubmit={(data) => {
+                  void handleSubmit(data);
+                }}
+                onCancel={handleCancelCreate}
+                workspace={null}
+                isInline={false}
+              />
+            </ContentPaper>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      <motion.div {...motionProps['slideInFromBottom']}>
+        <ListContainer>
+          <SectionTitle variant="h6">Workspaces</SectionTitle>
+          <WorkspaceList
+            workspaces={workspaces}
+            editingWorkspaceId={editingWorkspaceId}
+            onEdit={handleEdit}
+            onCancelEdit={handleCancelEdit}
+            onDelete={handleDelete}
+            onSubmit={(data) => {
+              void handleSubmit(data);
+            }}
+          />
+        </ListContainer>
+      </motion.div>
+      <Box sx={{ position: 'fixed', bottom: 24, right: 24 }}>
+        <Tooltip title="Create new workspace" arrow>
+          <Fab color="primary" onClick={handleCreateNew}>
+            <AddIcon />
+          </Fab>
+        </Tooltip>
       </Box>
-      {editingWorkspace && (
-        <Button onClick={(): void => setEditingWorkspace(null)} sx={{ mb: 2 }}>
-          Cancel Editing
-        </Button>
-      )}
-      <WorkspaceList
-        db={db}
-        onEdit={setEditingWorkspace}
-        onDelete={(workspace): void => {
-          void handleDelete(workspace);
-        }}
-      />
-    </Box>
+    </motion.div>
   );
 };
 

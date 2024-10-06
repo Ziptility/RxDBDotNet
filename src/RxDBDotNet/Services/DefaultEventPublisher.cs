@@ -1,4 +1,5 @@
-﻿using HotChocolate.Subscriptions;
+﻿// src\RxDBDotNet\Services\DefaultEventPublisher.cs
+using HotChocolate.Subscriptions;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 
@@ -15,7 +16,7 @@ public sealed class DefaultEventPublisher(ITopicEventSender eventSender) : IEven
 {
     /// <inheritdoc/>
     public async Task PublishDocumentChangedEventAsync<TDocument>(TDocument changedDocument, CancellationToken cancellationToken)
-        where TDocument : class, IReplicatedDocument
+        where TDocument : IReplicatedDocument
     {
         ArgumentNullException.ThrowIfNull(changedDocument);
 

@@ -1,3 +1,4 @@
+<!-- SECURITY.md -->
 # Security Policy
 
 ## Supported Versions

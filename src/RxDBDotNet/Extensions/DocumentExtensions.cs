@@ -1,11 +1,12 @@
-﻿using RxDBDotNet.Documents;
+﻿// src\RxDBDotNet\Extensions\DocumentExtensions.cs
 using System.Reflection;
+using RxDBDotNet.Documents;
 
 namespace RxDBDotNet.Extensions;
 
 public static class DocumentExtensions
 {
-    public static string GetGraphQLTypeName<TDocument>() where TDocument : class, IReplicatedDocument
+    public static string GetGraphQLTypeName<TDocument>() where TDocument : IReplicatedDocument
     {
         var attribute = typeof(TDocument).GetCustomAttribute<GraphQLNameAttribute>();
 

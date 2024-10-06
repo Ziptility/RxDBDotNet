@@ -1,27 +1,26 @@
+// example/livedocs-client/src/pages/workspaces.tsx
 import React from 'react';
+import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { Typography, Box, CircularProgress } from '@mui/material';
+import { PageContainer, StyledCircularProgress, CenteredBox } from '@/styles/StyledComponents';
+import { motionProps } from '@/utils/motionSystem';
 
-const WorkspacesPageContent = dynamic(
-  () => import('../components/WorkspacesPageContent'),
-  { 
-    ssr: false,
-    loading: () => (
-      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-        <CircularProgress />
-      </Box>
-    ),
-  }
-);
+const WorkspacesPageContent = dynamic(() => import('../components/WorkspacesPageContent'), {
+  ssr: false,
+  loading: () => (
+    <CenteredBox sx={{ height: '50vh' }}>
+      <StyledCircularProgress />
+    </CenteredBox>
+  ),
+});
 
 const WorkspacesPage: React.FC = () => {
   return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Workspaces
-      </Typography>
-      <WorkspacesPageContent />
-    </>
+    <PageContainer>
+      <motion.div {...motionProps['fadeIn']}>
+        <WorkspacesPageContent />
+      </motion.div>
+    </PageContainer>
   );
 };
 

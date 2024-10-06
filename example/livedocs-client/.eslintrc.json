@@ -1,35 +1,226 @@
+// example/livedocs-client/.eslintrc.json
 {
+  "root": true,
   "extends": [
+    "eslint:recommended",
+    "next",
     "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:@typescript-eslint/strict",
-    "prettier"
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime",
+    "plugin:react-hooks/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript",
+    "plugin:prettier/recommended",
+    "plugin:promise/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
   },
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y", "import", "promise"],
   "rules": {
+    // General Best Practices
+    "eqeqeq": ["error", "always"],
+    "no-console": "off",
+    "no-debugger": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "strict": ["error", "global"],
+    "prefer-const": "error",
+
+    // Promise Rules
+    "promise/catch-or-return": "error",
+    "promise/always-return": "error",
+    "promise/no-return-wrap": "error",
+    "promise/param-names": "error",
+    "promise/no-new-statics": "error",
+    "promise/no-return-in-finally": "error",
+    "promise/valid-params": "error",
+    "promise/no-nesting": "error",
+    "promise/prefer-await-to-then": "error",
+    "promise/no-callback-in-promise": "error",
+    "promise/no-promise-in-callback": "error",
+
+    // TypeScript-Specific Rules
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/explicit-function-return-type": ["error", { "allowExpressions": true }],
     "@typescript-eslint/explicit-module-boundary-types": "error",
     "@typescript-eslint/no-non-null-assertion": "error",
     "@typescript-eslint/no-unsafe-assignment": "error",
     "@typescript-eslint/no-unsafe-call": "error",
     "@typescript-eslint/no-unsafe-member-access": "error",
     "@typescript-eslint/no-unsafe-return": "error",
-    "@typescript-eslint/restrict-template-expressions": "off",
-    "no-console": "off"
+    "@typescript-eslint/prefer-as-const": "error",
+    "@typescript-eslint/no-unnecessary-type-assertion": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/strict-boolean-expressions": "error",
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/ban-ts-comment": ["error", { "ts-ignore": "allow-with-description" }],
+    "@typescript-eslint/require-await": "error",
+    "@typescript-eslint/no-unnecessary-condition": "error",
+    "@typescript-eslint/switch-exhaustiveness-check": "error",
+    "@typescript-eslint/no-shadow": "error",
+    "@typescript-eslint/no-use-before-define": "error",
+    "@typescript-eslint/no-unnecessary-boolean-literal-compare": "error",
+    "@typescript-eslint/no-unnecessary-type-arguments": "error",
+    "@typescript-eslint/prefer-optional-chain": "error",
+    "@typescript-eslint/prefer-nullish-coalescing": "error",
+    "@typescript-eslint/no-invalid-void-type": "error",
+    "@typescript-eslint/no-base-to-string": "error",
+    "@typescript-eslint/no-confusing-non-null-assertion": "error",
+    "@typescript-eslint/no-unnecessary-qualifier": "error",
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        "selector": "interface",
+        "format": ["PascalCase"],
+        "custom": {
+          "regex": "^I[A-Z]",
+          "match": false
+        }
+      }
+    ],
+
+    // React-Specific Rules
+    "react/jsx-filename-extension": ["error", { "extensions": [".tsx"] }],
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/no-unknown-property": "error",
+    "react/no-array-index-key": "error",
+    "react/jsx-props-no-spreading": "off",
+    "react/boolean-prop-naming": "error",
+    "react/button-has-type": "error",
+    "react/default-props-match-prop-types": "error",
+    "react/destructuring-assignment": ["error", "always"],
+    "react/forbid-component-props": "error",
+    "react/forbid-dom-props": "error",
+    "react/forbid-elements": "error",
+    "react/forbid-foreign-prop-types": "error",
+    "react/forbid-prop-types": "error",
+    "react/function-component-definition": ["error", { "namedComponents": "arrow-function" }],
+    "react/hook-use-state": "error",
+    "react/iframe-missing-sandbox": "error",
+    "react/jsx-boolean-value": ["error", "never"],
+    "react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }],
+    "react/jsx-fragments": ["error", "syntax"],
+    "react/jsx-handler-names": "error",
+    "react/jsx-key": ["error", { "checkFragmentShorthand": true }],
+    "react/jsx-no-bind": [
+      "error",
+      {
+        "ignoreDOMComponents": false,
+        "ignoreRefs": true,
+        "allowArrowFunctions": false,
+        "allowFunctions": false,
+        "allowBind": false
+      }
+    ],
+    "react/jsx-no-constructed-context-values": "error",
+    "react/jsx-no-script-url": "error",
+    "react/jsx-pascal-case": "error",
+    "react/no-access-state-in-setstate": "error",
+    "react/no-children-prop": "error",
+    "react/no-danger": "error",
+    "react/no-multi-comp": "error",
+    "react/no-this-in-sfc": "error",
+    "react/no-unstable-nested-components": "error",
+    "react/no-unused-prop-types": "error",
+    "react/prefer-es6-class": ["error", "always"],
+    "react/prefer-read-only-props": "error",
+    "react/prefer-stateless-function": "error",
+    "react/require-default-props": "error",
+    "react/self-closing-comp": "error",
+    "react/sort-comp": "error",
+    "react/sort-prop-types": "error",
+    "react/state-in-constructor": ["error", "always"],
+    "react/static-property-placement": ["error", "static public field"],
+    "react/style-prop-object": "error",
+    "react/void-dom-elements-no-children": "error",
+    "react/jsx-no-leaked-render": "error",
+    "react/no-typos": "error",
+    "react/jsx-no-useless-fragment": ["error", { "allowExpressions": true }],
+
+    // React Hooks Rules
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "error",
+
+    // Import Rules
+    "import/order": [
+      "error",
+      {
+        "newlines-between": "never",
+        "groups": ["builtin", "external", "internal", ["parent", "sibling"], "index", "object", "type"],
+        "pathGroups": [
+          {
+            "pattern": "react",
+            "group": "external",
+            "position": "before"
+          },
+          {
+            "pattern": "next/**",
+            "group": "external",
+            "position": "after"
+          },
+          {
+            "pattern": "@/**",
+            "group": "internal",
+            "position": "after"
+          }
+        ],
+        "pathGroupsExcludedImportTypes": ["react", "next"],
+        "alphabetize": { "order": "asc", "caseInsensitive": true }
+      }
+    ],
+    "import/no-unresolved": "off",
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": false }],
+    "import/no-cycle": "error",
+    "import/no-self-import": "error",
+    "import/no-useless-path-segments": "error",
+    "import/no-default-export": "error",
+    "import/prefer-default-export": "off",
+    "import/no-named-as-default": "error",
+    "import/no-named-as-default-member": "error",
+
+    // Prettier Integration
+    "prettier/prettier": "error"
   },
-  "ignorePatterns": ["node_modules/", ".next/", "out/", "next.config.js"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/resolver": {
+      "typescript": {}
+    },
+    "next": {
+      "rootDir": "src"
+    }
+  },
+  "ignorePatterns": ["node_modules/", ".next/", "out/", "build/", "next.config.js"],
   "overrides": [
     {
       "files": ["next.config.js"],
       "parser": "espree",
       "parserOptions": {
-        "ecmaVersion": 2020
+        "ecmaVersion": 2021,
+        "sourceType": "module"
+      }
+    },
+    {
+      "files": ["src/**/*.tsx"],
+      "rules": {
+        "import/no-default-export": "off",
+        "react/jsx-no-bind": "off"
       }
     }
   ]

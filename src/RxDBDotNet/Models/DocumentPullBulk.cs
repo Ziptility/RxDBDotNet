@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Documents;
+﻿// src\RxDBDotNet\Models\DocumentPullBulk.cs
+using RxDBDotNet.Documents;
 
 namespace RxDBDotNet.Models;
 
@@ -6,7 +7,7 @@ namespace RxDBDotNet.Models;
 ///     Represents the result of a replication pull operation.
 /// </summary>
 /// <typeparam name="TDocument">The type of the documents being pulled.</typeparam>
-public sealed class DocumentPullBulk<TDocument> where TDocument : class, IReplicatedDocument
+public sealed class DocumentPullBulk<TDocument> where TDocument : IReplicatedDocument
 {
     /// <summary>
     ///     The list of pulled documents.

@@ -1,3 +1,4 @@
+// example/livedocs-client/src/hooks/useOnlineStatus.ts
 import { useState, useEffect } from 'react';
 
 export function useOnlineStatus(): boolean {

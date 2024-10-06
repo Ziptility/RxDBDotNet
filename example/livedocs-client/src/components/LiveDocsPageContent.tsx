@@ -1,133 +1,132 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button } from '@mui/material';
-import { Subscription } from 'rxjs';
-import LiveDocList from './LiveDocList';
-import LiveDocForm from './LiveDocForm';
-import { getDatabase } from '../lib/database';
-import { setupReplication } from '../lib/replication';
-import { LiveDocDocType, UserDocType, WorkspaceDocType } from '@/lib/schemas';
-import { LiveDocsDatabase } from '@/types';
+// example/livedocs-client/src/components/LiveDocsPageContent.tsx
+import React, { useState, useCallback } from 'react';
+import { Add as AddIcon } from '@mui/icons-material';
+import { Box, Fab, Tooltip } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import type { LiveDoc, User, Workspace } from '@/generated/graphql';
+import { useDocuments } from '@/hooks/useDocuments';
+import {
+  ContentPaper,
+  SectionTitle,
+  ListContainer,
+  StyledAlert,
+  StyledCircularProgress,
+  CenteredBox,
+} from '@/styles/StyledComponents';
+import { motionProps, staggeredChildren } from '@/utils/motionSystem';
+import LiveDocForm from './LiveDocForm';
+import LiveDocList from './LiveDocList';
 
-const LiveDocsPageContent: React.FC = (): JSX.Element => {
-  const [db, setDb] = useState<LiveDocsDatabase | null>(null);
-  const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDocDocType | null>(null);
-  const [users, setUsers] = useState<UserDocType[]>([]);
-  const [workspaces, setWorkspaces] = useState<WorkspaceDocType[]>([]);
+const LiveDocsPageContent: React.FC = () => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingLiveDoc, setEditingLiveDoc] = useState<LiveDoc | null>(null);
+  const {
+    documents: liveDocs,
+    isLoading: isLoadingLiveDocs,
+    error: liveDocError,
+    upsertDocument: upsertDocument,
+    deleteDocument: deleteDocument,
+  } = useDocuments<LiveDoc>('livedoc');
 
-  useEffect(() => {
-    let usersSubscription: Subscription | undefined;
-    let workspacesSubscription: Subscription | undefined;
+  const { documents: users, isLoading: isLoadingUsers } = useDocuments<User>('user');
+  const { documents: workspaces, isLoading: isLoadingWorkspaces } = useDocuments<Workspace>('workspace');
 
-    const initDb = async (): Promise<void> => {
-      try {
-        const database = await getDatabase();
-        await setupReplication(database);
-        setDb(database);
-
-        usersSubscription = database.users
-          .find({
-            selector: {
-              isDeleted: false,
-            },
-          })
-          .$.subscribe((docs) => {
-            setUsers(docs.map((doc) => doc.toJSON()));
-          });
-
-        workspacesSubscription = database.workspaces
-          .find({
-            selector: {
-              isDeleted: false,
-            },
-          })
-          .$.subscribe((docs) => {
-            setWorkspaces(docs.map((doc) => doc.toJSON()));
-          });
-      } catch (error) {
-        console.error('Error initializing database:', error);
-      }
-    };
-
-    void initDb();
-
-    return () => {
-      usersSubscription?.unsubscribe();
-      workspacesSubscription?.unsubscribe();
-    };
-  }, []);
-
-  const handleCreate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db) {
-      try {
-        await db.livedocs.insert({
+  const handleSubmit = useCallback(
+    async (liveDocData: Omit<LiveDoc, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
+      if (editingLiveDoc) {
+        const updatedLiveDoc: LiveDoc = {
+          ...editingLiveDoc,
+          ...liveDocData,
+          updatedAt: new Date().toISOString(),
+        };
+        await upsertDocument(updatedLiveDoc);
+      } else {
+        const newLiveDoc: LiveDoc = {
           id: uuidv4(),
-          ...liveDoc,
+          ...liveDocData,
           updatedAt: new Date().toISOString(),
           isDeleted: false,
-        });
-      } catch (error) {
-        console.error('Error creating LiveDoc:', error);
+        };
+        await upsertDocument(newLiveDoc);
       }
-    }
-  };
+      setEditingLiveDoc(null);
+      setIsCreating(false);
+    },
+    [editingLiveDoc, upsertDocument]
+  );
 
-  const handleUpdate = async (liveDoc: Omit<LiveDocDocType, 'id' | 'updatedAt' | 'isDeleted'>): Promise<void> => {
-    if (db && editingLiveDoc) {
-      try {
-        await db.livedocs.upsert({
-          ...editingLiveDoc,
-          ...liveDoc,
-          updatedAt: new Date().toISOString(),
-        });
-        setEditingLiveDoc(null);
-      } catch (error) {
-        console.error('Error updating LiveDoc:', error);
-      }
-    }
-  };
+  const handleCancel = useCallback((): void => {
+    setEditingLiveDoc(null);
+    setIsCreating(false);
+  }, []);
 
-  const handleDelete = async (liveDoc: LiveDocDocType): Promise<void> => {
-    if (db) {
-      try {
-        await db.livedocs.upsert({
-          ...liveDoc,
-          isDeleted: true,
-          updatedAt: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error('Error deleting LiveDoc:', error);
-      }
-    }
-  };
+  const handleEdit = useCallback((liveDoc: LiveDoc): void => {
+    setEditingLiveDoc(liveDoc);
+    setIsCreating(true);
+  }, []);
 
-  if (!db) {
-    return <Box>Initializing database...</Box>;
+  const handleDelete = useCallback(
+    (liveDoc: LiveDoc) => {
+      void deleteDocument(liveDoc.id);
+    },
+    [deleteDocument]
+  );
+
+  const handleCreateNew = useCallback(() => {
+    setEditingLiveDoc(null);
+    setIsCreating(true);
+  }, []);
+
+  if (isLoadingLiveDocs || isLoadingUsers || isLoadingWorkspaces) {
+    return (
+      <CenteredBox sx={{ height: '50vh' }}>
+        <StyledCircularProgress />
+      </CenteredBox>
+    );
   }
 
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <LiveDocForm
-          liveDoc={editingLiveDoc ?? undefined}
-          users={users.map((u) => ({ id: u.id, name: `${u.firstName} ${u.lastName}` }))}
-          workspaces={workspaces.map((w) => ({ id: w.id, name: w.name }))}
-          onSubmit={editingLiveDoc ? handleUpdate : handleCreate}
-        />
+    <motion.div {...staggeredChildren}>
+      {liveDocError ? (
+        <motion.div {...motionProps['fadeIn']}>
+          <StyledAlert severity="error" sx={{ mb: 2 }}>
+            {liveDocError.message}
+          </StyledAlert>
+        </motion.div>
+      ) : null}
+      <AnimatePresence>
+        {isCreating ? (
+          <motion.div {...motionProps['slideInFromTop']}>
+            <ContentPaper>
+              <SectionTitle variant="h6">{editingLiveDoc ? 'Edit LiveDoc' : 'Create LiveDoc'}</SectionTitle>
+              <LiveDocForm
+                liveDoc={editingLiveDoc ?? undefined}
+                users={users}
+                workspaces={workspaces}
+                onSubmit={(e) => {
+                  void handleSubmit(e);
+                }}
+                onCancel={handleCancel}
+              />
+            </ContentPaper>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      <motion.div {...motionProps['slideInFromBottom']}>
+        <ListContainer>
+          <SectionTitle variant="h6">LiveDoc List</SectionTitle>
+          <LiveDocList liveDocs={liveDocs} onEdit={handleEdit} onDelete={handleDelete} />
+        </ListContainer>
+      </motion.div>
+      <Box sx={{ position: 'fixed', bottom: 24, right: 24 }}>
+        <Tooltip title="Create new LiveDoc" arrow>
+          <Fab color="primary" onClick={handleCreateNew}>
+            <AddIcon />
+          </Fab>
+        </Tooltip>
       </Box>
-      {editingLiveDoc && (
-        <Button onClick={(): void => setEditingLiveDoc(null)} sx={{ mb: 2 }}>
-          Cancel Editing
-        </Button>
-      )}
-      <LiveDocList
-        db={db}
-        onEdit={setEditingLiveDoc}
-        onDelete={(liveDoc): void => {
-          void handleDelete(liveDoc);
-        }}
-      />
-    </Box>
+    </motion.div>
   );
 };
 

@@ -1,4 +1,6 @@
-﻿using RxDBDotNet.Tests.Model;
+﻿// tests\RxDBDotNet.Tests\AdditionalCoverageTests.cs
+using System.Diagnostics;
+using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
 
 namespace RxDBDotNet.Tests;
@@ -74,7 +76,7 @@ public class AdditionalCoverageTests : IAsyncLifetime
             .HaveCount(1);
         response.Data.PushWorkspace?.Workspace?.First()
             .Id.Should()
-            .Be(workspace1.Id!.Value);
+            .Be(workspace1.Id);
         response.Data.PushWorkspace?.Errors.Should()
             .BeNullOrEmpty();
     }
@@ -147,20 +149,23 @@ public class AdditionalCoverageTests : IAsyncLifetime
         TestContext = new TestScenarioBuilder().Build();
         var workspace1 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
         var workspace2 = await TestContext.HttpClient.CreateWorkspaceAsync(TestContext.CancellationToken);
+        workspace1.workspaceInputGql.Topics?.Value.Should()
+            .HaveCount(1);
+        workspace2.workspaceInputGql.Topics?.Value.Should()
+            .HaveCount(1);
 
         await using var subscriptionClient = await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(TestContext.CancellationToken);
 
+        Debug.Assert(workspace1.workspaceInputGql.Id != null, "workspace1.workspaceInputGql.Id != null");
+        Debug.Assert(workspace2.workspaceInputGql.Id != null, "workspace2.workspaceInputGql.Id != null");
         var topics = new List<string>
         {
-            workspace1.workspaceInputGql.Id!.Value.ToString(),
-            workspace2.workspaceInputGql.Id!.Value.ToString(),
+            workspace1.workspaceInputGql.Id.Value.ToString() ?? throw new InvalidOperationException(),
+            workspace2.workspaceInputGql.Id.Value.ToString() ?? throw new InvalidOperationException(),
         };
 
-        var subscriptionQuery = new SubscriptionQueryBuilderGql().WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(),
-                new WorkspaceInputHeadersGql
-                {
-                    Authorization = "test-auth-token",
-                }, topics)
+        var subscriptionQuery = new SubscriptionQueryBuilderGql()
+            .WithStreamWorkspace(new WorkspacePullBulkQueryBuilderGql().WithAllFields(), topics: topics)
             .Build();
 
         var subscriptionTask = CollectSubscriptionDataAsync(subscriptionClient, subscriptionQuery, TestContext.CancellationToken, maxResponses: 2);
@@ -192,8 +197,8 @@ public class AdditionalCoverageTests : IAsyncLifetime
                 .NotBeNull();
             var workspaceIds = new List<Guid?>
             {
-                workspace1.workspaceInputGql.Id!.Value,
-                workspace2.workspaceInputGql.Id!.Value,
+                workspace1.workspaceInputGql.Id.Value,
+                workspace2.workspaceInputGql.Id.Value,
             };
 
             workspaceIds.Should()

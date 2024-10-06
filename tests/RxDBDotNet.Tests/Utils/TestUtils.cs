@@ -1,6 +1,8 @@
-﻿using System.Diagnostics;
+﻿// tests\RxDBDotNet.Tests\Utils\TestUtils.cs
+using System.Diagnostics;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
+using LiveDocs.GraphQLApi.Security;
 using RxDBDotNet.Tests.Model;
 using static RxDBDotNet.Tests.Setup.Strings;
 
@@ -38,13 +40,14 @@ internal static class TestUtils
             FirstName = CreateString(),
             LastName = CreateString(),
             Email = $"{CreateString()}@example.com",
+            Role = role,
             JwtAccessToken = null,
             WorkspaceId = workspace.ReplicatedDocumentId,
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
         };
 
-        var jwtToken = JwtUtil.GenerateJwtToken(replicatedUser, role);
+        var jwtToken = JwtUtil.GenerateJwtToken(replicatedUser);
 
         var user = new User
         {
@@ -52,11 +55,13 @@ internal static class TestUtils
             FirstName = replicatedUser.FirstName,
             LastName = replicatedUser.LastName,
             Email = replicatedUser.Email,
+            Role = replicatedUser.Role,
             JwtAccessToken = jwtToken,
             WorkspaceId = workspace.Id,
             UpdatedAt = replicatedUser.UpdatedAt,
             IsDeleted = replicatedUser.IsDeleted,
             ReplicatedDocumentId = replicatedUser.Id,
+            Topics = [],
         };
 
         await dbContext.Users.AddAsync(user, cancellationToken);
@@ -84,9 +89,10 @@ internal static class TestUtils
             FirstName = CreateString(),
             LastName = CreateString(),
             Email = $"{CreateString()}@example.com",
-            WorkspaceId = workspace.Id!.Value,
+            WorkspaceId = workspace.Id,
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
+            Role = UserRole.StandardUser,
         };
 
         var userInputPushRowGql = new UserInputPushRowGql
@@ -206,12 +212,19 @@ internal static class TestUtils
             },
         };
 
-        var updateWorkspace =
-            new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields(), workspaceInputGql);
+        var updateWorkspace = new MutationQueryBuilderGql().WithPushWorkspace(new PushWorkspacePayloadQueryBuilderGql().WithAllFields()
+                .WithErrors(new PushWorkspaceErrorQueryBuilderGql()
+                    .WithAuthenticationErrorFragment(new AuthenticationErrorQueryBuilderGql().WithAllFields())
+                    .WithUnauthorizedAccessErrorFragment(new UnauthorizedAccessErrorQueryBuilderGql().WithAllFields())),
+            workspaceInputGql);
 
         var response = await httpClient.PostGqlMutationAsync(updateWorkspace, cancellationToken);
 
         response.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Errors.Should()
+            .BeNullOrEmpty();
+        response.Data.PushWorkspace?.Workspace.Should()
             .BeNullOrEmpty();
 
         return await httpClient.GetWorkspaceByIdAsync(workspace.Id, cancellationToken, jwtAccessToken);
@@ -343,17 +356,18 @@ internal static class TestUtils
     {
         var liveDocId = Provider.Sql.Create();
 
+        Debug.Assert(workspace.Id != null, "workspace.Id != null");
         var newLiveDoc = new LiveDocInputGql
         {
             Id = liveDocId,
             Content = CreateString(),
-            OwnerId = owner.Id!.Value,
-            WorkspaceId = workspace.Id!.Value,
+            OwnerId = owner.Id,
+            WorkspaceId = workspace.Id,
             UpdatedAt = DateTimeOffset.UtcNow,
             IsDeleted = false,
             Topics = new List<string>
             {
-                workspace.Id!.Value.ToString(),
+                workspace.Id.Value.ToString(),
             },
         };
 
@@ -431,7 +445,7 @@ internal static class TestUtils
         response.Errors.Should()
             .BeNullOrEmpty();
 
-        return await httpClient.GetLiveDocByIdAsync(liveDoc.Id!.Value, cancellationToken);
+        return await httpClient.GetLiveDocByIdAsync(liveDoc.Id, cancellationToken);
     }
 
     public static async Task<LiveDocGql> GetLiveDocByIdAsync(

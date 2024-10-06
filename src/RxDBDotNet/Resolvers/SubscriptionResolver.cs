@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿// src\RxDBDotNet\Resolvers\SubscriptionResolver.cs
+using System.Runtime.CompilerServices;
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using RxDBDotNet.Documents;
@@ -7,7 +8,7 @@ using RxDBDotNet.Models;
 namespace RxDBDotNet.Resolvers;
 
 /// <summary>
-///     Provides subscription functionality for real-time updates of replicated documents.
+///     Provides subscription functionality for real-time updates of documents.
 ///     This class implements the 'event observation' mode of the RxDB replication protocol.
 /// </summary>
 /// <typeparam name="TDocument">The type of document being replicated. Must implement <see cref="IReplicatedDocument" />.</typeparam>
@@ -15,7 +16,7 @@ namespace RxDBDotNet.Resolvers;
 ///     Note that this class must not use constructor injection per:
 ///     https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
 /// </remarks>
-public sealed class SubscriptionResolver<TDocument> where TDocument : class, IReplicatedDocument
+public sealed class SubscriptionResolver<TDocument> where TDocument : IReplicatedDocument
 {
     /// <summary>
     ///     Provides a stream of document changes for subscription.

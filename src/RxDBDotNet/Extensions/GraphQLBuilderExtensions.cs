@@ -1,4 +1,5 @@
-﻿using System.Security.Authentication;
+﻿// src\RxDBDotNet\Extensions\GraphQLBuilderExtensions.cs
+using System.Security.Authentication;
 using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
 using HotChocolate.Subscriptions;
@@ -158,7 +159,7 @@ public static class GraphQLBuilderExtensions
 
     private static void AddReadAuthorizationIfNecessary<TDocument>(
         IObjectFieldDescriptor queryField,
-        ReplicationOptions<TDocument> replicationOptions) where TDocument : class, IReplicatedDocument
+        ReplicationOptions<TDocument> replicationOptions) where TDocument : IReplicatedDocument
     {
         foreach (var readPolicyRequirement in replicationOptions.Security.PolicyRequirements.Where(pr =>
                      pr.DocumentOperation.Operation == Operation.Read))
@@ -177,35 +178,35 @@ public static class GraphQLBuilderExtensions
         var pushRowArgName = $"{char.ToLowerInvariant(graphQLTypeName[0])}{graphQLTypeName[1..]}PushRow";
 
         builder.AddTypeExtension(new ObjectTypeExtension(objectTypeDescriptor =>
-        {
-            var field = objectTypeDescriptor.Name("Mutation")
-                .Field(pushDocumentsName)
-                .UseMutationConvention()
-                .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
-                .Argument(pushRowArgName, a => a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
-                    .Description($"The list of {graphQLTypeName} documents to push to the server."))
-                .Description($"Pushes {graphQLTypeName} documents to the server and detects any conflicts.")
-                .Resolve(context =>
-                {
-                    var mutation = context.Resolver<MutationResolver<TDocument>>();
-                    var documentService = context.Service<IDocumentService<TDocument>>();
-                    var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
-                    var cancellationToken = context.RequestAborted;
-                    var authorizationHelper = context.Services.GetService<AuthorizationHelper>();
-                    var currentUser = context.GetUser();
-                    var securityOptions = replicationOptions.Security;
+         {
+             var field = objectTypeDescriptor.Name("Mutation")
+                 .Field(pushDocumentsName)
+                 .UseMutationConvention()
+                 .Type<NonNullType<ListType<NonNullType<ObjectType<TDocument>>>>>()
+                 .Argument(pushRowArgName, a => a.Type<ListType<InputObjectType<DocumentPushRow<TDocument>>>>()
+                     .Description($"The list of {graphQLTypeName} documents to push to the server."))
+                 .Description($"Pushes {graphQLTypeName} documents to the server and detects any conflicts.")
+                 .Resolve(context =>
+                 {
+                     var mutation = context.Resolver<MutationResolver<TDocument>>();
+                     var documentService = context.Service<IDocumentService<TDocument>>();
+                     var documents = context.ArgumentValue<List<DocumentPushRow<TDocument>?>?>(pushRowArgName);
+                     var cancellationToken = context.RequestAborted;
+                     var authorizationHelper = context.Services.GetService<AuthorizationHelper>();
+                     var currentUser = context.GetUser();
+                     var securityOptions = replicationOptions.Security;
 
-                    return mutation.PushDocumentsAsync(documents, documentService, currentUser, securityOptions,
-                        authorizationHelper, cancellationToken);
-                });
+                     return mutation.PushDocumentsAsync(documents, documentService, currentUser, securityOptions,
+                         authorizationHelper, cancellationToken);
+                 });
 
-            AddFieldErrorTypes(field, replicationOptions);
-        }));
+             AddFieldErrorTypes(field, replicationOptions);
+         }));
 
         return builder.AddType(new InputObjectType<DocumentPushRow<TDocument>>(inputObjectTypeDescriptor =>
         {
             inputObjectTypeDescriptor.Name(pushRowTypeName)
-                .Description($"Input type for pushing {graphQLTypeName} documents to the server.");
+                 .Description($"Input type for pushing {graphQLTypeName} documents to the server.");
             inputObjectTypeDescriptor.Field(f => f.AssumedMasterState)
                 .Type<InputObjectType<TDocument>>()
                 .Description("The assumed state of the document on the server before the push.");
@@ -216,7 +217,7 @@ public static class GraphQLBuilderExtensions
     }
 
     private static void AddFieldErrorTypes<TDocument>(IObjectFieldDescriptor field, ReplicationOptions<TDocument> replicationOptions)
-        where TDocument : class, IReplicatedDocument
+        where TDocument : IReplicatedDocument
     {
         var addedErrorTypes = new HashSet<Type>();
 
@@ -239,7 +240,7 @@ public static class GraphQLBuilderExtensions
 
     private static IRequestExecutorBuilder ConfigureDocumentSubscriptions<TDocument>(
         this IRequestExecutorBuilder builder,
-        ReplicationOptions<TDocument> replicationOptions) where TDocument : class, IReplicatedDocument
+        ReplicationOptions<TDocument> replicationOptions) where TDocument : IReplicatedDocument
     {
         var graphQLTypeName = GetGraphQLTypeName<TDocument>();
         var streamDocumentName = $"stream{graphQLTypeName}";

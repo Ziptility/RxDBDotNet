@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿// src\RxDBDotNet\Security\WebSocketJwtAuthInterceptor.cs
+using System.Security.Claims;
 using HotChocolate.AspNetCore;
 using HotChocolate.AspNetCore.Subscriptions;
 using HotChocolate.AspNetCore.Subscriptions.Protocols;
@@ -201,8 +202,6 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
         var validationParameters = jwtBearerOptions.TokenValidationParameters;
         _logger.LogDebug("Token validation parameters retrieved");
 
-        LogTokenValidationParameters(validationParameters);
-
         try
         {
             await UpdateValidationParametersAsync(jwtBearerOptions, validationParameters, cancellationToken)
@@ -234,29 +233,6 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
             _logger.LogWarning(ex, "Token validation failed.");
             return null;
         }
-    }
-
-    private void LogTokenValidationParameters(TokenValidationParameters validationParameters)
-    {
-            _logger.LogDebug("Token validation parameters: " +
-                         "ValidateIssuer = {ValidateIssuer}, " +
-                         "ValidIssuers = {ValidIssuers}, " +
-                         "ValidateAudience = {ValidateAudience}, " +
-                         "ValidAudiences = {ValidAudiences}, " +
-                         "ValidateLifetime = {ValidateLifetime}, " +
-                         "RequireExpirationTime = {RequireExpirationTime}, " +
-                         "ClockSkew = {ClockSkew}, " +
-                         "ValidateIssuerSigningKey = {ValidateIssuerSigningKey}, " +
-                         "SignatureValidationKeysAvailable = {SignatureValidationKeysAvailable}",
-            validationParameters.ValidateIssuer,
-            validationParameters.ValidIssuers != null ? string.Join(", ", validationParameters.ValidIssuers) : "null",
-            validationParameters.ValidateAudience,
-            validationParameters.ValidAudiences != null ? string.Join(", ", validationParameters.ValidAudiences) : "null",
-            validationParameters.ValidateLifetime,
-            validationParameters.RequireExpirationTime,
-            validationParameters.ClockSkew,
-            validationParameters.ValidateIssuerSigningKey,
-            validationParameters.IssuerSigningKey != null || (validationParameters.IssuerSigningKeys?.Any() ?? false));
     }
 
     /// <summary>

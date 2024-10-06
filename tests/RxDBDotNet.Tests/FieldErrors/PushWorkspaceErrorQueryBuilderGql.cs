@@ -1,4 +1,5 @@
-﻿namespace RxDBDotNet.Tests.Model;
+﻿// tests\RxDBDotNet.Tests\FieldErrors\PushWorkspaceErrorQueryBuilderGql.cs
+namespace RxDBDotNet.Tests.Model;
 
 public partial class PushWorkspaceErrorQueryBuilderGql
 {

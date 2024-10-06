@@ -1,27 +1,26 @@
+/* example/livedocs-client/src/styles/globals.css */
+
 :root {
-  /* Define CSS variables for colors */
-  --color-primary: #1976d2;
-  --color-secondary: #dc004e;
-  --color-background: #f5f5f5;
-  --color-text: #333333;
-  --color-text-light: #666666;
-  --color-border: #e0e0e0;
+  /* Spacing */
+  --spacing-unit: 8px;
+  --spacing-xs: calc(var(--spacing-unit) * 0.5);
+  --spacing-sm: var(--spacing-unit);
+  --spacing-md: calc(var(--spacing-unit) * 2);
+  --spacing-lg: calc(var(--spacing-unit) * 3);
+  --spacing-xl: calc(var(--spacing-unit) * 4);
 
-  /* Define CSS variables for spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
-  /* Define CSS variables for font sizes */
-  --font-size-sm: 0.875rem;
-  --font-size-md: 1rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.5rem;
+  /* Transitions */
+  --transition-speed: 0.2s;
 
-  /* Define CSS variables for transitions */
-  --transition-speed: 0.3s;
+  /* Z-index */
+  --z-index-drawer: 1200;
+  --z-index-app-bar: 1100;
+  --z-index-modal: 1300;
+  --z-index-snackbar: 1400;
+  --z-index-tooltip: 1500;
 }
 
 /* Reset and base styles */
@@ -31,81 +30,154 @@
   padding: 0;
 }
 
-html,
-body {
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+html {
   font-size: 16px;
-  line-height: 1.5;
-  color: var(--color-text);
-  background-color: var(--color-background);
+  scroll-behavior: smooth;
 }
 
+body {
+  font-family: var(--font-family);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive typography */
+@media screen and (min-width: 600px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+@media screen and (min-width: 960px) {
+  html {
+    font-size: 20px;
+  }
+}
+
+/* Accessibility improvements */
 a {
-  color: inherit;
   text-decoration: none;
   transition: color var(--transition-speed) ease;
 }
 
-a:hover {
-  color: var(--color-primary);
+a:hover,
+a:focus {
+  text-decoration: underline;
+}
+
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline-offset: 2px;
+}
+
+/* Improved focus visibility for keyboard navigation */
+:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Hide focus outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 5px;
 }
 
 /* Utility classes */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-md);
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .text-center {
   text-align: center;
 }
 
-.mt-1 { margin-top: var(--spacing-xs); }
-.mt-2 { margin-top: var(--spacing-sm); }
-.mt-3 { margin-top: var(--spacing-md); }
-.mt-4 { margin-top: var(--spacing-lg); }
-.mt-5 { margin-top: var(--spacing-xl); }
-
-.mb-1 { margin-bottom: var(--spacing-xs); }
-.mb-2 { margin-bottom: var(--spacing-sm); }
-.mb-3 { margin-bottom: var(--spacing-md); }
-.mb-4 { margin-bottom: var(--spacing-lg); }
-.mb-5 { margin-bottom: var(--spacing-xl); }
-
-/* Custom scrollbar styles */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.text-left {
+  text-align: left;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--color-background);
+.text-right {
+  text-align: right;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 4px;
+/* Responsive flex container */
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-secondary);
+/* Responsive grid system */
+.grid {
+  display: grid;
+  gap: var(--spacing-md);
 }
 
-/* Responsive typography */
-@media (max-width: 768px) {
-  html, body {
-    font-size: 14px;
+@media screen and (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@media screen and (min-width: 960px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.fade-in {
-  animation: fadeIn var(--transition-speed) ease-in;
+@media screen and (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background-color: #fff;
+    color: #000;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  .no-print {
+    display: none;
+  }
 }

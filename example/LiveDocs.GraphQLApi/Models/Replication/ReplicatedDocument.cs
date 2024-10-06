@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// example/LiveDocs.GraphQLApi/Models/Replication/ReplicatedDocument.cs
+
+using System.ComponentModel.DataAnnotations;
 using LiveDocs.GraphQLApi.Validations;
 using RxDBDotNet.Documents;
 
@@ -30,7 +32,7 @@ public abstract record ReplicatedDocument : IReplicatedDocument
         set =>
             // Strip microseconds by setting the ticks to zero, keeping only up to milliseconds.
             // Doing this because microseconds are not supported by Hot Chocolate's DateTime serializer.
-            // Now Equals() and GetHashCode() will work correctly.
+            // Now Equals() and GetHashCode() will work correctly across roundtrips.
             _updatedAt = value.AddTicks(-(value.Ticks % TimeSpan.TicksPerMillisecond));
     }
 

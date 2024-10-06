@@ -1,4 +1,5 @@
-﻿using RxDBDotNet.Tests.Setup;
+﻿// tests\RxDBDotNet.TestModelGenerator\Program.cs
+using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.TestModelGenerator;
 

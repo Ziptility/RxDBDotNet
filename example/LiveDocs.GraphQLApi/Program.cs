@@ -1,24 +1,29 @@
+// example/LiveDocs.GraphQLApi/Program.cs
+
+using System.Net;
+using System.Security.Claims;
 using HotChocolate.AspNetCore;
-using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
 using LiveDocs.GraphQLApi.Models.Replication;
-using LiveDocs.GraphQLApi.Models.Shared;
+using LiveDocs.GraphQLApi.Security;
 using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using RxDBDotNet.Extensions;
+using RxDBDotNet.Security;
 using RxDBDotNet.Services;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-ConfigureServices(builder);
+ConfigureServices();
 
-ConfigureGraphQL(builder);
+ConfigureGraphQL();
 
 var app = builder.Build();
 
-ConfigureApp(app);
+ConfigureApp();
 
 await InitializeLiveDocsDbAsync();
 
@@ -26,9 +31,11 @@ await app.RunAsync();
 
 return;
 
-static void ConfigureServices(WebApplicationBuilder builder)
+void ConfigureServices()
 {
     builder.AddServiceDefaults();
+
+    ConfigureAuthorization();
 
     builder.Services.AddProblemDetails();
 
@@ -38,7 +45,7 @@ static void ConfigureServices(WebApplicationBuilder builder)
         {
             corsPolicyBuilder.WithOrigins(
                     "http://localhost:3000",
-                    "http://127.0.0.1:8888")
+                    "http://localhost:3001")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
@@ -51,27 +58,80 @@ static void ConfigureServices(WebApplicationBuilder builder)
     builder.AddRedisClient("redis");
 
     builder.Services
-        .AddScoped<IDocumentService<Hero>, HeroService>()
         .AddScoped<IDocumentService<ReplicatedUser>, UserService>()
         .AddScoped<IDocumentService<ReplicatedWorkspace>, WorkspaceService>()
         .AddScoped<IDocumentService<ReplicatedLiveDoc>, LiveDocService>();
 }
 
-static void ConfigureGraphQL(WebApplicationBuilder builder)
+void ConfigureGraphQL()
 {
     builder.Services.AddGraphQLServer()
         .ModifyRequestOptions(o => o.IncludeExceptionDetails = true)
+        .AddAuthorization()
         // Mutation conventions must be enabled for replication to work
         .AddMutationConventions()
         .AddReplication()
-        .AddSubscriptionDiagnostics()
-        .AddReplicatedDocument<Hero>()
+        .AddReplicatedDocument<ReplicatedLiveDoc>()
         .AddReplicatedDocument<ReplicatedUser>()
         .AddReplicatedDocument<ReplicatedWorkspace>()
-        .AddReplicatedDocument<ReplicatedLiveDoc>()
-        .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>(), new SubscriptionOptions
+        .AddRedisSubscriptions(provider => provider.GetRequiredService<IConnectionMultiplexer>());
+}
+
+void ConfigureAuthorization()
+{
+    builder.Services.AddScoped<AuthorizationHelper>();
+
+    ConfigurePolicies();
+
+    ConfigureAuthentication();
+}
+
+void ConfigurePolicies()
+{
+    builder.Services.AddAuthorizationBuilder()
+        // The roles are hierarchical
+        .AddPolicy(PolicyNames.HasStandardUserAccess,
+            policy => policy.RequireClaim(
+                ClaimTypes.Role,
+                nameof(UserRole.StandardUser),
+                nameof(UserRole.WorkspaceAdmin),
+                nameof(UserRole.SystemAdmin)))
+        .AddPolicy(PolicyNames.HasWorkspaceAdminAccess,
+            policy => policy.RequireClaim(
+                ClaimTypes.Role,
+                nameof(UserRole.WorkspaceAdmin),
+                nameof(UserRole.SystemAdmin)))
+        .AddPolicy(PolicyNames.HasSystemAdminAccess,
+            policy => policy.RequireClaim(
+                ClaimTypes.Role,
+                nameof(UserRole.SystemAdmin)));
+}
+
+void ConfigureAuthentication()
+{
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
         {
-            TopicPrefix = null,
+            options.Audience = JwtUtil.Audience;
+            options.IncludeErrorDetails = true;
+            options.RequireHttpsMetadata = false;
+            options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters();
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = _ => Task.CompletedTask,
+                OnAuthenticationFailed = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    ctx.Fail(ctx.Exception);
+                    return Task.CompletedTask;
+                },
+                OnForbidden = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    ctx.Fail(nameof(HttpStatusCode.Forbidden));
+                    return Task.CompletedTask;
+                },
+            };
         });
 }
 
@@ -84,17 +144,21 @@ static Task InitializeLiveDocsDbAsync()
     return LiveDocsDbInitializer.InitializeAsync();
 }
 
-void ConfigureApp(WebApplication webApplication)
+void ConfigureApp()
 {
-    webApplication.UseExceptionHandler();
+    app.UseExceptionHandler();
 
-    webApplication.UseDeveloperExceptionPage();
+    app.UseDeveloperExceptionPage();
 
-    webApplication.UseCors();
+    app.UseCors();
 
-    webApplication.UseWebSockets();
+    app.UseAuthentication();
 
-    webApplication.MapGraphQL()
+    app.UseAuthorization();
+
+    app.UseWebSockets();
+
+    app.MapGraphQL()
         .WithOptions(new GraphQLServerOptions
         {
             Tool =

@@ -6,38 +6,22 @@ on:
 jobs:
   build-and-test-pr:
     runs-on: windows-latest
+    services:
+      dind:
+        image: docker:dind
+        options: --privileged
+        ports:
+          - 2375:2375
     steps:
-    - name: Check Docker status and switch to Linux containers if necessary
-      shell: pwsh
+    - name: Set up Docker client
       run: |
-        Write-Host "Checking Docker status..."
-        $dockerInfo = docker info --format '{{.OSType}}'
-        Write-Host "Current Docker OS Type: $dockerInfo"
-        if ($dockerInfo -eq 'linux') {
-          Write-Host "Docker is already using Linux containers."
-        } else {
-          Write-Host "Docker is using Windows containers. Attempting to switch to Linux containers..."
-          docker version
-          docker pull alpine
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Failed to pull Linux container. Switching to Linux containers mode..."
-            & $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
-            docker version
-            docker pull alpine
-          }
-        }
-        
-        # Verify the switch
-        $dockerInfo = docker info --format '{{.OSType}}'
-        Write-Host "Docker OS Type after switch attempt: $dockerInfo"
-        if ($dockerInfo -ne 'linux') {
-          Write-Error "Failed to switch to Linux containers"
-          exit 1
-        }
+        echo "DOCKER_HOST=tcp://localhost:2375" >> $env:GITHUB_ENV
+        echo "DOCKER_TLS_VERIFY=" >> $env:GITHUB_ENV
 
     - name: Verify Docker is using Linux containers
       shell: pwsh
       run: |
+        docker version
         $osType = docker info --format '{{.OSType}}'
         Write-Host "Docker OS Type: $osType"
         if ($osType -ne 'linux') {

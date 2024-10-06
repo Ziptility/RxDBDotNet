@@ -1,42 +1,29 @@
 ﻿using Xunit;
 
-namespace RxDBDotNet.Tests.Setup
+namespace RxDBDotNet.Tests.Setup;
+
+public sealed class DockerSetupUtil : IAsyncLifetime
 {
-    public sealed class DockerSetupUtil : IAsyncLifetime
+    private readonly Lazy<Task> _initializer = new(InitializeAsyncInternal);
+
+    public Task InitializeAsync()
     {
-        private static readonly SemaphoreSlim Semaphore = new(1, 1);
-        private static volatile bool _isInitialized;
+        return _initializer.Value;
+    }
 
-        public async Task InitializeAsync()
-        {
-            if (_isInitialized)
-            {
-                return;
-            }
+    public Task DisposeAsync()
+    {
+        // since the test containers are expensive to setup
+        // we don't want to dispose of them after each test run.
+        // Manually delete them when necessary; for example,
+        // when the db schema changes.
+        return Task.CompletedTask;
+    }
 
-            await Semaphore.WaitAsync();
-            try
-            {
-                if (!_isInitialized)
-                {
-                    await InitializeAsyncInternal();
-                    _isInitialized = true;
-                }
-            }
-            finally
-            {
-                Semaphore.Release();
-            }
-        }
+    private static async Task InitializeAsyncInternal()
+    {
+        await RedisSetupUtil.SetupAsync();
 
-        public Task DisposeAsync() => Task.CompletedTask;
-
-        private static async Task InitializeAsyncInternal()
-        {
-            Console.WriteLine("Starting Docker setup...");
-            await RedisSetupUtil.SetupAsync();
-            await DbSetupUtil.SetupAsync();
-            Console.WriteLine("Docker setup completed successfully");
-        }
+        await DbSetupUtil.SetupAsync();
     }
 }

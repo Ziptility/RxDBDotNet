@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-test-pr:
-    runs-on: ubuntu-22.04
+    runs-on: windows-latest  # Changed to a Windows runner
     steps:
     - uses: actions/checkout@v3
       with:
@@ -21,11 +21,16 @@ jobs:
     - name: Install .NET Aspire workload
       run: dotnet workload install aspire
 
+    - name: Install Docker
+      run: |
+        Start-Service docker
+        docker --version
+
     - name: Install Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18.x'
-      
+
     - name: Install dependencies and build the client
       working-directory: example/livedocs-client
       run: |

@@ -12,25 +12,27 @@ jobs:
       run: |
         Write-Host "Checking Docker status..."
         $dockerInfo = docker info --format '{{.OSType}}'
+        Write-Host "Current Docker OS Type: $dockerInfo"
         if ($dockerInfo -eq 'linux') {
           Write-Host "Docker is already using Linux containers."
         } else {
-          Write-Host "Docker is not using Linux containers. Attempting to switch..."
-          # Stop Docker service
-          Stop-Service docker
-          # Set Docker to use Linux containers
-          $daemonJson = Get-Content 'C:\ProgramData\Docker\config\daemon.json' -Raw | ConvertFrom-Json
-          $daemonJson | Add-Member -Name 'osType' -Value 'linux' -MemberType NoteProperty -Force
-          $daemonJson | ConvertTo-Json | Set-Content 'C:\ProgramData\Docker\config\daemon.json'
-          # Start Docker service
-          Start-Service docker
-          # Wait for Docker to be ready
-          docker ps > $null
-          while ($LASTEXITCODE -ne 0) {
-            Write-Host "Waiting for Docker to be ready..."
-            Start-Sleep -Seconds 5
-            docker ps > $null
+          Write-Host "Docker is using Windows containers. Attempting to switch to Linux containers..."
+          docker version
+          docker pull alpine
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to pull Linux container. Switching to Linux containers mode..."
+            & $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
+            docker version
+            docker pull alpine
           }
+        }
+        
+        # Verify the switch
+        $dockerInfo = docker info --format '{{.OSType}}'
+        Write-Host "Docker OS Type after switch attempt: $dockerInfo"
+        if ($dockerInfo -ne 'linux') {
+          Write-Error "Failed to switch to Linux containers"
+          exit 1
         }
 
     - name: Verify Docker is using Linux containers
@@ -42,6 +44,8 @@ jobs:
           Write-Error "Docker is not using Linux containers"
           exit 1
         }
+        # Additional verification
+        docker run --rm alpine echo "Running Linux container successfully"
 
     - uses: actions/checkout@v3
       with:

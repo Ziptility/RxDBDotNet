@@ -7,9 +7,24 @@ jobs:
   build-and-test-pr:
     runs-on: windows-latest
     steps:
-    - name: Switch to Linux containers
+    - name: Check and switch to Linux containers
+      shell: pwsh
       run: |
-        & $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
+        $currentContext = docker context inspect --format '{{.Name}}'
+        Write-Host "Current Docker context: $currentContext"
+        
+        if ($currentContext -eq 'default') {
+          # We're likely already using Linux containers, but let's verify
+          $osType = docker info --format '{{.OSType}}'
+          if ($osType -ne 'linux') {
+            Write-Host "Switching to Linux containers..."
+            & 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchLinuxEngine
+          } else {
+            Write-Host "Already using Linux containers."
+          }
+        } else {
+          Write-Host "Not in default context. Please ensure Linux containers are being used."
+        }
 
     - name: Verify Docker is using Linux containers
       run: |

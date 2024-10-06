@@ -41,7 +41,7 @@ public static class RedisSetupUtil
                 else
                 {
                     var redisContainer = new RedisBuilder().WithName(containerName)
-                        .WithImage("redis:7.0")
+                        .WithImage("redis:latest")
                         .WithPortBinding(3333, 6379)
                         .WithCleanUp(false)
                         .Build();

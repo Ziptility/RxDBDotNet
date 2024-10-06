@@ -1,4 +1,7 @@
 ﻿// tests\RxDBDotNet.Tests\Utils\DateTimeOffsetExtensions.cs
+
+using System;
+
 namespace RxDBDotNet.Tests.Utils;
 
 public static class DateTimeOffsetExtensions

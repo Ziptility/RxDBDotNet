@@ -1,7 +1,12 @@
 ﻿// tests\RxDBDotNet.Tests.Setup\TestScenarioBuilder.cs
+
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using HotChocolate.AspNetCore;
 using HotChocolate.Execution.Configuration;
 using HotChocolate.Execution.Options;

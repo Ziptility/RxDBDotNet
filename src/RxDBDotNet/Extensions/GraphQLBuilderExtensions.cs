@@ -1,8 +1,14 @@
 ﻿// src\RxDBDotNet\Extensions\GraphQLBuilderExtensions.cs
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Authentication;
+using HotChocolate;
 using HotChocolate.Execution.Configuration;
 using HotChocolate.Language;
 using HotChocolate.Subscriptions;
+using HotChocolate.Types;
 using Microsoft.Extensions.DependencyInjection;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;

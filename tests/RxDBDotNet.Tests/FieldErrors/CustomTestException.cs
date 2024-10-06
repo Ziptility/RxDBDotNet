@@ -1,4 +1,7 @@
 ﻿// tests\RxDBDotNet.Tests\FieldErrors\CustomTestException.cs
+
+using System;
+
 namespace RxDBDotNet.Tests.Model;
 
 public class CustomTestException : Exception

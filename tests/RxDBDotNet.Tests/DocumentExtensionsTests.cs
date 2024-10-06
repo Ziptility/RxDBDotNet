@@ -1,5 +1,9 @@
-﻿using HotChocolate;
+﻿using System;
+using System.Collections.Generic;
+using FluentAssertions;
+using HotChocolate;
 using RxDBDotNet.Documents;
+using RxDBDotNet.Extensions;
 
 namespace RxDBDotNet.Tests
 {

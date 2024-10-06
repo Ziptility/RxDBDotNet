@@ -1,5 +1,8 @@
 ﻿// src\RxDBDotNet\Security\Operation.cs
+
+using System;
 using System.Text.Json.Serialization;
+using HotChocolate;
 
 namespace RxDBDotNet.Security;
 

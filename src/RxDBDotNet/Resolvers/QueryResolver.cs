@@ -1,4 +1,10 @@
 ﻿// src\RxDBDotNet\Resolvers\QueryResolver.cs
+
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using HotChocolate.Data;
 using HotChocolate.Execution;
 using HotChocolate.Resolvers;
 using RxDBDotNet.Documents;

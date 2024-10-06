@@ -1,4 +1,7 @@
 ﻿// src\RxDBDotNet\Security\DocumentOperation.cs
+
+using System;
+
 namespace RxDBDotNet.Security;
 
 /// <summary>

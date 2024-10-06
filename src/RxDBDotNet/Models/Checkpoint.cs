@@ -1,4 +1,7 @@
 ﻿// src\RxDBDotNet\Models\Checkpoint.cs
+
+using System;
+
 namespace RxDBDotNet.Models;
 
 /// <summary>

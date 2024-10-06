@@ -1,5 +1,6 @@
 ﻿// example/LiveDocs.GraphQLApi/Models/Replication/ReplicatedUser.cs
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using HotChocolate;
 using HotChocolate.Types;

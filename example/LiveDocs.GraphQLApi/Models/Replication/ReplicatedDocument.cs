@@ -1,6 +1,9 @@
 ﻿// example/LiveDocs.GraphQLApi/Models/Replication/ReplicatedDocument.cs
 
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using LiveDocs.GraphQLApi.Validations;
 using RxDBDotNet.Documents;
 

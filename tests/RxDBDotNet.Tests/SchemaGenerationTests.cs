@@ -1,6 +1,12 @@
 ﻿// tests\RxDBDotNet.Tests\SchemaGenerationTests.cs
+
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using FluentAssertions;
 using GraphQlClientGenerator;
 using Newtonsoft.Json;
+using RxDBDotNet.Tests.Setup;
 
 namespace RxDBDotNet.Tests;
 

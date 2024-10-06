@@ -1,5 +1,10 @@
 ﻿// tests\RxDBDotNet.Tests\PullDocumentsTests.cs
+
+using System;
+using System.Threading.Tasks;
+using FluentAssertions;
 using RxDBDotNet.Tests.Model;
+using RxDBDotNet.Tests.Setup;
 using RxDBDotNet.Tests.Utils;
 
 namespace RxDBDotNet.Tests;

@@ -1,6 +1,14 @@
 ﻿// tests\RxDBDotNet.Tests\AdditionalCoverageTests.cs
+
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentAssertions;
 using RxDBDotNet.Tests.Model;
+using RxDBDotNet.Tests.Setup;
 using RxDBDotNet.Tests.Utils;
 
 namespace RxDBDotNet.Tests;

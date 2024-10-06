@@ -1,4 +1,7 @@
 ﻿// tests\RxDBDotNet.Tests.Setup\Strings.cs
+
+using System;
+
 namespace RxDBDotNet.Tests.Setup;
 
 public static class Strings

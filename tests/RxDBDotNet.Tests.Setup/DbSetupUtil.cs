@@ -45,7 +45,8 @@ public static class DbSetupUtil
                 }
                 else
                 {
-                    var sqlServerDockerContainer = new MsSqlBuilder().WithName(containerName)
+                    var sqlServerDockerContainer = new MsSqlBuilder()
+                        .WithName(containerName)
                         .WithPassword(saPassword)
                         .WithPortBinding(1445, 1433)
                         .WithCleanUp(false)

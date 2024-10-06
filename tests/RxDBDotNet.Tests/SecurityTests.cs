@@ -1,5 +1,6 @@
 ﻿// tests\RxDBDotNet.Tests\SecurityTests.cs
 using LiveDocs.GraphQLApi.Security;
+using RxDBDotNet.Security;
 using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Utils;
 using static RxDBDotNet.Tests.Setup.Strings;
@@ -18,7 +19,39 @@ public class SecurityTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await TestContext.DisposeAsync();
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (TestContext != null)
+        {
+            await TestContext.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public void RequirePolicy_WithNoOperations_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var securityOptions = new SecurityOptions<ReplicatedWorkspace>();
+
+        // Act & Assert
+        var action = () => securityOptions.RequirePolicy(Operation.None, "SomePolicy");
+        action.Should().Throw<ArgumentException>().WithMessage("At least one operation must be specified. (Parameter 'operations')");
+    }
+
+    [Fact]
+    public void RequirePolicy_WithNullOrEmptyPolicy_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var securityOptions = new SecurityOptions<ReplicatedWorkspace>();
+
+        // Act & Assert
+        var actionWithNull = () => securityOptions.RequirePolicy(Operation.Read, null!);
+        actionWithNull.Should().Throw<ArgumentException>().WithMessage("Policy cannot be null or whitespace. (Parameter 'policy')");
+
+        var actionWithEmpty = () => securityOptions.RequirePolicy(Operation.Read, "");
+        actionWithEmpty.Should().Throw<ArgumentException>().WithMessage("Policy cannot be null or whitespace. (Parameter 'policy')");
+
+        var actionWithWhitespace = () => securityOptions.RequirePolicy(Operation.Read, "   ");
+        actionWithWhitespace.Should().Throw<ArgumentException>().WithMessage("Policy cannot be null or whitespace. (Parameter 'policy')");
     }
 
     [Fact]

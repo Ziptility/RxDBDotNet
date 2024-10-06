@@ -7,29 +7,38 @@ jobs:
   build-and-test-pr:
     runs-on: windows-latest
     steps:
-    - name: Check and switch to Linux containers
+    - name: Check Docker status and switch to Linux containers if necessary
       shell: pwsh
       run: |
-        $currentContext = docker context inspect --format '{{.Name}}'
-        Write-Host "Current Docker context: $currentContext"
-        
-        if ($currentContext -eq 'default') {
-          # We're likely already using Linux containers, but let's verify
-          $osType = docker info --format '{{.OSType}}'
-          if ($osType -ne 'linux') {
-            Write-Host "Switching to Linux containers..."
-            & 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchLinuxEngine
-          } else {
-            Write-Host "Already using Linux containers."
-          }
+        Write-Host "Checking Docker status..."
+        $dockerInfo = docker info --format '{{.OSType}}'
+        if ($dockerInfo -eq 'linux') {
+          Write-Host "Docker is already using Linux containers."
         } else {
-          Write-Host "Not in default context. Please ensure Linux containers are being used."
+          Write-Host "Docker is not using Linux containers. Attempting to switch..."
+          # Stop Docker service
+          Stop-Service docker
+          # Set Docker to use Linux containers
+          $daemonJson = Get-Content 'C:\ProgramData\Docker\config\daemon.json' -Raw | ConvertFrom-Json
+          $daemonJson | Add-Member -Name 'osType' -Value 'linux' -MemberType NoteProperty -Force
+          $daemonJson | ConvertTo-Json | Set-Content 'C:\ProgramData\Docker\config\daemon.json'
+          # Start Docker service
+          Start-Service docker
+          # Wait for Docker to be ready
+          docker ps > $null
+          while ($LASTEXITCODE -ne 0) {
+            Write-Host "Waiting for Docker to be ready..."
+            Start-Sleep -Seconds 5
+            docker ps > $null
+          }
         }
 
     - name: Verify Docker is using Linux containers
+      shell: pwsh
       run: |
-        docker info
-        if ((docker info --format '{{.OSType}}') -ne 'linux') {
+        $osType = docker info --format '{{.OSType}}'
+        Write-Host "Docker OS Type: $osType"
+        if ($osType -ne 'linux') {
           Write-Error "Docker is not using Linux containers"
           exit 1
         }

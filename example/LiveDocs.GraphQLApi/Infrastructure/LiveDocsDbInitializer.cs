@@ -16,20 +16,33 @@ namespace LiveDocs.GraphQLApi.Infrastructure
         {
             await using var dbContext = new LiveDocsDbContext();
 
-            try
-            {
-                await dbContext.Database.EnsureCreatedAsync();
-            }
-            catch
-            {
-                // ignore this error; the db exists
-            }
+            // See https://github.com/dotnet/aspire/issues/1023#issuecomment-2156120941
+            // for macOS related issues
+            var strategy = new SqlServerRetryingExecutionStrategy(
+                dbContext,
+                maxRetryCount: 10,
+                TimeSpan.FromSeconds(5),
+                RetryIntervals);
 
-            if (!await dbContext.Workspaces.AnyAsync())
+            await strategy.ExecuteAsync(async () =>
             {
-                await SeedDataAsync(dbContext);
+                try
+                {
+                    await dbContext.Database.EnsureCreatedAsync();
+                }
+                catch
+                {
+                    // ignore this error; the db exists
+                }
+
+                if (!await dbContext.Workspaces.AnyAsync())
+                {
+                    await SeedDataAsync(dbContext);
             }
+            });
         }
+
+        private static readonly int[] RetryIntervals = { 0 };
 
         private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
         {

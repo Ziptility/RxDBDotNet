@@ -10,23 +10,14 @@ var redis = builder.AddRedis("redis", 6379)
     .WithImageTag("latest")
     .WithEndpoint(port: 6380, targetPort: 6379, name: "redis-endpoint");
 
-// // See https://github.com/dotnet/aspire/issues/1023 for macOs related issues
-// // Detect OS and architecture
-// var isArm64 = RuntimeInformation.ProcessArchitecture != Architecture.Arm64;
-// var sqlServerImage = isArm64
-//     ? "azure-sql-edge"
-//     : "mssql/server";
-// var sqlServerTag = isArm64
-//     ? "latest"
-//     : "2022-latest";
-
 // Add SQL Server
 var password = builder.AddParameter("sqlpassword", secret: true);
 var sqlDb = builder.AddSqlServer("sql", password: password, port: 1433)
-    .WithImage("azure-sql-edge")
-    .WithImageTag("latest")
+    .WithImage("mssql/server")
+    .WithImageTag("2022-latest")
     .WithEnvironment("ACCEPT_EULA", "Y")
     .WithEnvironment("MSSQL_SA_PASSWORD", "Admin123!")
+    // this is here to preserve the data across restarts
     .WithVolume("livedocs-sql-data", "/var/opt/mssql")
     .WithEndpoint(port: 1146, targetPort: 1433, name: "sql-endpoint")
     .AddDatabase("sqldata", databaseName: "LiveDocsDb");

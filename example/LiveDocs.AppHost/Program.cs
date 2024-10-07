@@ -1,4 +1,5 @@
 // example/LiveDocs.AppHost/Program.cs
+
 using System;
 using Aspire.Hosting;
 using Projects;

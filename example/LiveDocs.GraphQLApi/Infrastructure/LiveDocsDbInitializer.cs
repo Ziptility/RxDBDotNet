@@ -8,91 +8,90 @@ using LiveDocs.GraphQLApi.Models.Replication;
 using LiveDocs.GraphQLApi.Security;
 using Microsoft.EntityFrameworkCore;
 
-namespace LiveDocs.GraphQLApi.Infrastructure
+namespace LiveDocs.GraphQLApi.Infrastructure;
+
+public static class LiveDocsDbInitializer
 {
-    public static class LiveDocsDbInitializer
+    public static async Task InitializeAsync()
     {
-        public static async Task InitializeAsync()
+        await using var dbContext = new LiveDocsDbContext();
+
+        // See https://github.com/dotnet/aspire/issues/1023#issuecomment-2156120941
+        // for macOS related issues
+        var strategy = new SqlServerRetryingExecutionStrategy(
+            dbContext,
+            maxRetryCount: 10,
+            TimeSpan.FromSeconds(5),
+            RetryIntervals);
+
+        await strategy.ExecuteAsync(async () =>
         {
-            await using var dbContext = new LiveDocsDbContext();
-
-            // See https://github.com/dotnet/aspire/issues/1023#issuecomment-2156120941
-            // for macOS related issues
-            var strategy = new SqlServerRetryingExecutionStrategy(
-                dbContext,
-                maxRetryCount: 10,
-                TimeSpan.FromSeconds(5),
-                RetryIntervals);
-
-            await strategy.ExecuteAsync(async () =>
+            try
             {
-                try
-                {
-                    await dbContext.Database.EnsureCreatedAsync();
-                }
-                catch
-                {
-                    // ignore this error; the db exists
-                }
-
-                if (!await dbContext.Workspaces.AnyAsync())
-                {
-                    await SeedDataAsync(dbContext);
+                await dbContext.Database.EnsureCreatedAsync();
             }
-            });
-        }
+            catch
+            {
+                // ignore this error; the db exists
+            }
 
-        private static readonly int[] RetryIntervals = { 0 };
+            if (!await dbContext.Workspaces.AnyAsync())
+            {
+                await SeedDataAsync(dbContext);
+            }
+        });
+    }
 
-        private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
+    private static readonly int[] RetryIntervals = { 0 };
+
+    private static async Task SeedDataAsync(LiveDocsDbContext dbContext)
+    {
+        var rootWorkspace = new Workspace
         {
-            var rootWorkspace = new Workspace
-            {
-                Id = RT.Comb.Provider.Sql.Create(),
-                Name = "Default Workspace",
-                UpdatedAt = DateTimeOffset.UtcNow,
-                IsDeleted = false,
-                ReplicatedDocumentId = Guid.NewGuid(),
-                Topics = [],
-            };
+            Id = RT.Comb.Provider.Sql.Create(),
+            Name = "Default Workspace",
+            UpdatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false,
+            ReplicatedDocumentId = Guid.NewGuid(),
+            Topics = [],
+        };
 
-            await dbContext.Workspaces.AddAsync(rootWorkspace);
+        await dbContext.Workspaces.AddAsync(rootWorkspace);
 
-            var systemAdminReplicatedUser = new ReplicatedUser
-            {
-                Id = Guid.NewGuid(),
-                FirstName = "System",
-                LastName = "Admin",
-                Email = "systemadmin@livedocs.example.org",
-                Role = UserRole.SystemAdmin,
-                WorkspaceId = rootWorkspace.ReplicatedDocumentId,
-                UpdatedAt = DateTimeOffset.UtcNow,
-                IsDeleted = false,
-            };
+        var systemAdminReplicatedUser = new ReplicatedUser
+        {
+            Id = Guid.NewGuid(),
+            FirstName = "System",
+            LastName = "Admin",
+            Email = "systemadmin@livedocs.example.org",
+            Role = UserRole.SystemAdmin,
+            WorkspaceId = rootWorkspace.ReplicatedDocumentId,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            IsDeleted = false,
+        };
 
-            // Generate a non-expiring JWT token for the system admin user
-            // We'll use this in the client app to bootstrap the "logged in" state
-            // since we are not supporting username and password login in this example application
-            var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, expires: DateTime.MaxValue);
+        // Generate a non-expiring JWT token for the system admin user
+        // We'll use this in the client app to bootstrap the "logged in" state
+        // since we are not supporting username and password login in this example application
+        var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, expires: DateTime.MaxValue);
 
-            var systemAdminUser = new User
-            {
-                Id = RT.Comb.Provider.Sql.Create(),
-                FirstName = systemAdminReplicatedUser.FirstName,
-                LastName = systemAdminReplicatedUser.LastName,
-                Email = systemAdminReplicatedUser.Email,
-                Role = systemAdminReplicatedUser.Role,
-                JwtAccessToken = nonExpiringToken,
-                WorkspaceId = rootWorkspace.Id,
-                UpdatedAt = systemAdminReplicatedUser.UpdatedAt,
-                IsDeleted = systemAdminReplicatedUser.IsDeleted,
-                ReplicatedDocumentId = systemAdminReplicatedUser.Id,
-                Topics = [],
-            };
+        var systemAdminUser = new User
+        {
+            Id = RT.Comb.Provider.Sql.Create(),
+            FirstName = systemAdminReplicatedUser.FirstName,
+            LastName = systemAdminReplicatedUser.LastName,
+            Email = systemAdminReplicatedUser.Email,
+            Role = systemAdminReplicatedUser.Role,
+            JwtAccessToken = nonExpiringToken,
+            WorkspaceId = rootWorkspace.Id,
+            UpdatedAt = systemAdminReplicatedUser.UpdatedAt,
+            IsDeleted = systemAdminReplicatedUser.IsDeleted,
+            ReplicatedDocumentId = systemAdminReplicatedUser.Id,
+            Topics = [],
+        };
 
-            await dbContext.Users.AddAsync(systemAdminUser);
+        await dbContext.Users.AddAsync(systemAdminUser);
 
-            await dbContext.SaveChangesAsync();
-        }
+        await dbContext.SaveChangesAsync();
     }
 }

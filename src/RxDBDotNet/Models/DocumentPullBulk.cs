@@ -1,4 +1,6 @@
 ﻿// src\RxDBDotNet\Models\DocumentPullBulk.cs
+
+using System.Collections.Generic;
 using RxDBDotNet.Documents;
 
 namespace RxDBDotNet.Models;

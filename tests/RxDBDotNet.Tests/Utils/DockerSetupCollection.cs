@@ -1,4 +1,7 @@
 ﻿// tests\RxDBDotNet.Tests\Utils\DockerSetupCollection.cs
+
+using RxDBDotNet.Tests.Setup;
+
 namespace RxDBDotNet.Tests.Utils;
 
 [CollectionDefinition("DockerSetup")]

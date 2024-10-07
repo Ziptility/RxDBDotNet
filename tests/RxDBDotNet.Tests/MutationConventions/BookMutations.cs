@@ -1,6 +1,9 @@
 ﻿// tests\RxDBDotNet.Tests\MutationConventions\BookMutations.cs
 #pragma warning disable CA1822
+using System;
+using System.Threading.Tasks;
 using HotChocolate.Types;
+using RxDBDotNet.Extensions;
 
 namespace RxDBDotNet.Tests.MutationConventions;
 

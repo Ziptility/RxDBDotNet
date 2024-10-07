@@ -1,5 +1,10 @@
 ﻿// example/LiveDocs.GraphQLApi/Services/DocumentService.cs
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using Microsoft.EntityFrameworkCore;

@@ -1,5 +1,6 @@
 ﻿// example/LiveDocs.GraphQLApi/Models/Entities/LiveDoc.cs
 
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace LiveDocs.GraphQLApi.Models.Entities;

@@ -1,5 +1,11 @@
 ﻿// tests\RxDBDotNet.TestModelGenerator\GraphQlClientFactory.cs
+
+using System;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using GraphQlClientGenerator;
 using Newtonsoft.Json;
 

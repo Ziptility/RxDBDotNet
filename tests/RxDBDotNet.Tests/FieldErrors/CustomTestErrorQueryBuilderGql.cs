@@ -1,4 +1,7 @@
 ﻿// tests\RxDBDotNet.Tests\FieldErrors\CustomTestErrorQueryBuilderGql.cs
+
+using System.Collections.Generic;
+
 namespace RxDBDotNet.Tests.Model;
 
 public class CustomTestErrorQueryBuilderGql : GraphQlQueryBuilder<CustomTestErrorQueryBuilderGql>

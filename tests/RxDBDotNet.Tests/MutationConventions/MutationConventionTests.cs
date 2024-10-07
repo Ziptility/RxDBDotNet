@@ -1,7 +1,16 @@
 // tests\RxDBDotNet.Tests\MutationConventions\MutationConventionTests.cs
+
+using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using FluentAssertions;
 using GraphQlClientGenerator;
 using HotChocolate.Subscriptions;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using RxDBDotNet.Extensions;
+using RxDBDotNet.Tests.Setup;
 using StackExchange.Redis;
 
 namespace RxDBDotNet.Tests.MutationConventions;

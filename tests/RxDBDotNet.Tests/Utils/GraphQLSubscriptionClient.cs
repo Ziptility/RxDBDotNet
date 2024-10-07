@@ -1,7 +1,15 @@
 ﻿// tests\RxDBDotNet.Tests\Utils\GraphQLSubscriptionClient.cs
+
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
 using RxDBDotNet.Security;
 
 namespace RxDBDotNet.Tests.Utils;

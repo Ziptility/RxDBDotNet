@@ -1,7 +1,9 @@
 // example/LiveDocs.GraphQLApi/Program.cs
 
+using System;
 using System.Net;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using HotChocolate.AspNetCore;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Infrastructure;
@@ -10,6 +12,10 @@ using LiveDocs.GraphQLApi.Security;
 using LiveDocs.GraphQLApi.Services;
 using LiveDocs.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Security;
 using RxDBDotNet.Services;

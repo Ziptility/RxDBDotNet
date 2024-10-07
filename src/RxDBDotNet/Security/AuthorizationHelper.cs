@@ -1,6 +1,9 @@
 ﻿// src\RxDBDotNet\Security\AuthorizationHelper.cs
+
+using System;
 using System.Security.Authentication;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using RxDBDotNet.Documents;
 

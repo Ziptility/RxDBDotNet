@@ -1,5 +1,11 @@
 ﻿// src\RxDBDotNet\Security\WebSocketJwtAuthInterceptor.cs
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using HotChocolate.AspNetCore;
 using HotChocolate.AspNetCore.Subscriptions;
 using HotChocolate.AspNetCore.Subscriptions.Protocols;

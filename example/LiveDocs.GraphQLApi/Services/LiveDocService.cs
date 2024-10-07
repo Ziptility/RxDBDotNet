@@ -1,5 +1,9 @@
 ﻿// example/LiveDocs.GraphQLApi/Services/LiveDocService.cs
 
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using LiveDocs.GraphQLApi.Data;
 using LiveDocs.GraphQLApi.Models.Entities;
 using LiveDocs.GraphQLApi.Models.Replication;

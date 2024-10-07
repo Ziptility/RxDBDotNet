@@ -1,5 +1,12 @@
 ﻿// tests\RxDBDotNet.Tests\BasicDocumentOperationsTests.cs
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using FluentAssertions;
+using RT.Comb;
 using RxDBDotNet.Tests.Model;
+using RxDBDotNet.Tests.Setup;
 using RxDBDotNet.Tests.Utils;
 
 namespace RxDBDotNet.Tests;

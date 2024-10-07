@@ -1,4 +1,7 @@
 ﻿// src\RxDBDotNet\Extensions\ReplicationOptions.cs
+
+using System;
+using System.Collections.Generic;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Security;
 

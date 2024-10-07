@@ -1,5 +1,8 @@
 ﻿// src\RxDBDotNet\Documents\IReplicatedDocument.cs
 
+using System;
+using System.Collections.Generic;
+
 namespace RxDBDotNet.Documents;
 
 /// <summary>

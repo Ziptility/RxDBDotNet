@@ -1,5 +1,6 @@
 // example/LiveDocs.ServiceDefaults/Extensions.cs
 
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;

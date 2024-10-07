@@ -1,5 +1,6 @@
 ﻿// src\RxDBDotNet\Extensions\DocumentExtensions.cs
 using System.Reflection;
+using HotChocolate;
 using RxDBDotNet.Documents;
 
 namespace RxDBDotNet.Extensions;

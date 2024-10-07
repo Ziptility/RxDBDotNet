@@ -14,7 +14,7 @@
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
-        <ImplicitUsings>enable</ImplicitUsings>
+
         <WarningLevel>9999</WarningLevel>
         <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
         <NoWarn>$(NoWarn);CA1848;CA2007;CA1716;MA0004</NoWarn>

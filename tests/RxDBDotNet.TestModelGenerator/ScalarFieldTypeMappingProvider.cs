@@ -1,4 +1,6 @@
 ﻿// tests\RxDBDotNet.TestModelGenerator\ScalarFieldTypeMappingProvider.cs
+
+using System;
 using System.Text.Json;
 using GraphQlClientGenerator;
 using LiveDocs.GraphQLApi.Security;

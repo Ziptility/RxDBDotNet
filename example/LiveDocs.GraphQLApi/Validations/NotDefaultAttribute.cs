@@ -1,5 +1,6 @@
 ﻿// example/LiveDocs.GraphQLApi/Validations/NotDefaultAttribute.cs
 
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace LiveDocs.GraphQLApi.Validations;

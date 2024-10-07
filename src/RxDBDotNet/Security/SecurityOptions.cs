@@ -1,4 +1,7 @@
 ﻿// src\RxDBDotNet\Security\SecurityOptions.cs
+
+using System;
+using System.Collections.Generic;
 using RxDBDotNet.Documents;
 
 namespace RxDBDotNet.Security;

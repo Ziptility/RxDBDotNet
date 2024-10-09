@@ -32,7 +32,7 @@
         <PackageReference Include="Aspire.Hosting.SqlServer" Version="8.2.1" />
         <PackageReference Include="Aspire.Hosting.NodeJs" Version="8.2.1" />
         <PackageReference Include="Aspire.Hosting.Redis" Version="8.2.1" />
-        <PackageReference Include="System.Text.Json" Version="8.0.4" />
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
     </ItemGroup>
 
     <!-- Analyzers-->

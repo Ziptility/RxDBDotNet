@@ -1,4 +1,4 @@
-// example/livedocs-client/src/components/NetworkStatus.tsx
+// src\components\NetworkStatus.tsx
 import React, { useEffect, useState } from 'react';
 import { Sync as SyncIcon, WifiOff as WifiOffIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { Box, Chip, Tooltip, Typography } from '@mui/material';

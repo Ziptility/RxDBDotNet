@@ -35,11 +35,11 @@
         <PackageReference Include="HotChocolate.AspNetCore.Subscriptions" Version="10.5.5" />
         <PackageReference Include="HotChocolate.Data" Version="13.9.14" />
         <PackageReference Include="HotChocolate.Types" Version="13.9.14" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.1.34" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="8.0.8" />
-        <PackageReference Include="System.Text.Json" Version="8.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.10" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="8.0.10" />
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
     </ItemGroup>
 
     <ItemGroup>
@@ -49,7 +49,7 @@
     <!-- Analyzers-->
     <ItemGroup>
         <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.1.0-beta" />
-        <PackageReference Include="Meziantou.Analyzer" Version="2.0.169">
+        <PackageReference Include="Meziantou.Analyzer" Version="2.0.173">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -57,11 +57,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Roslynator.Analyzers" Version="4.12.7">
+        <PackageReference Include="Roslynator.Analyzers" Version="4.12.8">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="4.12.7">
+        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="4.12.8">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

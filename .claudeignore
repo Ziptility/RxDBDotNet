@@ -1,0 +1,14 @@
+.git/
+bin/
+obj/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.dll
+*.exe
+*.pdb
+packages/
+.vs/
+**/Properties/launchSettings.json
+example/

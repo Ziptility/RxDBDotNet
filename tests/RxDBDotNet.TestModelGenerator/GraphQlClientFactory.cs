@@ -41,10 +41,12 @@ public static class GraphQlClientFactory
                 ClassSuffix = "Gql",
                 CSharpVersion = CSharpVersion.NewestWithNullableReferences,
                 DataClassMemberNullability = DataClassMemberNullability.DefinedBySchema,
+                FileScopedNamespaces = true,
+                TargetNamespace = "RxDBDotNet.Tests.Model",
             };
 
             var generator = new GraphQlGenerator(config);
-            var csharpCode = generator.GenerateFullClientCSharpFile(schema, "RxDBDotNet.Tests.Model");
+            var csharpCode = generator.GenerateFullClientCSharpFile(schema);
 
             // Split the generated code into lines
             var lines = csharpCode.Split([Environment.NewLine], StringSplitOptions.None).ToList();

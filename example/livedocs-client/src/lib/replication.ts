@@ -1,4 +1,4 @@
-// example/livedocs-client/src/lib/replication.ts
+// src\lib\replication.ts
 import { API_CONFIG } from '@/config';
 import { replicateLiveDocs } from '@/lib/liveDocReplication';
 import { replicateUsers } from '@/lib/userReplication';

@@ -23,14 +23,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="GraphQlClientGenerator" Version="0.9.23" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
+        <PackageReference Include="GraphQlClientGenerator" Version="0.9.24" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.10" />
     </ItemGroup>
 
     <!-- Analyzers-->
     <ItemGroup>
         <PackageReference Include="Lindhart.Analyser.MissingAwaitWarning" Version="3.1.0-beta" />
-        <PackageReference Include="Meziantou.Analyzer" Version="2.0.169">
+        <PackageReference Include="Meziantou.Analyzer" Version="2.0.173">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -38,11 +38,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Roslynator.Analyzers" Version="4.12.7">
+        <PackageReference Include="Roslynator.Analyzers" Version="4.12.8">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="4.12.7">
+        <PackageReference Include="Roslynator.CodeAnalysis.Analyzers" Version="4.12.8">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

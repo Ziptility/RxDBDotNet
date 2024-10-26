@@ -1,7 +1,9 @@
-﻿// src\RxDBDotNet\Security\PolicyRequirement.cs
-using Microsoft.AspNetCore.Authorization;
+﻿// src\RxDBDotNet\Configuration\PolicyRequirement.cs
 
-namespace RxDBDotNet.Security;
+using Microsoft.AspNetCore.Authorization;
+using RxDBDotNet.Security;
+
+namespace RxDBDotNet.Configuration;
 
 /// <summary>
 /// Represents a policy requirement for authorizing access to documents in RxDBDotNet.

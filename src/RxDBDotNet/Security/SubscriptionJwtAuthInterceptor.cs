@@ -1,4 +1,4 @@
-﻿// src\RxDBDotNet\Security\WebSocketJwtAuthInterceptor.cs
+﻿// src\RxDBDotNet\Security\SubscriptionJwtAuthInterceptor.cs
 
 using System;
 using System.Collections.Generic;
@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using RxDBDotNet.Configuration;
 
 namespace RxDBDotNet.Security;
 
@@ -35,34 +36,40 @@ namespace RxDBDotNet.Security;
 /// Note: This implementation assumes that Hot Chocolate handles the connection timeout and multiple ConnectionInit messages internally.
 /// If this is not the case, additional logic would need to be added to this middleware to fully comply with the protocol.
 /// </remarks>
-public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
+public class SubscriptionJwtAuthInterceptor : DefaultSocketSessionInterceptor
 {
     private const string BearerPrefix = "Bearer ";
     private readonly IAuthenticationSchemeProvider? _schemeProvider;
     private readonly IOptionsMonitor<JwtBearerOptions> _jwtOptionsMonitor;
-    private readonly ILogger<WebSocketJwtAuthInterceptor> _logger;
+    private readonly ILogger<SubscriptionJwtAuthInterceptor> _logger;
     private bool? _isJwtBearerConfigured;
+    private readonly string _authenticationScheme;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WebSocketJwtAuthInterceptor"/> class.
+    /// Initializes a new instance of the <see cref="SubscriptionJwtAuthInterceptor"/> class.
     /// </summary>
     /// <param name="schemeProvider">The authentication scheme provider.</param>
     /// <param name="jwtOptionsMonitor">The options monitor for JWT bearer token validation.</param>
+    /// <param name="replicationOptions">The replication options.</param>
     /// <param name="logger">The logger for this middleware.</param>
     /// <remarks>
-    /// We inject IAuthenticationSchemeProvider and IOptionsMonitor&lt;JwtBearerOptions&gt; for the following reasons:
-    /// 1. IAuthenticationSchemeProvider allows us to check if JWT Bearer authentication is configured.
-    /// 2. IOptionsMonitor&lt;JwtBearerOptions&gt; provides access to the JWT configuration for token validation.
+    /// We inject <see cref="IAuthenticationSchemeProvider"/> and <see cref="IOptionsMonitor{JwtBearerOptions}"/> for the following reasons:
+    /// 1. <see cref="IAuthenticationSchemeProvider"/> allows us to check if JWT Bearer authentication is configured.
+    /// 2. <see cref="IOptionsMonitor{JwtBearerOptions}"/> provides access to the JWT configuration for token validation.
     /// This approach allows the middleware to work correctly whether authentication is configured or not.
     /// </remarks>
-    public WebSocketJwtAuthInterceptor(
+    public SubscriptionJwtAuthInterceptor(
         IAuthenticationSchemeProvider? schemeProvider,
         IOptionsMonitor<JwtBearerOptions> jwtOptionsMonitor,
-        ILogger<WebSocketJwtAuthInterceptor> logger)
+        IOptions<ReplicationOptions> replicationOptions,
+        ILogger<SubscriptionJwtAuthInterceptor> logger)
     {
+        ArgumentNullException.ThrowIfNull(replicationOptions);
+
         _schemeProvider = schemeProvider;
         _jwtOptionsMonitor = jwtOptionsMonitor;
         _logger = logger;
+        _authenticationScheme = replicationOptions.Value.Security.SubscriptionAuthenticationScheme;
     }
 
     /// <summary>
@@ -323,7 +330,7 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
 
         try
         {
-            var scheme = await _schemeProvider.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme).ConfigureAwait(false);
+            var scheme = await _schemeProvider.GetSchemeAsync(_authenticationScheme).ConfigureAwait(false);
             _isJwtBearerConfigured = scheme != null;
             _logger.LogInformation("JWT Bearer authentication scheme {SchemeStatus}", _isJwtBearerConfigured.Value ? "found" : "not found");
 

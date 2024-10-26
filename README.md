@@ -224,7 +224,7 @@ Usage:
         });
     ```
 
-2. The WebSocketJwtAuthInterceptor will automatically use the OIDC configuration for subscription authentication.
+2. The SubscriptionJwtAuthInterceptor will automatically use the OIDC configuration for subscription authentication.
 
 ## Example Application
 

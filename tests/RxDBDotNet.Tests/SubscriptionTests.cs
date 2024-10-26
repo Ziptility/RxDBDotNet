@@ -47,7 +47,7 @@ public class SubscriptionTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tests the WebSocketJwtAuthInterceptor's ability to handle JWT authentication with OpenID Connect (OIDC) configuration.
+    /// Tests the SubscriptionJwtAuthInterceptor's ability to handle JWT authentication with OpenID Connect (OIDC) configuration.
     /// </summary>
     /// <remarks>
     /// This test verifies that:

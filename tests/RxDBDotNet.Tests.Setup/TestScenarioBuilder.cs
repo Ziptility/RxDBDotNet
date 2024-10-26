@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RxDBDotNet.Configuration;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Security;
@@ -142,7 +143,7 @@ public class TestScenarioBuilder
     /// <typeparam name="TDocument">The type of the document.</typeparam>
     /// <param name="configure">An action to configure replication options.</param>
     /// <returns>The current <see cref="TestScenarioBuilder"/> instance.</returns>
-    public TestScenarioBuilder ConfigureReplicatedDocument<TDocument>(Action<ReplicationOptions<TDocument>>? configure = null)
+    public TestScenarioBuilder ConfigureReplicatedDocument<TDocument>(Action<DocumentOptions<TDocument>>? configure = null)
         where TDocument : class, IReplicatedDocument
     {
         _configureReplicatedDocuments[typeof(TDocument)] = builder => builder.AddReplicatedDocument(configure);

@@ -289,9 +289,7 @@ public static class GraphQLBuilderExtensions
                     }))
                     .Description($"Headers for {graphQLTypeName} subscription authentication. "
                                  + "Note: This parameter is defined to maintain compatibility with the RxDB protocol, "
-                                 + "but is not used in the RxDBDotNet implementation. Instead, clients should pass "
-                                 + "the Authorization header in the HTTP request following standard practices for "
-                                 + "Hot Chocolate subscriptions and ASP.NET applications."))
+                                 + "but is not used in the RxDBDotNet implementation."))
                 .Argument("topics", a => a.Type<ListType<NonNullType<StringType>>>())
                 .Description($"An optional set topics to receive events for when {graphQLTypeName} is upserted."
                              + $" If null then events will be received for all {graphQLTypeName} upserts.")

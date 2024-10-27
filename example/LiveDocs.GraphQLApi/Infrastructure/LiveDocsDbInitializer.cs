@@ -73,7 +73,11 @@ public static class LiveDocsDbInitializer
         // Generate a non-expiring JWT token for the system admin user
         // We'll use this in the client app to bootstrap the "logged in" state
         // since we are not supporting username and password login in this example application
-        var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, expires: DateTime.MaxValue);
+        var tokenParameters = new TokenParameters
+        {
+            Expires = DateTime.MaxValue,
+        };
+        var nonExpiringToken = JwtUtil.GenerateJwtToken(systemAdminReplicatedUser, tokenParameters);
 
         var systemAdminUser = new User
         {

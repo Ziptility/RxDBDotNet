@@ -1,7 +1,7 @@
 ﻿// src\RxDBDotNet\Configuration\SecurityOptions.cs
 
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-
 namespace RxDBDotNet.Configuration;
 
 /// <summary>
@@ -9,13 +9,25 @@ namespace RxDBDotNet.Configuration;
 /// </summary>
 public class SecurityOptions
 {
+    private readonly List<string> _subscriptionAuthenticationSchemes = [JwtBearerDefaults.AuthenticationScheme];
+
     /// <summary>
-    /// Gets or sets the authentication scheme used for validating Subscription JWT tokens.
-    /// If not specified, defaults to JwtBearerDefaults.AuthenticationScheme.
+    /// Gets the authentication schemes used for validating Subscription JWT tokens.
+    /// The default value is a list containing only JwtBearerDefaults.AuthenticationScheme.
     /// </summary>
-    /// <remarks>
-    /// This is particularly useful when your application has multiple JWT authentication schemes
-    /// configured and you want to specify which one should be used for WebSocket authentication.
-    /// </remarks>
-    public string SubscriptionAuthenticationScheme { get; set; } = JwtBearerDefaults.AuthenticationScheme;
+    public IReadOnlyList<string> SubscriptionAuthenticationSchemes => _subscriptionAuthenticationSchemes;
+
+    /// <summary>
+    /// Adds an authentication scheme to be used for WebSocket authentication if not already added.
+    /// </summary>
+    /// <param name="scheme">The authentication scheme to add.</param>
+    /// <returns>The current SecurityOptions instance for method chaining.</returns>
+    public SecurityOptions TryAddSubscriptionAuthenticationScheme(string scheme)
+    {
+        if (!_subscriptionAuthenticationSchemes.Contains(scheme))
+        {
+            _subscriptionAuthenticationSchemes.Add(scheme);
+        }
+        return this;
+    }
 }

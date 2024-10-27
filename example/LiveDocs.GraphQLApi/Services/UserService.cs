@@ -80,7 +80,7 @@ public class UserService : DocumentService<User, ReplicatedUser>
         entityToUpdate.LastName = updatedDocument.LastName;
         entityToUpdate.Email = updatedDocument.Email;
         entityToUpdate.Role = updatedDocument.Role;
-        entityToUpdate.JwtAccessToken = JwtUtil.GenerateJwtToken(updatedDocument);
+        entityToUpdate.JwtAccessToken = JwtUtil.GenerateJwtToken(updatedDocument, new TokenParameters());
         entityToUpdate.UpdatedAt = updatedDocument.UpdatedAt;
         entityToUpdate.Topics.Clear();
         if (updatedDocument.Topics != null)
@@ -99,7 +99,7 @@ public class UserService : DocumentService<User, ReplicatedUser>
             .Where(w => w.ReplicatedDocumentId == newDocument.WorkspaceId)
             .SingleAsync(cancellationToken);
 
-        var jwtToken = JwtUtil.GenerateJwtToken(newDocument);
+        var jwtToken = JwtUtil.GenerateJwtToken(newDocument, new TokenParameters());
 
         return new User
         {

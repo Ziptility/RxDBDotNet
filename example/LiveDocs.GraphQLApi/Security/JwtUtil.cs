@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -29,7 +30,7 @@ public static class JwtUtil
     /// <summary>
     /// The issuer of the JWT token, representing the application that generated the token.
     /// </summary>
-    public const string Issuer = "LiveDocsExampleApp";
+    public const string Issuer = "UnitTestAndExampleApp";
 
     /// <summary>
     /// The audience for the JWT token, representing the intended recipients or clients of the token.
@@ -40,15 +41,17 @@ public static class JwtUtil
     /// Generates a JWT token for a given user, capturing the user's id, role, email, and a custom workspace claim.
     /// </summary>
     /// <param name="user">The <see cref="ReplicatedUser"/> for whom the token is being generated. This parameter cannot be null.</param>
-    /// <param name="expires">Optional. The expiration time of the token. If not provided, the token will expire in 120 minutes.</param>
+    /// <param name="tokenParameters">The parameters used for generating the token, including the secret key, issuer, audience, and expiration time.</param>
     /// <returns>A JWT token as a <see cref="string"/> that contains the user's claims.</returns>
     /// <remarks>
     /// This token is valid for 120 minutes and is signed using the HMAC SHA256 algorithm.
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown if the <paramref name="user"/> parameter is null.</exception>
-    public static string GenerateJwtToken(ReplicatedUser user, DateTime? expires = null)
+    public static string GenerateJwtToken(ReplicatedUser user, TokenParameters? tokenParameters)
     {
         ArgumentNullException.ThrowIfNull(user);
+
+        tokenParameters ??= new TokenParameters();
 
         var now = DateTimeOffset.UtcNow;
         var claims = new List<Claim>
@@ -62,14 +65,15 @@ public static class JwtUtil
             new(CustomClaimTypes.WorkspaceId, user.WorkspaceId.ToString("D", CultureInfo.InvariantCulture)),
         };
 
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        Debug.Assert(tokenParameters.SecretKey != null, nameof(tokenParameters.SecretKey) + " != null");
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenParameters.SecretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: Issuer,
-            audience: Audience,
+            issuer: tokenParameters.Issuer,
+            audience: tokenParameters.Audience,
             claims: claims,
-            expires: expires ?? DateTime.UtcNow.AddMinutes(120),
+            expires: tokenParameters.Expires ?? DateTime.UtcNow.AddMinutes(120),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -78,6 +82,7 @@ public static class JwtUtil
     /// <summary>
     /// Retrieves the token validation parameters used for validating JWT tokens.
     /// </summary>
+    /// <param name="tokenParameters">Optional parameters to customize the token validation settings.</param>
     /// <returns>A <see cref="TokenValidationParameters"/> object configured with strict validation settings.</returns>
     /// <remarks>
     /// The validation parameters enforce comprehensive checks on the token, including:
@@ -93,22 +98,26 @@ public static class JwtUtil
     /// these settings should be carefully configured according to security requirements.
     /// </remarks>
     /// <exception cref="SecurityTokenException">Thrown if the validation parameters are misconfigured or if the token fails validation.</exception>
-    public static TokenValidationParameters GetTokenValidationParameters()
+    public static TokenValidationParameters GetTokenValidationParameters(TokenParameters? tokenParameters = null)
     {
+        tokenParameters ??= new TokenParameters();
+
+        Debug.Assert(tokenParameters.SecretKey != null, "tokenParameters.SecretKey != null");
+
         return new TokenValidationParameters
         {
             ValidateIssuer = true, // Ensure the token is issued by the correct authority
-            ValidIssuer = Issuer,  // Specify the valid issuer
+            ValidIssuer = tokenParameters.Issuer,  // Specify the valid issuer
 
             ValidateAudience = true, // Ensure the token is intended for the correct audience
-            ValidAudience = Audience, // Specify the valid audience
+            ValidAudience = tokenParameters.Audience, // Specify the valid audience
 
             ValidateLifetime = true, // Ensure the token is not expired and is within its valid time range
             RequireExpirationTime = true, // Explicitly require that the token contains an expiration time
             ClockSkew = TimeSpan.Zero, // Set clock skew to zero to ensure strict expiration checks
 
             ValidateIssuerSigningKey = true, // Ensure the token was signed with the correct signing key
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey)), // Specify the signing key
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenParameters.SecretKey)), // Specify the signing key
 
             RequireSignedTokens = true, // Ensure the token is signed
 

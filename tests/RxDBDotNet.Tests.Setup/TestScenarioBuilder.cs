@@ -40,7 +40,7 @@ namespace RxDBDotNet.Tests.Setup;
 public class TestScenarioBuilder
 {
     private bool _setupAuthorization;
-    private Action<IWebHostBuilder> _configureWebHostBuilder = _ => { };
+    private readonly Action<IWebHostBuilder> _configureWebHostBuilder = _ => { };
     private Action<IServiceCollection> _configureServices = _ => { };
     private Action<IRequestExecutorBuilder> _configureGraphQL = _ => { };
     private readonly Dictionary<Type, Action<IRequestExecutorBuilder>> _configureReplicatedDocuments = [];
@@ -101,17 +101,6 @@ public class TestScenarioBuilder
     public TestScenarioBuilder WithAuthorization(bool setup = true)
     {
         _setupAuthorization = setup;
-        return this;
-    }
-
-    /// <summary>
-    /// Configures the web host builder.
-    /// </summary>
-    /// <param name="configure">An action to configure the web host builder.</param>
-    /// <returns>The current <see cref="TestScenarioBuilder"/> instance.</returns>
-    public TestScenarioBuilder ConfigureWebHost(Action<IWebHostBuilder> configure)
-    {
-        _configureWebHostBuilder += configure;
         return this;
     }
 

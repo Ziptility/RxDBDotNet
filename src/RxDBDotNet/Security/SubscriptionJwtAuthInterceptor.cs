@@ -1,4 +1,4 @@
-﻿// src\RxDBDotNet\Security\WebSocketJwtAuthInterceptor.cs
+﻿// src\RxDBDotNet\Security\SubscriptionJwtAuthInterceptor.cs
 
 using System;
 using System.Collections.Generic;
@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using RxDBDotNet.Configuration;
 
 namespace RxDBDotNet.Security;
 
@@ -35,57 +36,42 @@ namespace RxDBDotNet.Security;
 /// Note: This implementation assumes that Hot Chocolate handles the connection timeout and multiple ConnectionInit messages internally.
 /// If this is not the case, additional logic would need to be added to this middleware to fully comply with the protocol.
 /// </remarks>
-public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
+public class SubscriptionJwtAuthInterceptor : DefaultSocketSessionInterceptor
 {
     private const string BearerPrefix = "Bearer ";
     private readonly IAuthenticationSchemeProvider? _schemeProvider;
     private readonly IOptionsMonitor<JwtBearerOptions> _jwtOptionsMonitor;
-    private readonly ILogger<WebSocketJwtAuthInterceptor> _logger;
-    private bool? _isJwtBearerConfigured;
+    private readonly ILogger<SubscriptionJwtAuthInterceptor> _logger;
+    private readonly IReadOnlyList<string> _authenticationSchemes;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="WebSocketJwtAuthInterceptor"/> class.
+    /// Initializes a new instance of the <see cref="SubscriptionJwtAuthInterceptor"/> class.
     /// </summary>
     /// <param name="schemeProvider">The authentication scheme provider.</param>
     /// <param name="jwtOptionsMonitor">The options monitor for JWT bearer token validation.</param>
+    /// <param name="replicationOptions">The replication options.</param>
     /// <param name="logger">The logger for this middleware.</param>
     /// <remarks>
-    /// We inject IAuthenticationSchemeProvider and IOptionsMonitor&lt;JwtBearerOptions&gt; for the following reasons:
-    /// 1. IAuthenticationSchemeProvider allows us to check if JWT Bearer authentication is configured.
-    /// 2. IOptionsMonitor&lt;JwtBearerOptions&gt; provides access to the JWT configuration for token validation.
+    /// We inject <see cref="IAuthenticationSchemeProvider"/> and <see cref="IOptionsMonitor{JwtBearerOptions}"/> for the following reasons:
+    /// 1. <see cref="IAuthenticationSchemeProvider"/> allows us to check if JWT Bearer authentication is configured.
+    /// 2. <see cref="IOptionsMonitor{JwtBearerOptions}"/> provides access to the JWT configuration for token validation.
     /// This approach allows the middleware to work correctly whether authentication is configured or not.
     /// </remarks>
-    public WebSocketJwtAuthInterceptor(
+    public SubscriptionJwtAuthInterceptor(
         IAuthenticationSchemeProvider? schemeProvider,
         IOptionsMonitor<JwtBearerOptions> jwtOptionsMonitor,
-        ILogger<WebSocketJwtAuthInterceptor> logger)
+        IOptions<ReplicationOptions> replicationOptions,
+        ILogger<SubscriptionJwtAuthInterceptor> logger)
     {
+        ArgumentNullException.ThrowIfNull(replicationOptions);
+
         _schemeProvider = schemeProvider;
         _jwtOptionsMonitor = jwtOptionsMonitor;
         _logger = logger;
+        _authenticationSchemes = replicationOptions.Value.Security.SubscriptionAuthenticationSchemes;
     }
 
-    /// <summary>
-    /// Called when a new WebSocket connection is being established.
-    /// This method handles the ConnectionInit message as per the graphql-transport-ws protocol.
-    /// It validates the JWT token in the connection payload and sets up the ClaimsPrincipal for authenticated connections.
-    /// If JWT authentication is not configured, it allows all connections.
-    /// </summary>
-    /// <param name="session">The socket session for the connection.</param>
-    /// <param name="connectionInitMessage">The payload of the ConnectionInit message.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="session"/> or <paramref name="connectionInitMessage"/> is null.</exception>
-    /// <returns>A <see cref="ConnectionStatus"/> indicating whether the connection was accepted or rejected.</returns>
-    /// <remarks>
-    /// This method follows these steps:
-    /// 1. Check if JWT Bearer authentication is configured.
-    /// 2. If not configured, accept all connections (allowing for non-authenticated setups).
-    /// 3. If configured, validate the JWT token from the ConnectionInit message payload.
-    /// 4. Set up the ClaimsPrincipal for authenticated connections.
-    /// 5. If authentication fails, reject the connection with a 4403: Forbidden status.
-    /// This approach ensures that the middleware works in both authenticated and non-authenticated scenarios,
-    /// providing flexibility for different application setups while adhering to the graphql-transport-ws protocol.
-    /// </remarks>
+    /// <inheritdoc/>
     public override async ValueTask<ConnectionStatus> OnConnectAsync(
         ISocketSession session,
         IOperationMessagePayload connectionInitMessage,
@@ -101,10 +87,15 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
         {
             // Check if JWT Bearer authentication is configured
             // This allows the middleware to work in both authenticated and non-authenticated setups
-            var isJwtConfigured = await IsJwtBearerConfiguredAsync().ConfigureAwait(false);
-            _logger.LogDebug("JWT Bearer authentication is {ConfigurationStatus}", isJwtConfigured ? "configured" : "not configured");
+            var isJwtBearerConfigured = await IsJwtBearerConfiguredAsync().ConfigureAwait(false);
+            _logger.LogDebug("JWT Bearer authentication is {ConfigurationStatus}", GetConfigurationStatus(isJwtBearerConfigured));
 
-            if (!isJwtConfigured)
+            if (isJwtBearerConfigured == null)
+            {
+                return RejectConnection("Unable to determine if JWT Bearer authentication is configured.");
+            }
+
+            if (!isJwtBearerConfigured.Value)
             {
                 // If JWT Bearer is not configured, we accept all connections
                 // This is crucial for supporting non-authenticated scenarios
@@ -116,25 +107,25 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
             var token = ExtractToken(connectionInitMessage);
             if (string.IsNullOrEmpty(token))
             {
-                _logger.LogWarning("No valid authorization token provided in the connection payload");
-                return RejectConnection("No valid authorization token provided.");
+                return RejectConnection("No valid authorization token provided in the connection payload");
             }
 
             _logger.LogDebug("Token extracted from connection payload. Proceeding with validation");
 
-            // Validate the token
-            var claimsPrincipal = await ValidateTokenAsync(token, cancellationToken).ConfigureAwait(false);
-            if (claimsPrincipal == null)
+            // Try each configured authentication scheme until one succeeds
+            foreach (var scheme in _authenticationSchemes)
             {
-                _logger.LogWarning("Invalid authorization token");
-                return RejectConnection("Invalid authorization token.");
+                var claimsPrincipal = await ValidateTokenAsync(token, scheme, cancellationToken).ConfigureAwait(false);
+                if (claimsPrincipal != null)
+                {
+                    session.Connection.HttpContext.User = claimsPrincipal;
+                    _logger.LogInformation("Connection authenticated successfully for user {UserId} using scheme {Scheme}", claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value, scheme);
+                    return ConnectionStatus.Accept();
+                }
             }
 
-            // If the token is valid, set the ClaimsPrincipal on the HttpContext
-            // This allows the rest of the application to access the authenticated user's claims
-            session.Connection.HttpContext.User = claimsPrincipal;
-            _logger.LogInformation("Connection authenticated successfully for user {UserId}", claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            return ConnectionStatus.Accept();
+            // If we get here, no scheme successfully validated the token
+            return RejectConnection("Token validation failed for all configured authentication schemes");
         }
         catch (Exception ex)
         {
@@ -143,6 +134,16 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
             _logger.LogError(ex, "An error occurred during WebSocket connection authentication.");
             return RejectConnection("An error occurred during authentication.");
         }
+    }
+
+    private static string GetConfigurationStatus(bool? isJwtBearerConfigured)
+    {
+        if (isJwtBearerConfigured == null)
+        {
+            return "unknown";
+        }
+
+        return isJwtBearerConfigured.Value ? "configured" : "not configured";
     }
 
     /// <summary>
@@ -170,8 +171,12 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
     /// </summary>
     /// <param name="reason">The reason for rejecting the connection.</param>
     /// <returns>A ConnectionStatus indicating a rejected connection.</returns>
-    private static ConnectionStatus RejectConnection(string reason)
+    private ConnectionStatus RejectConnection(string reason)
     {
+#pragma warning disable CA2254
+        _logger.LogWarning(reason);
+#pragma warning restore CA2254
+
         return ConnectionStatus.Reject("4403: Forbidden", new Dictionary<string, object?>(StringComparer.Ordinal)
         {
             { "reason", reason },
@@ -182,6 +187,7 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
     /// Validates the provided JWT token using the configured JWT bearer options.
     /// </summary>
     /// <param name="token">The JWT token to validate.</param>
+    /// <param name="scheme">The authentication scheme to use for validation.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>
     /// A <see cref="ClaimsPrincipal"/> if the token is valid and a non-null principal was created; otherwise, <c>null</c>.
@@ -192,94 +198,105 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
     /// The method is designed to handle exceptions during token validation, returning null for any validation failure.
     /// This approach allows the calling method to easily distinguish between valid and invalid tokens.
     /// </remarks>
-    private async Task<ClaimsPrincipal?> ValidateTokenAsync(string token, CancellationToken cancellationToken)
+    private async Task<ClaimsPrincipal?> ValidateTokenAsync(
+        string token,
+        string scheme,
+        CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Starting token validation");
+        _logger.LogDebug("Starting token validation using scheme: {Scheme}", scheme);
 
         // Retrieve the JWT Bearer options. These options are configured when setting up JWT authentication
-        var jwtBearerOptions = _jwtOptionsMonitor.Get(JwtBearerDefaults.AuthenticationScheme);
-        _logger.LogDebug("JWT Bearer options retrieved");
+        var jwtBearerOptions = _jwtOptionsMonitor.Get(scheme);
+        _logger.LogDebug("JWT Bearer options retrieved for scheme: {Scheme}", scheme);
 
-        // Get the token handler from the options. This is typically a JwtSecurityTokenHandler
+        // Get the token handler from the options
         var tokenHandler = jwtBearerOptions.TokenHandlers.Single();
         _logger.LogDebug("Token handler retrieved: {TokenHandlerType}", tokenHandler.GetType().Name);
 
         // Get the token validation parameters from the options
         var validationParameters = jwtBearerOptions.TokenValidationParameters;
-        _logger.LogDebug("Token validation parameters retrieved");
+        _logger.LogDebug("Token validation parameters retrieved for scheme: {Scheme}", scheme);
 
         try
         {
-            await UpdateValidationParametersAsync(jwtBearerOptions, validationParameters, cancellationToken)
+            await TryUpdateValidationParametersAsync(jwtBearerOptions, validationParameters, cancellationToken)
                 .ConfigureAwait(false);
-            _logger.LogDebug("Validation parameters updated");
 
             // Validate the token using the configured parameters
             // This step performs the actual cryptographic verification of the token
-            _logger.LogDebug("Validating token");
+            _logger.LogDebug("Validating token using scheme: {Scheme}", scheme);
             var tokenValidationResult = await tokenHandler
                 .ValidateTokenAsync(token, validationParameters)
                 .ConfigureAwait(false);
 
             if (tokenValidationResult.IsValid)
             {
-                _logger.LogInformation("Token validated successfully");
+                _logger.LogInformation("Token validated successfully using scheme: {Scheme}", scheme);
                 return new ClaimsPrincipal(tokenValidationResult.ClaimsIdentity);
             }
 
-            _logger.LogWarning("Token validation failed. Error: {Error}. Exception details: {@Exception}",
+            _logger.LogWarning(
+                "Token validation failed for scheme {Scheme}. Error: {Error}. Exception details: {@Exception}",
+                scheme,
                 tokenValidationResult.Exception?.Message,
                 tokenValidationResult.Exception);
+
             return null;
         }
         catch (Exception ex)
         {
             // If any exception occurs during validation, we log it and return null
             // This is to ensure that any unexpected errors in token validation are treated as validation failures
-            _logger.LogWarning(ex, "Token validation failed.");
+            _logger.LogWarning(
+                "Token validation failed for scheme {Scheme}. Error: {Error}. Exception details: {@Exception}",
+                scheme,
+                ex.Message,
+                ex);
             return null;
         }
     }
 
     /// <summary>
-    /// Updates the token validation parameters with the latest OpenID Connect configuration if necessary.
+    /// Attempts to update the token validation parameters with the latest OpenID Connect configuration.
     /// </summary>
     /// <param name="jwtBearerOptions">The JWT bearer options.</param>
     /// <param name="validationParameters">The token validation parameters to update.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     /// <remarks>
     /// This method is crucial for supporting dynamic OIDC configuration and key rotation.
     /// It's particularly relevant when using identity providers like IdentityServer.
     /// This approach ensures that the application always uses the most up-to-date signing keys
     /// without requiring a restart or manual configuration update.
     /// </remarks>
-    private async Task UpdateValidationParametersAsync(
+    private async Task TryUpdateValidationParametersAsync(
         JwtBearerOptions jwtBearerOptions,
         TokenValidationParameters validationParameters,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Current IssuerSigningKeys count: {KeyCount}", validationParameters.IssuerSigningKeys?.Count() ?? 0);
-
-        // Check if we need to retrieve the OpenID Connect configuration
-        // This is necessary when:
-        // 1. No issuer signing keys are explicitly configured
-        // 2. A configuration manager is available (typically set up when using OIDC discovery)
-        if (validationParameters.IssuerSigningKeys.IsNullOrEmpty() && jwtBearerOptions.ConfigurationManager != null)
+        if (jwtBearerOptions.ConfigurationManager != null)
         {
             _logger.LogDebug("Retrieving OpenID Connect configuration");
             try
             {
                 // Asynchronously retrieve the OpenID Connect configuration
-                // This typically involves a network call to the OIDC provider's discovery endpoint
                 var config = await jwtBearerOptions.ConfigurationManager
                     .GetConfigurationAsync(cancellationToken)
                     .ConfigureAwait(false);
 
-            // Update the validation parameters with the fetched signing keys
-            // This ensures we're using the most recent keys for token validation
+                // Update signing keys
                 validationParameters.IssuerSigningKeys = config.SigningKeys;
-                _logger.LogInformation("OpenID Connect configuration retrieved and signing keys updated");
-                _logger.LogDebug("Updated IssuerSigningKeys count: {KeyCount}", validationParameters.IssuerSigningKeys?.Count() ?? 0);
+
+                // Update issuer if validation is enabled
+                if (validationParameters.ValidateIssuer)
+                {
+                    validationParameters.ValidIssuer = config.Issuer;
+                }
+
+                _logger.LogInformation("OpenID Connect configuration retrieved and validation parameters updated");
+                _logger.LogDebug("Updated configuration - Keys: {KeyCount}, Issuer: {Issuer}",
+                    validationParameters.IssuerSigningKeys?.Count() ?? 0,
+                    validationParameters.ValidIssuer);
             }
             catch (Exception ex)
             {
@@ -289,7 +306,7 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
         }
         else
         {
-            _logger.LogDebug("Skipping OpenID Connect configuration retrieval: IssuerSigningKeys present or ConfigurationManager not available");
+            _logger.LogDebug("Skipping OpenID Connect configuration retrieval: ConfigurationManager not available");
         }
     }
 
@@ -306,36 +323,46 @@ public class WebSocketJwtAuthInterceptor : DefaultSocketSessionInterceptor
     /// 3. It directly reflects whether the AddJwtBearer() method has been called in the application's startup configuration.
     /// The result is cached to improve performance for subsequent calls.
     /// </remarks>
-    private async Task<bool> IsJwtBearerConfiguredAsync()
+    private async Task<bool?> IsJwtBearerConfiguredAsync()
     {
-        if (_isJwtBearerConfigured.HasValue)
-        {
-            _logger.LogDebug("Using cached JWT Bearer configuration status: {IsConfigured}", _isJwtBearerConfigured.Value);
-            return _isJwtBearerConfigured.Value;
-        }
+        bool? isJwtBearerConfigured;
 
         if (_schemeProvider == null)
         {
-            _logger.LogWarning("Authentication scheme provider is null, considering JWT Bearer as not configured");
-            _isJwtBearerConfigured = false;
+            _logger.LogInformation("Authentication scheme provider is null, considering JWT Bearer as not configured");
             return false;
         }
 
         try
         {
-            var scheme = await _schemeProvider.GetSchemeAsync(JwtBearerDefaults.AuthenticationScheme).ConfigureAwait(false);
-            _isJwtBearerConfigured = scheme != null;
-            _logger.LogInformation("JWT Bearer authentication scheme {SchemeStatus}", _isJwtBearerConfigured.Value ? "found" : "not found");
+            // Check if any of the configured schemes exist
+            var configuredSchemes = 0;
+            foreach (var scheme in _authenticationSchemes)
+            {
+                if (await _schemeProvider.GetSchemeAsync(scheme).ConfigureAwait(false) != null)
+                {
+                    configuredSchemes++;
+                }
+            }
+
+            isJwtBearerConfigured = configuredSchemes > 0;
+
+            _logger.LogInformation(
+                "Found {ConfiguredCount} configured authentication schemes out of {TotalCount} specified schemes",
+                configuredSchemes,
+                _authenticationSchemes.Count);
 
             var allSchemes = await _schemeProvider.GetAllSchemesAsync().ConfigureAwait(false);
+
             _logger.LogDebug("All authentication schemes: {@Schemes}", allSchemes.Select(s => s.Name));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while checking JWT Bearer configuration");
-            _isJwtBearerConfigured = false;
+            // An exception occurred, so we don't know if JWT Bearer is configured
+            isJwtBearerConfigured = null;
         }
 
-        return _isJwtBearerConfigured.Value;
+        return isJwtBearerConfigured;
     }
 }

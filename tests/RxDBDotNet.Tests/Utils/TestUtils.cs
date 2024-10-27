@@ -43,8 +43,11 @@ internal static class TestUtils
         this TestContext context,
         Workspace workspace,
         UserRole role,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        TokenParameters? tokenParameters = null)
     {
+        tokenParameters ??= new TokenParameters();
+
         var dbContext = context.ServiceProvider.GetRequiredService<LiveDocsDbContext>();
         var replicatedUser = new ReplicatedUser
         {
@@ -59,7 +62,7 @@ internal static class TestUtils
             IsDeleted = false,
         };
 
-        var jwtToken = JwtUtil.GenerateJwtToken(replicatedUser);
+        var jwtToken = JwtUtil.GenerateJwtToken(replicatedUser, tokenParameters);
 
         var user = new User
         {

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
@@ -14,87 +13,75 @@ using RxDBDotNet.Models;
 namespace RxDBDotNet.Resolvers;
 
 /// <summary>
-///     Provides subscription functionality for real-time updates of documents.
-///     This class implements the 'event observation' mode of the RxDB replication protocol.
+/// Provides subscription functionality for real-time updates of documents.
+/// This class implements the 'event observation' mode of the RxDB replication protocol
+/// with a fail-fast approach for reliability and simplicity.
 /// </summary>
-/// <typeparam name="TDocument">The type of document being replicated. Must implement <see cref="IReplicatedDocument" />.</typeparam>
-/// <remarks>
-///     Note that this class must not use constructor injection per:
-///     https://chillicream.com/docs/hotchocolate/v13/server/dependency-injection#constructor-injection
-/// </remarks>
+/// <typeparam name="TDocument">The type of document being replicated.</typeparam>
 public sealed class SubscriptionResolver<TDocument> where TDocument : IReplicatedDocument
 {
     /// <summary>
-    ///     Provides a stream of document changes for subscription.
-    ///     This method is the entry point for GraphQL subscriptions and implements
-    ///     the server-side push mechanism of the RxDB replication protocol.
+    /// Provides a stream of document changes for a subscription.
     /// </summary>
-    /// <param name="eventReceiver">The event receiver used for subscribing to document changes.</param>
-    /// <param name="topics">An optional set of topics to receive events for when a document is changed.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <returns>
-    ///     An asynchronous enumerable of <see cref="DocumentPullBulk{TDocument}" /> representing the stream of document
-    ///     changes.
-    /// </returns>
-#pragma warning disable CA1822 // disable Mark members as static since this is a class instantiated by DI
+    /// <param name="eventReceiver">The event receiver for document changes.</param>
+    /// <param name="topics">Optional topics to filter events.</param>
+    /// <param name="cancellationToken">Cancellation token to stop the stream.</param>
+    /// <returns>An async enumerable of document changes.</returns>
+    /// <exception cref="ArgumentNullException">When eventReceiver is null.</exception>
+#pragma warning disable CA1822
     internal IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStream(
         ITopicEventReceiver eventReceiver,
         List<string>? topics,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(eventReceiver);
-
         return DocumentChangedStreamInternal(eventReceiver, topics, cancellationToken);
     }
 
     private static async IAsyncEnumerable<DocumentPullBulk<TDocument>> DocumentChangedStreamInternal(
         ITopicEventReceiver eventReceiver,
-        List<string>? subscriberTopics,
+        List<string>? topics,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var streamName = $"Stream_{typeof(TDocument).Name}";
 
-        while (!cancellationToken.IsCancellationRequested)
+        var sourceStream = await eventReceiver
+            .SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken)
+            .ConfigureAwait(false);
+
+        await using (sourceStream.ConfigureAwait(false))
         {
-            ISourceStream<DocumentPullBulk<TDocument>>? documentStream = null;
-
-            try
+            await foreach (var result in sourceStream.ReadEventsAsync()
+                               .WithCancellation(cancellationToken)
+                               .ConfigureAwait(false))
             {
-                documentStream = await eventReceiver.SubscribeAsync<DocumentPullBulk<TDocument>>(streamName, cancellationToken)
-                    .ConfigureAwait(false);
-
-                await foreach (var pullDocumentResult in documentStream.ReadEventsAsync()
-                                   .WithCancellation(cancellationToken)
-                                   .ConfigureAwait(false))
+                if (ShouldYieldDocument(result, topics))
                 {
-                    if (ShouldYieldDocuments(pullDocumentResult, subscriberTopics))
-                    {
-                        yield return pullDocumentResult;
-                    }
-                }
-            }
-            finally
-            {
-                // Ensure we dispose of the stream if it was created
-                if (documentStream != null)
-                {
-                    await documentStream.DisposeAsync()
-                        .ConfigureAwait(false);
+                    yield return result;
                 }
             }
         }
     }
 
-    private static bool ShouldYieldDocuments(DocumentPullBulk<TDocument> pullDocumentResult, List<string>? subscriberTopics)
+    /// <summary>
+    /// Determines if a document should be yielded based on topic filtering.
+    /// Empty document sets are always yielded to maintain checkpoint consistency.
+    /// Documents are filtered based on topic subscription if topics are specified.
+    /// </summary>
+    /// <param name="result">The bulk result of the document pull operation.</param>
+    /// <param name="topics">The list of topics to filter the documents by. If null or empty, all documents are yielded.</param>
+    private static bool ShouldYieldDocument(
+        DocumentPullBulk<TDocument> result,
+        List<string>? topics)
     {
-        // In the RxDB replication protocol:
-        // 1. Empty document lists in updates are valid and should be processed.
-        // 2. The checkpoint should always be updated, even if no documents are present.
-        // 3. The client (subscriber) should receive these updates to keep its checkpoint current.
-        return pullDocumentResult.Documents.Count == 0
-               || pullDocumentResult.Documents.Exists(doc => subscriberTopics == null
-                                                             || subscriberTopics.Count == 0
-                                                             // Not ignoring case to follow the pub/sub pattern of case-sensitive channels in redis
-                                                             || doc.Topics?.Intersect(subscriberTopics, StringComparer.Ordinal).Any() == true);
+        if (result.Documents.Count == 0)
+        {
+            return true; // Always yield empty updates to maintain checkpoint consistency
+        }
+
+        return topics is null
+            || topics.Count == 0
+            || result.Documents.Exists(doc =>
+                doc.Topics?.Intersect(topics, StringComparer.Ordinal).Any() == true);
     }
 }

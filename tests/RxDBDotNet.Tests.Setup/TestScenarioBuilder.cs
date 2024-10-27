@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RxDBDotNet.Configuration;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Security;
@@ -39,7 +40,7 @@ namespace RxDBDotNet.Tests.Setup;
 public class TestScenarioBuilder
 {
     private bool _setupAuthorization;
-    private Action<IWebHostBuilder> _configureWebHostBuilder = _ => { };
+    private readonly Action<IWebHostBuilder> _configureWebHostBuilder = _ => { };
     private Action<IServiceCollection> _configureServices = _ => { };
     private Action<IRequestExecutorBuilder> _configureGraphQL = _ => { };
     private readonly Dictionary<Type, Action<IRequestExecutorBuilder>> _configureReplicatedDocuments = [];
@@ -104,17 +105,6 @@ public class TestScenarioBuilder
     }
 
     /// <summary>
-    /// Configures the web host builder.
-    /// </summary>
-    /// <param name="configure">An action to configure the web host builder.</param>
-    /// <returns>The current <see cref="TestScenarioBuilder"/> instance.</returns>
-    public TestScenarioBuilder ConfigureWebHost(Action<IWebHostBuilder> configure)
-    {
-        _configureWebHostBuilder += configure;
-        return this;
-    }
-
-    /// <summary>
     /// Configures services for the test setup.
     /// </summary>
     /// <param name="configure">An action to configure services.</param>
@@ -142,7 +132,7 @@ public class TestScenarioBuilder
     /// <typeparam name="TDocument">The type of the document.</typeparam>
     /// <param name="configure">An action to configure replication options.</param>
     /// <returns>The current <see cref="TestScenarioBuilder"/> instance.</returns>
-    public TestScenarioBuilder ConfigureReplicatedDocument<TDocument>(Action<ReplicationOptions<TDocument>>? configure = null)
+    public TestScenarioBuilder ConfigureReplicatedDocument<TDocument>(Action<DocumentOptions<TDocument>>? configure = null)
         where TDocument : class, IReplicatedDocument
     {
         _configureReplicatedDocuments[typeof(TDocument)] = builder => builder.AddReplicatedDocument(configure);

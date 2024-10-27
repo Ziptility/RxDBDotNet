@@ -8,6 +8,7 @@ using FluentAssertions;
 using LiveDocs.GraphQLApi.Models.Replication;
 using LiveDocs.GraphQLApi.Security;
 using RT.Comb;
+using RxDBDotNet.Configuration;
 using RxDBDotNet.Security;
 using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Setup;
@@ -39,7 +40,7 @@ public class SecurityTests : IAsyncLifetime
     public void RequirePolicy_WithNoOperations_ShouldThrowArgumentException()
     {
         // Arrange
-        var securityOptions = new SecurityOptions<ReplicatedWorkspace>();
+        var securityOptions = new DocumentSecurityOptions<ReplicatedWorkspace>();
 
         // Act & Assert
         var action = () => securityOptions.RequirePolicy(Operation.None, "SomePolicy");
@@ -50,7 +51,7 @@ public class SecurityTests : IAsyncLifetime
     public void RequirePolicy_WithNullOrEmptyPolicy_ShouldThrowArgumentException()
     {
         // Arrange
-        var securityOptions = new SecurityOptions<ReplicatedWorkspace>();
+        var securityOptions = new DocumentSecurityOptions<ReplicatedWorkspace>();
 
         // Act & Assert
         var actionWithNull = () => securityOptions.RequirePolicy(Operation.Read, null!);

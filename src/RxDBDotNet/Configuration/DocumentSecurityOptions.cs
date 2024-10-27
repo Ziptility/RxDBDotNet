@@ -1,10 +1,11 @@
-﻿// src\RxDBDotNet\Security\SecurityOptions.cs
+﻿// src\RxDBDotNet\Configuration\DocumentSecurityOptions.cs
 
 using System;
 using System.Collections.Generic;
 using RxDBDotNet.Documents;
+using RxDBDotNet.Security;
 
-namespace RxDBDotNet.Security;
+namespace RxDBDotNet.Configuration;
 
 /// <summary>
 /// Provides configuration options for setting up security policies in RxDBDotNet.
@@ -14,7 +15,7 @@ namespace RxDBDotNet.Security;
 /// The type of document that the security options apply to.
 /// This type must implement the <see cref="IReplicatedDocument"/> interface.
 /// </typeparam>
-public sealed class SecurityOptions<TDocument> where TDocument : IReplicatedDocument
+public sealed class DocumentSecurityOptions<TDocument> where TDocument : IReplicatedDocument
 {
     internal List<PolicyRequirement> PolicyRequirements { get; } = [];
 
@@ -22,8 +23,8 @@ public sealed class SecurityOptions<TDocument> where TDocument : IReplicatedDocu
     /// Requires a specified policy to be met in order to create the replicated document.
     /// </summary>
     /// <param name="policy">The policy that must be met for create access.</param>
-    /// <returns>The current <see cref="SecurityOptions{TDocument}"/> instance for method chaining.</returns>
-    public SecurityOptions<TDocument> RequirePolicyToCreate(string policy)
+    /// <returns>The current <see cref="DocumentSecurityOptions{TDocument}"/> instance for method chaining.</returns>
+    public DocumentSecurityOptions<TDocument> RequirePolicyToCreate(string policy)
     {
         return RequirePolicy(Operation.Create, policy);
     }
@@ -32,8 +33,8 @@ public sealed class SecurityOptions<TDocument> where TDocument : IReplicatedDocu
     /// Requires a specified policy to be met in order to read the replicated document.
     /// </summary>
     /// <param name="policy">The policy that must be met for read access.</param>
-    /// <returns>The current <see cref="SecurityOptions{TDocument}"/> instance for method chaining.</returns>
-    public SecurityOptions<TDocument> RequirePolicyToRead(string policy)
+    /// <returns>The current <see cref="DocumentSecurityOptions{TDocument}"/> instance for method chaining.</returns>
+    public DocumentSecurityOptions<TDocument> RequirePolicyToRead(string policy)
     {
         return RequirePolicy(Operation.Read, policy);
     }
@@ -42,8 +43,8 @@ public sealed class SecurityOptions<TDocument> where TDocument : IReplicatedDocu
     /// Requires a specified policy to be met in order to update the replicated document.
     /// </summary>
     /// <param name="policy">The policy that must be met for update access.</param>
-    /// <returns>The current <see cref="SecurityOptions{TDocument}"/> instance for method chaining.</returns>
-    public SecurityOptions<TDocument> RequirePolicyToUpdate(string policy)
+    /// <returns>The current <see cref="DocumentSecurityOptions{TDocument}"/> instance for method chaining.</returns>
+    public DocumentSecurityOptions<TDocument> RequirePolicyToUpdate(string policy)
     {
         return RequirePolicy(Operation.Update, policy);
     }
@@ -52,8 +53,8 @@ public sealed class SecurityOptions<TDocument> where TDocument : IReplicatedDocu
     /// Requires a specified policy to be met in order to delete the replicated document.
     /// </summary>
     /// <param name="policy">The policy that must be met for delete access.</param>
-    /// <returns>The current <see cref="SecurityOptions{TDocument}"/> instance for method chaining.</returns>
-    public SecurityOptions<TDocument> RequirePolicyToDelete(string policy)
+    /// <returns>The current <see cref="DocumentSecurityOptions{TDocument}"/> instance for method chaining.</returns>
+    public DocumentSecurityOptions<TDocument> RequirePolicyToDelete(string policy)
     {
         return RequirePolicy(Operation.Delete, policy);
     }
@@ -63,11 +64,11 @@ public sealed class SecurityOptions<TDocument> where TDocument : IReplicatedDocu
     /// </summary>
     /// <param name="operations">The operations to which the policy applies. This can be a combination of Operation flags.</param>
     /// <param name="policy">The policy that must be met for the specified operations.</param>
-    /// <returns>The current <see cref="SecurityOptions{TDocument}"/> instance for method chaining.</returns>
+    /// <returns>The current <see cref="DocumentSecurityOptions{TDocument}"/> instance for method chaining.</returns>
     /// <exception cref="ArgumentException">
     /// Thrown when no operations are specified or when the policy is null or whitespace.
     /// </exception>
-    public SecurityOptions<TDocument> RequirePolicy(Operation operations, string policy)
+    public DocumentSecurityOptions<TDocument> RequirePolicy(Operation operations, string policy)
     {
         if (operations == Operation.None)
         {

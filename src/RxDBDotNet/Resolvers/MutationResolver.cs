@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using RxDBDotNet.Configuration;
 using RxDBDotNet.Documents;
 using RxDBDotNet.Models;
 using RxDBDotNet.Security;
@@ -38,7 +39,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         List<DocumentPushRow<TDocument>?>? documents,
         IDocumentService<TDocument> documentService,
         ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions,
+        DocumentSecurityOptions<TDocument>? securityOptions,
         AuthorizationHelper? authorizationHelper,
         CancellationToken cancellationToken)
     {
@@ -195,7 +196,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         IDocumentService<TDocument> documentService,
         AuthorizationHelper? authorizationHelper,
         ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions,
+        DocumentSecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
     {
         // Create new documents
@@ -243,7 +244,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
         IDocumentService<TDocument> service,
         AuthorizationHelper? authorizationHelper,
         ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions,
+        DocumentSecurityOptions<TDocument>? securityOptions,
         CancellationToken cancellationToken)
     {
         // Set the server timestamp for updates
@@ -277,7 +278,7 @@ public sealed class MutationResolver<TDocument> where TDocument : class, IReplic
     private static Task AuthorizeOperationAsync(
         AuthorizationHelper? authorizationHelper,
         ClaimsPrincipal? currentUser,
-        SecurityOptions<TDocument>? securityOptions,
+        DocumentSecurityOptions<TDocument>? securityOptions,
         Operation operation)
     {
         if (authorizationHelper == null)

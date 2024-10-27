@@ -19,14 +19,10 @@ RxDBDotNet is a powerful .NET library that implements the [RxDB replication prot
     - [Policy-Based Security](#policy-based-security)
     - [Subscription Topics](#subscription-topics)
     - [Custom Error Types](#custom-error-types)
-    - [OpenID Connect (OIDC) Support for Subscription Authentication](#openid-connect-oidc-support-for-subscription-authentication)
+    - [Authentication Schemes for Subscriptions](#authentication-schemes-for-subscriptions)
   - [Example Application](#example-application)
     - [Prerequisites for Running the Example Application](#prerequisites-for-running-the-example-application)
     - [Running the Full Stack](#running-the-full-stack)
-  - [RxDB Replication Protocol Details](#rxdb-replication-protocol-details)
-  - [Custom Implementations for RxDB Clients](#custom-implementations-for-rxdb-clients)
-  - [Security Considerations](#security-considerations)
-    - [Server-Side Timestamp Overwriting](#server-side-timestamp-overwriting)
   - [Contributing](#contributing)
   - [License](#license)
   - [Code of Conduct](#code-of-conduct)
@@ -200,31 +196,115 @@ builder.Services
     });
 ```
 
-### OpenID Connect (OIDC) Support for Subscription Authentication
+### Authentication Schemes for Subscriptions
 
-RxDBDotNet supports OIDC configuration for JWT validation in GraphQL subscriptions.
+RxDBDotNet supports configuring multiple authentication schemes for GraphQL subscriptions over WebSocket connections. This feature provides flexibility in token validation and supports scenarios where you need to handle tokens from different authentication sources.
 
-Key Features:
+#### Basic Configuration
 
-- Dynamic retrieval of OIDC configuration, including signing keys
-- Support for key rotation without requiring application restarts
-- Seamless integration with existing JWT authentication setups
+By default, RxDBDotNet uses the standard JWT Bearer authentication scheme (`"Bearer"`). You can use this with minimal configuration:
 
-Usage:
+```csharp
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = // ... your token validation parameters
+    });
 
-1. Configure JWT Bearer authentication with OIDC support:
+builder.Services
+    .AddGraphQLServer()
+    .AddMutationConventions()
+    .AddReplication() // Uses default Bearer scheme
+```
 
-    ```csharp
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
-        {
-            options.Authority = "https://your-oidc-provider.com";
-            options.Audience = "your-api-audience";
-            // Other JWT options...
-        });
-    ```
+#### Custom Authentication Schemes
 
-2. The SubscriptionJwtAuthInterceptor will automatically use the OIDC configuration for subscription authentication.
+You can configure multiple authentication schemes to validate subscription tokens:
+
+```csharp
+// Configure multiple JWT Bearer schemes
+builder.Services
+    .AddAuthentication()
+    .AddJwtBearer("Bearer", options => 
+    {
+        options.Audience = "DefaultAudience";
+        options.TokenValidationParameters = // ... default scheme parameters
+    })
+    .AddJwtBearer("CustomScheme", options =>
+    {
+        options.Audience = "CustomAudience";
+        options.TokenValidationParameters = // ... custom scheme parameters
+    });
+
+// Configure RxDBDotNet to use both schemes
+builder.Services
+    .AddGraphQLServer()
+    .AddMutationConventions()
+    .AddReplication(options => 
+    {
+        options.Security
+            .TryAddSubscriptionAuthenticationScheme("CustomScheme");
+        // The default "Bearer" scheme is already included
+    });
+```
+
+When a client attempts to establish a WebSocket connection, RxDBDotNet will:
+1. Try to validate the token using each configured scheme in order
+2. Accept the connection with the first scheme that successfully validates the token
+3. Reject the connection if no scheme can validate the token
+
+#### OIDC Support
+
+The subscription authentication system fully supports OpenID Connect configuration, including dynamic key retrieval and rotation:
+
+```csharp
+builder.Services
+    .AddAuthentication()
+    .AddJwtBearer("OidcScheme", options =>
+    {
+        options.Authority = "https://your-identity-provider.com";
+        options.Audience = "your-api";
+        options.RequireHttpsMetadata = true;
+    });
+
+builder.Services
+    .AddGraphQLServer()
+    .AddMutationConventions()
+    .AddReplication(options => 
+    {
+        options.Security
+            .TryAddSubscriptionAuthenticationScheme("OidcScheme");
+    });
+```
+
+The system will automatically:
+- Retrieve OIDC configuration from the authority
+- Use the latest signing keys
+- Handle key rotation without requiring application restarts
+
+#### Client Usage
+
+Clients should include the JWT token in the WebSocket connection initialization:
+
+```typescript
+const client = createClient({
+  url: 'ws://your-api/graphql',
+  connectionParams: {
+    headers: {
+      Authorization: `Bearer ${jwtToken}`
+    }
+  }
+});
+```
+
+#### Error Handling
+
+The subscription authentication system provides detailed error information:
+
+- If authentication fails, the WebSocket connection is closed with code 4403 (Forbidden)
+- Error details are included in the close message
+- Connection attempts are logged for debugging purposes
 
 ## Example Application
 

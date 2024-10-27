@@ -8,8 +8,11 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using HotChocolate.Subscriptions;
 using LiveDocs.GraphQLApi.Security;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 using RxDBDotNet.Extensions;
 using RxDBDotNet.Tests.Model;
 using RxDBDotNet.Tests.Setup;
@@ -160,6 +163,62 @@ public class SubscriptionAuthenticationSchemeTests : IAsyncLifetime
         });
 
         exception.Message.Should().Be("WebSocket connection closed unexpectedly");
+    }
+
+    [Fact]
+    public async Task Subscription_WithSchemeProviderError_ShouldRejectConnection()
+    {
+        // Arrange
+        var mockSchemeProvider = new Mock<IAuthenticationSchemeProvider>();
+        mockSchemeProvider
+            .Setup(x => x.GetSchemeAsync(It.IsAny<string>()))
+            .ThrowsAsync(new InvalidOperationException("Simulated error during scheme retrieval"));
+
+        TestContext = new TestScenarioBuilder(configureGraphQLDefaults: false)
+            .ConfigureServices(services =>
+            {
+                // Remove existing authentication scheme provider
+                services.RemoveAll<IAuthenticationSchemeProvider>();
+
+                // Add our mock scheme provider that throws an exception
+                services.AddSingleton(mockSchemeProvider.Object);
+
+                // Add other required services
+                services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("localhost:3333"));
+
+                // Configure authentication with JWT Bearer
+                services.AddAuthentication()
+                    .AddJwtBearer(options =>
+                    {
+                        options.Audience = JwtUtil.Audience;
+                        options.IncludeErrorDetails = true;
+                        options.RequireHttpsMetadata = false;
+                        options.TokenValidationParameters = JwtUtil.GetTokenValidationParameters();
+                    });
+            })
+            .ConfigureGraphQL(builder => builder
+                .AddMutationConventions()
+                .AddRedisSubscriptions(_ => TestContext.ServiceProvider.GetRequiredService<IConnectionMultiplexer>(),
+                    new SubscriptionOptions { TopicPrefix = Guid.NewGuid().ToString() })
+                .AddReplication())
+            .Build();
+
+        var workspace = await TestContext.CreateWorkspaceAsync(TestContext.CancellationToken);
+        var user = await TestContext.CreateUserAsync(workspace, UserRole.WorkspaceAdmin, TestContext.CancellationToken);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<IOException>(async () =>
+        {
+            await TestContext.Factory.CreateGraphQLSubscriptionClientAsync(
+                TestContext.CancellationToken,
+                bearerToken: user.JwtAccessToken);
+        });
+
+        // The connection should be rejected since we cannot determine the authentication configuration
+        exception.Message.Should().Be("WebSocket connection closed unexpectedly");
+
+        // Verify that our mock was called
+        mockSchemeProvider.Verify(x => x.GetSchemeAsync(It.IsAny<string>()), Times.AtLeastOnce);
     }
 
     private static async Task<List<GqlSubscriptionResponse>> CollectSubscriptionDataAsync(
